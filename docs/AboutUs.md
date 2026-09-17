@@ -5,57 +5,69 @@
 
 # About Us
 
-We are a team based in the [School of Computing, National University of Singapore](http://www.comp.nus.edu.sg).
+We are a team based in the [School of Computing, National University of Singapore](https://www.comp.nus.edu.sg).
 
-You can reach us at the email `seer[at]comp.nus.edu.sg`
+You can reach us at the email `TODO[at]u.nus.edu`
 
 ## Project team
 
-### John Doe
+### Joshua Andrew
 
-<img src="images/johndoe.png" width="200px">
+<img src="images/joshmode.png" width="200px">
 
-[[homepage](http://www.comp.nus.edu.sg/~damithch)]
-[[github](https://github.com/johndoe)]
-[[portfolio](team/johndoe.md)]
+[[github](https://github.com/joshmode)]
+[[portfolio](team/joshmode.md)]
 
-* Role: Project Advisor
+* Role: TODO
+* Responsibilities: TODO
 
-### Jane Doe
+### Wang Kaiyuanhao
 
-<img src="images/johndoe.png" width="200px">
+<img src="images/lew1swong.png" width="200px">
 
-[[github](http://github.com/johndoe)]
-[[portfolio](team/johndoe.md)]
+[[github](https://github.com/Lew1sWong)]
+[[portfolio](team/lew1swong.md)]
 
-* Role: Team Lead
-* Responsibilities: UI
+* Role: TODO
+* Responsibilities: TODO
 
-### Johnny Doe
+### Terence Goh Yan Chen
 
-<img src="images/johndoe.png" width="200px">
+<img src="images/notmeegoreng.png" width="200px">
 
-[[github](http://github.com/johndoe)] [[portfolio](team/johndoe.md)]
+[[github](https://github.com/notmeegoreng)]
+[[portfolio](team/notmeegoreng.md)]
 
-* Role: Developer
-* Responsibilities: Data
+* Role: TODO
+* Responsibilities: TODO
 
-### Jean Doe
+### Wang Xiaojie
 
-<img src="images/johndoe.png" width="200px">
+<img src="images/ilieks.png" width="200px">
 
-[[github](http://github.com/johndoe)]
-[[portfolio](team/johndoe.md)]
+[[github](https://github.com/IliekS)]
+[[portfolio](team/ilieks.md)]
 
-* Role: Developer
-* Responsibilities: Dev Ops + Threading
+* Role: TODO
+* Responsibilities: TODO
 
-### James Doe
+### Thakker Yash
 
-<img src="images/johndoe.png" width="200px">
+<img src="images/yash.png" width="200px">
 
-[[github](http://github.com/johndoe)]
-[[portfolio](team/johndoe.md)]
+[[github](https://github.com/Yash-PoPularPlusPlus)]
+[[portfolio](team/yash.md)]
 
-* Role: Developer
-* Responsibilities: UI
+* Role: TODO
+* Responsibilities: TODO
+
+### Samaira Kapur
+
+<img src="images/samairakapur.png" width="200px">
+
+[[github](https://github.com/samairakapur)]
+[[portfolio](team/samairakapur.md)]
+
+* Role: TODO
+* Responsibilities: TODO
+
