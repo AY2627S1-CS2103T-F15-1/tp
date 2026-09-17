@@ -7,11 +7,12 @@
       "headings": {
         "about-us": "About Us",
         "project-team": "Project team",
-        "john-doe": "John Doe",
-        "jane-doe": "Jane Doe",
-        "johnny-doe": "Johnny Doe",
-        "jean-doe": "Jean Doe",
-        "james-doe": "James Doe"
+        "joshua-andrew": "Joshua Andrew",
+        "wang-kaiyuanhao": "Wang Kaiyuanhao",
+        "terence-goh-yan-chen": "Terence Goh Yan Chen",
+        "wang-xiaojie": "Wang Xiaojie",
+        "thakker-yash": "Thakker Yash",
+        "samaira-kapur": "Samaira Kapur"
       },
       "headingKeywords": {}
     },
@@ -128,6 +129,14 @@
       "headingKeywords": {}
     },
     {
+      "src": "ilieks.md",
+      "title": "Wang Xiaojie's Project Portfolio Page",
+      "headings": {
+        "project-tutorflow": "Project: TutorFlow"
+      },
+      "headingKeywords": {}
+    },
+    {
       "src": "index.md",
       "title": "",
       "headings": {
@@ -136,10 +145,50 @@
       "headingKeywords": {}
     },
     {
+      "src": "joshmode.md",
+      "title": "Joshua Andrew's Project Portfolio Page",
+      "headings": {
+        "project-tutorflow": "Project: TutorFlow"
+      },
+      "headingKeywords": {}
+    },
+    {
+      "src": "lew1swong.md",
+      "title": "Wang Kaiyuanhao's Project Portfolio Page",
+      "headings": {
+        "project-tutorflow": "Project: TutorFlow"
+      },
+      "headingKeywords": {}
+    },
+    {
+      "src": "notmeegoreng.md",
+      "title": "Terence Goh Yan Chen's Project Portfolio Page",
+      "headings": {
+        "project-tutorflow": "Project: TutorFlow"
+      },
+      "headingKeywords": {}
+    },
+    {
+      "src": "samairakapur.md",
+      "title": "Samaira Kapur's Project Portfolio Page",
+      "headings": {
+        "project-tutorflow": "Project: TutorFlow"
+      },
+      "headingKeywords": {}
+    },
+    {
       "src": "team/johndoe.md",
       "title": "John Doe's Project Portfolio Page",
       "headings": {
         "project-addressbook-level-3": "Project: AddressBook Level 3"
+      },
+      "headingKeywords": {}
+    },
+    {
+      "src": "yash-PoPularPlusPLus.md",
+      "title": "Thakker Yash's Project Portfolio Page",
+      "headings": {
+        "project-tutorflow": "Project: TutorFlow"
       },
       "headingKeywords": {}
     }
