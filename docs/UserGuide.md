@@ -1,12 +1,7 @@
----
-  layout: default.md
-  title: "User Guide"
-  pageNav: 3
----
-
-# AB-3 User Guide
-
-AddressBook Level 3 (AB3) is a **desktop application for managing contacts, optimized for use through a Command Line Interface (CLI)** while retaining the benefits of a Graphical User Interface (GUI). If you type quickly, AB3 can help you manage contacts faster than traditional GUI applications.
+# TutorFlow User Guide
+## This page is a work-in-progress
+TutorFlow is a **desktop application that keeps your students, schedule, and payments in one place, optimized for use through a Command Line Interface (CLI)** while retaining the benefits of a Graphical User Interface (GUI).
+For power-users, TutorFlow can help you manage contacts faster than traditional GUI applications.
 
 <!-- * Table of Contents -->
 <page-nav-print />
@@ -18,7 +13,7 @@ AddressBook Level 3 (AB3) is a **desktop application for managing contacts, opti
 1. Ensure that Java `25` or later is installed on your computer.<br>
    **Mac users:** Ensure you have the precise JDK version prescribed [here](https://se-education.org/guides/tutorials/javaInstallationMac.html).
 
-1. Download the latest `.jar` file from [here](https://github.com/se-edu/addressbook-level3/releases).
+1. Download the latest `.jar` file from [here](https://this-is-a-placeholder). 
 
 1. Copy the file to the folder you want to use as the _home folder_ for your AddressBook.
 
