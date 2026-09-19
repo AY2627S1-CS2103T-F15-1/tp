@@ -1,8 +1,3 @@
----
-  layout: default.md
-  title: ""
----
-
 # Tutorflow
 ## This page is a work-in-progress
 
