@@ -4,43 +4,58 @@
     "name" : "Alice Pauline",
     "phone" : "94351253",
     "email" : "alice@example.com",
-    "address" : "123, Jurong West Ave 6, #08-111",
-    "tags" : [ "friends" ]
+    "level" : "S3",
+    "subjects" : [ "Math" ],
+    "rate" : "50",
+    "venue" : "123, Jurong West Ave 6, #08-111"
   }, {
     "name" : "Benson Meier",
     "phone" : "98765432",
     "email" : "johnd@example.com",
-    "address" : "311, Clementi Ave 2, #02-25",
-    "tags" : [ "owesMoney", "friends" ]
+    "level" : "J1",
+    "subjects" : [ "Physics", "Math" ],
+    "rate" : "60",
+    "venue" : "311, Clementi Ave 2, #02-25"
   }, {
     "name" : "Carl Kurz",
     "phone" : "95352563",
     "email" : "heinz@example.com",
-    "address" : "wall street",
-    "tags" : [ ]
+    "level" : "P6",
+    "subjects" : [ "Math" ],
+    "rate" : "40",
+    "venue" : "wall street"
   }, {
     "name" : "Daniel Meier",
     "phone" : "87652533",
     "email" : "cornelia@example.com",
-    "address" : "10th street",
-    "tags" : [ "friends" ]
+    "level" : "S4",
+    "subjects" : [ "Chemistry" ],
+    "rate" : "55",
+    "venue" : "10th street"
   }, {
     "name" : "Elle Meyer",
     "phone" : "9482224",
     "email" : "werner@example.com",
-    "address" : "michegan ave",
-    "tags" : [ ]
+    "level" : "J2",
+    "subjects" : [ "Math" ],
+    "rate" : "70",
+    "venue" : "michegan ave"
   }, {
     "name" : "Fiona Kunz",
     "phone" : "9482427",
     "email" : "lydia@example.com",
-    "address" : "little tokyo",
-    "tags" : [ ]
+    "level" : "P5",
+    "subjects" : [ "Math" ],
+    "rate" : "35",
+    "venue" : "little tokyo"
   }, {
     "name" : "George Best",
     "phone" : "9482442",
     "email" : "anna@example.com",
-    "address" : "4th street",
-    "tags" : [ ]
-  } ]
+    "level" : "S1",
+    "subjects" : [ "Math" ],
+    "rate" : "45",
+    "venue" : "4th street"
+  } ],
+  "lessons" : [ ]
 }

@@ -8,9 +8,14 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.Student;
 
 /**
  * A UI component that displays information of a {@code Person}.
+ *
+ * <p>If the person is a {@code Student}, student-specific fields such as
+ * level, subjects, rate, and venue are shown. Otherwise, only the base
+ * person fields (name, phone, email) are displayed.
  */
 public class PersonCard extends UiPart<Region> {
 
@@ -35,11 +40,15 @@ public class PersonCard extends UiPart<Region> {
     @FXML
     private Label phone;
     @FXML
-    private Label address;
+    private Label level;
+    @FXML
+    private Label rate;
     @FXML
     private Label email;
     @FXML
-    private FlowPane tags;
+    private Label venue;
+    @FXML
+    private FlowPane subjects;
 
     /**
      * Creates a {@code PersonCard} with the given {@code Person} and index to display.
@@ -50,10 +59,26 @@ public class PersonCard extends UiPart<Region> {
         id.setText(displayedIndex + ". ");
         name.setText(person.getName().fullName);
         phone.setText(person.getPhone().value);
-        address.setText(person.getAddress().value);
-        email.setText(person.getEmail().value);
-        person.getTags().stream()
-                .sorted(Comparator.comparing(tag -> tag.tagName))
-                .forEach(tag -> tags.getChildren().add(new Label(tag.tagName)));
+
+        if (person.getEmail() != null) {
+            email.setText(person.getEmail().value);
+            email.setManaged(true);
+            email.setVisible(true);
+        }
+
+        if (person instanceof Student student) {
+            level.setText(student.getLevel().value);
+            rate.setText(student.getRate().toDisplayString() + "/lesson");
+
+            student.getSubjects().stream()
+                    .sorted(Comparator.comparing(subject -> subject.value))
+                    .forEach(subject -> subjects.getChildren().add(new Label(subject.value)));
+
+            if (student.getVenue() != null) {
+                venue.setText(student.getVenue().value);
+                venue.setManaged(true);
+                venue.setVisible(true);
+            }
+        }
     }
 }

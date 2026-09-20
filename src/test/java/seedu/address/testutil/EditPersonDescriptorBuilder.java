@@ -5,12 +5,15 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import seedu.address.logic.commands.EditCommand.EditPersonDescriptor;
-import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
+import seedu.address.model.person.Level;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
-import seedu.address.model.tag.Tag;
+import seedu.address.model.person.Rate;
+import seedu.address.model.person.Student;
+import seedu.address.model.person.Subject;
+import seedu.address.model.person.Venue;
 
 /**
  * A utility class to help with building EditPersonDescriptor objects.
@@ -35,8 +38,16 @@ public class EditPersonDescriptorBuilder {
         descriptor.setName(person.getName());
         descriptor.setPhone(person.getPhone());
         descriptor.setEmail(person.getEmail());
-        descriptor.setAddress(person.getAddress());
-        descriptor.setTags(person.getTags());
+
+        if (person instanceof Student) {
+            Student student = (Student) person;
+            descriptor.setLevel(student.getLevel());
+            descriptor.setSubjects(student.getSubjects());
+            descriptor.setRate(student.getRate());
+            if (student.getVenue() != null) {
+                descriptor.setVenue(student.getVenue());
+            }
+        }
     }
 
     /**
@@ -64,20 +75,36 @@ public class EditPersonDescriptorBuilder {
     }
 
     /**
-     * Sets the {@code Address} of the {@code EditPersonDescriptor} that we are building.
+     * Sets the {@code Level} of the {@code EditPersonDescriptor} that we are building.
      */
-    public EditPersonDescriptorBuilder withAddress(String address) {
-        descriptor.setAddress(new Address(address));
+    public EditPersonDescriptorBuilder withLevel(String level) {
+        descriptor.setLevel(new Level(level));
         return this;
     }
 
     /**
-     * Parses the {@code tags} into a {@code Set<Tag>} and sets it to the {@code EditPersonDescriptor}
+     * Sets the {@code Rate} of the {@code EditPersonDescriptor} that we are building.
+     */
+    public EditPersonDescriptorBuilder withRate(String rate) {
+        descriptor.setRate(new Rate(rate));
+        return this;
+    }
+
+    /**
+     * Sets the {@code Venue} of the {@code EditPersonDescriptor} that we are building.
+     */
+    public EditPersonDescriptorBuilder withVenue(String venue) {
+        descriptor.setVenue(new Venue(venue));
+        return this;
+    }
+
+    /**
+     * Parses the {@code subjects} into a {@code Set<Subject>} and sets it to the {@code EditPersonDescriptor}
      * that we are building.
      */
-    public EditPersonDescriptorBuilder withTags(String... tags) {
-        Set<Tag> tagSet = Stream.of(tags).map(Tag::new).collect(Collectors.toSet());
-        descriptor.setTags(tagSet);
+    public EditPersonDescriptorBuilder withSubjects(String... subjects) {
+        Set<Subject> subjectSet = Stream.of(subjects).map(Subject::new).collect(Collectors.toSet());
+        descriptor.setSubjects(subjectSet);
         return this;
     }
 
