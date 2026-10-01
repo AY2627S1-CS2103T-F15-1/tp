@@ -34,10 +34,9 @@ You can reach us at the email `e1406390[at]u.nus.edu`
 <img src="images/notmeegoreng.png" width="200px">
 
 [[github](https://github.com/notmeegoreng)]
-[[portfolio](team/notmeegoreng.md)]
 
-* Role: TODO
-* Responsibilities: TODO
+* Role: Developer
+* Responsibilities: Implementing and testing assigned TutorFlow features, and maintaining related documentation.
 
 ### Wang Xiaojie
 
@@ -46,6 +45,7 @@ You can reach us at the email `e1406390[at]u.nus.edu`
 [[github](https://github.com/IliekS)]
 [[portfolio](team/ilieks.md)]
 
+Year 3 Computer Science
 * Role: Developer
 * Responsibilities: Maintaining the team repository, including the issue tracker, milestones and merging of pull requests, and implementing features
 
