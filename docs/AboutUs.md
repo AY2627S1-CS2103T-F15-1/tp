@@ -53,10 +53,9 @@ You can reach us at the email `TODO[at]u.nus.edu`
 
 ### Thakker Yash
 
-<img src="images/yash.png" width="200px">
+<img src="images/yash-popularplusplus.png" width="200px">
 
 [[github](https://github.com/Yash-PoPularPlusPlus)]
-[[portfolio](team/yash.md)]
 
 * Role: TODO
 * Responsibilities: TODO
@@ -70,4 +69,3 @@ You can reach us at the email `TODO[at]u.nus.edu`
 
 * Role: TODO
 * Responsibilities: TODO
-
