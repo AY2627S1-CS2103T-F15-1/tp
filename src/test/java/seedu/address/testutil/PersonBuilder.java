@@ -3,13 +3,15 @@ package seedu.address.testutil;
 import java.util.HashSet;
 import java.util.Set;
 
-import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
+import seedu.address.model.person.Level;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.Rate;
 import seedu.address.model.person.Remark;
-import seedu.address.model.tag.Tag;
+import seedu.address.model.person.Subject;
+import seedu.address.model.person.Venue;
 import seedu.address.model.util.SampleDataUtil;
 
 /**
@@ -20,15 +22,20 @@ public class PersonBuilder {
     public static final String DEFAULT_NAME = "Amy Bee";
     public static final String DEFAULT_PHONE = "85355255";
     public static final String DEFAULT_EMAIL = "amy@gmail.com";
-    public static final String DEFAULT_ADDRESS = "123, Jurong West Ave 6, #08-111";
+    public static final String DEFAULT_LEVEL = "S3";
+    public static final String DEFAULT_SUBJECT = "Math";
+    public static final String DEFAULT_RATE = "50";
+    public static final String DEFAULT_VENUE = "123, Jurong West Ave 6, #08-111";
     public static final String DEFAULT_REMARK = "";
 
     private Name name;
     private Phone phone;
     private Email email;
-    private Address address;
+    private Level level;
+    private Set<Subject> subjects;
+    private Rate rate;
+    private Venue venue;
     private Remark remark;
-    private Set<Tag> tags;
 
     /**
      * Creates a {@code PersonBuilder} with the default details.
@@ -37,9 +44,12 @@ public class PersonBuilder {
         name = new Name(DEFAULT_NAME);
         phone = new Phone(DEFAULT_PHONE);
         email = new Email(DEFAULT_EMAIL);
-        address = new Address(DEFAULT_ADDRESS);
+        level = new Level(DEFAULT_LEVEL);
+        subjects = new HashSet<>();
+        subjects.add(new Subject(DEFAULT_SUBJECT));
+        rate = new Rate(DEFAULT_RATE);
+        venue = new Venue(DEFAULT_VENUE);
         remark = new Remark(DEFAULT_REMARK);
-        tags = new HashSet<>();
     }
 
     /**
@@ -48,10 +58,12 @@ public class PersonBuilder {
     public PersonBuilder(Person personToCopy) {
         name = personToCopy.getName();
         phone = personToCopy.getPhone();
-        email = personToCopy.getEmail();
-        address = personToCopy.getAddress();
+        email = personToCopy.getEmail().orElse(null);
+        level = personToCopy.getLevel();
+        subjects = new HashSet<>(personToCopy.getSubjects());
+        rate = personToCopy.getRate();
+        venue = personToCopy.getVenue().orElse(null);
         remark = personToCopy.getRemark();
-        tags = new HashSet<>(personToCopy.getTags());
     }
 
     /**
@@ -59,22 +71,6 @@ public class PersonBuilder {
      */
     public PersonBuilder withName(String name) {
         this.name = new Name(name);
-        return this;
-    }
-
-    /**
-     * Parses the {@code tags} into a {@code Set<Tag>} and sets it to the {@code Person} that we are building.
-     */
-    public PersonBuilder withTags(String ... tags) {
-        this.tags = SampleDataUtil.getTagSet(tags);
-        return this;
-    }
-
-    /**
-     * Sets the {@code Address} of the {@code Person} that we are building.
-     */
-    public PersonBuilder withAddress(String address) {
-        this.address = new Address(address);
         return this;
     }
 
@@ -95,6 +91,55 @@ public class PersonBuilder {
     }
 
     /**
+     * Removes the {@code Email} of the {@code Person} that we are building.
+     */
+    public PersonBuilder withoutEmail() {
+        this.email = null;
+        return this;
+    }
+
+    /**
+     * Sets the {@code Level} of the {@code Person} that we are building.
+     */
+    public PersonBuilder withLevel(String level) {
+        this.level = new Level(level);
+        return this;
+    }
+
+    /**
+     * Parses the {@code subjects} into a {@code Set<Subject>} and sets it to the {@code Person}
+     * that we are building.
+     */
+    public PersonBuilder withSubjects(String... subjects) {
+        this.subjects = SampleDataUtil.getSubjectSet(subjects);
+        return this;
+    }
+
+    /**
+     * Sets the {@code Rate} of the {@code Person} that we are building.
+     */
+    public PersonBuilder withRate(String rate) {
+        this.rate = new Rate(rate);
+        return this;
+    }
+
+    /**
+     * Sets the {@code Venue} of the {@code Person} that we are building.
+     */
+    public PersonBuilder withVenue(String venue) {
+        this.venue = new Venue(venue);
+        return this;
+    }
+
+    /**
+     * Removes the {@code Venue} of the {@code Person} that we are building.
+     */
+    public PersonBuilder withoutVenue() {
+        this.venue = null;
+        return this;
+    }
+
+    /**
      * Sets the {@code Remark} of the {@code Person} that we are building.
      */
     public PersonBuilder withRemark(String remark) {
@@ -103,7 +148,7 @@ public class PersonBuilder {
     }
 
     public Person build() {
-        return new Person(name, phone, email, address, remark, tags);
+        return new Person(name, phone, email, level, subjects, rate, venue, remark);
     }
 
 }

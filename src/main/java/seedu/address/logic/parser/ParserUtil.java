@@ -9,11 +9,13 @@ import java.util.Set;
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.StringUtil;
 import seedu.address.logic.parser.exceptions.ParseException;
-import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
+import seedu.address.model.person.Level;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
-import seedu.address.model.tag.Tag;
+import seedu.address.model.person.Rate;
+import seedu.address.model.person.Subject;
+import seedu.address.model.person.Venue;
 
 /**
  * Contains utility methods used for parsing strings in the various *Parser classes.
@@ -66,21 +68,6 @@ public class ParserUtil {
     }
 
     /**
-     * Parses a {@code String address} into an {@code Address}.
-     * Leading and trailing whitespaces will be trimmed.
-     *
-     * @throws ParseException if the given {@code address} is invalid.
-     */
-    public static Address parseAddress(String address) throws ParseException {
-        requireNonNull(address);
-        String trimmedAddress = address.trim();
-        if (!Address.isValidAddress(trimmedAddress)) {
-            throw new ParseException(Address.MESSAGE_CONSTRAINTS);
-        }
-        return new Address(trimmedAddress);
-    }
-
-    /**
      * Parses a {@code String email} into an {@code Email}.
      * Leading and trailing whitespaces will be trimmed.
      *
@@ -96,29 +83,76 @@ public class ParserUtil {
     }
 
     /**
-     * Parses a {@code String tag} into a {@code Tag}.
+     * Parses a {@code String level} into a {@code Level}.
      * Leading and trailing whitespaces will be trimmed.
      *
-     * @throws ParseException if the given {@code tag} is invalid.
+     * @throws ParseException if the given {@code level} is invalid.
      */
-    public static Tag parseTag(String tag) throws ParseException {
-        requireNonNull(tag);
-        String trimmedTag = tag.trim();
-        if (!Tag.isValidTagName(trimmedTag)) {
-            throw new ParseException(Tag.MESSAGE_CONSTRAINTS);
+    public static Level parseLevel(String level) throws ParseException {
+        requireNonNull(level);
+        String trimmedLevel = level.trim();
+        if (!Level.isValidLevel(trimmedLevel)) {
+            throw new ParseException(Level.MESSAGE_CONSTRAINTS);
         }
-        return new Tag(trimmedTag);
+        return new Level(trimmedLevel);
     }
 
     /**
-     * Parses {@code Collection<String> tags} into a {@code Set<Tag>}.
+     * Parses a {@code String subject} into a {@code Subject}.
+     * Leading and trailing whitespaces will be trimmed.
+     *
+     * @throws ParseException if the given {@code subject} is invalid.
      */
-    public static Set<Tag> parseTags(Collection<String> tags) throws ParseException {
-        requireNonNull(tags);
-        final Set<Tag> tagSet = new HashSet<>();
-        for (String tagName : tags) {
-            tagSet.add(parseTag(tagName));
+    public static Subject parseSubject(String subject) throws ParseException {
+        requireNonNull(subject);
+        String trimmedSubject = subject.trim();
+        if (!Subject.isValidSubject(trimmedSubject)) {
+            throw new ParseException(Subject.MESSAGE_CONSTRAINTS);
         }
-        return tagSet;
+        return new Subject(trimmedSubject);
+    }
+
+    /**
+     * Parses {@code Collection<String> subjects} into a {@code Set<Subject>}.
+     *
+     * @throws ParseException if any of the given {@code subjects} is invalid.
+     */
+    public static Set<Subject> parseSubjects(Collection<String> subjects) throws ParseException {
+        requireNonNull(subjects);
+        final Set<Subject> subjectSet = new HashSet<>();
+        for (String subject : subjects) {
+            subjectSet.add(parseSubject(subject));
+        }
+        return subjectSet;
+    }
+
+    /**
+     * Parses a {@code String rate} into a {@code Rate}.
+     * Leading and trailing whitespaces will be trimmed.
+     *
+     * @throws ParseException if the given {@code rate} is invalid.
+     */
+    public static Rate parseRate(String rate) throws ParseException {
+        requireNonNull(rate);
+        String trimmedRate = rate.trim();
+        if (!Rate.isValidRate(trimmedRate)) {
+            throw new ParseException(Rate.MESSAGE_CONSTRAINTS);
+        }
+        return new Rate(trimmedRate);
+    }
+
+    /**
+     * Parses a {@code String venue} into a {@code Venue}.
+     * Leading and trailing whitespaces will be trimmed.
+     *
+     * @throws ParseException if the given {@code venue} is invalid.
+     */
+    public static Venue parseVenue(String venue) throws ParseException {
+        requireNonNull(venue);
+        String trimmedVenue = venue.trim();
+        if (!Venue.isValidVenue(trimmedVenue)) {
+            throw new ParseException(Venue.MESSAGE_CONSTRAINTS);
+        }
+        return new Venue(trimmedVenue);
     }
 }

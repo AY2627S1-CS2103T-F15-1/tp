@@ -18,7 +18,7 @@
       <padding>
         <Insets top="5" right="5" bottom="5" left="15" />
       </padding>
-      <HBox spacing="0.5" alignment="CENTER_LEFT">
+      <HBox spacing="5" alignment="CENTER_LEFT">
         <Label fx:id="id" styleClass="cell_big_label">
           <minWidth>
             <!-- Ensures that the label text is never truncated -->
@@ -26,11 +26,13 @@
           </minWidth>
         </Label>
         <Label fx:id="name" text="\$first" styleClass="cell_big_label" />
+        <Label fx:id="level" styleClass="cell_small_label" text="\$level" />
       </HBox>
-      <FlowPane fx:id="tags" />
+      <FlowPane fx:id="subjects" />
       <Label fx:id="phone" styleClass="cell_small_label" text="\$phone" />
-      <Label fx:id="address" styleClass="cell_small_label" text="\$address" />
+      <Label fx:id="rate" styleClass="cell_small_label" text="\$rate" />
       <Label fx:id="email" styleClass="cell_small_label" text="\$email" />
+      <Label fx:id="venue" styleClass="cell_small_label" text="\$venue" />
       <Label fx:id="remark" styleClass="cell_small_label" text="\$remark" />
     </VBox>
   </GridPane>
