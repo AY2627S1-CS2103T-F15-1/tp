@@ -28,8 +28,8 @@ You can reach us at the email `TODO[at]u.nus.edu`
 [[github](https://github.com/Lew1sWong)]
 [[portfolio](team/lew1swong.md)]
 
-* Role: TODO
-* Responsibilities: TODO
+* Role: Developer
+* Responsibilities: Implementing and testing assigned TutorFlow features, and maintaining related documentation.
 
 ### Terence Goh Yan Chen
 
