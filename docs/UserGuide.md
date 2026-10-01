@@ -13,7 +13,7 @@ For power-users, TutorFlow can help you manage contacts faster than traditional 
 1. Ensure that Java `25` or later is installed on your computer.<br>
    **Mac users:** Ensure you have the precise JDK version prescribed [here](https://se-education.org/guides/tutorials/javaInstallationMac.html).
 
-1. Download the latest `.jar` file from [here](https://this-is-a-placeholder). 
+1. Download the latest `.jar` file from [here](https://this-is-a-placeholder).
 
 1. Copy the file to the folder you want to use as the _home folder_ for your AddressBook.
 
