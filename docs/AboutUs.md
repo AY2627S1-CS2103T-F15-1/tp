@@ -7,7 +7,7 @@
 
 We are a team based in the [School of Computing, National University of Singapore](https://www.comp.nus.edu.sg).
 
-You can reach us at the email `TODO[at]u.nus.edu`
+You can reach us at the email `e1406390[at]u.nus.edu`
 
 ## Project team
 
@@ -16,20 +16,18 @@ You can reach us at the email `TODO[at]u.nus.edu`
 <img src="images/joshmode.png" width="200px">
 
 [[github](https://github.com/joshmode)]
-[[portfolio](team/joshmode.md)]
 
-* Role: TODO
-* Responsibilities: TODO
+* Role: Maintainer and implementer
+* Responsibilities: Maintaining the team repository, including the issue tracker, milestones and merging of pull requests, and implementing features
 
 ### Wang Kaiyuanhao
 
 <img src="images/lew1swong.png" width="200px">
 
 [[github](https://github.com/Lew1sWong)]
-[[portfolio](team/lew1swong.md)]
 
-* Role: TODO
-* Responsibilities: TODO
+* Role: Developer
+* Responsibilities: Implementing and testing assigned TutorFlow features, and maintaining related documentation.
 
 ### Terence Goh Yan Chen
 
@@ -53,13 +51,12 @@ You can reach us at the email `TODO[at]u.nus.edu`
 
 ### Thakker Yash
 
-<img src="images/yash.png" width="200px">
+<img src="images/yash-popularplusplus.png" width="200px">
 
 [[github](https://github.com/Yash-PoPularPlusPlus)]
-[[portfolio](team/yash.md)]
 
-* Role: TODO
-* Responsibilities: TODO
+* Role: Developer
+* Responsibilities: Implementing and testing assigned TutorFlow features, and maintaining related documentation.
 
 ### Samaira Kapur
 
@@ -70,4 +67,3 @@ You can reach us at the email `TODO[at]u.nus.edu`
 
 * Role: TODO
 * Responsibilities: TODO
-
