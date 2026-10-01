@@ -25,7 +25,6 @@ You can reach us at the email `e1406390[at]u.nus.edu`
 <img src="images/lew1swong.png" width="200px">
 
 [[github](https://github.com/Lew1sWong)]
-[[portfolio](team/lew1swong.md)]
 
 * Role: TODO
 * Responsibilities: TODO
