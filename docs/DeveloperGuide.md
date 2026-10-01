@@ -270,42 +270,329 @@ _{Explain here how the data archiving feature will be implemented}_
 
 **Target user profile**:
 
-* has a need to manage a significant number of contacts
-* prefers desktop apps over other types of applications
-* can type fast
-* prefers typing to mouse interactions
+* is an independent private tutor who teaches multiple students (around 20)
+* teaches at several venues (students' homes, cafés and online), often with short travel gaps between lessons
+* currently tracks lessons, homework, lesson notes and fees across calendars, chat apps, notebooks and spreadsheets
+* prefers desktop apps over other types of applications, and works from a laptop between lessons
+* can type fast and prefers typing to mouse interactions
 * is reasonably comfortable using CLI apps
+* is unwilling to spend a lot of time migrating existing data
 
-**Value proposition**: Manage contacts faster than with a typical mouse-driven GUI application.
+**Value proposition**: TutorFlow gives a private tutor one place to organise and access information about their students, lessons, homework and payments. It answers "what does today require, what does each student need, and who still owes me" fast enough to use in the fifteen minutes between two lessons, which is faster than tracking the same information across spreadsheets, chats, calendars and personal notes.
 
 
 ### User stories
 
 Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unlikely to have) - `*`
 
-| Priority | As a …                                    | I want to …                 | So that I can…                                                        |
-|----------|--------------------------------------------|------------------------------|------------------------------------------------------------------------|
-| `* * *`  | new user                                   | see usage instructions       | refer to instructions when I forget how to use the App                 |
-| `* * *`  | user                                       | add a new person             |                                                                        |
-| `* * *`  | user                                       | delete a person              | remove entries that I no longer need                                   |
-| `* * *`  | user                                       | find a person by name        | locate details of persons without having to go through the entire list |
-| `* *`    | user                                       | hide private contact details | minimize chance of someone else seeing them by accident                |
-| `*`      | user with many persons in the address book | sort persons by name         | locate a person easily                                                 |
+**Student management**
 
-*{More to be added}*
+| Priority | As a …                                    | I want to …                                                                                          | So that I can…                                                                               |
+|----------|--------------------------------------------|-------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|
+| `* * *`  | private tutor                              | create a student profile with contact details, subjects, academic level and lesson rate               | keep the information needed to teach them in one place                                        |
+| `* * *`  | private tutor                              | view a student overview with their next lesson, outstanding homework, recent lesson notes and unpaid balance | prepare for the student without checking multiple sections                             |
+| `* * *`  | private tutor                              | search for students by name                                                                           | access a student's record quickly                                                             |
+| `* *`    | private tutor                              | filter students by subject or academic level                                                          | find relevant groups of students                                                              |
+| `* * *`  | private tutor                              | update a student's profile                                                                            | keep their information accurate when their circumstances change                               |
+| `*`      | private tutor                              | archive a student who has stopped taking lessons                                                      | keep them out of my active list while their teaching and payment history remains available    |
+| `* * *`  | private tutor                              | be warned about a possible duplicate when creating a student                                          | avoid maintaining multiple records for the same person                                        |
+
+**Lesson scheduling**
+
+| Priority | As a …                                    | I want to …                                                                                          | So that I can…                                                                               |
+|----------|--------------------------------------------|-------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|
+| `* * *`  | private tutor                              | schedule a lesson with its student, subject, date, time, duration and venue                           | have all the information needed to conduct the lesson                                         |
+| `* *`    | private tutor                              | schedule recurring lessons                                                                            | avoid entering regular weekly lessons individually                                            |
+| `* * *`  | private tutor                              | view my lessons in a daily or weekly agenda                                                           | plan my teaching schedule and travel                                                          |
+| `* * *`  | private tutor                              | view all upcoming lessons for a specific student                                                      | review my commitments with them                                                               |
+| `* * *`  | private tutor                              | reschedule a lesson while retaining its existing details                                              | record timetable changes efficiently                                                          |
+| `* * *`  | private tutor                              | cancel a lesson and record its cancellation status                                                    | keep my schedule and payment records accurate                                                 |
+| `* * *`  | private tutor                              | be warned when a lesson conflicts with another commitment                                             | avoid double-booking myself                                                                   |
+| `*`      | travelling tutor                           | see consecutive lessons with insufficient travel time between their venues                            | identify schedules that may be impractical                                                    |
+| `* * *`  | private tutor                              | mark a lesson as completed, cancelled or missed                                                       | have an accurate record of what happened                                                      |
+| `* * *`  | private tutor                              | record preparation notes before a lesson and teaching notes afterward                                 | continue effectively from one lesson to the next                                              |
+
+**Homework management**
+
+| Priority | As a …                                    | I want to …                                                                                          | So that I can…                                                                               |
+|----------|--------------------------------------------|-------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|
+| `* * *`  | private tutor                              | assign homework to a student with a description and due date                                          | know what the student is expected to complete                                                 |
+| `* * *`  | private tutor                              | view all outstanding and overdue homework across my students                                          | identify which students require follow-up                                                     |
+| `* * *`  | private tutor                              | update homework as assigned, submitted, reviewed or overdue                                           | see its current status at a glance                                                            |
+| `* *`    | private tutor                              | edit an assignment's details                                                                          | correct mistakes or accommodate changes                                                       |
+| `* *`    | private tutor                              | record feedback on submitted homework                                                                 | remember the issues to discuss during the next lesson                                         |
+| `*`      | private tutor                              | view a student's homework history                                                                     | identify patterns in their completion and progress                                            |
+
+**Payments**
+
+| Priority | As a …                                    | I want to …                                                                                          | So that I can…                                                                               |
+|----------|--------------------------------------------|-------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|
+| `* * *`  | private tutor                              | record the fee charged for each completed lesson                                                      | calculate what each student owes                                                              |
+| `* * *`  | private tutor                              | record a payment and associate it with the relevant student                                           | keep their balance accurate                                                                   |
+| `* * *`  | private tutor                              | view each student's charges, payments and current balance                                             | answer payment questions clearly                                                              |
+| `* * *`  | private tutor                              | view all outstanding payments ordered by how long they have been unpaid                               | prioritise payment follow-ups                                                                 |
+| `* *`    | private tutor                              | correct or reverse an incorrectly entered payment                                                     | prevent errors from permanently distorting my records                                         |
+| `*`      | private tutor                              | export payment records for a selected period                                                          | use them for accounting and tax reporting                                                     |
+
+**Daily workflow**
+
+| Priority | As a …                                    | I want to …                                                                                          | So that I can…                                                                               |
+|----------|--------------------------------------------|-------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|
+| `* * *`  | private tutor                              | view a dashboard showing today's lessons, overdue homework and outstanding payments                   | know what requires my attention                                                               |
+| `*`      | private tutor                              | create follow-up tasks linked to students, lessons, homework or payments                              | make sure important actions are not forgotten                                                 |
+| `* *`    | private tutor                              | undo a recent destructive action                                                                      | recover from an accidental change                                                             |
+| `* * *`  | new user                                   | access in-app guidance and examples                                                                   | learn TutorFlow without relying on external documentation                                     |
+| `*`      | new user                                   | experiment with sample records and remove them when I am ready                                        | learn the application before entering real information                                        |
+| `*`      | private tutor moving from another tracking system | import student records from a common file format                                               | avoid re-entering all my existing information manually                                        |
 
 ### Use cases
 
-(For all use cases below, the **System** is the `AddressBook` and the **Actor** is the `user`, unless specified otherwise)
+(For all use cases below, the **System** is `TutorFlow` and the **Actor** is the `tutor`, unless specified otherwise)
 
-**Use case: Delete a person**
+**Use case: UC1 - Add a student**
 
 **MSS**
 
-1.  User requests to list persons
-2.  AddressBook shows a list of persons
-3.  User requests to delete a specific person in the list
-4.  AddressBook deletes the person
+1.  Tutor requests to add a student, providing the student's name, phone number, level, subject(s) and lesson rate, and optionally an email and usual venue
+2.  TutorFlow adds the student and confirms the addition
+
+    Use case ends.
+
+**Extensions**
+
+* 1a. A required detail is missing or invalid.
+
+    * 1a1. TutorFlow shows an error message stating which detail is wrong and the accepted format.
+
+      Use case resumes at step 1.
+
+* 1b. A student with the same name and phone number already exists.
+
+    * 1b1. TutorFlow rejects the request and tells the tutor that the student already exists.
+
+      Use case ends.
+
+* 1c. A student with the same name but a different phone number already exists.
+
+    * 1c1. TutorFlow adds the student and warns the tutor that another student has the same name.
+
+      Use case ends.
+
+* 2a. The data cannot be saved to disk.
+
+    * 2a1. TutorFlow tells the tutor that the change was applied in this session but could not be saved.
+
+      Use case ends.
+
+**Use case: UC2 - Schedule a lesson**
+
+**MSS**
+
+1.  Tutor requests to list students
+2.  TutorFlow shows a list of students
+3.  Tutor requests to schedule a lesson for a specific student, providing the subject, date, time and duration, and optionally a venue
+4.  TutorFlow adds the lesson and shows its details
+
+    Use case ends.
+
+**Extensions**
+
+* 2a. The list is empty.
+
+  Use case ends.
+
+* 3a. The given student does not exist.
+
+    * 3a1. TutorFlow shows an error message.
+
+      Use case resumes at step 2.
+
+* 3b. A lesson detail is invalid, for example a date in the past or a lesson that would run past midnight.
+
+    * 3b1. TutorFlow shows an error message stating which detail is wrong.
+
+      Use case resumes at step 3.
+
+* 3c. The subject is not one of the subjects the student is recorded as taking.
+
+    * 3c1. TutorFlow shows an error message.
+
+      Use case resumes at step 3.
+
+* 3d. An identical lesson already exists.
+
+    * 3d1. TutorFlow rejects the request and tells the tutor that the lesson already exists.
+
+      Use case ends.
+
+* 4a. The new lesson overlaps another scheduled lesson.
+
+    * 4a1. TutorFlow warns the tutor of the overlapping lesson.
+
+      Use case ends.
+
+**Use case: UC3 - Reschedule a lesson**
+
+**MSS**
+
+1.  Tutor requests to view the lessons of a specific student
+2.  TutorFlow shows a numbered list of the student's lessons
+3.  Tutor requests to reschedule a specific lesson, providing the new date, time, duration and/or venue
+4.  TutorFlow updates the lesson, keeping the details that were not changed, and shows the old and new details
+
+    Use case ends.
+
+**Extensions**
+
+* 2a. The student has no lessons.
+
+  Use case ends.
+
+* 3a. The given lesson does not exist in the list.
+
+    * 3a1. TutorFlow shows an error message.
+
+      Use case resumes at step 2.
+
+* 3b. The lesson is already completed or cancelled.
+
+    * 3b1. TutorFlow tells the tutor that the lesson can no longer be rescheduled.
+
+      Use case ends.
+
+* 3c. The new date or time is invalid, for example a date in the past.
+
+    * 3c1. TutorFlow shows an error message stating which detail is wrong.
+
+      Use case resumes at step 3.
+
+* 4a. The new time overlaps another scheduled lesson.
+
+    * 4a1. TutorFlow warns the tutor of the overlapping lesson.
+
+      Use case ends.
+
+**Use case: UC4 - Record the outcome of a lesson**
+
+**MSS**
+
+1.  Tutor requests to view the agenda for a day
+2.  TutorFlow shows the lessons on that day
+3.  Tutor requests to mark a specific lesson as completed, and provides teaching notes
+4.  TutorFlow marks the lesson as completed, saves the notes and confirms the update
+
+    Use case ends.
+
+**Extensions**
+
+* 2a. There are no lessons on that day.
+
+  Use case ends.
+
+* 3a. The given lesson does not exist in the list.
+
+    * 3a1. TutorFlow shows an error message.
+
+      Use case resumes at step 2.
+
+* 3b. The lesson is cancelled, or is scheduled for a future date.
+
+    * 3b1. TutorFlow tells the tutor that the lesson cannot be marked as completed.
+
+      Use case ends.
+
+* 3c. The lesson is already completed.
+
+    * 3c1. TutorFlow replaces the existing notes with the new notes and confirms the update.
+
+      Use case ends.
+
+* 3d. The tutor requests to mark the lesson as missed instead.
+
+    * 3d1. TutorFlow marks the lesson as missed and confirms the update.
+
+      Use case ends.
+
+**Use case: UC5 - Assign homework and record feedback**
+
+**MSS**
+
+1.  Tutor requests to assign homework to a specific student, providing a description and a due date
+2.  TutorFlow records the homework as assigned and confirms the addition
+3.  Tutor requests to mark the homework as submitted
+4.  TutorFlow updates the status of the homework
+5.  Tutor requests to record feedback on the homework
+6.  TutorFlow saves the feedback and confirms the update
+
+    Use case ends.
+
+**Extensions**
+
+* 1a. The description is empty or the due date is invalid or in the past.
+
+    * 1a1. TutorFlow shows an error message stating which detail is wrong.
+
+      Use case resumes at step 1.
+
+* 1b. The student already has identical homework with the same due date.
+
+    * 1b1. TutorFlow rejects the request and tells the tutor that the homework already exists.
+
+      Use case ends.
+
+* 3a. The given homework does not exist.
+
+    * 3a1. TutorFlow shows an error message.
+
+      Use case resumes at step 3.
+
+* 5a. The homework has not been submitted.
+
+    * 5a1. TutorFlow tells the tutor that feedback can only be recorded on submitted homework.
+
+      Use case resumes at step 3.
+
+**Use case: UC6 - Record a payment and check a student's balance**
+
+**MSS**
+
+1.  Tutor requests to record a payment from a specific student, providing the amount and optionally the date and notes
+2.  TutorFlow records the payment against the student and shows the student's updated balance
+3.  Tutor requests to view the student's account
+4.  TutorFlow shows the student's charges, payments and running balance
+
+    Use case ends.
+
+**Extensions**
+
+* 1a. The student does not exist.
+
+    * 1a1. TutorFlow shows an error message.
+
+      Use case resumes at step 1.
+
+* 1b. The amount is not a positive number or the date is in the future.
+
+    * 1b1. TutorFlow shows an error message stating which detail is wrong.
+
+      Use case resumes at step 1.
+
+* 2a. The payment is larger than the amount the student owes.
+
+    * 2a1. TutorFlow records the payment and shows that the student is in credit.
+
+      Use case resumes at step 3.
+
+**Use case: UC7 - Delete a student**
+
+**MSS**
+
+1.  Tutor requests to list students
+2.  TutorFlow shows a list of students
+3.  Tutor requests to delete a specific student in the list
+4.  TutorFlow tells the tutor which lessons, homework and payment records will be deleted along with the student, and asks for confirmation
+5.  Tutor confirms the deletion
+6.  TutorFlow deletes the student and all of their records, and confirms the deletion
 
     Use case ends.
 
@@ -317,24 +604,92 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 * 3a. The given index is invalid.
 
-    * 3a1. AddressBook shows an error message.
+    * 3a1. TutorFlow shows an error message.
 
       Use case resumes at step 2.
 
-*{More to be added}*
+* 4a. The student has no lessons, homework or payments.
+
+    * 4a1. TutorFlow deletes the student without asking for confirmation.
+
+      Use case ends.
+
+* 5a. The tutor does not confirm the deletion.
+
+    * 5a1. TutorFlow keeps the student and all of their records.
+
+      Use case ends.
+
+**Use case: UC8 - Prepare for the day and for a lesson**
+
+**MSS**
+
+1.  Tutor opens TutorFlow
+2.  TutorFlow loads the saved data and shows the dashboard, listing today's lessons, lessons awaiting notes, overdue homework and outstanding payments
+3.  Tutor requests to view the overview of a specific student
+4.  TutorFlow shows the student's details, next lesson, recent lesson notes, outstanding homework and unpaid balance
+
+    Use case ends.
+
+**Extensions**
+
+* 2a. There is no saved data.
+
+    * 2a1. TutorFlow starts with an empty data set and shows a welcome message.
+
+      Use case ends.
+
+* 2b. The saved data cannot be read.
+
+    * 2b1. TutorFlow keeps the unreadable file aside, starts with an empty data set and warns the tutor.
+
+      Use case ends.
+
+* 3a. The given student does not exist.
+
+    * 3a1. TutorFlow shows an error message.
+
+      Use case resumes at step 3.
 
 ### Non-Functional Requirements
 
 1.  Should work on any _mainstream OS_ as long as it has Java `25` or above installed.
-2.  Should be able to hold up to 1000 persons without noticeable sluggishness in performance for typical usage.
-3.  A user with above average typing speed for regular English text (i.e. not code, not system admin commands) should be able to accomplish most of the tasks faster using commands than using the mouse.
-
-*{More to be added}*
+2.  Should work fully offline, and should not make any network connections.
+3.  Should be able to hold up to 200 students and 10,000 lessons without noticeable sluggishness in performance for typical usage.
+4.  Searching, listing and viewing commands should show their results within 1 second on a typical laptop with the data set size in NFR 3.
+5.  Should start up and show the dashboard within 5 seconds on a typical laptop with the data set size in NFR 3.
+6.  A user with above average typing speed for regular English text (i.e. not code, not system admin commands) should be able to accomplish most of the tasks faster using commands than using the mouse.
+7.  Should save every change to disk before reporting that the command succeeded, so that no data is lost when the application is closed normally or when it is terminated after a command has completed.
+8.  Should validate all user input before storing it, and should reject invalid dates, times, amounts and contact details with a message that names the invalid field and the accepted format.
+9.  Should ask for confirmation before permanently deleting a student who has lessons, homework or payments, and before clearing all data.
+10. Should store all data only in a local file on the user's computer, and should not write students' contact details or fees to log files.
+11. Should store data in a human-readable text format that is documented in the Developer Guide, so that a tutor can back up the data by copying the data file.
+12. Should be able to load any data file saved by an earlier version of the same major version.
+13. Should be usable on screens with a resolution of 1280x720 and higher.
+14. Is for a single user only, and does not need to support several users editing the same data file.
 
 ### Glossary
 
 * **Mainstream OS**: Windows, Linux, Unix, or macOS
-* **Private contact detail**: A contact detail that is not meant to be shared with others
+* **Tutor**: The user of TutorFlow, an independent private tutor who teaches multiple students
+* **Student**: A person the tutor teaches, recorded with contact details, academic level, subjects, lesson rate and an optional usual venue
+* **Level**: A student's academic level in the Singapore education system: `P1` to `P6` (primary), `S1` to `S5` (secondary) or `J1` to `J2` (junior college)
+* **Rate**: The amount a student is charged for one hour of lesson, in Singapore dollars (SGD)
+* **Duplicate student**: A student with the same name and phone number as another student, after ignoring letter case and extra spaces
+* **Lesson**: A teaching session with one student, with a subject, date, start time, duration and venue
+* **Lesson status**: The state of a lesson: _scheduled_ (has not happened yet), _completed_ (took place), _cancelled_ (called off in advance) or _missed_ (the student did not attend)
+* **Overlap**: Two scheduled lessons on the same date whose time ranges share at least one minute. Lessons that end exactly when the next one starts do not overlap
+* **Agenda**: A view of the tutor's lessons in time order for a day or a week
+* **Dashboard**: The view shown on startup that lists what needs the tutor's attention today, such as today's lessons, lessons awaiting notes, overdue homework and outstanding payments
+* **Student overview**: A single view of a student's details, next lesson, recent lesson notes, outstanding homework and unpaid balance
+* **Lesson notes**: Free text that the tutor records about a lesson, such as what was covered and what the student needs to improve
+* **Homework status**: The state of a homework item: _assigned_, _submitted_ or _reviewed_. Homework that is still assigned after its due date is _overdue_
+* **Charge**: The fee for one completed lesson, calculated from the student's rate and the lesson duration unless the tutor specifies another amount
+* **Payment**: Money received from a student, recorded against the student rather than against a particular lesson
+* **Balance**: The total charges minus the total payments of a student. A positive balance is _outstanding_, and a negative balance means the student is _in credit_
+* **Index**: The position of an item in the list currently shown on screen, used by commands to refer to that item
+* **Prefix**: A short label ending in `/`, such as `n/` or `d/`, that marks the start of a command parameter
+* **Data file**: The local file in which TutorFlow saves all of its data
 
 --------------------------------------------------------------------------------------------------------------------
 
