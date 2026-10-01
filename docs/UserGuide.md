@@ -139,6 +139,20 @@ Examples:
 * `list` followed by `delete 2` deletes the 2nd person in the address book.
 * `find Betsy` followed by `delete 1` deletes the 1st person in the results of the `find` command.
 
+### Sorting persons by name: `sort`
+
+Sorts all persons in the address book by name, ignoring upper and lower case.
+
+Format: `sort [asc|desc]`
+
+* `asc` sorts from A to Z and `desc` sorts from Z to A. If no order is given, `asc` is used.
+* All persons are shown after sorting, even if the list was filtered by an earlier `find` command.
+* The new order is saved, so the persons stay in this order the next time you open the app.
+
+Examples:
+* `sort` sorts all persons from A to Z.
+* `sort desc` sorts all persons from Z to A.
+
 ### Clearing all entries: `clear`
 
 Clears all entries from the address book.
@@ -196,4 +210,5 @@ Action     | Format, Examples
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **List**   | `list`
+**Sort**   | `sort [asc\|desc]`<br> e.g., `sort desc`
 **Help**   | `help`

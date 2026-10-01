@@ -9,6 +9,7 @@ import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BOB;
 
+import java.util.Comparator;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -136,6 +137,24 @@ public class UniquePersonListTest {
         UniquePersonList expectedUniquePersonList = new UniquePersonList();
         expectedUniquePersonList.add(BOB);
         uniquePersonList.setPersons(expectedUniquePersonList);
+        assertEquals(expectedUniquePersonList, uniquePersonList);
+    }
+
+    @Test
+    public void sort_nullComparator_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> uniquePersonList.sort(null));
+    }
+
+    @Test
+    public void sort_validComparator_sortsList() {
+        uniquePersonList.add(BOB);
+        uniquePersonList.add(ALICE);
+
+        uniquePersonList.sort(Comparator.comparing(person -> person.getName().fullName));
+
+        UniquePersonList expectedUniquePersonList = new UniquePersonList();
+        expectedUniquePersonList.add(ALICE);
+        expectedUniquePersonList.add(BOB);
         assertEquals(expectedUniquePersonList, uniquePersonList);
     }
 

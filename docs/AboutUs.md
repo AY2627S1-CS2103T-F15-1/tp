@@ -46,8 +46,8 @@ You can reach us at the email `e1406390[at]u.nus.edu`
 [[portfolio](team/ilieks.md)]
 
 Year 3 Computer Science
-* Role: TODO
-* Responsibilities: TODO
+* Role: Developer
+* Responsibilities: Maintaining the team repository, including the issue tracker, milestones and merging of pull requests, and implementing features
 
 ### Thakker Yash
 
