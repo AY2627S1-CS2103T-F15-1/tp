@@ -57,8 +57,8 @@ You can reach us at the email `TODO[at]u.nus.edu`
 
 [[github](https://github.com/Yash-PoPularPlusPlus)]
 
-* Role: TODO
-* Responsibilities: TODO
+* Role: Developer
+* Responsibilities: Implementing and testing assigned TutorFlow features, and maintaining related documentation.
 
 ### Samaira Kapur
 
