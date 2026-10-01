@@ -20,13 +20,13 @@ public class SortCommand extends Command {
     public static final String ORDER_ASCENDING = "asc";
     public static final String ORDER_DESCENDING = "desc";
 
-    public static final String MESSAGE_USAGE = COMMAND_WORD + ": Sorts all persons by name, ignoring case, "
+    public static final String MESSAGE_USAGE = COMMAND_WORD + ": Sorts all students by name, ignoring case, "
             + "and displays them as a list with index numbers.\n"
             + "Parameters: [" + ORDER_ASCENDING + "|" + ORDER_DESCENDING + "] (default: " + ORDER_ASCENDING + ")\n"
             + "Examples: " + COMMAND_WORD + ", " + COMMAND_WORD + " " + ORDER_DESCENDING;
 
-    public static final String MESSAGE_SUCCESS_ASCENDING = "Sorted all persons by name (A to Z).";
-    public static final String MESSAGE_SUCCESS_DESCENDING = "Sorted all persons by name (Z to A).";
+    public static final String MESSAGE_SUCCESS_ASCENDING = "Sorted all students by name (A to Z).";
+    public static final String MESSAGE_SUCCESS_DESCENDING = "Sorted all students by name (Z to A).";
 
     private static final Comparator<Person> NAME_COMPARATOR =
             Comparator.comparing(person -> person.getName().fullName, String.CASE_INSENSITIVE_ORDER);
