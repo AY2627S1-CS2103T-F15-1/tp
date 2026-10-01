@@ -427,7 +427,9 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 * 4a. The new lesson overlaps another scheduled lesson.
 
-    * 4a1. TutorFlow warns the tutor of the overlapping lesson.
+    * 4a1. TutorFlow keeps the newly scheduled lesson and warns the tutor of the overlapping lesson.
+
+      The warning does not reject the scheduling request. See **Overlap** in the glossary for the conflict boundary; back-to-back lessons do not overlap.
 
       Use case ends.
 
@@ -468,7 +470,9 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 * 4a. The new time overlaps another scheduled lesson.
 
-    * 4a1. TutorFlow warns the tutor of the overlapping lesson.
+    * 4a1. TutorFlow keeps the updated lesson details and warns the tutor of the overlapping lesson.
+
+      The warning does not undo the rescheduling request. Only scheduled lessons are considered for overlap, as defined in the glossary.
 
       Use case ends.
 
