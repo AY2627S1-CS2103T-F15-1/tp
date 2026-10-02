@@ -3,6 +3,7 @@ package seedu.address.logic.commands;
 import java.time.LocalDate;
 import java.util.List;
 
+import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
@@ -10,6 +11,7 @@ import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonDate;
 import seedu.address.model.lesson.LessonDuration;
 import seedu.address.model.lesson.LessonTime;
+import seedu.address.model.person.Person;
 
 /**
  * Contains checks and messages that the commands which schedule or move a lesson share.
@@ -23,6 +25,19 @@ final class LessonCommandUtil {
     private static final int MAX_YEARS_AHEAD = 2;
 
     private LessonCommandUtil() {} // prevents instantiation
+
+    /**
+     * Returns the student at {@code studentIndex} in the displayed student list.
+     *
+     * @throws CommandException if the index is out of range.
+     */
+    static Person getStudent(Model model, Index studentIndex) throws CommandException {
+        List<Person> shownStudents = model.getFilteredPersonList();
+        if (studentIndex.getZeroBased() >= shownStudents.size()) {
+            throw new CommandException(Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+        }
+        return shownStudents.get(studentIndex.getZeroBased());
+    }
 
     /**
      * Checks that {@code date} is not so far ahead that it is probably a mistyped year.

@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.commands.AddCommand;
+import seedu.address.logic.commands.AgendaCommand;
 import seedu.address.logic.commands.ClearCommand;
 import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.EditCommand;
@@ -21,6 +22,7 @@ import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.LessonAddCommand;
+import seedu.address.logic.commands.LessonListCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.RemarkCommand;
 import seedu.address.logic.commands.SortCommand;
@@ -89,6 +91,17 @@ public class AddressBookParserTest {
     public void parseCommand_lessonAdd() throws Exception {
         assertTrue(parser.parseCommand(LessonAddCommand.COMMAND_WORD + " st/1 d/2026-12-22 t/16:30")
                 instanceof LessonAddCommand);
+    }
+
+    @Test
+    public void parseCommand_lessonList() throws Exception {
+        assertTrue(parser.parseCommand(LessonListCommand.COMMAND_WORD + " st/1") instanceof LessonListCommand);
+    }
+
+    @Test
+    public void parseCommand_agenda() throws Exception {
+        assertTrue(parser.parseCommand(AgendaCommand.COMMAND_WORD) instanceof AgendaCommand);
+        assertTrue(parser.parseCommand(AgendaCommand.COMMAND_WORD + " week/") instanceof AgendaCommand);
     }
 
     @Test

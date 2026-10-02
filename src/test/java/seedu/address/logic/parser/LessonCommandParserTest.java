@@ -9,6 +9,7 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.commands.LessonAddCommand;
+import seedu.address.logic.commands.LessonListCommand;
 import seedu.address.model.lesson.LessonDate;
 import seedu.address.model.lesson.LessonDuration;
 import seedu.address.model.lesson.LessonTime;
@@ -26,9 +27,14 @@ public class LessonCommandParserTest {
     }
 
     @Test
+    public void parse_lessonList_returnsLessonListCommand() {
+        assertParseSuccess(parser, " list st/1 all/", new LessonListCommand(INDEX_FIRST_PERSON, true));
+    }
+
+    @Test
     public void parse_missingLessonCommand_failure() {
         assertParseFailure(parser, "  ", String.format(MESSAGE_INVALID_COMMAND_FORMAT,
-                "Lesson commands: lesson add"));
+                "Lesson commands: lesson add, lesson list"));
     }
 
     @Test

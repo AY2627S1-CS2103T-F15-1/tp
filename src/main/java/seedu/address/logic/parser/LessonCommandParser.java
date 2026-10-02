@@ -33,11 +33,12 @@ public class LessonCommandParser implements Parser<Command> {
         String arguments = matcher.group("arguments");
         return switch (matcher.group("subCommandWord")) {
             case "add" -> new LessonAddCommandParser().parse(arguments);
+            case "list" -> new LessonListCommandParser().parse(arguments);
             default -> throw new ParseException(MESSAGE_UNKNOWN_COMMAND);
         };
     }
 
     private static String getUsage() {
-        return "Lesson commands: " + COMMAND_WORD + " add";
+        return "Lesson commands: " + COMMAND_WORD + " add, " + COMMAND_WORD + " list";
     }
 }

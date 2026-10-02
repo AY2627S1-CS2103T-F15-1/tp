@@ -9,7 +9,6 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_TIME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_VENUE;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Objects;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -85,7 +84,7 @@ public class LessonAddCommand extends Command {
     @Override
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
-        Person student = getStudent(model);
+        Person student = LessonCommandUtil.getStudent(model, studentIndex);
         Lesson lesson = createLesson(student);
 
         if (model.hasLesson(lesson)) {
@@ -96,14 +95,6 @@ public class LessonAddCommand extends Command {
 
         return new CommandResult(String.format(MESSAGE_SUCCESS, Messages.format(lesson),
                 Messages.formatVenue(lesson)) + LessonCommandUtil.getOverlapWarning(model, lesson));
-    }
-
-    private Person getStudent(Model model) throws CommandException {
-        List<Person> shownStudents = model.getFilteredPersonList();
-        if (studentIndex.getZeroBased() >= shownStudents.size()) {
-            throw new CommandException(Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
-        }
-        return shownStudents.get(studentIndex.getZeroBased());
     }
 
     private Lesson createLesson(Person student) throws CommandException {
