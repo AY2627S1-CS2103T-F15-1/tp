@@ -69,4 +69,11 @@ public class LessonDurationTest {
     public void hashCode_equalDurations_sameHashCode() {
         assertEquals(new LessonDuration(90).hashCode(), new LessonDuration(90).hashCode());
     }
+
+    @Test
+    public void format_minutes_returnsHoursAndMinutes() {
+        assertEquals("45m", LessonDuration.format(45));
+        assertEquals("2h", LessonDuration.format(120));
+        assertEquals("4h 30m", LessonDuration.format(270));
+    }
 }

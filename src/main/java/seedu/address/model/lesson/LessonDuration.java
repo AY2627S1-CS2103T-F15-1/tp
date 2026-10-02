@@ -37,19 +37,26 @@ public class LessonDuration {
     }
 
     /**
+     * Returns {@code minutes} in hours and minutes, e.g. "1h 30m".
+     */
+    public static String format(int minutes) {
+        int hours = minutes / 60;
+        int remainder = minutes % 60;
+        if (hours == 0) {
+            return remainder + "m";
+        }
+        if (remainder == 0) {
+            return hours + "h";
+        }
+        return hours + "h " + remainder + "m";
+    }
+
+    /**
      * Returns the duration in hours and minutes, e.g. "1h 30m".
      */
     @Override
     public String toString() {
-        int hours = value / 60;
-        int minutes = value % 60;
-        if (hours == 0) {
-            return minutes + "m";
-        }
-        if (minutes == 0) {
-            return hours + "h";
-        }
-        return hours + "h " + minutes + "m";
+        return format(value);
     }
 
     @Override
