@@ -210,4 +210,12 @@ public class ModelManagerTest {
         differentUserPrefs.setGuiSettings(new GuiSettings(1, 2, 3, 4));
         assertFalse(modelManager.equals(new ModelManager(addressBook, differentUserPrefs)));
     }
+
+    @Test
+    public void getFilteredLessonList_lessonsAddedOutOfOrder_isInAgendaOrder() {
+        modelManager.addLesson(CARL_ENGLISH);
+        modelManager.addLesson(ALICE_MATH);
+
+        assertEquals(List.of(ALICE_MATH, CARL_ENGLISH), modelManager.getFilteredLessonList());
+    }
 }

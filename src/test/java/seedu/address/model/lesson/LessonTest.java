@@ -10,6 +10,7 @@ import static seedu.address.testutil.TypicalLessons.CARL_ENGLISH;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BENSON;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Optional;
 
@@ -283,5 +284,75 @@ public class LessonTest {
                 .withStudent(ALICE.getName().fullName.toUpperCase(), ALICE.getPhone().value).build();
         assertEquals(new Name(ALICE.getName().fullName.toUpperCase()), upperCaseLesson.getStudentName());
         assertTrue(upperCaseLesson.isWith(ALICE));
+    }
+
+    @Test
+    public void isValidCancelReason() {
+        assertFalse(Lesson.isValidCancelReason("")); // empty
+        assertFalse(Lesson.isValidCancelReason("   ")); // blank
+        assertFalse(Lesson.isValidCancelReason("a".repeat(Lesson.MAX_REASON_LENGTH + 1))); // too long
+        assertFalse(Lesson.isValidCancelReason("Unwell\nagain")); // line break
+
+        assertTrue(Lesson.isValidCancelReason("Student unwell"));
+        assertTrue(Lesson.isValidCancelReason("a".repeat(Lesson.MAX_REASON_LENGTH))); // longest allowed
+    }
+
+    @Test
+    public void isUpcoming() {
+        LocalDate lessonDay = ALICE_MATH.getDate().value;
+
+        assertTrue(ALICE_MATH.isUpcoming(lessonDay)); // today
+        assertTrue(ALICE_MATH.isUpcoming(lessonDay.minusDays(1))); // in the future
+        assertFalse(ALICE_MATH.isUpcoming(lessonDay.plusDays(1))); // in the past
+        assertFalse(ALICE_MATH.cancel(null).isUpcoming(lessonDay.minusDays(1))); // cancelled
+    }
+
+    @Test
+    public void getTimeRange_returnsStartAndEndTime() {
+        assertEquals("16:30-18:00", ALICE_MATH.getTimeRange());
+        assertEquals("22:00-00:00", new LessonBuilder().withTime("22:00").withDuration(120).build().getTimeRange());
+    }
+
+    @Test
+    public void reschedule_changesSlotAndVenueOnly() {
+        Lesson moved = ALICE_MATH.reschedule(BENSON_PHYSICS.getDate(), BENSON_PHYSICS.getTime(),
+                BENSON_PHYSICS.getDuration(), null);
+
+        assertEquals(BENSON_PHYSICS.getDate(), moved.getDate());
+        assertEquals(BENSON_PHYSICS.getTime(), moved.getTime());
+        assertEquals(BENSON_PHYSICS.getDuration(), moved.getDuration());
+        assertEquals(Optional.empty(), moved.getVenue());
+        assertEquals(ALICE_MATH.getSubject(), moved.getSubject());
+        assertEquals(ALICE_MATH.getStudentName(), moved.getStudentName());
+        assertEquals(ALICE_MATH.getStatus(), moved.getStatus());
+    }
+
+    @Test
+    public void reschedule_slotRunsPastMidnight_throwsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, Lesson.MESSAGE_CONSTRAINTS, () -> ALICE_MATH.reschedule(
+                ALICE_MATH.getDate(), new LessonTime("23:00"), new LessonDuration(120), null));
+    }
+
+    @Test
+    public void cancel_keepsDetailsAndRecordsReason() {
+        Lesson cancelled = ALICE_MATH.cancel("Student unwell");
+
+        assertEquals(LessonStatus.CANCELLED, cancelled.getStatus());
+        assertEquals(Optional.of("Student unwell"), cancelled.getCancelReason());
+        assertEquals(new LessonBuilder(ALICE_MATH).withStatus(LessonStatus.CANCELLED)
+                .withCancelReason("Student unwell").build(), cancelled);
+        assertEquals(Optional.empty(), ALICE_MATH.cancel(null).getCancelReason());
+    }
+
+    @Test
+    public void chronological_ordersByDateThenTimeThenName() {
+        Lesson earlier = new LessonBuilder().withDate("2026-10-11").withTime("18:00").build();
+        Lesson sameDayLater = new LessonBuilder(ALICE_MATH).withTime("19:00").build();
+        Lesson sameSlotOtherStudent = new LessonBuilder(ALICE_MATH).withStudent(BENSON).build();
+
+        assertTrue(Lesson.CHRONOLOGICAL.compare(earlier, ALICE_MATH) < 0);
+        assertTrue(Lesson.CHRONOLOGICAL.compare(ALICE_MATH, sameDayLater) < 0);
+        assertTrue(Lesson.CHRONOLOGICAL.compare(ALICE_MATH, sameSlotOtherStudent) < 0);
+        assertEquals(0, Lesson.CHRONOLOGICAL.compare(ALICE_MATH, ALICE_MATH));
     }
 }

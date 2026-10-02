@@ -92,12 +92,12 @@ public class UniqueLessonList implements Iterable<Lesson> {
     }
 
     /**
-     * Returns the lessons in the list that overlap with {@code toCheck}.
+     * Returns the lessons in the list, other than {@code toCheck} itself, that overlap with {@code toCheck}.
      */
     public List<Lesson> getOverlapping(Lesson toCheck) {
         requireNonNull(toCheck);
         return internalList.stream()
-                .filter(lesson -> lesson.overlaps(toCheck))
+                .filter(lesson -> !lesson.equals(toCheck) && lesson.overlaps(toCheck))
                 .collect(Collectors.toList());
     }
 

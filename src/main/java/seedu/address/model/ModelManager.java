@@ -10,6 +10,7 @@ import java.util.logging.Logger;
 
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.model.lesson.Lesson;
@@ -25,6 +26,7 @@ public class ModelManager implements Model {
     private final UserPrefs userPrefs;
     private final FilteredList<Person> filteredPersons;
     private final FilteredList<Lesson> filteredLessons;
+    private final SortedList<Lesson> sortedLessons;
 
     /**
      * Initializes a ModelManager with the given addressBook and userPrefs.
@@ -38,6 +40,7 @@ public class ModelManager implements Model {
         this.userPrefs = new UserPrefs(userPrefs);
         filteredPersons = new FilteredList<>(this.addressBook.getPersonList());
         filteredLessons = new FilteredList<>(this.addressBook.getLessonList());
+        sortedLessons = new SortedList<>(filteredLessons, Lesson.CHRONOLOGICAL);
     }
 
     public ModelManager() {
@@ -159,11 +162,11 @@ public class ModelManager implements Model {
 
     /**
      * Returns an unmodifiable view of the list of {@code Lesson} backed by the internal list of
-     * {@code addressBook}
+     * {@code addressBook}, in the order of the agenda. Lesson indices refer to this list.
      */
     @Override
     public ObservableList<Lesson> getFilteredLessonList() {
-        return filteredLessons;
+        return sortedLessons;
     }
 
     @Override

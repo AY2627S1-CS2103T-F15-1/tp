@@ -3,7 +3,10 @@ package seedu.address.model.lesson;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -24,7 +27,18 @@ import seedu.address.model.person.Venue;
  */
 public class Lesson {
 
-    public static final String MESSAGE_CONSTRAINTS = "A lesson cannot run past midnight.";
+    public static final String MESSAGE_CONSTRAINTS = "A lesson cannot run past midnight. Split it into two lessons.";
+    public static final String MESSAGE_REASON_CONSTRAINTS =
+            "Reasons must be 1-200 characters and cannot contain line breaks.";
+    public static final int MAX_REASON_LENGTH = 200;
+
+    /** Orders lessons by date, then start time, then student name, which is the order of the agenda. */
+    public static final Comparator<Lesson> CHRONOLOGICAL = Comparator
+            .comparing((Lesson lesson) -> lesson.date.value)
+            .thenComparing(lesson -> lesson.time.value)
+            .thenComparing(lesson -> lesson.studentName.fullName, String.CASE_INSENSITIVE_ORDER);
+
+    private static final DateTimeFormatter CLOCK_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
 
     // Identity fields
     private final Name studentName;
@@ -76,6 +90,13 @@ public class Lesson {
         return time.value.toSecondOfDay() / 60 + duration.value <= 24 * 60;
     }
 
+    /**
+     * Returns true if a given string can be recorded as the reason for cancelling a lesson.
+     */
+    public static boolean isValidCancelReason(String test) {
+        return !test.isBlank() && test.length() <= MAX_REASON_LENGTH && test.lines().count() == 1;
+    }
+
     public Name getStudentName() {
         return studentName;
     }
@@ -125,6 +146,39 @@ public class Lesson {
 
     public boolean isScheduled() {
         return status == LessonStatus.SCHEDULED;
+    }
+
+    /**
+     * Returns true if this lesson is still to be taught on or after {@code today}, so cancelled and past lessons
+     * are not upcoming.
+     */
+    public boolean isUpcoming(LocalDate today) {
+        return isScheduled() && !date.value.isBefore(today);
+    }
+
+    /**
+     * Returns the start and end time of the lesson, e.g. "16:30-18:00".
+     */
+    public String getTimeRange() {
+        return time.value.format(CLOCK_FORMAT) + "-" + getEndTime().format(CLOCK_FORMAT);
+    }
+
+    /**
+     * Returns a copy of this lesson that takes place at the given slot and venue.
+     * Every other detail is retained.
+     */
+    public Lesson reschedule(LessonDate newDate, LessonTime newTime, LessonDuration newDuration, Venue newVenue) {
+        return new Lesson(studentName, studentPhone, subject, newDate, newTime, newDuration, newVenue, status,
+                notes, cancelReason);
+    }
+
+    /**
+     * Returns a copy of this lesson that is cancelled for the given {@code reason}, which may be null.
+     * Every other detail is retained, so that the record of the lesson is kept.
+     */
+    public Lesson cancel(String reason) {
+        return new Lesson(studentName, studentPhone, subject, date, time, duration, venue, LessonStatus.CANCELLED,
+                notes, reason);
     }
 
     /**

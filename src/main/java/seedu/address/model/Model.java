@@ -110,7 +110,7 @@ public interface Model {
      */
     List<Lesson> getConflictingLessons(Lesson lesson);
 
-    /** Returns an unmodifiable view of the filtered lesson list */
+    /** Returns an unmodifiable view of the filtered lesson list, in the order of the agenda. */
     ObservableList<Lesson> getFilteredLessonList();
 
     /**

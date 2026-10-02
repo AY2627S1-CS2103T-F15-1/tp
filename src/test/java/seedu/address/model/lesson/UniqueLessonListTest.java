@@ -8,6 +8,7 @@ import static seedu.address.testutil.TypicalLessons.ALICE_MATH;
 import static seedu.address.testutil.TypicalLessons.BENSON_PHYSICS;
 import static seedu.address.testutil.TypicalLessons.CARL_ENGLISH;
 import static seedu.address.testutil.TypicalPersons.ALICE;
+import static seedu.address.testutil.TypicalPersons.BENSON;
 
 import java.util.Iterator;
 import java.util.List;
@@ -242,5 +243,21 @@ public class UniqueLessonListTest {
     public void toStringMethod() {
         uniqueLessonList.add(ALICE_MATH);
         assertEquals(List.of(ALICE_MATH).toString(), uniqueLessonList.toString());
+    }
+
+    @Test
+    public void getOverlapping_lessonInList_excludesItself() {
+        uniqueLessonList.add(ALICE_MATH);
+        uniqueLessonList.add(BENSON_PHYSICS);
+
+        assertEquals(List.of(BENSON_PHYSICS), uniqueLessonList.getOverlapping(ALICE_MATH));
+    }
+
+    @Test
+    public void removeIf_reportsWhetherAnyLessonWasRemoved() {
+        uniqueLessonList.add(ALICE_MATH);
+
+        assertFalse(uniqueLessonList.removeIf(lesson -> lesson.isWith(BENSON)));
+        assertTrue(uniqueLessonList.removeIf(lesson -> lesson.isWith(ALICE)));
     }
 }
