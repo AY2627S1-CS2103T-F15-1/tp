@@ -5,11 +5,13 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.CommandTestUtil.DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.DESC_BOB;
-import static seedu.address.logic.commands.CommandTestUtil.VALID_ADDRESS_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_EMAIL_BOB;
+import static seedu.address.logic.commands.CommandTestUtil.VALID_LEVEL_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_NAME_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_PHONE_BOB;
-import static seedu.address.logic.commands.CommandTestUtil.VALID_TAG_HUSBAND;
+import static seedu.address.logic.commands.CommandTestUtil.VALID_RATE_BOB;
+import static seedu.address.logic.commands.CommandTestUtil.VALID_SUBJECT_PHYSICS;
+import static seedu.address.logic.commands.CommandTestUtil.VALID_VENUE_BOB;
 
 import org.junit.jupiter.api.Test;
 
@@ -48,12 +50,20 @@ public class EditPersonDescriptorTest {
         editedAmy = new EditPersonDescriptorBuilder(DESC_AMY).withEmail(VALID_EMAIL_BOB).build();
         assertFalse(DESC_AMY.equals(editedAmy));
 
-        // different address -> returns false
-        editedAmy = new EditPersonDescriptorBuilder(DESC_AMY).withAddress(VALID_ADDRESS_BOB).build();
+        // different level -> returns false
+        editedAmy = new EditPersonDescriptorBuilder(DESC_AMY).withLevel(VALID_LEVEL_BOB).build();
         assertFalse(DESC_AMY.equals(editedAmy));
 
-        // different tags -> returns false
-        editedAmy = new EditPersonDescriptorBuilder(DESC_AMY).withTags(VALID_TAG_HUSBAND).build();
+        // different subjects -> returns false
+        editedAmy = new EditPersonDescriptorBuilder(DESC_AMY).withSubjects(VALID_SUBJECT_PHYSICS).build();
+        assertFalse(DESC_AMY.equals(editedAmy));
+
+        // different rate -> returns false
+        editedAmy = new EditPersonDescriptorBuilder(DESC_AMY).withRate(VALID_RATE_BOB).build();
+        assertFalse(DESC_AMY.equals(editedAmy));
+
+        // different venue -> returns false
+        editedAmy = new EditPersonDescriptorBuilder(DESC_AMY).withVenue(VALID_VENUE_BOB).build();
         assertFalse(DESC_AMY.equals(editedAmy));
     }
 
@@ -63,9 +73,11 @@ public class EditPersonDescriptorTest {
         String expected = EditPersonDescriptor.class.getCanonicalName() + "{name="
                 + editPersonDescriptor.getName().orElse(null) + ", phone="
                 + editPersonDescriptor.getPhone().orElse(null) + ", email="
-                + editPersonDescriptor.getEmail().orElse(null) + ", address="
-                + editPersonDescriptor.getAddress().orElse(null) + ", tags="
-                + editPersonDescriptor.getTags().orElse(null) + "}";
+                + editPersonDescriptor.getEmail().orElse(null) + ", level="
+                + editPersonDescriptor.getLevel().orElse(null) + ", subjects="
+                + editPersonDescriptor.getSubjects().orElse(null) + ", rate="
+                + editPersonDescriptor.getRate().orElse(null) + ", venue="
+                + editPersonDescriptor.getVenue().orElse(null) + "}";
         assertEquals(expected, editPersonDescriptor.toString());
     }
 }

@@ -35,13 +35,17 @@ public class PersonCard extends UiPart<Region> {
     @FXML
     private Label phone;
     @FXML
-    private Label address;
+    private Label level;
+    @FXML
+    private Label rate;
     @FXML
     private Label email;
     @FXML
+    private Label venue;
+    @FXML
     private Label remark;
     @FXML
-    private FlowPane tags;
+    private FlowPane subjects;
 
     /**
      * Creates a {@code PersonCard} with the given {@code Person} and index to display.
@@ -52,11 +56,23 @@ public class PersonCard extends UiPart<Region> {
         id.setText(displayedIndex + ". ");
         name.setText(person.getName().fullName);
         phone.setText(person.getPhone().value);
-        address.setText(person.getAddress().value);
-        email.setText(person.getEmail().value);
+        level.setText(person.getLevel().value);
+        rate.setText(person.getRate().toDisplayString() + "/lesson");
+        showIfPresent(email, person.getEmail().map(value -> value.value).orElse(null));
+        showIfPresent(venue, person.getVenue().map(value -> value.value).orElse(null));
         remark.setText(person.getRemark().value);
-        person.getTags().stream()
-                .sorted(Comparator.comparing(tag -> tag.tagName))
-                .forEach(tag -> tags.getChildren().add(new Label(tag.tagName)));
+        person.getSubjects().stream()
+                .sorted(Comparator.comparing(subject -> subject.value.toLowerCase()))
+                .forEach(subject -> subjects.getChildren().add(new Label(subject.value)));
+    }
+
+    /**
+     * Shows {@code label} with the given {@code text}, or hides it if {@code text} is null.
+     */
+    private static void showIfPresent(Label label, String text) {
+        boolean isPresent = text != null;
+        label.setText(isPresent ? text : "");
+        label.setManaged(isPresent);
+        label.setVisible(isPresent);
     }
 }
