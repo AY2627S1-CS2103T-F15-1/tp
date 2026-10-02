@@ -62,6 +62,7 @@ public class AddressBookParser {
             case ListCommand.COMMAND_WORD -> new ListCommand();
             case RemarkCommand.COMMAND_WORD -> new RemarkCommandParser().parse(arguments);
             case SortCommand.COMMAND_WORD -> new SortCommandParser().parse(arguments);
+            case LessonCommandParser.COMMAND_WORD -> new LessonCommandParser().parse(arguments);
             case ExitCommand.COMMAND_WORD -> new ExitCommand();
             case HelpCommand.COMMAND_WORD -> new HelpCommand();
             default -> {

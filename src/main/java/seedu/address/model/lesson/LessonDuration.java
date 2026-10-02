@@ -14,6 +14,7 @@ public class LessonDuration {
     public static final String MESSAGE_CONSTRAINTS =
             "Duration must be a multiple of 15 minutes, between 15 and 480.";
 
+    public static final int DEFAULT_MINUTES = 60;
     public static final int MIN_DURATION = 15;
     public static final int MAX_DURATION = 480;
 

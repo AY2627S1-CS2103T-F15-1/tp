@@ -1,5 +1,7 @@
 package seedu.address.testutil;
 
+import java.time.LocalDate;
+
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonDate;
 import seedu.address.model.lesson.LessonDuration;
@@ -96,6 +98,13 @@ public class LessonBuilder {
     public LessonBuilder withDate(String date) {
         this.date = new LessonDate(date);
         return this;
+    }
+
+    /**
+     * Sets the {@code LessonDate} of the {@code Lesson} that we are building to {@code date}.
+     */
+    public LessonBuilder withDate(LocalDate date) {
+        return withDate(date.toString());
     }
 
     /**
