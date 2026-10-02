@@ -23,6 +23,13 @@ Class Rate
 Class Venue
 Class Remark
 
+Class UniqueLessonList
+Class Lesson
+Class LessonDate
+Class LessonTime
+Class LessonDuration
+Class LessonStatus
+
 Class I #FFFFFF
 }
 
@@ -39,6 +46,7 @@ ModelManager -right-> "1" UserPrefs
 UserPrefs .up.|> ReadOnlyUserPrefs
 
 AddressBook *--> "1" UniquePersonList
+AddressBook *--> "1" UniqueLessonList
 UniquePersonList --> "~* all" Person
 Person *--> Name
 Person *--> Phone
@@ -48,6 +56,14 @@ Person *--> "1..*" Subject
 Person *--> Rate
 Person *--> "0..1" Venue
 Person *--> Remark
+
+UniqueLessonList --> "~* all" Lesson
+Lesson *--> LessonDate
+Lesson *--> LessonTime
+Lesson *--> LessonDuration
+Lesson *--> LessonStatus
+Lesson *--> "0..1" Venue
+Lesson ..> Person : refers to its\nstudent by name\nand phone
 
 Person -[hidden]up--> I
 UniquePersonList -[hidden]right-> I
@@ -61,4 +77,5 @@ Rate -[hidden]right-> Venue
 Venue -[hidden]right-> Remark
 
 ModelManager --> "~* filtered" Person
+ModelManager --> "~* filtered" Lesson
 @enduml

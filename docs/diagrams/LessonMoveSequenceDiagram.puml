@@ -1,0 +1,71 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+
+box Logic LOGIC_COLOR_T1
+participant ":LogicManager" as LogicManager LOGIC_COLOR
+participant ":AddressBookParser" as AddressBookParser LOGIC_COLOR
+participant ":LessonCommandParser" as LessonCommandParser LOGIC_COLOR
+participant ":LessonMoveCommandParser" as LessonMoveCommandParser LOGIC_COLOR
+participant "l:LessonMoveCommand" as LessonMoveCommand LOGIC_COLOR
+end box
+
+box Model MODEL_COLOR_T1
+participant "m:Model" as Model MODEL_COLOR
+participant "target:Lesson" as Lesson MODEL_COLOR
+end box
+
+[-> LogicManager : execute("lesson move 1 d/2026-12-24")
+activate LogicManager
+
+LogicManager -> AddressBookParser : parseCommand("lesson move 1 d/2026-12-24")
+activate AddressBookParser
+
+AddressBookParser -> LessonCommandParser : parse(" move 1 d/2026-12-24")
+activate LessonCommandParser
+
+LessonCommandParser -> LessonMoveCommandParser : parse(" 1 d/2026-12-24")
+activate LessonMoveCommandParser
+
+create LessonMoveCommand
+LessonMoveCommandParser -> LessonMoveCommand : LessonMoveCommand(1, date, null, null, null)
+activate LessonMoveCommand
+LessonMoveCommand --> LessonMoveCommandParser
+deactivate LessonMoveCommand
+
+LessonMoveCommandParser --> LessonCommandParser : l
+deactivate LessonMoveCommandParser
+LessonCommandParser --> AddressBookParser : l
+deactivate LessonCommandParser
+AddressBookParser --> LogicManager : l
+deactivate AddressBookParser
+
+LogicManager -> LessonMoveCommand : execute(m)
+activate LessonMoveCommand
+
+LessonMoveCommand -> Model : getFilteredLessonList()
+activate Model
+Model --> LessonMoveCommand : target
+deactivate Model
+
+LessonMoveCommand -> Lesson : reschedule(date, time, duration, venue)
+activate Lesson
+Lesson --> LessonMoveCommand : moved
+deactivate Lesson
+
+LessonMoveCommand -> Model : setLesson(target, moved)
+activate Model
+Model --> LessonMoveCommand
+deactivate Model
+
+LessonMoveCommand -> Model : getConflictingLessons(moved)
+activate Model
+Model --> LessonMoveCommand : overlapping lessons
+deactivate Model
+
+LessonMoveCommand --> LogicManager : r
+deactivate LessonMoveCommand
+
+[<--LogicManager : r
+deactivate LogicManager
+@enduml
