@@ -8,7 +8,6 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TIME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_VENUE;
 
-import java.time.LocalDate;
 import java.util.Objects;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -98,9 +97,7 @@ public class LessonAddCommand extends Command {
     }
 
     private Lesson createLesson(Person student) throws CommandException {
-        if (date.value.isBefore(LocalDate.now())) {
-            throw new CommandException(MESSAGE_DATE_IN_PAST);
-        }
+        LessonCommandUtil.requireNotInPast(date, MESSAGE_DATE_IN_PAST);
         LessonCommandUtil.requireNearFuture(date);
         LessonCommandUtil.requireEndsBeforeMidnight(time, duration);
 

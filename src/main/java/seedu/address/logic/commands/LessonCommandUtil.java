@@ -40,6 +40,31 @@ final class LessonCommandUtil {
     }
 
     /**
+     * Returns the lesson at {@code lessonIndex} in the displayed lesson list.
+     *
+     * @throws CommandException if the index is out of range.
+     */
+    static Lesson getLesson(Model model, Index lessonIndex) throws CommandException {
+        List<Lesson> shownLessons = model.getFilteredLessonList();
+        if (lessonIndex.getZeroBased() >= shownLessons.size()) {
+            throw new CommandException(Messages.MESSAGE_INVALID_LESSON_DISPLAYED_INDEX);
+        }
+        return shownLessons.get(lessonIndex.getZeroBased());
+    }
+
+    /**
+     * Checks that {@code date} is not before today.
+     *
+     * @param message the message to show if it is.
+     * @throws CommandException if the date is in the past.
+     */
+    static void requireNotInPast(LessonDate date, String message) throws CommandException {
+        if (date.value.isBefore(LocalDate.now())) {
+            throw new CommandException(message);
+        }
+    }
+
+    /**
      * Checks that {@code date} is not so far ahead that it is probably a mistyped year.
      *
      * @throws CommandException if the date is more than 2 years from today.

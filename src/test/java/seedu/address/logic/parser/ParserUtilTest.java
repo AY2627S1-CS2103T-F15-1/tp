@@ -2,6 +2,7 @@ package seedu.address.logic.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_DATE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TIME;
@@ -333,5 +334,28 @@ public class ParserUtilTest {
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(" d/2026-09-22 t/16:30", PREFIX_DATE, PREFIX_TIME);
 
         ParserUtil.requirePrefixesPresent(argMultimap, "usage", PREFIX_DATE, PREFIX_TIME);
+    }
+
+    @Test
+    public void parseOptional_prefixAbsent_returnsNull() throws Exception {
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(" t/16:30", PREFIX_DATE, PREFIX_TIME);
+
+        assertNull(ParserUtil.parseOptional(argMultimap, PREFIX_DATE, ParserUtil::parseDate));
+    }
+
+    @Test
+    public void parseOptional_prefixPresent_returnsParsedValue() throws Exception {
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(" d/2026-09-22", PREFIX_DATE);
+
+        assertEquals(new LessonDate("2026-09-22"),
+                ParserUtil.parseOptional(argMultimap, PREFIX_DATE, ParserUtil::parseDate));
+    }
+
+    @Test
+    public void parseOptional_invalidValue_throwsParseException() {
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(" d/someday", PREFIX_DATE);
+
+        assertThrows(ParseException.class, LessonDate.MESSAGE_CONSTRAINTS, ()
+                -> ParserUtil.parseOptional(argMultimap, PREFIX_DATE, ParserUtil::parseDate));
     }
 }

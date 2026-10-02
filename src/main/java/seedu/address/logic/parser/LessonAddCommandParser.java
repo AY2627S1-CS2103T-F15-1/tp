@@ -7,6 +7,8 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TIME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_VENUE;
 
+import java.util.Objects;
+
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.LessonAddCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -36,20 +38,12 @@ public class LessonAddCommandParser implements Parser<LessonAddCommand> {
 
         Index studentIndex = ParserUtil.parseIndex(argMultimap.getValue(PREFIX_STUDENT).get());
 
-        // The subject and venue are optional, and stay null when they are not given
-        Subject subject = null;
-        if (argMultimap.getValue(PREFIX_SUBJECT).isPresent()) {
-            subject = ParserUtil.parseSubject(argMultimap.getValue(PREFIX_SUBJECT).get());
-        }
-        Venue venue = null;
-        if (argMultimap.getValue(PREFIX_VENUE).isPresent()) {
-            venue = ParserUtil.parseVenue(argMultimap.getValue(PREFIX_VENUE).get());
-        }
-        LessonDuration duration = new LessonDuration(LessonDuration.DEFAULT_MINUTES);
-        if (argMultimap.getValue(PREFIX_DURATION).isPresent()) {
-            duration = ParserUtil.parseDuration(argMultimap.getValue(PREFIX_DURATION).get());
-        }
-
+        // The subject, duration and venue are optional, and stay null when they are not given
+        Subject subject = ParserUtil.parseOptional(argMultimap, PREFIX_SUBJECT, ParserUtil::parseSubject);
+        Venue venue = ParserUtil.parseOptional(argMultimap, PREFIX_VENUE, ParserUtil::parseVenue);
+        LessonDuration duration = Objects.requireNonNullElse(
+                ParserUtil.parseOptional(argMultimap, PREFIX_DURATION, ParserUtil::parseDuration),
+                new LessonDuration(LessonDuration.DEFAULT_MINUTES));
         LessonDate date = ParserUtil.parseDate(argMultimap.getValue(PREFIX_DATE).get());
         LessonTime time = ParserUtil.parseTime(argMultimap.getValue(PREFIX_TIME).get());
 

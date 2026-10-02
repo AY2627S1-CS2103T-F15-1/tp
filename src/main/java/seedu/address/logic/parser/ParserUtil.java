@@ -215,6 +215,17 @@ public class ParserUtil {
     }
 
     /**
+     * Returns the value of {@code prefix} parsed by {@code valueParser}, or null if the prefix is not given.
+     *
+     * @throws ParseException if the value is invalid.
+     */
+    public static <T> T parseOptional(ArgumentMultimap argMultimap, Prefix prefix, ValueParser<T> valueParser)
+            throws ParseException {
+        Optional<String> value = argMultimap.getValue(prefix);
+        return value.isPresent() ? valueParser.parse(value.get()) : null;
+    }
+
+    /**
      * Returns true if the flag {@code flag}, a prefix that takes no value, is among the arguments.
      *
      * @throws ParseException if the flag is repeated or is given a value.
@@ -256,5 +267,13 @@ public class ParserUtil {
             throw new ParseException(constraints);
         }
         return factory.apply(trimmedValue);
+    }
+
+    /**
+     * Parses one value of a command into a {@code T}.
+     */
+    @FunctionalInterface
+    public interface ValueParser<T> {
+        T parse(String value) throws ParseException;
     }
 }
