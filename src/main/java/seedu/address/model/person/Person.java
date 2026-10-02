@@ -98,9 +98,15 @@ public class Person {
             return true;
         }
 
-        return otherPerson != null
-                && otherPerson.getName().fullName.equalsIgnoreCase(getName().fullName)
-                && otherPerson.getPhone().equals(getPhone());
+        return otherPerson != null && hasIdentity(otherPerson.getName(), otherPerson.getPhone());
+    }
+
+    /**
+     * Returns true if this person has the given name, ignoring case, and the given phone number.
+     * This is the identity that other data, such as a lesson, uses to refer to a person.
+     */
+    public boolean hasIdentity(Name otherName, Phone otherPhone) {
+        return otherName.fullName.equalsIgnoreCase(name.fullName) && otherPhone.equals(phone);
     }
 
     /**

@@ -87,6 +87,21 @@ public class PersonTest {
     }
 
     @Test
+    public void hasIdentity() {
+        // same name and phone -> returns true
+        assertTrue(ALICE.hasIdentity(ALICE.getName(), ALICE.getPhone()));
+
+        // name differs in case -> returns true
+        assertTrue(ALICE.hasIdentity(new Name(ALICE.getName().fullName.toUpperCase()), ALICE.getPhone()));
+
+        // different name -> returns false
+        assertFalse(ALICE.hasIdentity(BOB.getName(), ALICE.getPhone()));
+
+        // different phone -> returns false
+        assertFalse(ALICE.hasIdentity(ALICE.getName(), BOB.getPhone()));
+    }
+
+    @Test
     public void equals() {
         // same values -> returns true
         Person aliceCopy = new PersonBuilder(ALICE).build();
