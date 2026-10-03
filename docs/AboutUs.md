@@ -63,7 +63,6 @@ Year 3 Computer Science
 <img src="images/samairakapur.png" width="200px">
 
 [[github](https://github.com/samairakapur)]
-[[portfolio](team/samairakapur.md)]
 
-* Role: TODO
-* Responsibilities: TODO
+* Role: Developer
+* Responsibilities: Implementing and testing assigned TutorFlow features, and maintaining related documentation.
