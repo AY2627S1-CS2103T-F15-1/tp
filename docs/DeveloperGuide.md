@@ -125,6 +125,7 @@ How the parsing works:
 The `Model` component,
 
 * stores the address book data i.e., all `Person` objects, each of which represents a student with a name, phone number, level, subjects and rate, and optionally an email, a venue and a remark (the `Person` objects are contained in a `UniquePersonList` object). Two `Person` objects are the same student if they have the same phone number and the same name, ignoring case.
+* stores the `Lesson` objects, each of which is a lesson with a student, a subject, a date, a start time, a duration, a status and optionally a venue (the `Lesson` objects are contained in a `UniqueLessonList` object). A `Lesson` refers to its student by the student's name and phone number, which together identify a `Person`. Deleting a student deletes their lessons, and editing the name or phone number of a student keeps their lessons attached.
 * stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
 * stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
 * does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
@@ -138,6 +139,7 @@ The `Model` component,
 The `Storage` component,
 * can save both address book data and user preference data in JSON format, and read them back into corresponding objects.
 * is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonAddressBookStorage` and `JsonUserPrefsStorage` (one class per data file).
+* saves the students and the lessons in the same data file. A data file written before lessons existed has no lesson list, and still loads with no lessons.
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
 
 ### Common classes
@@ -149,6 +151,42 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 ## **Implementation**
 
 This section describes some noteworthy details on how certain features are implemented.
+
+### Lesson scheduling, agenda and conflict detection
+
+The lesson commands are `lesson add`, `lesson list`, `lesson move`, `lesson cancel` and `agenda`. They share the `lesson` command word, which `AddressBookParser` hands to `LessonCommandParser`. That parser reads the next word and passes the rest of the arguments to the parser of that command. `agenda` is its own command word.
+
+The sequence diagram below shows `execute("lesson move 1 d/2026-12-24")`.
+
+<puml src="diagrams/LessonMoveSequenceDiagram.puml" alt="Interactions Inside the Logic and Model Components for the `lesson move 1 d/2026-12-24` Command" />
+
+How the pieces fit together:
+
+* **Lesson indices.** `Model#getFilteredLessonList()` returns the lessons that `agenda` or `lesson list` last chose, sorted by date, then start time, then student name. `agenda` and `lesson list` number the lessons they show in that order, and `lesson move` and `lesson cancel` take the same number, so the number a tutor sees is always the one that the next command acts on. `lesson add` resets the filter so that every lesson is shown.
+* **Overlaps.** `Lesson#overlaps(Lesson)` is true when both lessons are scheduled, are on the same date, and each starts before the other ends. It compares minutes since the start of the day, so back-to-back lessons are not an overlap and a lesson that ends at midnight can still be compared. `Model#getConflictingLessons(Lesson)` returns the other lessons that overlap a lesson, and `lesson add` and `lesson move` append the result to their message as a warning. `agenda` marks every lesson that has at least one overlap.
+* **Cancelling.** `Lesson#cancel(String)` returns a copy with the status `CANCELLED` and the reason. The lesson is kept, so it stays in the agenda for billing, but it is no longer scheduled and so it never overlaps.
+* **Immutability.** `Lesson` is immutable. `lesson move` and `lesson cancel` build a changed copy and ask the model to replace the old lesson with it, in the same way that `edit` replaces a `Person`.
+* **Defaults to type less.** `lesson add` takes the subject from the student when the student has only one, uses 60 minutes if no duration is given, and uses the student's venue if no venue is given.
+
+#### Design considerations
+
+**Aspect: how a lesson refers to its student**
+
+* **Alternative 1 (current choice):** store the student's name and phone number in the lesson.
+    * Pros: The saved file stays flat and a lesson can be validated without loading students. A name and phone number already identify a student in TutorFlow.
+    * Cons: `AddressBook` must update the lessons when it edits or deletes a student. This is done in `setPerson` and `removePerson`, so no command has to remember it.
+* **Alternative 2:** store a reference to the `Person` object.
+    * Pros: No update is needed when a student is edited.
+    * Cons: `Person` is immutable and is replaced on every edit, so the reference would have to be replaced as well, and the saved file would need ids that students do not have.
+
+**Aspect: what to do when lessons overlap**
+
+* **Alternative 1 (current choice):** warn, but still schedule or move the lesson.
+    * Pros: A tutor may double book on purpose, for example for a make-up lesson or two siblings. Blocking would force the tutor to delete a real lesson to record another.
+    * Cons: A warning in the result box is easy to miss, so `agenda` also marks overlapping lessons.
+* **Alternative 2:** reject the lesson.
+    * Pros: No overlaps can exist.
+    * Cons: This is overzealous validation and has no workaround.
 
 ### \[Proposed\] Undo/redo feature
 
@@ -732,6 +770,62 @@ testers are expected to do more *exploratory* testing.
       Expected: Similar to previous.
 
 1. _{ more test cases … }_
+
+### Lessons
+
+1. Scheduling a lesson
+
+   1. Prerequisites: Use `list`, with at least two students in the list. The 1st student takes one subject and the 2nd student takes more than one.
+
+   1. Test case: `lesson add st/1 d/<a date next week> t/16:30 dur/90`<br>
+      Expected: A lesson is scheduled in the student's only subject at the student's venue. The result shows `Scheduled: ...`.
+
+   1. Test case: the same command again<br>
+      Expected: The lesson is rejected as an exact duplicate.
+
+   1. Test case: `lesson add st/2 d/<the same date> t/17:00` (without `s/`)<br>
+      Expected: Rejected, because the student takes several subjects. The result names the subjects.
+
+   1. Test case: `lesson add st/2 s/<a subject of the student> d/<the same date> t/17:00`<br>
+      Expected: Scheduled, and the result warns that it overlaps the first lesson.
+
+   1. Other incorrect commands to try: `lesson add st/1 d/2020-01-01 t/16:30` (past date), `lesson add st/1 d/<next week> t/23:00 dur/120` (past midnight), `lesson add st/0 d/<next week> t/16:30`, `lesson add st/1`<br>
+      Expected: Nothing is scheduled. The result shows an error message.
+
+1. Viewing lessons
+
+   1. Prerequisites: Schedule the two lessons above.
+
+   1. Test case: `agenda d/<the same date>`<br>
+      Expected: Both lessons are listed in time order, each marked `⚠ overlaps`.
+
+   1. Test case: `agenda week/ d/<the same date>`<br>
+      Expected: Seven days are shown, and days without lessons show `— no lessons —`.
+
+   1. Test case: `agenda week/yes`<br>
+      Expected: An error that the flag takes no value.
+
+   1. Test case: `lesson list st/1`<br>
+      Expected: The upcoming lessons of the 1st student are listed and numbered.
+
+1. Rescheduling and cancelling a lesson
+
+   1. Prerequisites: Run `agenda` for the date of the lessons, so that the lessons are numbered.
+
+   1. Test case: `lesson move 1 t/20:00`<br>
+      Expected: The 1st lesson moves to 20:00 and keeps its subject and venue. The result shows the old and the new slot.
+
+   1. Test case: `lesson move 1`<br>
+      Expected: An error that at least one of `d/`, `t/`, `dur/` or `v/` is needed.
+
+   1. Test case: `lesson cancel 1 r/Student unwell`<br>
+      Expected: The lesson is cancelled with its reason. Run `agenda` again to see it listed as cancelled and no longer overlapping.
+
+   1. Test case: `lesson cancel 1` again, then `lesson move 1 d/<next week>`<br>
+      Expected: Both are rejected because the lesson is already cancelled.
+
+   1. Test case: `lesson cancel 99`<br>
+      Expected: An error that the lesson index is invalid.
 
 ### Saving data
 

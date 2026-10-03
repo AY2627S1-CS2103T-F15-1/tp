@@ -1,7 +1,12 @@
 package seedu.address.logic.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_DATE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_TIME;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_WEEK;
 import static seedu.address.logic.parser.ParserUtil.MESSAGE_INVALID_INDEX;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
@@ -12,6 +17,10 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.lesson.Lesson;
+import seedu.address.model.lesson.LessonDate;
+import seedu.address.model.lesson.LessonDuration;
+import seedu.address.model.lesson.LessonTime;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Level;
 import seedu.address.model.person.Name;
@@ -242,5 +251,111 @@ public class ParserUtilTest {
         String venueWithWhitespace = WHITESPACE + VALID_VENUE + WHITESPACE;
         Venue expectedVenue = new Venue(VALID_VENUE);
         assertEquals(expectedVenue, ParserUtil.parseVenue(venueWithWhitespace));
+    }
+
+    @Test
+    public void parseDate_invalidValue_throwsParseException() {
+        assertThrows(ParseException.class, LessonDate.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseDate("2026-02-30"));
+    }
+
+    @Test
+    public void parseDate_validValueWithWhitespace_returnsTrimmedDate() throws Exception {
+        assertEquals(new LessonDate("2026-09-22"), ParserUtil.parseDate(WHITESPACE + "2026-09-22" + WHITESPACE));
+    }
+
+    @Test
+    public void parseTime_invalidValue_throwsParseException() {
+        assertThrows(ParseException.class, LessonTime.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseTime("25:00"));
+    }
+
+    @Test
+    public void parseTime_validValueWithWhitespace_returnsTrimmedTime() throws Exception {
+        assertEquals(new LessonTime("16:30"), ParserUtil.parseTime(WHITESPACE + "16:30" + WHITESPACE));
+    }
+
+    @Test
+    public void parseDuration_invalidValue_throwsParseException() {
+        for (String invalid : List.of("", "abc", "0", "-15", "20", "495", "900", "99999999999")) {
+            assertThrows(ParseException.class, LessonDuration.MESSAGE_CONSTRAINTS, ()
+                    -> ParserUtil.parseDuration(invalid));
+        }
+    }
+
+    @Test
+    public void parseDuration_validValueWithWhitespace_returnsTrimmedDuration() throws Exception {
+        assertEquals(new LessonDuration(90), ParserUtil.parseDuration(WHITESPACE + "90" + WHITESPACE));
+    }
+
+    @Test
+    public void parseReason_invalidValue_throwsParseException() {
+        assertThrows(ParseException.class, Lesson.MESSAGE_REASON_CONSTRAINTS, () -> ParserUtil.parseReason(" "));
+    }
+
+    @Test
+    public void parseReason_validValueWithWhitespace_returnsTrimmedReason() throws Exception {
+        assertEquals("Student unwell", ParserUtil.parseReason(WHITESPACE + "Student unwell" + WHITESPACE));
+    }
+
+    @Test
+    public void parseFlag_flagAbsentOrGivenWithoutValue_returnsWhetherPresent() throws Exception {
+        assertFalse(ParserUtil.parseFlag(ArgumentTokenizer.tokenize(" d/2026-09-22", PREFIX_WEEK), PREFIX_WEEK));
+        assertTrue(ParserUtil.parseFlag(ArgumentTokenizer.tokenize(" week/", PREFIX_WEEK), PREFIX_WEEK));
+    }
+
+    @Test
+    public void parseFlag_flagGivenValueOrRepeated_throwsParseException() {
+        assertThrows(ParseException.class, String.format(ParserUtil.MESSAGE_FLAG_TAKES_NO_VALUE, PREFIX_WEEK), ()
+                -> ParserUtil.parseFlag(ArgumentTokenizer.tokenize(" week/yes", PREFIX_WEEK), PREFIX_WEEK));
+        ArgumentMultimap repeated = ArgumentTokenizer.tokenize(" week/ week/", PREFIX_WEEK);
+        assertThrows(ParseException.class, () -> ParserUtil.parseFlag(repeated, PREFIX_WEEK));
+    }
+
+    @Test
+    public void requirePrefixesPresent_missingPrefixes_throwsParseExceptionNamingThem() {
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(" t/16:30", PREFIX_DATE, PREFIX_TIME);
+
+        assertThrows(ParseException.class, String.format(ParserUtil.MESSAGE_MISSING_PARAMETERS, "d/", "usage"), ()
+                -> ParserUtil.requirePrefixesPresent(argMultimap, "usage", PREFIX_DATE, PREFIX_TIME));
+
+        ArgumentMultimap empty = ArgumentTokenizer.tokenize("", PREFIX_DATE, PREFIX_TIME);
+        assertThrows(ParseException.class, String.format(ParserUtil.MESSAGE_MISSING_PARAMETERS, "d/, t/", "usage"), ()
+                -> ParserUtil.requirePrefixesPresent(empty, "usage", PREFIX_DATE, PREFIX_TIME));
+    }
+
+    @Test
+    public void requirePrefixesPresent_textBeforeFirstPrefix_throwsParseException() {
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(" oops d/2026-09-22", PREFIX_DATE);
+
+        assertThrows(ParseException.class, () -> ParserUtil.requirePrefixesPresent(argMultimap, "usage", PREFIX_DATE));
+    }
+
+    @Test
+    public void requirePrefixesPresent_allPrefixesPresent_doesNotThrow() throws Exception {
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(" d/2026-09-22 t/16:30", PREFIX_DATE, PREFIX_TIME);
+
+        ParserUtil.requirePrefixesPresent(argMultimap, "usage", PREFIX_DATE, PREFIX_TIME);
+    }
+
+    @Test
+    public void parseOptional_prefixAbsent_returnsNull() throws Exception {
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(" t/16:30", PREFIX_DATE, PREFIX_TIME);
+
+        assertNull(ParserUtil.parseOptional(argMultimap, PREFIX_DATE, ParserUtil::parseDate));
+    }
+
+    @Test
+    public void parseOptional_prefixPresent_returnsParsedValue() throws Exception {
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(" d/2026-09-22", PREFIX_DATE);
+
+        assertEquals(new LessonDate("2026-09-22"),
+                ParserUtil.parseOptional(argMultimap, PREFIX_DATE, ParserUtil::parseDate));
+    }
+
+    @Test
+    public void parseOptional_invalidValue_throwsParseException() {
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(" d/someday", PREFIX_DATE);
+
+        assertThrows(ParseException.class, LessonDate.MESSAGE_CONSTRAINTS, ()
+                -> ParserUtil.parseOptional(argMultimap, PREFIX_DATE, ParserUtil::parseDate));
     }
 }

@@ -48,10 +48,13 @@ For power-users, TutorFlow can help you manage contacts faster than traditional 
   For example, in `add n/NAME`, replace `NAME` with a value such as `John Doe`.
 
 * Items in square brackets are optional.<br>
-  For example, `n/NAME [t/TAG]` can be used as `n/John Doe t/friend` or as `n/John Doe`.
+  For example, `n/NAME [e/EMAIL]` can be used as `n/John Doe e/john@example.com` or as `n/John Doe`.
 
 * Items followed by `...` can appear zero or more times.<br>
-  For example, `[t/TAG]... ` may be omitted, or written as `t/friend` or `t/friend t/family`.
+  For example, `s/SUBJECT...` can be written as `s/Math` or `s/Math s/Physics`.
+
+* Items such as `week/` and `all/` are flags: write them on their own, without a value.<br>
+  For example, `agenda week/` is accepted, but `agenda week/yes` is rejected.
 
 * Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
@@ -77,6 +80,7 @@ Adds a student to TutorFlow.
 
 Format: `add n/NAME p/PHONE_NUMBER l/LEVEL s/SUBJECT... r/RATE [e/EMAIL] [v/VENUE]`
 
+* `NAME` is up to 100 characters of letters, digits, spaces and `. , ' ( ) / -`, such as `Tan Wei Ming (twin A)` or `Priya d/o Kumar`. Avoid typing a `/` right after a space when it would look like a prefix, such as `s/o`, because TutorFlow reads it as the start of the next parameter.
 * `LEVEL` is one of `P1` to `P6` (primary), `S1` to `S5` (secondary) or `J1` to `J2` (junior college). It is not case-sensitive, so `s3` is the same as `S3`.
 * `SUBJECT` is free text of up to 30 letters, digits, spaces, `&` and `-`, such as `Math` or `English & Literature`. Subjects are not case-sensitive.
 * `RATE` is the amount charged per lesson in dollars, from `0` to `9999.99` with at most 2 decimal places. A leading `$` is accepted, so `50`, `50.00` and `$50` are the same rate.
@@ -159,6 +163,92 @@ Examples:
 * `sort` sorts all persons from A to Z.
 * `sort desc` sorts all persons from Z to A.
 
+### Scheduling a lesson: `lesson add`
+
+Schedules a lesson for a student.
+
+Format: `lesson add st/STUDENT_INDEX [s/SUBJECT] d/DATE t/TIME [dur/MINUTES] [v/VENUE]`
+
+* `STUDENT_INDEX` is the index number shown in the displayed student list, and **must be a positive integer** 1, 2, 3, ...
+* `DATE` is written as `YYYY-MM-DD`, such as `2026-12-22`, or as `D/M/YYYY`, such as `22/12/2026`. It must be today or later, and no more than 2 years ahead, which catches a mistyped year.
+* `TIME` is written in 24-hour time, such as `16:30`. `4:30pm` and `1630` are also accepted.
+* `MINUTES` is the length of the lesson, from `15` to `480` in steps of `15`. If it is left out, it is `60`.
+* `SUBJECT` must be one of the student's subjects, and is not case-sensitive. If the student has only one subject, it can be left out. If the student has several, it must be given.
+* `VENUE` is up to 100 characters. If it is left out, the student's usual venue is used, or `—` if the student has none.
+* A lesson must end on the day it starts, so `t/23:00 dur/120` is rejected. Split it into two lessons.
+* Two lessons are duplicates if they have the same student, subject, date, time and duration. A duplicate is rejected.
+
+<box type="warning" seamless>
+
+**Overlaps only warn:** if the new lesson overlaps another scheduled lesson by at least one minute on the same date, it is still scheduled and the result lists the lessons it overlaps with. Lessons that end exactly when the next one starts do not overlap. Cancelled lessons are ignored.
+</box>
+
+Examples:
+* `lesson add st/1 s/Math d/2026-12-22 t/16:30 dur/90` Schedules a 90-minute Math lesson for the 1st student at the student's usual venue.
+* `lesson add st/2 d/2026-12-23 t/19:00 v/Online` Schedules a 60-minute lesson online for the 2nd student, in the only subject that student takes.
+
+### Viewing the agenda: `agenda`
+
+Shows the lessons of a day or of a week, in the order that they take place.
+
+Format: `agenda [d/DATE] [week/]`
+
+* Without `d/DATE`, it shows today. `DATE` is written as for [`lesson add`](#scheduling-a-lesson-lesson-add).
+* With `week/`, it shows the Monday to Sunday week that contains the date, one day after another. A day without lessons shows `— no lessons —`.
+* Each line shows the lesson number, the time, the student, the subject, the venue, and the status if the lesson is not simply scheduled. Lessons that overlap another lesson are marked `⚠ overlaps`.
+* Cancelled lessons are listed but are not counted in the number of lessons and the total time.
+* The lesson numbers are the ones that [`lesson move`](#rescheduling-a-lesson-lesson-move) and [`lesson cancel`](#cancelling-a-lesson-lesson-cancel) take, so run `agenda` or `lesson list` first and then use the number you see.
+* A day without lessons is not an error: it shows `No lessons on Tue 22 Dec 2026.`
+
+Examples:
+* `agenda` Shows today's lessons.
+* `agenda d/2026-12-22 week/` Shows the week of Monday 21 December 2026.
+
+### Listing the lessons of a student: `lesson list`
+
+Shows the lessons of one student.
+
+Format: `lesson list st/STUDENT_INDEX [all/]`
+
+* `STUDENT_INDEX` is the index number shown in the displayed student list.
+* By default, only upcoming lessons are shown, which means scheduled lessons from today onwards. With `all/`, past and cancelled lessons are shown as well.
+* The lessons are numbered in date order. These are the numbers that `lesson move` and `lesson cancel` take.
+
+Examples:
+* `lesson list st/1` Shows the upcoming lessons of the 1st student.
+* `lesson list st/1 all/` Shows every lesson of the 1st student.
+
+### Rescheduling a lesson: `lesson move`
+
+Moves a lesson to another date, time, duration or venue, and keeps everything else.
+
+Format: `lesson move INDEX [d/DATE] [t/TIME] [dur/MINUTES] [v/VENUE]`
+
+* `INDEX` is the lesson number in the list that is currently shown by `agenda` or `lesson list`, and **must be a positive integer** 1, 2, 3, ...
+* At least one of the optional fields must be given. Fields that are not given stay as they were.
+* The values follow the same rules as for [`lesson add`](#scheduling-a-lesson-lesson-add). A new date must be today or later. Only a date that you give is checked, so you can still change the time of a lesson that has already passed.
+* A completed or cancelled lesson cannot be rescheduled.
+* If the move makes the lesson identical to another lesson, it is rejected. If it makes the lesson overlap another lesson, it is moved and the result warns you.
+
+Examples:
+* `lesson move 1 d/2026-12-24` Moves the 1st lesson to 24 December 2026 at the same time.
+* `lesson move 2 t/17:00 v/Online` Moves the 2nd lesson to 17:00 and changes its venue to `Online`.
+
+### Cancelling a lesson: `lesson cancel`
+
+Cancels a lesson but keeps its record, so that you can still see that the slot was booked.
+
+Format: `lesson cancel INDEX [r/REASON]`
+
+* `INDEX` is the lesson number in the list that is currently shown by `agenda` or `lesson list`.
+* `REASON` is up to 200 characters on one line, such as `Student unwell`.
+* The lesson stays in the agenda as cancelled and no longer overlaps other lessons.
+* A lesson that is already cancelled or already completed cannot be cancelled.
+
+Examples:
+* `lesson cancel 1` Cancels the 1st lesson.
+* `lesson cancel 3 r/Student unwell` Cancels the 3rd lesson and records the reason.
+
 ### Clearing all entries: `clear`
 
 Clears all entries from the address book.
@@ -218,3 +308,8 @@ Action     | Format, Examples
 **List**   | `list`
 **Sort**   | `sort [asc\|desc]`<br> e.g., `sort desc`
 **Help**   | `help`
+**Lesson add** | `lesson add st/STUDENT_INDEX [s/SUBJECT] d/DATE t/TIME [dur/MINUTES] [v/VENUE]`<br> e.g., `lesson add st/1 s/Math d/2026-12-22 t/16:30 dur/90`
+**Agenda** | `agenda [d/DATE] [week/]`<br> e.g., `agenda d/2026-12-22 week/`
+**Lesson list** | `lesson list st/STUDENT_INDEX [all/]`<br> e.g., `lesson list st/1 all/`
+**Lesson move** | `lesson move INDEX [d/DATE] [t/TIME] [dur/MINUTES] [v/VENUE]`<br> e.g., `lesson move 1 d/2026-12-24 t/17:00`
+**Lesson cancel** | `lesson cancel INDEX [r/REASON]`<br> e.g., `lesson cancel 1 r/Student unwell`
