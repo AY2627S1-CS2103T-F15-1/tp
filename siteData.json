@@ -52,6 +52,7 @@
         "storage-component": "Storage component",
         "common-classes": "Common classes",
         "implementation": "Implementation",
+        "lesson-scheduling-agenda-and-conflict-detection": "Lesson scheduling, agenda and conflict detection",
         "proposed-undo-redo-feature": "[Proposed] Undo/redo feature",
         "proposed-data-archiving": "[Proposed] Data archiving",
         "documentation-logging-testing-dev-ops": "Documentation, logging, testing, dev-ops",
@@ -64,6 +65,7 @@
         "appendix-instructions-for-manual-testing": "Appendix: Instructions for manual testing",
         "launch-and-shutdown": "Launch and shutdown",
         "deleting-a-person": "Deleting a person",
+        "lessons": "Lessons",
         "saving-data": "Saving data"
       },
       "headingKeywords": {}
@@ -118,6 +120,11 @@
         "locating-persons-by-name-find": "Locating persons by name: find",
         "deleting-a-person-delete": "Deleting a person: delete",
         "sorting-persons-by-name-sort": "Sorting persons by name: sort",
+        "scheduling-a-lesson-lesson-add": "Scheduling a lesson: lesson add",
+        "viewing-the-agenda-agenda": "Viewing the agenda: agenda",
+        "listing-the-lessons-of-a-student-lesson-list": "Listing the lessons of a student: lesson list",
+        "rescheduling-a-lesson-lesson-move": "Rescheduling a lesson: lesson move",
+        "cancelling-a-lesson-lesson-cancel": "Cancelling a lesson: lesson cancel",
         "clearing-all-entries-clear": "Clearing all entries: clear",
         "exiting-the-program-exit": "Exiting the program: exit",
         "saving-the-data": "Saving the data",
