@@ -18,12 +18,23 @@ import org.junit.jupiter.api.io.TempDir;
 import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ReadOnlyAddressBook;
+import seedu.address.testutil.PersonBuilder;
 
 public class JsonAddressBookStorageTest {
     private static final Path TEST_DATA_FOLDER = Paths.get("src", "test", "data", "JsonAddressBookStorageTest");
 
     @TempDir
     public Path testFolder;
+
+    @Test
+    public void readAndSaveAddressBook_remarkPreserved() throws Exception {
+        Path path = testFolder.resolve("remarks.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(path);
+        AddressBook book = new AddressBook();
+        book.addPerson(new PersonBuilder(ALICE).withRemark("Swimming & \"reading\" 中文").build());
+        storage.saveAddressBook(book);
+        assertEquals(book, storage.readAddressBook().get());
+    }
 
     @Test
     public void readAddressBook_nullFilePath_throwsNullPointerException() {
