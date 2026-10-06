@@ -26,7 +26,22 @@ public class DeleteCommandParserTest {
     }
 
     @Test
+    public void parse_validArgsWithConfirm_returnsConfirmedDeleteCommand() {
+        assertParseSuccess(parser, "1 confirm", new DeleteCommand(INDEX_FIRST_PERSON, true));
+        assertParseSuccess(parser, "  1   confirm  ", new DeleteCommand(INDEX_FIRST_PERSON, true));
+    }
+
+    @Test
     public void parse_invalidArgs_throwsParseException() {
-        assertParseFailure(parser, "a", String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE));
+        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE);
+        assertParseFailure(parser, "a", expectedMessage);
+        assertParseFailure(parser, "", expectedMessage);
+        // confirm without an index
+        assertParseFailure(parser, "confirm", expectedMessage);
+        // the keyword is case-sensitive and nothing else is accepted after the index
+        assertParseFailure(parser, "1 CONFIRM", expectedMessage);
+        assertParseFailure(parser, "1 yes", expectedMessage);
+        assertParseFailure(parser, "1 confirm confirm", expectedMessage);
+        assertParseFailure(parser, "0 confirm", expectedMessage);
     }
 }
