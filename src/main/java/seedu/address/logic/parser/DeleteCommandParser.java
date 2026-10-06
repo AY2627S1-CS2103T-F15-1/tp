@@ -17,9 +17,20 @@ public class DeleteCommandParser implements Parser<DeleteCommand> {
      * @throws ParseException if the user input does not conform to the expected format
      */
     public DeleteCommand parse(String args) throws ParseException {
+        String trimmedArgs = args.trim();
+        boolean isConfirmed = false;
+        String indexArg = trimmedArgs;
+
+        // The optional confirm keyword is the last word, e.g. "3 confirm"
+        String[] words = trimmedArgs.split("\\s+");
+        if (words.length == 2 && words[1].equals(DeleteCommand.CONFIRM_KEYWORD)) {
+            isConfirmed = true;
+            indexArg = words[0];
+        }
+
         try {
-            Index index = ParserUtil.parseIndex(args);
-            return new DeleteCommand(index);
+            Index index = ParserUtil.parseIndex(indexArg);
+            return new DeleteCommand(index, isConfirmed);
         } catch (ParseException pe) {
             throw new ParseException(
                     String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE), pe);

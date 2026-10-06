@@ -10,6 +10,8 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
+import java.time.LocalDate;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.index.Index;
@@ -17,7 +19,9 @@ import seedu.address.logic.Messages;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
+import seedu.address.testutil.LessonBuilder;
 
 /**
  * Contains integration tests (interaction with the Model) and unit tests for
@@ -80,6 +84,69 @@ public class DeleteCommandTest {
     }
 
     @Test
+    public void execute_studentWithLessonsNotConfirmed_asksForConfirmationAndDeletesNothing() {
+        Person student = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        model.addLesson(new LessonBuilder().withStudent(student).withDate(LocalDate.now().plusDays(3)).build());
+        model.addLesson(new LessonBuilder().withStudent(student).withDate(LocalDate.now().plusDays(10)).build());
+        Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
+
+        String expectedMessage = String.format(DeleteCommand.MESSAGE_CONFIRMATION, student.getName(),
+                student.getPhone(), 2, String.format(DeleteCommand.MESSAGE_UPCOMING_WARNING, 2),
+                INDEX_FIRST_PERSON.getOneBased());
+
+        assertCommandSuccess(new DeleteCommand(INDEX_FIRST_PERSON), model, expectedMessage, expectedModel);
+        assertTrue(model.getFilteredPersonList().contains(student));
+        assertEquals(2, model.getAddressBook().getLessonList().size());
+    }
+
+    @Test
+    public void execute_studentWithOnlyPastLessonsNotConfirmed_asksWithoutUpcomingWarning() {
+        Person student = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        model.addLesson(new LessonBuilder().withStudent(student).withDate("2020-01-06").build());
+        Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
+
+        String expectedMessage = String.format(DeleteCommand.MESSAGE_CONFIRMATION, student.getName(),
+                student.getPhone(), 1, "", INDEX_FIRST_PERSON.getOneBased());
+
+        assertCommandSuccess(new DeleteCommand(INDEX_FIRST_PERSON), model, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_studentWithLessonsConfirmed_deletesStudentAndLessons() {
+        Person student = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Lesson lessonOfStudent = new LessonBuilder().withStudent(student).build();
+        model.addLesson(lessonOfStudent);
+        Person otherStudent = model.getFilteredPersonList().get(INDEX_SECOND_PERSON.getZeroBased());
+        Lesson lessonOfOtherStudent = new LessonBuilder().withStudent(otherStudent).build();
+        model.addLesson(lessonOfOtherStudent);
+
+        Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
+        expectedModel.deletePerson(student);
+
+        String expectedMessage = String.format(DeleteCommand.MESSAGE_DELETE_PERSON_WITH_LESSONS_SUCCESS,
+                Messages.format(student), 1);
+
+        assertCommandSuccess(new DeleteCommand(INDEX_FIRST_PERSON, true), model, expectedMessage, expectedModel);
+        // only the deleted student's lessons are removed
+        assertEquals(1, model.getAddressBook().getLessonList().size());
+        assertTrue(model.getAddressBook().getLessonList().contains(lessonOfOtherStudent));
+    }
+
+    @Test
+    public void execute_studentWithoutLessonsConfirmed_deletesStudent() {
+        Person personToDelete = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        DeleteCommand deleteCommand = new DeleteCommand(INDEX_FIRST_PERSON, true);
+
+        String expectedMessage = String.format(DeleteCommand.MESSAGE_DELETE_PERSON_SUCCESS,
+                Messages.format(personToDelete));
+
+        ModelManager expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
+        expectedModel.deletePerson(personToDelete);
+
+        assertCommandSuccess(deleteCommand, model, expectedMessage, expectedModel);
+    }
+
+    @Test
     public void equals() {
         DeleteCommand deleteFirstCommand = new DeleteCommand(INDEX_FIRST_PERSON);
         DeleteCommand deleteSecondCommand = new DeleteCommand(INDEX_SECOND_PERSON);
@@ -99,13 +166,17 @@ public class DeleteCommandTest {
 
         // different person -> returns false
         assertFalse(deleteFirstCommand.equals(deleteSecondCommand));
+
+        // different confirmation -> returns false
+        assertFalse(deleteFirstCommand.equals(new DeleteCommand(INDEX_FIRST_PERSON, true)));
     }
 
     @Test
     public void toStringMethod() {
         Index targetIndex = Index.fromOneBased(1);
         DeleteCommand deleteCommand = new DeleteCommand(targetIndex);
-        String expected = DeleteCommand.class.getCanonicalName() + "{targetIndex=" + targetIndex + "}";
+        String expected = DeleteCommand.class.getCanonicalName()
+                + "{targetIndex=" + targetIndex + ", isConfirmed=false}";
         assertEquals(expected, deleteCommand.toString());
     }
 
