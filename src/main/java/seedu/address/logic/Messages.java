@@ -56,8 +56,9 @@ public class Messages {
                 .append("; Rate: ")
                 .append(person.getRate().toDisplayString());
         person.getVenue().ifPresent(venue -> builder.append("; Venue: ").append(venue));
-        builder.append("; Remark: ")
-                .append(person.getRemark());
+        if (!person.getRemark().value.isEmpty()) {
+            builder.append("; Remark: ").append(person.getRemark());
+        }
         return builder.toString();
     }
 
