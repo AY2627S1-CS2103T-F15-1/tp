@@ -1,7 +1,7 @@
 # TutorFlow User Guide
 ## This page is a work-in-progress
 TutorFlow is a **desktop application that keeps your students, schedule, and payments in one place, optimized for use through a Command Line Interface (CLI)** while retaining the benefits of a Graphical User Interface (GUI).
-For power-users, TutorFlow can help you manage contacts faster than traditional GUI applications.
+For power-users, TutorFlow can help you manage your students and lessons faster than traditional GUI applications.
 
 <!-- * Table of Contents -->
 <page-nav-print />
@@ -15,7 +15,7 @@ For power-users, TutorFlow can help you manage contacts faster than traditional 
 
 1. Download the latest `.jar` file from [here](https://this-is-a-placeholder).
 
-1. Copy the file to the folder you want to use as the _home folder_ for your AddressBook.
+1. Copy the file to the folder you want to use as the _home folder_ for TutorFlow.
 
 1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar addressbook.jar`.<br>
    A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample data.<br>
@@ -122,9 +122,9 @@ Examples:
 *  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st student to be `91234567` and `johndoe@example.com` respectively.
 *  `edit 2 l/S4 s/Math s/Chemistry` Changes the 2nd student to Secondary 4, and the subjects to `Math` and `Chemistry`.
 
-### Locating persons by name: `find`
+### Locating students by name: `find`
 
-Finds persons whose names contain any of the given keywords.
+Finds students whose names contain any of the given keywords.
 
 Format: `find KEYWORD [MORE_KEYWORDS]`
 
@@ -133,7 +133,7 @@ Format: `find KEYWORD [MORE_KEYWORDS]`
 * The search considers only names.
 * A keyword matches any part of a name; for example, `Han` matches `Hans` and `Johan`, and `wei` matches `Tan Wei Ming`.
 * A keyword can be up to 100 characters long.
-* Persons matching at least one keyword are returned (an `OR` search); for example, `Hans Bo` returns `Hans Gruber` and `Bo Yang`.
+* Students matching at least one keyword are returned (an `OR` search); for example, `Hans Bo` returns `Hans Gruber` and `Bo Yang`.
 
 Examples:
 * `find John` returns `john` and `John Doe`
@@ -158,19 +158,19 @@ Examples:
 * `delete 3` on a student with 12 lessons shows a prompt; `delete 3 confirm` then deletes the student and the 12 lessons.
 * `find Betsy` followed by `delete 1` deletes the 1st student in the results of the `find` command.
 
-### Sorting persons by name: `sort`
+### Sorting students by name: `sort`
 
-Sorts all persons in the address book by name, ignoring upper and lower case.
+Sorts all students by name, ignoring upper and lower case.
 
 Format: `sort [asc|desc]`
 
 * `asc` sorts from A to Z and `desc` sorts from Z to A. If no order is given, `asc` is used.
-* All persons are shown after sorting, even if the list was filtered by an earlier `find` command.
-* The new order is saved, so the persons stay in this order the next time you open the app.
+* All students are shown after sorting, even if the list was filtered by an earlier `find` command.
+* The new order is saved, so the students stay in this order the next time you open the app.
 
 Examples:
-* `sort` sorts all persons from A to Z.
-* `sort desc` sorts all persons from Z to A.
+* `sort` sorts all students from A to Z.
+* `sort desc` sorts all students from Z to A.
 
 ### Scheduling a lesson: `lesson add`
 
@@ -260,7 +260,7 @@ Examples:
 
 ### Clearing all entries: `clear`
 
-Clears all entries from the address book.
+Clears all students and lessons from TutorFlow.
 
 Format: `clear`
 
@@ -272,19 +272,19 @@ Format: `exit`
 
 ### Saving the data
 
-AddressBook automatically saves data after every command. You do not need to save manually.
+TutorFlow automatically saves data after every command. You do not need to save manually.
 
 ### Editing the data file
 
-AddressBook data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
+TutorFlow data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
 
 Every lesson in the file must be with a student in the same file, with the same name and phone number. A file with a lesson whose student is missing is treated as invalid, as described below.
 
 <box type="warning" seamless>
 
 **Caution:**
-If your changes make the data file invalid, AddressBook starts with an empty address book at the next run. The invalid file remains on disk until you run a command (AddressBook saves after every command). Still, we recommend backing up the file before editing it.<br>
-Furthermore, certain edits can cause the AddressBook to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
+If your changes make the data file invalid, TutorFlow starts with no students and lessons at the next run. The invalid file remains on disk until you run a command (TutorFlow saves after every command). Still, we recommend backing up the file before editing it.<br>
+Furthermore, certain edits can cause TutorFlow to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
 </box>
 
 ### Archiving data files `[coming in v2.0]`
@@ -296,7 +296,7 @@ _Details coming soon ..._
 ## FAQ
 
 **Q**: How do I transfer my data to another computer?<br>
-**A**: Install the app on the other computer and overwrite the data file it creates with the data file from your previous AddressBook home folder.
+**A**: Install the app on the other computer and overwrite the data file it creates with the data file from your previous TutorFlow home folder.
 
 --------------------------------------------------------------------------------------------------------------------
 
