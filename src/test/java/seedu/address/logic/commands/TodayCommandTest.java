@@ -73,6 +73,16 @@ public class TodayCommandTest {
     }
 
     @Test
+    public void execute_completedLessonToday_showsItsStatus() {
+        addLessons(new LessonBuilder(todayMath).withStatus(LessonStatus.COMPLETED).build());
+
+        String[] lines = new TodayCommand(TODAY).execute(model).getFeedbackToUser().split("\n");
+
+        assertEquals("TODAY'S LESSONS (1, 1h 30m)", lines[2]);
+        assertTrue(lines[3].endsWith("Blk 512 Bishan St 13  (completed)"));
+    }
+
+    @Test
     public void execute_pastScheduledLessons_showsThemMostRecentFirst() {
         addLessons(lastWeekScheduled, yesterdayScheduled, yesterdayCompleted, tomorrowScheduled);
 
