@@ -82,6 +82,7 @@ Format: `add n/NAME p/PHONE_NUMBER l/LEVEL s/SUBJECT... r/RATE [e/EMAIL] [v/VENU
 
 * `NAME` is up to 100 characters of letters, digits, spaces and `. , ' ( ) / -`, such as `Tan Wei Ming (twin A)` or `Priya d/o Kumar`. Avoid typing a `/` right after a space when it would look like a prefix, such as `s/o`, because TutorFlow reads it as the start of the next parameter.
 * `LEVEL` is one of `P1` to `P6` (primary), `S1` to `S5` (secondary) or `J1` to `J2` (junior college). It is not case-sensitive, so `s3` is the same as `S3`.
+* `PHONE_NUMBER` has 3 to 15 digits and can start with `+`, for example `91234567` or `+6591234567`. Spaces and hyphens between the digits are allowed and are removed, so `9123 4567` is stored as `91234567`.
 * `SUBJECT` is free text of up to 30 letters, digits, spaces, `&` and `-`, such as `Math` or `English & Literature`. Subjects are not case-sensitive.
 * `RATE` is the amount charged per lesson in dollars, from `0` to `9999.99` with at most 2 decimal places. A leading `$` is accepted, so `50`, `50.00` and `$50` are the same rate.
 * `VENUE` is where the student is usually taught, up to 100 characters.
