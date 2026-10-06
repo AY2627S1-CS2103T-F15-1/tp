@@ -54,12 +54,32 @@ public class NameContainsKeywordsPredicateTest {
         // Mixed-case keywords
         predicate = new NameContainsKeywordsPredicate(List.of("aLIce", "bOB"));
         assertTrue(predicate.test(new PersonBuilder().withName("Alice Bob").build()));
+
+        // Keyword that is part of a word at the start, in the middle and at the end of a name
+        predicate = new NameContainsKeywordsPredicate(List.of("Ali"));
+        assertTrue(predicate.test(new PersonBuilder().withName("Alice Bob").build()));
+        predicate = new NameContainsKeywordsPredicate(List.of("lic"));
+        assertTrue(predicate.test(new PersonBuilder().withName("Alice Bob").build()));
+        predicate = new NameContainsKeywordsPredicate(List.of("ob"));
+        assertTrue(predicate.test(new PersonBuilder().withName("Alice Bob").build()));
+
+        // Keyword that is part of a name with punctuation
+        predicate = new NameContainsKeywordsPredicate(List.of("wei"));
+        assertTrue(predicate.test(new PersonBuilder().withName("Tan Wei Ming (twin A)").build()));
     }
 
     @Test
     public void test_nameDoesNotContainKeywords_returnsFalse() {
         // Zero keywords
         NameContainsKeywordsPredicate predicate = new NameContainsKeywordsPredicate(List.of());
+        assertFalse(predicate.test(new PersonBuilder().withName("Alice").build()));
+
+        // Blank keyword matches nothing
+        predicate = new NameContainsKeywordsPredicate(List.of(""));
+        assertFalse(predicate.test(new PersonBuilder().withName("Alice").build()));
+
+        // Keyword longer than the name
+        predicate = new NameContainsKeywordsPredicate(List.of("Alice Bobby"));
         assertFalse(predicate.test(new PersonBuilder().withName("Alice").build()));
 
         // Non-matching keyword

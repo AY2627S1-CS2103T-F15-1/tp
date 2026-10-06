@@ -21,6 +21,17 @@ public class FindCommandParserTest {
     }
 
     @Test
+    public void parse_keywordTooLong_throwsParseException() {
+        String longKeyword = "a".repeat(FindCommand.MAX_KEYWORD_LENGTH + 1);
+        assertParseFailure(parser, "Alice " + longKeyword, FindCommand.MESSAGE_KEYWORD_TOO_LONG);
+
+        // a keyword of exactly the maximum length is accepted
+        String maxLengthKeyword = "a".repeat(FindCommand.MAX_KEYWORD_LENGTH);
+        assertParseSuccess(parser, maxLengthKeyword,
+                new FindCommand(new NameContainsKeywordsPredicate(List.of(maxLengthKeyword))));
+    }
+
+    @Test
     public void parse_validArgs_returnsFindCommand() {
         // no leading and trailing whitespaces
         FindCommand expectedFindCommand =

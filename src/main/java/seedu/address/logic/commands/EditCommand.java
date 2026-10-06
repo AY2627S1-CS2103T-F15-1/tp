@@ -57,6 +57,8 @@ public class EditCommand extends Command {
     public static final String MESSAGE_EDIT_PERSON_SUCCESS = "Edited student: %1$s";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
     public static final String MESSAGE_DUPLICATE_PERSON = "This student already exists in TutorFlow.";
+    public static final String MESSAGE_SAME_NAME_WARNING =
+            "\nNote: you already have another student named %1$s. Both are now in your list.";
 
     private final Index index;
     private final EditPersonDescriptor editPersonDescriptor;
@@ -89,9 +91,17 @@ public class EditCommand extends Command {
             throw new CommandException(MESSAGE_DUPLICATE_PERSON);
         }
 
+        // Warn only when this edit gives the student the name of another student, not on every later edit
+        boolean hasNewSameName = !personToEdit.hasSameName(editedPerson)
+                && model.getAddressBook().getPersonList().stream().anyMatch(editedPerson::hasSameName);
+
         model.setPerson(personToEdit, editedPerson);
         model.updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
-        return new CommandResult(String.format(MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson)));
+        String message = String.format(MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson));
+        if (hasNewSameName) {
+            message += String.format(MESSAGE_SAME_NAME_WARNING, editedPerson.getName());
+        }
+        return new CommandResult(message);
     }
 
     /**

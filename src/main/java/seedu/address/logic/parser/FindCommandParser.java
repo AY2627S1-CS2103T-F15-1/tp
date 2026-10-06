@@ -26,6 +26,11 @@ public class FindCommandParser implements Parser<FindCommand> {
         }
 
         String[] nameKeywords = trimmedArgs.split("\\s+");
+        for (String keyword : nameKeywords) {
+            if (keyword.length() > FindCommand.MAX_KEYWORD_LENGTH) {
+                throw new ParseException(FindCommand.MESSAGE_KEYWORD_TOO_LONG);
+            }
+        }
 
         return new FindCommand(new NameContainsKeywordsPredicate(List.of(nameKeywords)));
     }

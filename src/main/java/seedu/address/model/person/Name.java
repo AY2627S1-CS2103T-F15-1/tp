@@ -6,6 +6,9 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
 /**
  * Represents a Person's name in the address book.
  * Guarantees: immutable; is valid as declared in {@link #isValidName(String)}
+ *
+ * <p>Leading and trailing whitespace is removed and runs of spaces inside the name are collapsed into one,
+ * so {@code John  Tan} is stored, and compared, as {@code John Tan}.
  */
 public class Name {
 
@@ -29,7 +32,7 @@ public class Name {
     public Name(String name) {
         requireNonNull(name);
         checkArgument(isValidName(name), MESSAGE_CONSTRAINTS);
-        fullName = name;
+        fullName = name.strip().replaceAll("\\s+", " ");
     }
 
     /**

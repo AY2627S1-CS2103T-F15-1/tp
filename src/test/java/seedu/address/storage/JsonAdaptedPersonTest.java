@@ -25,7 +25,7 @@ import seedu.address.testutil.PersonBuilder;
 
 public class JsonAdaptedPersonTest {
     private static final String INVALID_NAME = "R@chel";
-    private static final String INVALID_PHONE = "+651234";
+    private static final String INVALID_PHONE = "91a4";
     private static final String INVALID_EMAIL = "example.com";
     private static final String INVALID_LEVEL = "S9";
     private static final String INVALID_SUBJECT = "#math";

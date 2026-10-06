@@ -22,7 +22,7 @@ import seedu.address.testutil.LessonBuilder;
 
 public class JsonAdaptedLessonTest {
     private static final String INVALID_NAME = "R@chel";
-    private static final String INVALID_PHONE = "+651234";
+    private static final String INVALID_PHONE = "91a4";
     private static final String INVALID_SUBJECT = "#math";
     private static final String INVALID_DATE = "2026-02-30";
     private static final String INVALID_TIME = "24:00";

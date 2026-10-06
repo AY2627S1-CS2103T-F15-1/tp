@@ -22,6 +22,8 @@ class JsonSerializableAddressBook {
 
     public static final String MESSAGE_DUPLICATE_PERSON = "Persons list contains duplicate person(s).";
     public static final String MESSAGE_DUPLICATE_LESSON = "Lessons list contains duplicate lesson(s).";
+    public static final String MESSAGE_LESSON_WITHOUT_STUDENT =
+            "Lessons list contains a lesson whose student is not in the persons list.";
 
     private final List<JsonAdaptedPerson> persons = new ArrayList<>();
     private final List<JsonAdaptedLesson> lessons = new ArrayList<>();
@@ -69,6 +71,13 @@ class JsonSerializableAddressBook {
                 throw new IllegalValueException(MESSAGE_DUPLICATE_LESSON);
             }
             addressBook.addLesson(lesson);
+        }
+        // Commands always delete or update the lessons of a student together with the student, so a lesson without
+        // its student can only come from editing the data file by hand
+        boolean hasLessonWithoutStudent = addressBook.getLessonList().stream()
+                .anyMatch(lesson -> addressBook.getPersonList().stream().noneMatch(lesson::isWith));
+        if (hasLessonWithoutStudent) {
+            throw new IllegalValueException(MESSAGE_LESSON_WITHOUT_STUDENT);
         }
         return addressBook;
     }

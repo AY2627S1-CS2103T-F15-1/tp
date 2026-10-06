@@ -46,6 +46,31 @@ public class AddCommandTest {
     }
 
     @Test
+    public void execute_sameNameDifferentPhone_addedWithWarning() throws Exception {
+        ModelStubAcceptingPersonAdded modelStub = new ModelStubAcceptingPersonAdded();
+        Person alice = new PersonBuilder().withName("Alice Pauline").withPhone("94351253").build();
+        Person otherAlice = new PersonBuilder().withName("alice  pauline").withPhone("81234567").build();
+        modelStub.addPerson(alice);
+
+        CommandResult commandResult = new AddCommand(otherAlice).execute(modelStub);
+
+        assertEquals(String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(otherAlice))
+                + String.format(AddCommand.MESSAGE_SAME_NAME_WARNING, otherAlice.getName()),
+                commandResult.getFeedbackToUser());
+        assertEquals(List.of(alice, otherAlice), modelStub.personsAdded);
+    }
+
+    @Test
+    public void execute_sameNameAndPhoneOnlyDifferingInSpaces_throwsCommandException() {
+        Person alice = new PersonBuilder().withName("Alice Pauline").withPhone("94351253").build();
+        Person sameAlice = new PersonBuilder().withName("Alice   Pauline ").withPhone("94351253").build();
+        ModelStub modelStub = new ModelStubWithPerson(alice);
+
+        assertThrows(CommandException.class, AddCommand.MESSAGE_DUPLICATE_PERSON, () ->
+                new AddCommand(sameAlice).execute(modelStub));
+    }
+
+    @Test
     public void execute_duplicatePerson_throwsCommandException() {
         Person validPerson = new PersonBuilder().build();
         AddCommand addCommand = new AddCommand(validPerson);
@@ -223,7 +248,9 @@ public class AddCommandTest {
 
         @Override
         public ReadOnlyAddressBook getAddressBook() {
-            return new AddressBook();
+            AddressBook addressBook = new AddressBook();
+            personsAdded.forEach(addressBook::addPerson);
+            return addressBook;
         }
     }
 

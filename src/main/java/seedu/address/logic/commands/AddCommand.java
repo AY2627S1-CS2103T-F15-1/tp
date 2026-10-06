@@ -43,6 +43,8 @@ public class AddCommand extends Command {
 
     public static final String MESSAGE_SUCCESS = "New student added: %1$s";
     public static final String MESSAGE_DUPLICATE_PERSON = "This student already exists in TutorFlow.";
+    public static final String MESSAGE_SAME_NAME_WARNING =
+            "\nNote: you already have a student named %1$s. Both are now in your list.";
 
     private final Person toAdd;
 
@@ -62,8 +64,15 @@ public class AddCommand extends Command {
             throw new CommandException(MESSAGE_DUPLICATE_PERSON);
         }
 
+        // Different students can share a name, so a student with the same name is added with a warning
+        boolean hasSameName = model.getAddressBook().getPersonList().stream().anyMatch(toAdd::hasSameName);
+
         model.addPerson(toAdd);
-        return new CommandResult(String.format(MESSAGE_SUCCESS, Messages.format(toAdd)));
+        String message = String.format(MESSAGE_SUCCESS, Messages.format(toAdd));
+        if (hasSameName) {
+            message += String.format(MESSAGE_SAME_NAME_WARNING, toAdd.getName());
+        }
+        return new CommandResult(message);
     }
 
     @Override

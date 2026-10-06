@@ -60,6 +60,16 @@ public class JsonSerializableAddressBookTest {
     }
 
     @Test
+    public void toModelType_lessonWithoutStudent_throwsIllegalValueException() {
+        // the persons list has Bob, but the lesson is with Alice
+        JsonSerializableAddressBook data = new JsonSerializableAddressBook(
+                List.of(new JsonAdaptedPerson(TypicalPersons.BOB)),
+                List.of(new JsonAdaptedLesson(TypicalLessons.ALICE_MATH)));
+        assertThrows(IllegalValueException.class, JsonSerializableAddressBook.MESSAGE_LESSON_WITHOUT_STUDENT,
+                data::toModelType);
+    }
+
+    @Test
     public void toModelType_invalidLesson_throwsIllegalValueException() {
         JsonAdaptedLesson invalidLesson = new JsonAdaptedLesson("Alice Pauline", "94351253", "Math", "2026-02-30",
                 "16:30", 90, null, null, null, null);
