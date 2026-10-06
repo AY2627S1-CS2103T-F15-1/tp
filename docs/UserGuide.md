@@ -140,6 +140,27 @@ Examples:
 * `find alex david` returns `Alex Yeoh`, `David Li`<br>
   ![result for 'find alex david'](images/findAlexDavidResult.png)
 
+### Viewing a student's overview: `view`
+
+Shows what you need to prepare for one student, on one screen.
+
+Format: `view INDEX`
+
+* Shows the student at the specified `INDEX`.
+* The index refers to the index number shown in the displayed student list.
+* The index **must be a positive integer** 1, 2, 3, ...
+* The overview shows, in this order:
+  * the student's level, subjects, rate, phone number and, if recorded, email, usual venue and remark
+  * the **next lesson**: the date, time, subject and venue of the first scheduled lesson from today onwards
+  * the **recent lesson notes**: the notes of the 3 most recent completed lessons, newest first
+  * the **lesson history**: how many lessons are completed, cancelled and missed
+* A section with nothing to show says so, for example `No upcoming lessons.`, instead of disappearing.
+* The command only shows information. It does not change the student list, so the indexes you use for other commands stay the same.
+
+Examples:
+* `list` followed by `view 2` shows the overview of the 2nd student.
+* `find Betsy` followed by `view 1` shows the overview of the 1st student in the results of the `find` command.
+
 ### Deleting a student: `delete`
 
 Deletes the specified student from TutorFlow.
@@ -317,6 +338,7 @@ Action     | Format, Examples
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [l/LEVEL] [s/SUBJECT]... [r/RATE] [v/VENUE]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **List**   | `list`
+**View**   | `view INDEX`<br> e.g., `view 1`
 **Sort**   | `sort [asc\|desc]`<br> e.g., `sort desc`
 **Help**   | `help`
 **Lesson add** | `lesson add st/STUDENT_INDEX [s/SUBJECT] d/DATE t/TIME [dur/MINUTES] [v/VENUE]`<br> e.g., `lesson add st/1 s/Math d/2026-12-22 t/16:30 dur/90`
