@@ -28,6 +28,7 @@ import seedu.address.logic.commands.LessonMoveCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.RemarkCommand;
 import seedu.address.logic.commands.SortCommand;
+import seedu.address.logic.commands.TodayCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
@@ -122,6 +123,11 @@ public class AddressBookParserTest {
     public void parseCommand_agenda() throws Exception {
         assertTrue(parser.parseCommand(AgendaCommand.COMMAND_WORD) instanceof AgendaCommand);
         assertTrue(parser.parseCommand(AgendaCommand.COMMAND_WORD + " week/") instanceof AgendaCommand);
+    }
+
+    @Test
+    public void parseCommand_today() throws Exception {
+        assertTrue(parser.parseCommand(TodayCommand.COMMAND_WORD) instanceof TodayCommand);
     }
 
     @Test

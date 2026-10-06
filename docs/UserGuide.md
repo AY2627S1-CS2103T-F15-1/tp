@@ -234,6 +234,31 @@ Examples:
 * `agenda` Shows today's lessons.
 * `agenda d/2026-12-22 week/` Shows the week of Monday 21 December 2026.
 
+### Viewing today's dashboard: `today`
+
+Shows what today requires: today's lessons, and the past lessons that are not yet marked completed.
+
+Format: `today`
+
+* The first section, `TODAY'S LESSONS`, shows the number of lessons today and their total time, followed by the time, student, subject and venue of each lesson. Lessons that overlap another lesson are marked `⚠ overlaps`. Cancelled lessons are left out.
+* The second section, `LESSONS AWAITING NOTES`, shows the scheduled lessons from earlier days that were not marked completed, the most recent first.
+* An empty section is not an error: it shows `No lessons today.` or `All past lessons are recorded.`
+* The command takes no parameters, so `today now` is rejected.
+* Today is the date on your computer, so a wrong system clock shows the wrong day.
+
+Examples:
+* `today` on Thursday 17 September 2026 might show:
+  ```
+  Thursday, 17 September 2026
+
+  TODAY'S LESSONS (2, 2h 30m)
+    16:30-18:00  Tan Wei Ming       Math       Blk 512 Bishan St 13  ⚠ overlaps
+    17:00-18:00  Priya s/o Kumar    Physics    Online  ⚠ overlaps
+
+  LESSONS AWAITING NOTES (1)
+    Tue 15 Sep  Lim Jia Hui        Science    not yet marked completed
+  ```
+
 ### Listing the lessons of a student: `lesson list`
 
 Shows the lessons of one student.
@@ -343,6 +368,7 @@ Action     | Format, Examples
 **Help**   | `help`
 **Lesson add** | `lesson add st/STUDENT_INDEX [s/SUBJECT] d/DATE t/TIME [dur/MINUTES] [v/VENUE]`<br> e.g., `lesson add st/1 s/Math d/2026-12-22 t/16:30 dur/90`
 **Agenda** | `agenda [d/DATE] [week/]`<br> e.g., `agenda d/2026-12-22 week/`
+**Today** | `today`
 **Lesson list** | `lesson list st/STUDENT_INDEX [all/]`<br> e.g., `lesson list st/1 all/`
 **Lesson move** | `lesson move INDEX [d/DATE] [t/TIME] [dur/MINUTES] [v/VENUE]`<br> e.g., `lesson move 1 d/2026-12-24 t/17:00`
 **Lesson cancel** | `lesson cancel INDEX [r/REASON]`<br> e.g., `lesson cancel 1 r/Student unwell`
