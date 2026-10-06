@@ -80,10 +80,33 @@ public class PersonTest {
         Person editedBob = new PersonBuilder(BOB).withName(VALID_NAME_BOB.toLowerCase()).build();
         assertTrue(BOB.isSamePerson(editedBob));
 
-        // name has trailing spaces, same phone -> returns false
+        // name has trailing spaces, same phone -> returns true, as the extra whitespace is not part of the name
         String nameWithTrailingSpaces = VALID_NAME_BOB + " ";
         editedBob = new PersonBuilder(BOB).withName(nameWithTrailingSpaces).build();
-        assertFalse(BOB.isSamePerson(editedBob));
+        assertTrue(BOB.isSamePerson(editedBob));
+
+        // name has extra spaces between words, same phone -> returns true
+        editedBob = new PersonBuilder(BOB).withName(VALID_NAME_BOB.replace(" ", "   ")).build();
+        assertTrue(BOB.isSamePerson(editedBob));
+    }
+
+    @Test
+    public void hasSameName() {
+        // same object -> returns true
+        assertTrue(ALICE.hasSameName(ALICE));
+
+        // null -> returns false
+        assertFalse(ALICE.hasSameName(null));
+
+        // same name, different phone -> returns true
+        assertTrue(ALICE.hasSameName(new PersonBuilder(ALICE).withPhone(VALID_PHONE_BOB).build()));
+
+        // name differs in case -> returns true
+        assertTrue(ALICE.hasSameName(new PersonBuilder(ALICE).withName(ALICE.getName().fullName.toUpperCase())
+                .build()));
+
+        // different name, same phone -> returns false
+        assertFalse(ALICE.hasSameName(new PersonBuilder(ALICE).withName(VALID_NAME_BOB).build()));
     }
 
     @Test

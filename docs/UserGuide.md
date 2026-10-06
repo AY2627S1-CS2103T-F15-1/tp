@@ -85,7 +85,9 @@ Format: `add n/NAME p/PHONE_NUMBER l/LEVEL s/SUBJECT... r/RATE [e/EMAIL] [v/VENU
 * `SUBJECT` is free text of up to 30 letters, digits, spaces, `&` and `-`, such as `Math` or `English & Literature`. Subjects are not case-sensitive.
 * `RATE` is the amount charged per lesson in dollars, from `0` to `9999.99` with at most 2 decimal places. A leading `$` is accepted, so `50`, `50.00` and `$50` are the same rate.
 * `VENUE` is where the student is usually taught, up to 100 characters.
-* Two students are duplicates if they have the same phone number and a name that matches when letter case is ignored.
+* Extra spaces in a `NAME` are ignored, so `John  Tan` is stored as `John Tan`.
+* Two students are duplicates if they have the same phone number and a name that matches when letter case and extra spaces are ignored. A duplicate is not added.
+* Two different students can share a name, for example two students called `Tan Wei Ming` with different phone numbers. TutorFlow adds the student and shows a note, so that you can spot a double entry.
 
 <box type="tip" seamless>
 
@@ -113,6 +115,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [l/LEVEL] [s/SUBJECT]...
 * Existing values will be updated to the input values.
 * When editing subjects, all of the student's existing subjects are replaced; adding subjects is not cumulative. A student must keep at least one subject.
 * The values for the level, subjects, rate and venue follow the same rules as for [`add`](#adding-a-student-add).
+* If the edit gives the student the name of another student, it is accepted and TutorFlow shows a note. If the phone number is also the same as that student's, the edit is rejected as a duplicate.
 
 Examples:
 *  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st student to be `91234567` and `johndoe@example.com` respectively.

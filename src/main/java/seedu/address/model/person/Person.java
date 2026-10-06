@@ -102,6 +102,14 @@ public class Person {
     }
 
     /**
+     * Returns true if both persons have the same name, ignoring case, whatever their phone numbers.
+     * Two different students can share a name, but the user is warned when this happens.
+     */
+    public boolean hasSameName(Person otherPerson) {
+        return otherPerson != null && otherPerson.getName().fullName.equalsIgnoreCase(name.fullName);
+    }
+
+    /**
      * Returns true if this person has the given name, ignoring case, and the given phone number.
      * This is the identity that other data, such as a lesson, uses to refer to a person.
      */
