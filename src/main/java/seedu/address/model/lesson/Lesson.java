@@ -31,6 +31,9 @@ public class Lesson {
     public static final String MESSAGE_REASON_CONSTRAINTS =
             "Reasons must be 1-200 characters and cannot contain line breaks.";
     public static final int MAX_REASON_LENGTH = 200;
+    public static final String MESSAGE_NOTES_CONSTRAINTS =
+            "Notes must be 1-1000 printable characters and cannot contain line breaks.";
+    public static final int MAX_NOTES_LENGTH = 1000;
 
     /** Orders lessons by date, then start time, then student name, which is the order of the agenda. */
     public static final Comparator<Lesson> CHRONOLOGICAL = Comparator
@@ -70,6 +73,7 @@ public class Lesson {
             LessonDuration duration, Venue venue, LessonStatus status, String notes, String cancelReason) {
         requireAllNonNull(studentName, studentPhone, subject, date, time, duration, status);
         checkArgument(isValidTimeRange(time, duration), MESSAGE_CONSTRAINTS);
+        checkArgument(notes == null || isValidNotes(notes), MESSAGE_NOTES_CONSTRAINTS);
         this.studentName = studentName;
         this.studentPhone = studentPhone;
         this.subject = subject;
@@ -95,6 +99,15 @@ public class Lesson {
      */
     public static boolean isValidCancelReason(String test) {
         return !test.isBlank() && test.length() <= MAX_REASON_LENGTH && test.lines().count() == 1;
+    }
+
+    /**
+     * Returns true if the given string can be recorded as teaching notes on one command line.
+     */
+    public static boolean isValidNotes(String test) {
+        return !test.isBlank() && test.length() <= MAX_NOTES_LENGTH
+                && test.codePoints().noneMatch(character -> Character.isISOControl(character)
+                        || character == '\u2028' || character == '\u2029');
     }
 
     public Name getStudentName() {
@@ -179,6 +192,15 @@ public class Lesson {
     public Lesson cancel(String reason) {
         return new Lesson(studentName, studentPhone, subject, date, time, duration, venue, LessonStatus.CANCELLED,
                 notes, reason);
+    }
+
+    /**
+     * Returns a completed copy of this lesson, replacing its notes if {@code newNotes} is given.
+     * Omitting notes retains the existing notes, and every booking detail is retained.
+     */
+    public Lesson complete(String newNotes) {
+        return new Lesson(studentName, studentPhone, subject, date, time, duration, venue, LessonStatus.COMPLETED,
+                newNotes == null ? notes : newNotes, cancelReason);
     }
 
     /**

@@ -36,12 +36,13 @@ public class LessonCommandParser implements Parser<Command> {
             case "list" -> new LessonListCommandParser().parse(arguments);
             case "move" -> new LessonMoveCommandParser().parse(arguments);
             case "cancel" -> new LessonCancelCommandParser().parse(arguments);
+            case "done" -> new LessonDoneCommandParser().parse(arguments);
             default -> throw new ParseException(MESSAGE_UNKNOWN_COMMAND);
         };
     }
 
     private static String getUsage() {
         return "Lesson commands: " + COMMAND_WORD + " add, " + COMMAND_WORD + " list, " + COMMAND_WORD + " move, "
-                + COMMAND_WORD + " cancel";
+                + COMMAND_WORD + " cancel, " + COMMAND_WORD + " done";
     }
 }

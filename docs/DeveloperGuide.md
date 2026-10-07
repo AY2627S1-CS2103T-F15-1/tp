@@ -188,6 +188,14 @@ How the pieces fit together:
     * Pros: No overlaps can exist.
     * Cons: This is overzealous validation and has no workaround.
 
+### Lesson completion and teaching notes
+
+`lesson done INDEX [n/NOTES]` is routed through `LessonCommandParser` to `LessonDoneCommandParser`. The parser validates the lesson index, rejects repeated `n/` prefixes and uses `ParserUtil#parseNotes` to normalise and validate optional notes. `Lesson` validates notes again at the model boundary, and `JsonAdaptedLesson` rejects invalid saved notes with an `IllegalValueException`.
+
+`LessonDoneCommand` uses the current filtered lesson list, rejects cancelled lessons and dates after the local current date, then replaces the lesson with the immutable copy returned by `Lesson#complete`. A `Clock` can be injected into the command to test date boundaries without changing the system clock. Completing a lesson does not reset the active filter, so it can disappear from an upcoming-only list; `lesson list st/INDEX all/` includes completed lessons for later note corrections.
+
+When notes are supplied again on a completed lesson, they replace the existing notes without creating another lesson. Omitting notes preserves them. The existing `LogicManager` save path persists the status and notes before returning success, and `view` includes these notes and the completed-lesson count. This first increment does not add the separate `lesson missed` command.
+
 ### \[Proposed\] Undo/redo feature
 
 #### Proposed Implementation
@@ -826,6 +834,19 @@ testers are expected to do more *exploratory* testing.
 
    1. Test case: `lesson cancel 99`<br>
       Expected: An error that the lesson index is invalid.
+
+1. Completing a lesson
+
+   1. Prerequisites: Schedule a lesson dated today, then run `agenda` and note its lesson number.
+
+   1. Test case: `lesson done INDEX n/Covered algebra`<br>
+      Expected: `Completed: ...`. Run `view STUDENT_INDEX` to see the notes and completed count. Reopen the app and check they are still present.
+
+   1. Test case: Run `lesson list st/STUDENT_INDEX all/`, check the current lesson number, then run `lesson done INDEX n/Revised notes` followed by `lesson done INDEX`<br>
+      Expected: Notes change to `Revised notes`, then remain unchanged. No extra lesson is created.
+
+   1. Other incorrect commands to try: completion of a future or cancelled lesson, `lesson done 0`, `lesson done INDEX n/`, or `lesson done INDEX n/First n/Second`<br>
+      Expected: Rejected without changing the lesson or notes.
 
 ### Saving data
 

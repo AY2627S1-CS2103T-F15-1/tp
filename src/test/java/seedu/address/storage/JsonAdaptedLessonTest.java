@@ -40,6 +40,15 @@ public class JsonAdaptedLessonTest {
     private static final String VALID_STATUS = ALICE_MATH.getStatus().toString();
 
     @Test
+    public void toModelType_invalidNotes_throwsIllegalValueException() {
+        for (String notes : new String[] {"", "a".repeat(Lesson.MAX_NOTES_LENGTH + 1), "First\nSecond"}) {
+            JsonAdaptedLesson lesson = new JsonAdaptedLesson(VALID_NAME, VALID_PHONE, VALID_SUBJECT, VALID_DATE,
+                    VALID_TIME, VALID_DURATION, VALID_VENUE, "completed", notes, null);
+            assertThrows(IllegalValueException.class, Lesson.MESSAGE_NOTES_CONSTRAINTS, lesson::toModelType);
+        }
+    }
+
+    @Test
     public void toModelType_validLessonDetails_returnsLesson() throws Exception {
         JsonAdaptedLesson lesson = new JsonAdaptedLesson(ALICE_MATH);
         assertEquals(ALICE_MATH, lesson.toModelType());
