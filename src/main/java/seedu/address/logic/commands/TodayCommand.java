@@ -29,7 +29,6 @@ public class TodayCommand extends Command {
             + "not yet marked completed.\n"
             + "Example: " + COMMAND_WORD;
 
-    public static final String MESSAGE_NO_PARAMETERS = "The '" + COMMAND_WORD + "' command takes no parameters.";
     public static final String MESSAGE_TODAY_HEADER = "TODAY'S LESSONS (%1$d, %2$s)";
     public static final String MESSAGE_AWAITING_NOTES_HEADER = "LESSONS AWAITING NOTES (%1$d)";
     public static final String MESSAGE_NO_LESSONS_TODAY = "  No lessons today.";

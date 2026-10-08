@@ -128,6 +128,7 @@ public class AddressBookParserTest {
     @Test
     public void parseCommand_today() throws Exception {
         assertTrue(parser.parseCommand(TodayCommand.COMMAND_WORD) instanceof TodayCommand);
+        assertTrue(parser.parseCommand(TodayCommand.COMMAND_WORD + " 3") instanceof TodayCommand);
     }
 
     @Test
