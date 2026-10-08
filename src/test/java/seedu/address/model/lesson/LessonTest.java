@@ -25,6 +25,36 @@ import seedu.address.testutil.PersonBuilder;
 public class LessonTest {
 
     @Test
+    public void isValidNotes() {
+        assertTrue(Lesson.isValidNotes("Covered algebra; revise x² + 2x + 1."));
+        assertTrue(Lesson.isValidNotes("a".repeat(Lesson.MAX_NOTES_LENGTH)));
+        assertFalse(Lesson.isValidNotes(""));
+        assertFalse(Lesson.isValidNotes(" "));
+        assertFalse(Lesson.isValidNotes("a".repeat(Lesson.MAX_NOTES_LENGTH + 1)));
+        assertFalse(Lesson.isValidNotes("First\nSecond"));
+        assertFalse(Lesson.isValidNotes("First\rSecond"));
+        assertFalse(Lesson.isValidNotes("First\tSecond"));
+        assertFalse(Lesson.isValidNotes("First\u2029Second"));
+    }
+
+    @Test
+    public void complete_retainsBookingDetailsAndOriginalLesson() {
+        Lesson expected = new LessonBuilder(ALICE_MATH).withStatus(LessonStatus.COMPLETED)
+                .withNotes("Covered algebra").build();
+        assertEquals(expected, ALICE_MATH.complete("Covered algebra"));
+        assertEquals(LessonStatus.SCHEDULED, ALICE_MATH.getStatus());
+        assertTrue(ALICE_MATH.getNotes().isEmpty());
+        assertEquals(expected, expected.complete(null));
+        assertEquals(new LessonBuilder(expected).withNotes("Revised notes").build(),
+                expected.complete("Revised notes"));
+    }
+
+    @Test
+    public void complete_invalidNotes_throwsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, Lesson.MESSAGE_NOTES_CONSTRAINTS, () -> ALICE_MATH.complete(""));
+    }
+
+    @Test
     public void constructor_nullRequiredField_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> new Lesson(null, ALICE_MATH.getStudentPhone(),
                 ALICE_MATH.getSubject(), ALICE_MATH.getDate(), ALICE_MATH.getTime(), ALICE_MATH.getDuration()));

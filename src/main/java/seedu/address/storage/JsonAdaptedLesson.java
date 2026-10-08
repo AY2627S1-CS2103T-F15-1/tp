@@ -102,6 +102,9 @@ class JsonAdaptedLesson {
         final LessonStatus modelStatus = status == null ? LessonStatus.SCHEDULED
                 : convert("status", status, LessonStatus::isValidStatus,
                         LessonStatus.MESSAGE_CONSTRAINTS, LessonStatus::fromString);
+        if (notes != null && !Lesson.isValidNotes(notes)) {
+            throw new IllegalValueException(Lesson.MESSAGE_NOTES_CONSTRAINTS);
+        }
 
         return new Lesson(modelStudentName, modelStudentPhone, modelSubject, modelDate, modelTime, modelDuration,
                 modelVenue, modelStatus, notes, cancelReason);

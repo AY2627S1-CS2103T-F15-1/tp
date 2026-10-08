@@ -215,6 +215,20 @@ public class ParserUtil {
     }
 
     /**
+     * Parses teaching notes, trimming the ends and collapsing repeated spaces.
+     *
+     * @throws ParseException if the notes are empty, too long or contain non-printable characters.
+     */
+    public static String parseNotes(String notes) throws ParseException {
+        requireNonNull(notes);
+        String normalisedNotes = notes.trim().replaceAll(" {2,}", " ");
+        if (!Lesson.isValidNotes(normalisedNotes)) {
+            throw new ParseException(Lesson.MESSAGE_NOTES_CONSTRAINTS);
+        }
+        return normalisedNotes;
+    }
+
+    /**
      * Returns the value of {@code prefix} parsed by {@code valueParser}, or null if the prefix is not given.
      *
      * @throws ParseException if the value is invalid.

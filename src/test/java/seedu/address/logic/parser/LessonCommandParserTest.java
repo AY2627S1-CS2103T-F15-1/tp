@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.commands.LessonAddCommand;
 import seedu.address.logic.commands.LessonCancelCommand;
+import seedu.address.logic.commands.LessonDoneCommand;
 import seedu.address.logic.commands.LessonListCommand;
 import seedu.address.logic.commands.LessonMoveCommand;
 import seedu.address.model.lesson.LessonDate;
@@ -48,7 +49,13 @@ public class LessonCommandParserTest {
     @Test
     public void parse_missingLessonCommand_failure() {
         assertParseFailure(parser, "  ", String.format(MESSAGE_INVALID_COMMAND_FORMAT,
-                "Lesson commands: lesson add, lesson list, lesson move, lesson cancel"));
+                "Lesson commands: lesson add, lesson list, lesson move, lesson cancel, lesson done"));
+    }
+
+    @Test
+    public void parse_lessonDone_returnsLessonDoneCommand() {
+        assertParseSuccess(parser, " done 1 n/Covered algebra",
+                new LessonDoneCommand(INDEX_FIRST_PERSON, "Covered algebra"));
     }
 
     @Test
