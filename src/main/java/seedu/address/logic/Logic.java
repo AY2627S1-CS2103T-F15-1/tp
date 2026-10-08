@@ -20,6 +20,12 @@ public interface Logic {
      */
     CommandResult execute(String commandText) throws CommandException, ParseException;
 
+    /**
+     * Returns the dashboard of what today requires, as shown by the {@code today} command.
+     * The data is only read, so nothing is saved.
+     */
+    String getDashboard();
+
     /** Returns an unmodifiable view of the filtered list of persons */
     ObservableList<Person> getFilteredPersonList();
 

@@ -236,7 +236,7 @@ Examples:
 
 ### Viewing today's dashboard: `today`
 
-Shows what today requires: today's lessons, and the past lessons that are not yet marked completed.
+Shows what today requires: today's lessons, and the past lessons that are not yet marked completed. TutorFlow also shows this when it starts.
 
 Format: `today`
 
