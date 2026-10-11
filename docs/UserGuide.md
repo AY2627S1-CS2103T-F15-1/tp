@@ -59,20 +59,27 @@ For power-users, TutorFlow can help you manage your students and lessons faster 
 * Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
 
-* Extraneous parameters for commands that take no parameters, such as `help`, `list`, `today` and `exit`, are ignored.<br>
-  For example, `help 123` is interpreted as `help`.
+* Extraneous parameters for commands that take no parameters, such as `list`, `today` and `exit`, are ignored.<br>
+  For example, `list 123` is interpreted as `list`.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </box>
 
 ### Viewing help: `help`
 
-Shows a message explaining how to access the help page.
+Shows every command, or how to use one command, without leaving TutorFlow.
 
-![help message](images/helpMessage.png)
+Format: `help [COMMAND]`
 
-Format: `help`
+* `help` shows every command with a one-line summary.
+* `help COMMAND` shows what the command does, its parameters and an example. `COMMAND` is the command as you type it, so for the lesson commands write both words, such as `help lesson add`.
+* `help lesson` lists the commands that start with `lesson`.
+* `COMMAND` is case-sensitive, like every command. For a name that is not a command, such as `help foo`, TutorFlow says `No help available for 'foo'. Type 'help' for the full list.`
+* To see where to find this guide, use the `Help` menu or press `F1`. That opens the help window with a link to this page.
 
+Examples:
+* `help` lists all commands.
+* `help lesson move` shows how to reschedule a lesson.
 
 ### Adding a student: `add`
 
@@ -160,6 +167,20 @@ Format: `view INDEX`
 Examples:
 * `list` followed by `view 2` shows the overview of the 2nd student.
 * `find Betsy` followed by `view 1` shows the overview of the 1st student in the results of the `find` command.
+
+### Adding a remark to a student: `remark`
+
+Sets a free-text remark on a student, such as a preference or something to remember.
+
+Format: `remark INDEX r/REMARK`
+
+* Sets the remark of the student at the specified `INDEX`, which is the index number shown in the displayed student list and **must be a positive integer** 1, 2, 3, ...
+* The new remark replaces the old one. Writing `r/` with nothing after it removes the remark.
+* A remark is shown in the student's card and in [`view`](#viewing-a-students-overview-view).
+
+Examples:
+* `remark 1 r/Prefers morning lessons` sets the remark of the 1st student.
+* `remark 1 r/` removes the remark of the 1st student.
 
 ### Deleting a student: `delete`
 
@@ -391,7 +412,8 @@ Action     | Format, Examples
 **List**   | `list`
 **View**   | `view INDEX`<br> e.g., `view 1`
 **Sort**   | `sort [asc\|desc]`<br> e.g., `sort desc`
-**Help**   | `help`
+**Remark** | `remark INDEX r/REMARK`<br> e.g., `remark 1 r/Prefers morning lessons`
+**Help**   | `help [COMMAND]`<br> e.g., `help`, `help lesson add`
 **Lesson add** | `lesson add st/STUDENT_INDEX [s/SUBJECT] d/DATE t/TIME [dur/MINUTES] [v/VENUE]`<br> e.g., `lesson add st/1 s/Math d/2026-12-22 t/16:30 dur/90`
 **Agenda** | `agenda [d/DATE] [week/]`<br> e.g., `agenda d/2026-12-22 week/`
 **Today** | `today`
