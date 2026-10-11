@@ -30,7 +30,7 @@ For power-users, TutorFlow can help you manage your students and lessons faster 
 
    * `delete 3` : Deletes the 3rd student shown in the current list.
 
-   * `clear` : Deletes all students.
+   * `clear confirm` : Deletes all students and lessons.
 
    * `exit` : Exits the app.
 
@@ -59,7 +59,7 @@ For power-users, TutorFlow can help you manage your students and lessons faster 
 * Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
 
-* Extraneous parameters for commands that take no parameters, such as `help`, `list`, `today`, `exit`, and `clear`, are ignored.<br>
+* Extraneous parameters for commands that take no parameters, such as `help`, `list`, `today` and `exit`, are ignored.<br>
   For example, `help 123` is interpreted as `help`.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
@@ -323,9 +323,18 @@ Examples:
 
 ### Clearing all entries: `clear`
 
-Clears all students and lessons from TutorFlow.
+Deletes **all** students and lessons from TutorFlow.
 
-Format: `clear`
+Format: `clear confirm`
+
+* Typing `clear` on its own deletes nothing. It only reminds you what would be deleted and how to confirm.
+* `confirm` must be written exactly in lower case. Anything else after `clear` is rejected, so a mistyped command can never wipe your data.
+* Clearing cannot be undone. TutorFlow saves the empty data straight away, so copy `data/addressbook.json` first if you may want your records back.
+* Clearing data that is already empty works and does nothing.
+
+Examples:
+* `clear` shows `This deletes ALL students and lessons. Type 'clear confirm' to proceed.`
+* `clear confirm` deletes everything.
 
 ### Exiting the program: `exit`
 
@@ -375,7 +384,7 @@ _Details coming soon ..._
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 **Add**    | `add n/NAME p/PHONE_NUMBER l/LEVEL s/SUBJECT... r/RATE [e/EMAIL] [v/VENUE]` <br> e.g., `add n/James Ho p/22224444 l/S3 s/Math s/Physics r/55 e/jamesho@example.com v/Online`
-**Clear**  | `clear`
+**Clear**  | `clear confirm`
 **Delete** | `delete INDEX [confirm]`<br> e.g., `delete 3`, `delete 3 confirm`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [l/LEVEL] [s/SUBJECT]... [r/RATE] [v/VENUE]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
