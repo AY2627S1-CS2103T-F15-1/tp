@@ -71,7 +71,7 @@ public class AddressBookParser {
             case TodayCommand.COMMAND_WORD -> new TodayCommand(LocalDate.now());
             case LessonCommandParser.COMMAND_WORD -> new LessonCommandParser().parse(arguments);
             case ExitCommand.COMMAND_WORD -> new ExitCommand();
-            case HelpCommand.COMMAND_WORD -> new HelpCommand();
+            case HelpCommand.COMMAND_WORD -> new HelpCommandParser().parse(arguments);
             default -> {
                 logger.finer("This user input caused a ParseException: " + userInput);
                 throw new ParseException(MESSAGE_UNKNOWN_COMMAND);

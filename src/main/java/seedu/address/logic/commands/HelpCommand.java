@@ -1,21 +1,123 @@
 package seedu.address.logic.commands;
 
+import static java.util.Objects.requireNonNull;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import seedu.address.commons.util.ToStringBuilder;
+import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 
 /**
- * Formats full help instructions for every command for display.
+ * Shows every command with a one-line summary, or the usage of one command.
  */
 public class HelpCommand extends Command {
 
     public static final String COMMAND_WORD = "help";
 
-    public static final String MESSAGE_USAGE = COMMAND_WORD + ": Shows program usage instructions.\n"
-            + "Example: " + COMMAND_WORD;
+    public static final String MESSAGE_USAGE = COMMAND_WORD + ": Shows every command with a one-line summary, "
+            + "or how to use one command.\n"
+            + "Parameters: [COMMAND]\n"
+            + "Examples: " + COMMAND_WORD + ", " + COMMAND_WORD + " lesson add, " + COMMAND_WORD + " lesson";
 
-    public static final String SHOWING_HELP_MESSAGE = "Opened help window.";
+    public static final String MESSAGE_ALL_COMMANDS = "Commands (type 'help COMMAND' to see how to use one):";
+    public static final String MESSAGE_COMMANDS_STARTING_WITH = "Commands that start with '%1$s' (type 'help COMMAND' "
+            + "to see how to use one):";
+    public static final String MESSAGE_NO_HELP = "No help available for '%1$s'. Type 'help' for the full list.";
+
+    /** Every command, in the order that it is listed. */
+    private static final List<CommandHelp> COMMANDS = List.of(
+            new CommandHelp("add", "Adds a student", AddCommand.MESSAGE_USAGE),
+            new CommandHelp("edit", "Edits a student's details", EditCommand.MESSAGE_USAGE),
+            new CommandHelp("delete", "Deletes a student, and their lessons", DeleteCommand.MESSAGE_USAGE),
+            new CommandHelp("list", "Shows all students", ListCommand.MESSAGE_USAGE),
+            new CommandHelp("find", "Finds students by name", FindCommand.MESSAGE_USAGE),
+            new CommandHelp("view", "Shows a student's overview", ViewCommand.MESSAGE_USAGE),
+            new CommandHelp("sort", "Sorts students by name", SortCommand.MESSAGE_USAGE),
+            new CommandHelp("remark", "Sets a student's remark", RemarkCommand.MESSAGE_USAGE),
+            new CommandHelp("lesson add", "Schedules a lesson", LessonAddCommand.MESSAGE_USAGE),
+            new CommandHelp("lesson list", "Lists a student's lessons", LessonListCommand.MESSAGE_USAGE),
+            new CommandHelp("lesson move", "Reschedules a lesson", LessonMoveCommand.MESSAGE_USAGE),
+            new CommandHelp("lesson cancel", "Cancels a lesson", LessonCancelCommand.MESSAGE_USAGE),
+            new CommandHelp("lesson done", "Completes a lesson and records notes", LessonDoneCommand.MESSAGE_USAGE),
+            new CommandHelp("agenda", "Shows the lessons of a day or a week", AgendaCommand.MESSAGE_USAGE),
+            new CommandHelp("today", "Shows today's lessons", TodayCommand.MESSAGE_USAGE),
+            new CommandHelp("clear", "Deletes all data, after confirmation", ClearCommand.MESSAGE_USAGE),
+            new CommandHelp("help", "Shows this list, or how to use one command", MESSAGE_USAGE),
+            new CommandHelp("exit", "Exits TutorFlow", ExitCommand.MESSAGE_USAGE));
+
+    private final String commandName; // empty if every command is to be shown
+
+    /**
+     * Creates a {@code HelpCommand} that shows every command.
+     */
+    public HelpCommand() {
+        this("");
+    }
+
+    /**
+     * Creates a {@code HelpCommand} that shows help for {@code commandName}, which is every command if it is empty.
+     * Runs of spaces in {@code commandName} are treated as a single space.
+     */
+    public HelpCommand(String commandName) {
+        requireNonNull(commandName);
+        this.commandName = commandName.trim().replaceAll("\\s+", " ");
+    }
 
     @Override
-    public CommandResult execute(Model model) {
-        return new CommandResult(SHOWING_HELP_MESSAGE, true, false);
+    public CommandResult execute(Model model) throws CommandException {
+        requireNonNull(model);
+        if (commandName.isEmpty()) {
+            return new CommandResult(MESSAGE_ALL_COMMANDS + format(COMMANDS));
+        }
+
+        Optional<CommandHelp> exactMatch = COMMANDS.stream()
+                .filter(command -> command.name.equals(commandName)).findFirst();
+        if (exactMatch.isPresent()) {
+            return new CommandResult(exactMatch.get().usage);
+        }
+
+        // A word such as "lesson" is not a command on its own, so show the commands that start with it
+        List<CommandHelp> matches = COMMANDS.stream()
+                .filter(command -> command.name.startsWith(commandName + " ")).collect(Collectors.toList());
+        if (matches.isEmpty()) {
+            throw new CommandException(String.format(MESSAGE_NO_HELP, commandName));
+        }
+        return new CommandResult(String.format(MESSAGE_COMMANDS_STARTING_WITH, commandName) + format(matches));
     }
+
+    private static String format(List<CommandHelp> commands) {
+        int width = commands.stream().mapToInt(command -> command.name.length()).max().orElse(0);
+        return commands.stream()
+                .map(command -> String.format("\n  %-" + width + "s  %s", command.name, command.summary))
+                .collect(Collectors.joining());
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (other == this) {
+            return true;
+        }
+
+        // instanceof handles nulls
+        if (!(other instanceof HelpCommand otherCommand)) {
+            return false;
+        }
+
+        return commandName.equals(otherCommand.commandName);
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .add("commandName", commandName)
+                .toString();
+    }
+
+    /**
+     * What is shown for one command: its name, a one-line summary and how to use it.
+     */
+    private record CommandHelp(String name, String summary, String usage) {}
 }
