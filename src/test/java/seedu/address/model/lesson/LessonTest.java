@@ -55,6 +55,19 @@ public class LessonTest {
     }
 
     @Test
+    public void miss_retainsDetailsAndOriginalLesson() {
+        Lesson original = new LessonBuilder(ALICE_MATH).withVenue("Online").withNotes("Prepared algebra").build();
+        Lesson missed = original.miss();
+        assertEquals(new LessonBuilder(original).withStatus(LessonStatus.MISSED).build(), missed);
+        assertEquals(LessonStatus.SCHEDULED, original.getStatus());
+        assertTrue(original.isSameLesson(missed));
+        assertFalse(missed.isScheduled());
+        assertFalse(missed.isUpcoming(original.getDate().value));
+        assertFalse(missed.overlaps(original));
+        assertEquals(missed, missed.miss());
+    }
+
+    @Test
     public void constructor_nullRequiredField_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> new Lesson(null, ALICE_MATH.getStudentPhone(),
                 ALICE_MATH.getSubject(), ALICE_MATH.getDate(), ALICE_MATH.getTime(), ALICE_MATH.getDuration()));
