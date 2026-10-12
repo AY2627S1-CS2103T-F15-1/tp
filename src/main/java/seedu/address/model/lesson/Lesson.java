@@ -204,6 +204,14 @@ public class Lesson {
     }
 
     /**
+     * Returns a missed copy of this lesson, retaining all booking details and existing notes.
+     */
+    public Lesson miss() {
+        return new Lesson(studentName, studentPhone, subject, date, time, duration, venue, LessonStatus.MISSED,
+                notes, cancelReason);
+    }
+
+    /**
      * Returns true if this lesson is with the given {@code person}.
      */
     public boolean isWith(Person person) {

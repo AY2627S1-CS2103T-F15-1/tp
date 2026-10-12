@@ -12,6 +12,7 @@ import seedu.address.logic.commands.LessonAddCommand;
 import seedu.address.logic.commands.LessonCancelCommand;
 import seedu.address.logic.commands.LessonDoneCommand;
 import seedu.address.logic.commands.LessonListCommand;
+import seedu.address.logic.commands.LessonMissedCommand;
 import seedu.address.logic.commands.LessonMoveCommand;
 import seedu.address.model.lesson.LessonDate;
 import seedu.address.model.lesson.LessonDuration;
@@ -49,7 +50,7 @@ public class LessonCommandParserTest {
     @Test
     public void parse_missingLessonCommand_failure() {
         assertParseFailure(parser, "  ", String.format(MESSAGE_INVALID_COMMAND_FORMAT,
-                "Lesson commands: lesson add, lesson list, lesson move, lesson cancel, lesson done"));
+                "Lesson commands: lesson add, lesson list, lesson move, lesson cancel, lesson done, lesson missed"));
     }
 
     @Test
@@ -61,5 +62,10 @@ public class LessonCommandParserTest {
     @Test
     public void parse_unknownLessonCommand_failure() {
         assertParseFailure(parser, " fly st/1", MESSAGE_UNKNOWN_COMMAND);
+    }
+
+    @Test
+    public void parse_lessonMissed_returnsLessonMissedCommand() {
+        assertParseSuccess(parser, " missed 1", new LessonMissedCommand(INDEX_FIRST_PERSON));
     }
 }

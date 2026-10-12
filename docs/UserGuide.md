@@ -227,7 +227,7 @@ Format: `agenda [d/DATE] [week/]`
 * With `week/`, it shows the Monday to Sunday week that contains the date, one day after another. A day without lessons shows `— no lessons —`.
 * Each line shows the lesson number, the time, the student, the subject, the venue, and the status if the lesson is not simply scheduled. Lessons that overlap another lesson are marked `⚠ overlaps`.
 * Cancelled lessons are listed but are not counted in the number of lessons and the total time.
-* The lesson numbers are the ones that `lesson move`, `lesson cancel` and `lesson done` take, so run `agenda` or `lesson list` first and then use the number you see.
+* The lesson numbers are the ones that `lesson move`, `lesson cancel`, `lesson done` and `lesson missed` take, so run `agenda` or `lesson list` first and then use the number you see.
 * A day without lessons is not an error: it shows `No lessons on Tue 22 Dec 2026.`
 
 Examples:
@@ -265,8 +265,8 @@ Shows the lessons of one student.
 Format: `lesson list st/STUDENT_INDEX [all/]`
 
 * `STUDENT_INDEX` is the index number shown in the displayed student list.
-* By default, only upcoming lessons are shown, which means scheduled lessons from today onwards. With `all/`, past and cancelled lessons are shown as well.
-* The lessons are numbered in date order. These are the numbers that `lesson move`, `lesson cancel` and `lesson done` take.
+* By default, only upcoming lessons are shown, which means scheduled lessons from today onwards. With `all/`, past, completed, cancelled and missed lessons are shown as well.
+* The lessons are numbered in date order. These are the numbers that `lesson move`, `lesson cancel`, `lesson done` and `lesson missed` take.
 
 Examples:
 * `lesson list st/1` Shows the upcoming lessons of the 1st student.
@@ -320,6 +320,23 @@ Format: `lesson done INDEX [n/NOTES]`
 Examples:
 * `agenda` followed by `lesson done 1` completes today's 1st lesson without adding notes.
 * `lesson list st/1 all/` followed by `lesson done 2 n/Covered quadratic roots. Revise factorisation.` completes the 2nd displayed lesson or updates its notes if already completed.
+
+### Recording a missed lesson: `lesson missed`
+
+Marks a scheduled lesson as missed without deleting its record.
+
+Format: `lesson missed INDEX`
+
+* `INDEX` is the positive lesson number from the current `agenda` or `lesson list`, not the student number. Use `lesson list st/STUDENT_INDEX all/` to select a past lesson.
+* Only lessons dated today or earlier can be marked missed, using your computer's local date. Future, cancelled and completed lessons are rejected without changing data.
+* The student, subject, date, time, duration, venue and existing notes are retained. The missed status is saved automatically and counted in `view STUDENT_INDEX` under lesson history.
+* A missed lesson disappears from an upcoming-only list and no longer counts as a scheduling overlap. Use `all/` to include it again and check its current lesson number.
+* Repeating `lesson missed` on the same missed lesson leaves it unchanged. If the lesson actually took place, use `lesson done INDEX [n/NOTES]` to correct it to completed.
+* No extra parameters are accepted. This command does not record fees or payments.
+
+Examples:
+* `agenda` followed by `lesson missed 1` marks today's 1st displayed lesson as missed.
+* `lesson list st/1 all/` followed by `lesson missed 2` marks the 2nd displayed lesson as missed, provided it is scheduled for today or earlier.
 
 ### Clearing all entries: `clear`
 
@@ -390,3 +407,4 @@ Action     | Format, Examples
 **Lesson move** | `lesson move INDEX [d/DATE] [t/TIME] [dur/MINUTES] [v/VENUE]`<br> e.g., `lesson move 1 d/2026-12-24 t/17:00`
 **Lesson cancel** | `lesson cancel INDEX [r/REASON]`<br> e.g., `lesson cancel 1 r/Student unwell`
 **Lesson done** | `lesson done INDEX [n/NOTES]`<br> e.g., `lesson done 1 n/Covered quadratic roots`
+**Lesson missed** | `lesson missed INDEX`<br> e.g., `lesson missed 1`
