@@ -22,7 +22,8 @@ public class LessonMissedCommand extends Command {
 
     public static final String COMMAND_WORD = LessonCommandParser.COMMAND_WORD + " missed";
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Marks the lesson identified by the index "
-            + "in the displayed lesson list as missed, retaining its booking details and notes.\n"
+            + "in the displayed lesson list as missed, retaining its booking details and notes. "
+            + "It can only be used on or after the day of the lesson.\n"
             + "Parameters: INDEX (must be a positive integer)\n"
             + "Example: " + COMMAND_WORD + " 1";
     public static final String MESSAGE_SUCCESS = "Marked missed: %1$s.";
