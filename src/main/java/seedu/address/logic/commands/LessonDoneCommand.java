@@ -4,7 +4,6 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NOTES;
 
 import java.time.Clock;
-import java.time.LocalDate;
 import java.util.Objects;
 
 import seedu.address.commons.core.index.Index;
@@ -59,12 +58,8 @@ public class LessonDoneCommand extends Command {
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
         Lesson target = LessonCommandUtil.getLesson(model, lessonIndex);
-        if (target.getStatus() == LessonStatus.CANCELLED) {
-            throw new CommandException(MESSAGE_CANCELLED_LESSON);
-        }
-        if (target.getDate().value.isAfter(LocalDate.now(clock))) {
-            throw new CommandException(String.format(MESSAGE_FUTURE_LESSON, target.getDate()));
-        }
+        LessonCommandUtil.requireStatusNot(target, LessonStatus.CANCELLED, MESSAGE_CANCELLED_LESSON);
+        LessonCommandUtil.requireNotInFuture(target, clock, MESSAGE_FUTURE_LESSON);
         if (target.getStatus() == LessonStatus.COMPLETED && notes == null) {
             return new CommandResult(MESSAGE_ALREADY_COMPLETED);
         }

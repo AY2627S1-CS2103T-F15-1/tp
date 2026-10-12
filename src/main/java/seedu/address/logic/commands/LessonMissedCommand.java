@@ -3,7 +3,6 @@ package seedu.address.logic.commands;
 import static java.util.Objects.requireNonNull;
 
 import java.time.Clock;
-import java.time.LocalDate;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.ToStringBuilder;
@@ -55,15 +54,9 @@ public class LessonMissedCommand extends Command {
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
         Lesson target = LessonCommandUtil.getLesson(model, lessonIndex);
-        if (target.getStatus() == LessonStatus.CANCELLED) {
-            throw new CommandException(MESSAGE_CANCELLED_LESSON);
-        }
-        if (target.getStatus() == LessonStatus.COMPLETED) {
-            throw new CommandException(MESSAGE_COMPLETED_LESSON);
-        }
-        if (target.getDate().value.isAfter(LocalDate.now(clock))) {
-            throw new CommandException(String.format(MESSAGE_FUTURE_LESSON, target.getDate()));
-        }
+        LessonCommandUtil.requireStatusNot(target, LessonStatus.CANCELLED, MESSAGE_CANCELLED_LESSON);
+        LessonCommandUtil.requireStatusNot(target, LessonStatus.COMPLETED, MESSAGE_COMPLETED_LESSON);
+        LessonCommandUtil.requireNotInFuture(target, clock, MESSAGE_FUTURE_LESSON);
         if (target.getStatus() == LessonStatus.MISSED) {
             return new CommandResult(MESSAGE_ALREADY_MISSED);
         }
