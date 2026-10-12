@@ -22,23 +22,34 @@ import seedu.address.storage.Storage;
  * The main LogicManager of the app.
  */
 public class LogicManager implements Logic {
-    public static final String FILE_OPS_ERROR_FORMAT = "Could not save data due to the following error: %s";
+    public static final String FILE_OPS_ERROR_FORMAT = "Your change was applied in this session but could not be "
+            + "saved: %s. Fix this before closing TutorFlow.";
 
-    public static final String FILE_OPS_PERMISSION_ERROR_FORMAT =
-            "Could not save data to file %s due to insufficient permissions to write to the file or the folder.";
+    public static final String FILE_OPS_PERMISSION_ERROR_FORMAT = "Your change was applied in this session but "
+            + "could not be saved: TutorFlow cannot write to %s. Fix this before closing TutorFlow.";
 
     private final Logger logger = LogsCenter.getLogger(LogicManager.class);
 
     private final Model model;
     private final Storage storage;
     private final AddressBookParser addressBookParser;
+    private final String startupWarning;
 
     /**
      * Constructs a {@code LogicManager} with the given {@code Model} and {@code Storage}.
      */
     public LogicManager(Model model, Storage storage) {
+        this(model, storage, "");
+    }
+
+    /**
+     * Constructs a {@code LogicManager} that shows {@code startupWarning}, which may be empty, before the dashboard
+     * when TutorFlow starts.
+     */
+    public LogicManager(Model model, Storage storage, String startupWarning) {
         this.model = model;
         this.storage = storage;
+        this.startupWarning = startupWarning;
         addressBookParser = new AddressBookParser();
     }
 
@@ -64,6 +75,11 @@ public class LogicManager implements Logic {
     @Override
     public String getDashboard() {
         return new TodayCommand(LocalDate.now()).execute(model).getFeedbackToUser();
+    }
+
+    @Override
+    public String getStartupMessage() {
+        return startupWarning.isEmpty() ? getDashboard() : startupWarning + "\n\n" + getDashboard();
     }
 
     @Override

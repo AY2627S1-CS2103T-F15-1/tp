@@ -20,6 +20,7 @@ import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.ReadOnlyUserPrefs;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.util.SampleDataUtil;
+import seedu.address.storage.DataFileRecovery;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.Storage;
@@ -42,6 +43,7 @@ public class MainApp extends Application {
     protected Logic logic;
     protected Storage storage;
     protected Model model;
+    protected String startupWarning = "";
 
     @Override
     public void init() throws Exception {
@@ -55,7 +57,7 @@ public class MainApp extends Application {
 
         model = initModelManager(storage, userPrefs);
 
-        logic = new LogicManager(model, storage);
+        logic = new LogicManager(model, storage, startupWarning);
 
         ui = new UiManager(logic, storage.getAddressBookFilePath());
     }
@@ -80,6 +82,7 @@ public class MainApp extends Application {
         } catch (DataLoadingException e) {
             logger.warning("Data file at " + storage.getAddressBookFilePath() + " could not be loaded."
                     + " Will be starting with no data.");
+            startupWarning = DataFileRecovery.setAside(storage.getAddressBookFilePath());
             initialData = new AddressBook();
         }
 
