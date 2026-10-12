@@ -337,6 +337,8 @@ Format: `exit`
 
 TutorFlow automatically saves data after every command. You do not need to save manually.
 
+If a change cannot be saved, for example because the disk is full or the file is read-only, TutorFlow says `Your change was applied in this session but could not be saved`, and the reason. The change is still in the running app, so fix the problem (free some space, or make the file writable) and run any command again to save. Closing TutorFlow with `exit` is refused while the last save has failed, so that you do not lose the change.
+
 ### Editing the data file
 
 TutorFlow data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
@@ -346,7 +348,7 @@ Every lesson in the file must be with a student in the same file, with the same 
 <box type="warning" seamless>
 
 **Caution:**
-If your changes make the data file invalid, TutorFlow starts with no students and lessons at the next run. The invalid file remains on disk until you run a command (TutorFlow saves after every command). Still, we recommend backing up the file before editing it.<br>
+If your changes make the data file invalid, TutorFlow does not delete it. At the next run it renames the file to `addressbook.json.corrupt` (or `addressbook.json.corrupt.1` and so on, if that name is taken), starts with no students and lessons, and tells you where the file went. Fix the file and rename it back to `addressbook.json` while TutorFlow is closed to get your records back. We still recommend backing up the file before editing it.<br>
 Furthermore, certain edits can cause TutorFlow to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
 </box>
 
