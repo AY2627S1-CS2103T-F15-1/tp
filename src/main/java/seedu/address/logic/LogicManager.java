@@ -22,10 +22,11 @@ import seedu.address.storage.Storage;
  * The main LogicManager of the app.
  */
 public class LogicManager implements Logic {
-    public static final String FILE_OPS_ERROR_FORMAT = "Could not save data due to the following error: %s";
+    public static final String FILE_OPS_ERROR_FORMAT = "Your change was applied in this session but could not be "
+            + "saved: %s. Fix this before closing TutorFlow.";
 
-    public static final String FILE_OPS_PERMISSION_ERROR_FORMAT =
-            "Could not save data to file %s due to insufficient permissions to write to the file or the folder.";
+    public static final String FILE_OPS_PERMISSION_ERROR_FORMAT = "Your change was applied in this session but "
+            + "could not be saved: TutorFlow cannot write to %s. Fix this before closing TutorFlow.";
 
     private final Logger logger = LogsCenter.getLogger(LogicManager.class);
 
