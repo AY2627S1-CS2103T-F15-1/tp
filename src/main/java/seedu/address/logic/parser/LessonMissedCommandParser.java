@@ -10,6 +10,11 @@ import seedu.address.logic.parser.exceptions.ParseException;
  */
 public class LessonMissedCommandParser implements Parser<LessonMissedCommand> {
 
+    /**
+     * Parses the given {@code String} of arguments in the context of the LessonMissedCommand
+     * and returns a LessonMissedCommand object for execution.
+     * @throws ParseException if the arguments are not a single positive lesson index
+     */
     @Override
     public LessonMissedCommand parse(String args) throws ParseException {
         try {
