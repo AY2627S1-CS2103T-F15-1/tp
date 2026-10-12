@@ -3,7 +3,9 @@ package seedu.address.logic.commands;
 import static java.util.Objects.requireNonNull;
 
 import java.time.Clock;
+import java.util.logging.Logger;
 
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
@@ -29,6 +31,8 @@ public class LessonMissedCommand extends Command {
     public static final String MESSAGE_COMPLETED_LESSON = "Cannot mark a completed lesson as missed.";
     public static final String MESSAGE_FUTURE_LESSON =
             "That lesson is scheduled for %1$s. Mark it missed on or after that date.";
+
+    private static final Logger logger = LogsCenter.getLogger(LessonMissedCommand.class);
 
     private final Index lessonIndex;
     private final Clock clock;
@@ -62,6 +66,7 @@ public class LessonMissedCommand extends Command {
         }
 
         model.setLesson(target, target.miss());
+        logger.info("Marked a lesson of " + target.getStudentName() + " as missed");
         return new CommandResult(String.format(MESSAGE_SUCCESS, Messages.format(target)));
     }
 
