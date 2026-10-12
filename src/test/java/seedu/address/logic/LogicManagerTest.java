@@ -87,6 +87,21 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void getStartupMessage_noWarning_isTheDashboard() {
+        assertEquals(logic.getDashboard(), logic.getStartupMessage());
+    }
+
+    @Test
+    public void getStartupMessage_withWarning_showsWarningBeforeTheDashboard() {
+        String warning = "Your data file could not be read.";
+        Logic warningLogic = new LogicManager(model, new StorageManager(
+                new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json")),
+                new JsonUserPrefsStorage(temporaryFolder.resolve("userPrefs.json"))), warning);
+
+        assertEquals(warning + "\n\n" + warningLogic.getDashboard(), warningLogic.getStartupMessage());
+    }
+
+    @Test
     public void getDashboard_showsTodayCommandResult() {
         assertEquals(new TodayCommand(LocalDate.now()).execute(model).getFeedbackToUser(), logic.getDashboard());
     }

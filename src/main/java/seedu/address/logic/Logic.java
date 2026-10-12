@@ -26,6 +26,12 @@ public interface Logic {
      */
     String getDashboard();
 
+    /**
+     * Returns what is shown when TutorFlow starts: a warning about the data file, if there is one, followed by the
+     * dashboard.
+     */
+    String getStartupMessage();
+
     /** Returns an unmodifiable view of the filtered list of persons */
     ObservableList<Person> getFilteredPersonList();
 

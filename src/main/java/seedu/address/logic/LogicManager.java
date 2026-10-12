@@ -32,13 +32,23 @@ public class LogicManager implements Logic {
     private final Model model;
     private final Storage storage;
     private final AddressBookParser addressBookParser;
+    private final String startupWarning;
 
     /**
      * Constructs a {@code LogicManager} with the given {@code Model} and {@code Storage}.
      */
     public LogicManager(Model model, Storage storage) {
+        this(model, storage, "");
+    }
+
+    /**
+     * Constructs a {@code LogicManager} that shows {@code startupWarning}, which may be empty, before the dashboard
+     * when TutorFlow starts.
+     */
+    public LogicManager(Model model, Storage storage, String startupWarning) {
         this.model = model;
         this.storage = storage;
+        this.startupWarning = startupWarning;
         addressBookParser = new AddressBookParser();
     }
 
@@ -64,6 +74,11 @@ public class LogicManager implements Logic {
     @Override
     public String getDashboard() {
         return new TodayCommand(LocalDate.now()).execute(model).getFeedbackToUser();
+    }
+
+    @Override
+    public String getStartupMessage() {
+        return startupWarning.isEmpty() ? getDashboard() : startupWarning + "\n\n" + getDashboard();
     }
 
     @Override
