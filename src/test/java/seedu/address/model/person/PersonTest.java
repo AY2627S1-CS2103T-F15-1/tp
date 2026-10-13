@@ -88,6 +88,11 @@ public class PersonTest {
         // name has extra spaces between words, same phone -> returns true
         editedBob = new PersonBuilder(BOB).withName(VALID_NAME_BOB.replace(" ", "   ")).build();
         assertTrue(BOB.isSamePerson(editedBob));
+
+        // same name typed with a composed accent and with a separate accent, same phone -> returns true
+        Person composed = new PersonBuilder(ALICE).withName("Jos\u00e9 \u00c1lvarez").build();
+        Person decomposed = new PersonBuilder(ALICE).withName("Jose\u0301 A\u0301lvarez").build();
+        assertTrue(composed.isSamePerson(decomposed));
     }
 
     @Test
