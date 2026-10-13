@@ -4,6 +4,7 @@ import java.nio.file.Path;
 import java.util.logging.Logger;
 
 import javafx.event.ActionEvent;
+import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextInputControl;
@@ -15,6 +16,7 @@ import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.Logic;
 import seedu.address.logic.commands.CommandResult;
+import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
 
@@ -154,6 +156,20 @@ public class MainWindow extends UiPart<Stage> {
 
     void show() {
         primaryStage.show();
+    }
+
+    /**
+     * Handles the window's close button and File > Exit. Both run the {@code exit} command, which refuses to close
+     * TutorFlow while the latest changes could not be saved, so that closing the window cannot lose data.
+     */
+    @FXML
+    private void handleExitRequest(Event event) {
+        event.consume(); // the window is only closed by handleExit(), once the exit command has succeeded
+        try {
+            executeCommand(ExitCommand.COMMAND_WORD);
+        } catch (CommandException | ParseException e) {
+            logger.info("The window was not closed: " + e.getMessage()); // the result box shows why
+        }
     }
 
     /**
