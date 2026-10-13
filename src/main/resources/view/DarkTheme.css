@@ -153,6 +153,10 @@
     -fx-text-fill: white;
 }
 
+.result-display.error {
+    -fx-text-fill: #ff7b72;
+}
+
 .result-display .label {
     -fx-text-fill: black !important;
 }
