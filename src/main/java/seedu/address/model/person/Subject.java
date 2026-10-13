@@ -3,6 +3,8 @@ package seedu.address.model.person;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
+import java.util.Locale;
+
 /**
  * Represents a subject taught to a student in TutorFlow.
  * Guarantees: immutable; is valid as declared in {@link #isValidSubject(String)}
@@ -61,6 +63,6 @@ public class Subject {
 
     @Override
     public int hashCode() {
-        return value.toLowerCase().hashCode();
+        return value.toLowerCase(Locale.ROOT).hashCode();
     }
 }

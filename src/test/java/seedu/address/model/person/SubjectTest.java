@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
+import java.util.Locale;
+
 import org.junit.jupiter.api.Test;
 
 public class SubjectTest {
@@ -81,5 +83,16 @@ public class SubjectTest {
     @Test
     public void hashCode_equalSubjects_sameHashCode() {
         assertEquals(new Subject("Math").hashCode(), new Subject("MATH").hashCode());
+    }
+
+    @Test
+    public void hashCode_equalSubjectsInTurkishLocale_sameHashCode() {
+        Locale defaultLocale = Locale.getDefault();
+        try {
+            Locale.setDefault(Locale.forLanguageTag("tr-TR"));
+            assertEquals(new Subject("PHYSICS I").hashCode(), new Subject("physics i").hashCode());
+        } finally {
+            Locale.setDefault(defaultLocale);
+        }
     }
 }
