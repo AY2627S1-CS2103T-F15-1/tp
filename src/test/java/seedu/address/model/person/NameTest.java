@@ -60,6 +60,16 @@ public class NameTest {
     }
 
     @Test
+    public void constructor_accentTypedAsSeparateCharacter_isSameNameAsComposedAccent() {
+        Name composed = new Name("Jos\u00e9 \u00c1lvarez");
+        Name decomposed = new Name("Jose\u0301 A\u0301lvarez");
+
+        assertEquals(composed, decomposed);
+        assertEquals(composed.hashCode(), decomposed.hashCode());
+        assertEquals("Jos\u00e9 \u00c1lvarez", decomposed.fullName); // stored in the composed form
+    }
+
+    @Test
     public void equals() {
         Name name = new Name("Valid Name");
 

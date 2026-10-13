@@ -3,12 +3,15 @@ package seedu.address.model.person;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
+import java.text.Normalizer;
+
 /**
  * Represents a Person's name in the address book.
  * Guarantees: immutable; is valid as declared in {@link #isValidName(String)}
  *
  * <p>Leading and trailing whitespace is removed and runs of spaces inside the name are collapsed into one,
- * so {@code John  Tan} is stored, and compared, as {@code John Tan}.
+ * so {@code John  Tan} is stored, and compared, as {@code John Tan}. An accented letter is stored in its composed form,
+ * so {@code Jos\u00e9} typed with one character and with a letter and a separate accent is the same name.
  */
 public class Name {
 
@@ -32,7 +35,7 @@ public class Name {
     public Name(String name) {
         requireNonNull(name);
         checkArgument(isValidName(name), MESSAGE_CONSTRAINTS);
-        fullName = name.strip().replaceAll("\\s+", " ");
+        fullName = Normalizer.normalize(name.strip().replaceAll("\\s+", " "), Normalizer.Form.NFC);
     }
 
     /**
