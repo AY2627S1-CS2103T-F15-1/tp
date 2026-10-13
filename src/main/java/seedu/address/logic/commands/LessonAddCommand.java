@@ -107,7 +107,8 @@ public class LessonAddCommand extends Command {
     }
 
     /**
-     * Returns the subject the user asked for, or the only subject of {@code student} if none was asked for.
+     * Returns the subject of {@code student} that the user asked for, or the only subject of {@code student} if
+     * none was asked for. The lesson uses the student's own spelling, so {@code math} is shown as {@code Math}.
      */
     private Subject chooseSubject(Person student) throws CommandException {
         if (subject == null && student.getSubjects().size() == 1) {
@@ -117,10 +118,9 @@ public class LessonAddCommand extends Command {
             throw new CommandException(String.format(MESSAGE_SUBJECT_REQUIRED, student.getName(),
                     joinSubjects(student)));
         }
-        if (!student.getSubjects().contains(subject)) {
-            throw new CommandException(String.format(MESSAGE_SUBJECT_NOT_TAKEN, student.getName(), subject));
-        }
-        return subject;
+        return student.getSubjects().stream().filter(subject::equals).findFirst()
+                .orElseThrow(() -> new CommandException(
+                        String.format(MESSAGE_SUBJECT_NOT_TAKEN, student.getName(), subject)));
     }
 
     private static String joinSubjects(Person student) {
