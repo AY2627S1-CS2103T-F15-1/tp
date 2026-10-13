@@ -34,6 +34,9 @@ public class ParserUtil {
 
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
     public static final String MESSAGE_MISSING_PARAMETERS = "Missing required parameter(s): %1$s\n%2$s";
+    public static final int MAX_SUBJECTS_PER_STUDENT = 10;
+    public static final String MESSAGE_TOO_MANY_SUBJECTS = "A student can have at most "
+            + MAX_SUBJECTS_PER_STUDENT + " subjects.";
     public static final String MESSAGE_FLAG_TAKES_NO_VALUE = "The '%1$s' flag does not take a value.";
 
     /**
@@ -127,13 +130,17 @@ public class ParserUtil {
     /**
      * Parses {@code Collection<String> subjects} into a {@code Set<Subject>}.
      *
-     * @throws ParseException if any of the given {@code subjects} is invalid.
+     * @throws ParseException if any of the given {@code subjects} is invalid, or if there are more than
+     *     {@value #MAX_SUBJECTS_PER_STUDENT} different subjects.
      */
     public static Set<Subject> parseSubjects(Collection<String> subjects) throws ParseException {
         requireNonNull(subjects);
         final Set<Subject> subjectSet = new HashSet<>();
         for (String subject : subjects) {
             subjectSet.add(parseSubject(subject));
+        }
+        if (subjectSet.size() > MAX_SUBJECTS_PER_STUDENT) {
+            throw new ParseException(MESSAGE_TOO_MANY_SUBJECTS);
         }
         return subjectSet;
     }

@@ -200,6 +200,25 @@ public class ParserUtilTest {
     }
 
     @Test
+    public void parseSubjects_moreThanTenDifferentSubjects_throwsParseException() {
+        List<String> eleven = List.of("S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9", "S10", "S11");
+        String expectedMessage = ParserUtil.MESSAGE_TOO_MANY_SUBJECTS;
+        assertThrows(ParseException.class, expectedMessage, () -> ParserUtil.parseSubjects(eleven));
+    }
+
+    @Test
+    public void parseSubjects_exactlyTenSubjects_returnsThem() throws Exception {
+        List<String> ten = List.of("S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9", "S10");
+        assertEquals(10, ParserUtil.parseSubjects(ten).size());
+    }
+
+    @Test
+    public void parseSubjects_repeatedSubjects_countsEachSubjectOnce() throws Exception {
+        List<String> repeated = List.of("Math", "math", "MATH", "Physics");
+        assertEquals(2, ParserUtil.parseSubjects(repeated).size());
+    }
+
+    @Test
     public void parseSubjects_emptyCollection_returnsEmptySet() throws Exception {
         assertTrue(ParserUtil.parseSubjects(List.of()).isEmpty());
     }
