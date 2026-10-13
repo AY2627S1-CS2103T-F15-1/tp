@@ -55,6 +55,8 @@ public class NameTest {
         assertTrue(Name.isValidName("\u9648\u4f1f\u660e")); // Chinese characters
         assertTrue(Name.isValidName("Tan \u9648\u4f1f\u660e")); // English and Chinese together
         assertFalse(Name.isValidName("\u0301Jose")); // starts with a combining accent
+        assertFalse(Name.isValidName("a".repeat(101))); // too long
+        assertTrue(Name.isValidName("a".repeat(100))); // longest allowed
     }
 
     @Test

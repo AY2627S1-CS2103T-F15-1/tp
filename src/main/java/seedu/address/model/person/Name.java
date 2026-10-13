@@ -13,14 +13,14 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
 public class Name {
 
     public static final String MESSAGE_CONSTRAINTS =
-            "Names should only contain letters (in any language), numbers, spaces and the characters "
-                    + ". , ' ( ) / -, and should not be blank";
+            "Names must be 1-100 characters long and should only contain letters (in any language), "
+                    + "numbers, spaces and the characters . , ' ( ) / -";
 
     /*
      * The first character of the name must not be a whitespace,
      * otherwise " " (a blank string) becomes a valid input.
      */
-    public static final String VALIDATION_REGEX = "[\\p{L}\\p{N}][\\p{L}\\p{M}\\p{N} .,'()/-]*";
+    public static final String VALIDATION_REGEX = "[\\p{L}\\p{N}][\\p{L}\\p{M}\\p{N} .,'()/-]{0,99}";
 
     public final String fullName;
 
