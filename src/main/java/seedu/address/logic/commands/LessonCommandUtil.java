@@ -1,5 +1,6 @@
 package seedu.address.logic.commands;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -10,6 +11,7 @@ import seedu.address.model.Model;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonDate;
 import seedu.address.model.lesson.LessonDuration;
+import seedu.address.model.lesson.LessonStatus;
 import seedu.address.model.lesson.LessonTime;
 import seedu.address.model.person.Person;
 
@@ -50,6 +52,30 @@ final class LessonCommandUtil {
             throw new CommandException(Messages.MESSAGE_INVALID_LESSON_DISPLAYED_INDEX);
         }
         return shownLessons.get(lessonIndex.getZeroBased());
+    }
+
+    /**
+     * Checks that {@code lesson} does not have the given {@code status}.
+     *
+     * @param message the message to show if it does.
+     * @throws CommandException if the lesson has the status.
+     */
+    static void requireStatusNot(Lesson lesson, LessonStatus status, String message) throws CommandException {
+        if (lesson.getStatus() == status) {
+            throw new CommandException(message);
+        }
+    }
+
+    /**
+     * Checks that {@code lesson} is dated today or earlier, by the date of {@code clock}.
+     *
+     * @param messageFormat the message to show if it is not, where %1$s stands for the date of the lesson.
+     * @throws CommandException if the lesson is dated after today.
+     */
+    static void requireNotInFuture(Lesson lesson, Clock clock, String messageFormat) throws CommandException {
+        if (lesson.getDate().value.isAfter(LocalDate.now(clock))) {
+            throw new CommandException(String.format(messageFormat, lesson.getDate()));
+        }
     }
 
     /**

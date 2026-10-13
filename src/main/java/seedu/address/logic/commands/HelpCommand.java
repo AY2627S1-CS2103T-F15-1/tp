@@ -42,6 +42,7 @@ public class HelpCommand extends Command {
             new CommandHelp("lesson move", "Reschedules a lesson", LessonMoveCommand.MESSAGE_USAGE),
             new CommandHelp("lesson cancel", "Cancels a lesson", LessonCancelCommand.MESSAGE_USAGE),
             new CommandHelp("lesson done", "Completes a lesson and records notes", LessonDoneCommand.MESSAGE_USAGE),
+            new CommandHelp("lesson missed", "Marks a lesson as missed (no-show)", LessonMissedCommand.MESSAGE_USAGE),
             new CommandHelp("agenda", "Shows the lessons of a day or a week", AgendaCommand.MESSAGE_USAGE),
             new CommandHelp("today", "Shows today's lessons", TodayCommand.MESSAGE_USAGE),
             new CommandHelp("clear", "Deletes all data, after confirmation", ClearCommand.MESSAGE_USAGE),

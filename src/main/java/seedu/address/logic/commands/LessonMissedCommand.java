@@ -3,8 +3,9 @@ package seedu.address.logic.commands;
 import static java.util.Objects.requireNonNull;
 
 import java.time.Clock;
-import java.time.LocalDate;
+import java.util.logging.Logger;
 
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
@@ -21,7 +22,8 @@ public class LessonMissedCommand extends Command {
 
     public static final String COMMAND_WORD = LessonCommandParser.COMMAND_WORD + " missed";
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Marks the lesson identified by the index "
-            + "in the displayed lesson list as missed, retaining its booking details and notes.\n"
+            + "in the displayed lesson list as missed, retaining its booking details and notes. "
+            + "It can only be used on or after the day of the lesson.\n"
             + "Parameters: INDEX (must be a positive integer)\n"
             + "Example: " + COMMAND_WORD + " 1";
     public static final String MESSAGE_SUCCESS = "Marked missed: %1$s.";
@@ -30,6 +32,8 @@ public class LessonMissedCommand extends Command {
     public static final String MESSAGE_COMPLETED_LESSON = "Cannot mark a completed lesson as missed.";
     public static final String MESSAGE_FUTURE_LESSON =
             "That lesson is scheduled for %1$s. Mark it missed on or after that date.";
+
+    private static final Logger logger = LogsCenter.getLogger(LessonMissedCommand.class);
 
     private final Index lessonIndex;
     private final Clock clock;
@@ -55,20 +59,15 @@ public class LessonMissedCommand extends Command {
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
         Lesson target = LessonCommandUtil.getLesson(model, lessonIndex);
-        if (target.getStatus() == LessonStatus.CANCELLED) {
-            throw new CommandException(MESSAGE_CANCELLED_LESSON);
-        }
-        if (target.getStatus() == LessonStatus.COMPLETED) {
-            throw new CommandException(MESSAGE_COMPLETED_LESSON);
-        }
-        if (target.getDate().value.isAfter(LocalDate.now(clock))) {
-            throw new CommandException(String.format(MESSAGE_FUTURE_LESSON, target.getDate()));
-        }
+        LessonCommandUtil.requireStatusNot(target, LessonStatus.CANCELLED, MESSAGE_CANCELLED_LESSON);
+        LessonCommandUtil.requireStatusNot(target, LessonStatus.COMPLETED, MESSAGE_COMPLETED_LESSON);
+        LessonCommandUtil.requireNotInFuture(target, clock, MESSAGE_FUTURE_LESSON);
         if (target.getStatus() == LessonStatus.MISSED) {
             return new CommandResult(MESSAGE_ALREADY_MISSED);
         }
 
         model.setLesson(target, target.miss());
+        logger.info("Marked a lesson of " + target.getStudentName() + " as missed");
         return new CommandResult(String.format(MESSAGE_SUCCESS, Messages.format(target)));
     }
 

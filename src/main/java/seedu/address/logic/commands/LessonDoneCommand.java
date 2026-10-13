@@ -4,9 +4,10 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NOTES;
 
 import java.time.Clock;
-import java.time.LocalDate;
 import java.util.Objects;
+import java.util.logging.Logger;
 
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
@@ -32,6 +33,8 @@ public class LessonDoneCommand extends Command {
     public static final String MESSAGE_CANCELLED_LESSON = "Cannot complete a cancelled lesson.";
     public static final String MESSAGE_FUTURE_LESSON =
             "That lesson is scheduled for %1$s. Mark it complete on or after that date.";
+
+    private static final Logger logger = LogsCenter.getLogger(LessonDoneCommand.class);
 
     private final Index lessonIndex;
     private final String notes; // null if no notes were given
@@ -59,17 +62,14 @@ public class LessonDoneCommand extends Command {
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
         Lesson target = LessonCommandUtil.getLesson(model, lessonIndex);
-        if (target.getStatus() == LessonStatus.CANCELLED) {
-            throw new CommandException(MESSAGE_CANCELLED_LESSON);
-        }
-        if (target.getDate().value.isAfter(LocalDate.now(clock))) {
-            throw new CommandException(String.format(MESSAGE_FUTURE_LESSON, target.getDate()));
-        }
+        LessonCommandUtil.requireStatusNot(target, LessonStatus.CANCELLED, MESSAGE_CANCELLED_LESSON);
+        LessonCommandUtil.requireNotInFuture(target, clock, MESSAGE_FUTURE_LESSON);
         if (target.getStatus() == LessonStatus.COMPLETED && notes == null) {
             return new CommandResult(MESSAGE_ALREADY_COMPLETED);
         }
 
         model.setLesson(target, target.complete(notes));
+        logger.info("Completed a lesson of " + target.getStudentName());
         String message = target.getStatus() == LessonStatus.COMPLETED ? MESSAGE_UPDATED_NOTES : MESSAGE_SUCCESS;
         return new CommandResult(String.format(message, Messages.format(target)));
     }
