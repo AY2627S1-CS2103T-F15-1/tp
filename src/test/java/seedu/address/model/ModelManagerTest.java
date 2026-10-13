@@ -101,13 +101,13 @@ public class ModelManagerTest {
     }
 
     @Test
-    public void addLesson_filteredLessonList_showsAddedLesson() {
+    public void addLesson_filteredLessonList_keepsTheShownLessonsUnchanged() {
         modelManager.addLesson(ALICE_MATH);
         modelManager.updateFilteredLessonList(lesson -> false);
 
         modelManager.addLesson(CARL_ENGLISH);
 
-        assertEquals(List.of(ALICE_MATH, CARL_ENGLISH), modelManager.getFilteredLessonList());
+        assertEquals(List.of(), modelManager.getFilteredLessonList());
     }
 
     @Test

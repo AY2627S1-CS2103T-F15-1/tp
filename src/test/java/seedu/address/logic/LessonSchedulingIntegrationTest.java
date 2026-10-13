@@ -78,6 +78,28 @@ public class LessonSchedulingIntegrationTest {
     }
 
     @Test
+    public void execute_addingALessonAfterTheAgenda_doesNotShiftTheShownNumbers() throws Exception {
+        logic.execute("lesson add st/1 d/" + DAY + " t/10:00");
+        logic.execute("lesson add st/2 s/Physics d/" + DAY + " t/12:00");
+        logic.execute("agenda d/" + DAY);
+
+        // a lesson on another day is added, but the agenda on screen is unchanged
+        logic.execute("lesson add st/1 d/" + DAY.minusDays(3) + " t/09:00");
+        logic.execute("lesson cancel 2");
+
+        assertEquals(LessonStatus.CANCELLED, savedLessons().get(1).getStatus());
+        assertEquals(LessonStatus.SCHEDULED, savedLessons().get(2).getStatus());
+    }
+
+    @Test
+    public void execute_lessonNumberBeforeAnyAgenda_isRejectedAtStartup() throws Exception {
+        logic.execute("lesson add st/1 d/" + DAY + " t/10:00");
+        model.updateFilteredLessonList(unused -> false);
+
+        assertThrows(CommandException.class, () -> logic.execute("lesson cancel 1"));
+    }
+
+    @Test
     public void execute_lessonListThenMove_usesTheNumbersOfLessonList() throws Exception {
         logic.execute("lesson add st/1 d/" + DAY.plusDays(2) + " t/10:00");
         logic.execute("lesson add st/1 d/" + DAY + " t/10:00");
