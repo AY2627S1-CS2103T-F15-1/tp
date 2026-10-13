@@ -50,6 +50,23 @@ public class NameTest {
         assertTrue(Name.isValidName("Nur Aisyah d/o Ahmad")); // slash
         assertTrue(Name.isValidName("Tan Wei Ming (twin A)")); // brackets
         assertTrue(Name.isValidName("O'Brien-Smith Jr.")); // apostrophe, hyphen and full stop
+        assertTrue(Name.isValidName("Jos\u00e9 \u00c1lvarez")); // accented letters
+        assertTrue(Name.isValidName("Jose\u0301 Alvarez")); // letter followed by a combining accent
+        assertTrue(Name.isValidName("\u9648\u4f1f\u660e")); // Chinese characters
+        assertTrue(Name.isValidName("Tan \u9648\u4f1f\u660e")); // English and Chinese together
+        assertFalse(Name.isValidName("\u0301Jose")); // starts with a combining accent
+        assertFalse(Name.isValidName("a".repeat(101))); // too long
+        assertTrue(Name.isValidName("a".repeat(100))); // longest allowed
+    }
+
+    @Test
+    public void constructor_accentTypedAsSeparateCharacter_isSameNameAsComposedAccent() {
+        Name composed = new Name("Jos\u00e9 \u00c1lvarez");
+        Name decomposed = new Name("Jose\u0301 A\u0301lvarez");
+
+        assertEquals(composed, decomposed);
+        assertEquals(composed.hashCode(), decomposed.hashCode());
+        assertEquals("Jos\u00e9 \u00c1lvarez", decomposed.fullName); // stored in the composed form
     }
 
     @Test

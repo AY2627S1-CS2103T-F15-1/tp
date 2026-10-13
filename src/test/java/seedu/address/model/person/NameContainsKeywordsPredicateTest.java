@@ -69,6 +69,13 @@ public class NameContainsKeywordsPredicateTest {
     }
 
     @Test
+    public void test_keywordWithAccentTypedAsSeparateCharacter_returnsTrue() {
+        NameContainsKeywordsPredicate predicate = new NameContainsKeywordsPredicate(List.of("Jose\u0301"));
+
+        assertTrue(predicate.test(new PersonBuilder().withName("Jos\u00e9 \u00c1lvarez").build()));
+    }
+
+    @Test
     public void test_nameDoesNotContainKeywords_returnsFalse() {
         // Zero keywords
         NameContainsKeywordsPredicate predicate = new NameContainsKeywordsPredicate(List.of());

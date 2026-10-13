@@ -3,24 +3,27 @@ package seedu.address.model.person;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
+import java.text.Normalizer;
+
 /**
  * Represents a Person's name in the address book.
  * Guarantees: immutable; is valid as declared in {@link #isValidName(String)}
  *
  * <p>Leading and trailing whitespace is removed and runs of spaces inside the name are collapsed into one,
- * so {@code John  Tan} is stored, and compared, as {@code John Tan}.
+ * so {@code John  Tan} is stored, and compared, as {@code John Tan}. An accented letter is stored in its composed form,
+ * so {@code Jos\u00e9} typed with one character and with a letter and a separate accent is the same name.
  */
 public class Name {
 
     public static final String MESSAGE_CONSTRAINTS =
-            "Names should only contain letters, numbers, spaces and the characters . , ' ( ) / -, "
-                    + "and should not be blank";
+            "Names must be 1-100 characters long and should only contain letters (in any language), "
+                    + "numbers, spaces and the characters . , ' ( ) / -";
 
     /*
      * The first character of the name must not be a whitespace,
      * otherwise " " (a blank string) becomes a valid input.
      */
-    public static final String VALIDATION_REGEX = "[\\p{Alnum}][\\p{Alnum} .,'()/-]*";
+    public static final String VALIDATION_REGEX = "[\\p{L}\\p{N}][\\p{L}\\p{M}\\p{N} .,'()/-]{0,99}";
 
     public final String fullName;
 
@@ -32,7 +35,7 @@ public class Name {
     public Name(String name) {
         requireNonNull(name);
         checkArgument(isValidName(name), MESSAGE_CONSTRAINTS);
-        fullName = name.strip().replaceAll("\\s+", " ");
+        fullName = Normalizer.normalize(name.strip().replaceAll("\\s+", " "), Normalizer.Form.NFC);
     }
 
     /**

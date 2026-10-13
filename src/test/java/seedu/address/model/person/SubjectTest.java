@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
+import java.util.Locale;
+
 import org.junit.jupiter.api.Test;
 
 public class SubjectTest {
@@ -44,6 +46,10 @@ public class SubjectTest {
         assertTrue(Subject.isValidSubject("English & Literature")); // ampersand
         assertTrue(Subject.isValidSubject("Chinese-Higher")); // hyphen
         assertTrue(Subject.isValidSubject("a".repeat(30))); // longest allowed
+        assertTrue(Subject.isValidSubject("\u534e\u6587")); // Chinese characters
+        assertTrue(Subject.isValidSubject("Fran\u00e7ais")); // accented letter
+        assertTrue(Subject.isValidSubject("\u534e".repeat(30))); // longest allowed, in Chinese
+        assertFalse(Subject.isValidSubject("\u534e".repeat(31))); // too long, in Chinese
     }
 
     @Test
@@ -77,5 +83,26 @@ public class SubjectTest {
     @Test
     public void hashCode_equalSubjects_sameHashCode() {
         assertEquals(new Subject("Math").hashCode(), new Subject("MATH").hashCode());
+    }
+
+    @Test
+    public void constructor_accentTypedAsSeparateCharacter_isSameSubjectAsComposedAccent() {
+        Subject composed = new Subject("Fran\u00e7ais");
+        Subject decomposed = new Subject("Franc\u0327ais");
+
+        assertEquals(composed, decomposed);
+        assertEquals(composed.hashCode(), decomposed.hashCode());
+        assertEquals("Fran\u00e7ais", decomposed.toString());
+    }
+
+    @Test
+    public void hashCode_equalSubjectsInTurkishLocale_sameHashCode() {
+        Locale defaultLocale = Locale.getDefault();
+        try {
+            Locale.setDefault(Locale.forLanguageTag("tr-TR"));
+            assertEquals(new Subject("PHYSICS I").hashCode(), new Subject("physics i").hashCode());
+        } finally {
+            Locale.setDefault(defaultLocale);
+        }
     }
 }
