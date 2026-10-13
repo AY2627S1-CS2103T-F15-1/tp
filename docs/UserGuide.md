@@ -59,8 +59,11 @@ For power-users, TutorFlow can help you manage your students and lessons faster 
 * Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
 
-* Extraneous parameters for commands that take no parameters, such as `list`, `today` and `exit`, are ignored.<br>
+* Extraneous parameters for `list` are ignored.<br>
   For example, `list 123` is interpreted as `list`.
+
+* `today` and `exit` take no parameters. If you type anything after them, TutorFlow shows an error and does not run them.<br>
+  For example, `exit now` is rejected, so a mistyped command cannot close the app.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </box>
