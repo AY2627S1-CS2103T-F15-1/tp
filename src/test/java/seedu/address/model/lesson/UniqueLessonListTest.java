@@ -47,6 +47,27 @@ public class UniqueLessonListTest {
     }
 
     @Test
+    public void contains_cancelledLessonInList_returnsFalse() {
+        uniqueLessonList.add(new LessonBuilder(ALICE_MATH).withStatus(LessonStatus.CANCELLED).build());
+        assertFalse(uniqueLessonList.contains(ALICE_MATH));
+    }
+
+    @Test
+    public void add_sameSlotAsCancelledLesson_success() {
+        Lesson cancelled = new LessonBuilder(ALICE_MATH).withStatus(LessonStatus.CANCELLED).build();
+        uniqueLessonList.add(cancelled);
+        uniqueLessonList.add(ALICE_MATH);
+        assertTrue(uniqueLessonList.contains(ALICE_MATH));
+    }
+
+    @Test
+    public void setLessons_cancelledAndScheduledInSameSlot_success() {
+        Lesson cancelled = new LessonBuilder(ALICE_MATH).withStatus(LessonStatus.CANCELLED).build();
+        uniqueLessonList.setLessons(List.of(ALICE_MATH, cancelled));
+        assertEquals(List.of(ALICE_MATH, cancelled), uniqueLessonList.asUnmodifiableObservableList());
+    }
+
+    @Test
     public void add_nullLesson_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> uniqueLessonList.add(null));
     }

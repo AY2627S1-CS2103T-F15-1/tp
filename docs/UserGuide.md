@@ -321,6 +321,7 @@ Format: `lesson cancel INDEX [r/REASON]`
 * `REASON` is up to 200 characters on one line, such as `Student unwell`.
 * The lesson stays in the agenda as cancelled and no longer overlaps other lessons.
 * A lesson that is already cancelled or already completed cannot be cancelled.
+* A cancelled lesson does not block its slot. To book that time again, use `lesson add` with the same details. The cancelled record stays in your history.
 
 Examples:
 * `lesson cancel 1` Cancels the 1st lesson.

@@ -157,6 +157,19 @@ public class Lesson {
         return Optional.ofNullable(cancelReason);
     }
 
+    public boolean isCancelled() {
+        return status == LessonStatus.CANCELLED;
+    }
+
+    /**
+     * Returns true if this lesson and {@code otherLesson} would occupy the same slot twice, which is not allowed.
+     * They are the same lesson (see {@link #isSameLesson(Lesson)}) and neither is cancelled, so that a cancelled
+     * lesson never stops its slot from being booked again.
+     */
+    public boolean isDuplicateOf(Lesson otherLesson) {
+        return isSameLesson(otherLesson) && !isCancelled() && !otherLesson.isCancelled();
+    }
+
     public boolean isScheduled() {
         return status == LessonStatus.SCHEDULED;
     }
