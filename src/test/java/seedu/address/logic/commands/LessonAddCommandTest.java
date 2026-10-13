@@ -75,6 +75,13 @@ public class LessonAddCommandTest {
     }
 
     @Test
+    public void execute_subjectTypedInOtherCase_usesTheStudentsSpelling() throws Exception {
+        new LessonAddCommand(INDEX_FIRST_PERSON, new Subject("mATh"), DATE, TIME, DURATION, null).execute(model);
+
+        assertEquals("Math", model.getFilteredLessonList().get(0).getSubject().toString());
+    }
+
+    @Test
     public void execute_studentAndLessonWithoutVenue_showsNoVenue() {
         Person studentWithoutVenue = new PersonBuilder(ALICE).withoutVenue().build();
         model.setPerson(ALICE, studentWithoutVenue);
