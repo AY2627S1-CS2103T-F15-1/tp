@@ -44,6 +44,10 @@ public class SubjectTest {
         assertTrue(Subject.isValidSubject("English & Literature")); // ampersand
         assertTrue(Subject.isValidSubject("Chinese-Higher")); // hyphen
         assertTrue(Subject.isValidSubject("a".repeat(30))); // longest allowed
+        assertTrue(Subject.isValidSubject("\u534e\u6587")); // Chinese characters
+        assertTrue(Subject.isValidSubject("Fran\u00e7ais")); // accented letter
+        assertTrue(Subject.isValidSubject("\u534e".repeat(30))); // longest allowed, in Chinese
+        assertFalse(Subject.isValidSubject("\u534e".repeat(31))); // too long, in Chinese
     }
 
     @Test

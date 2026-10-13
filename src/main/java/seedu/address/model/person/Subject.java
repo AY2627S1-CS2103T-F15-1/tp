@@ -7,16 +7,16 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
  * Represents a subject taught to a student in TutorFlow.
  * Guarantees: immutable; is valid as declared in {@link #isValidSubject(String)}
  *
- * <p>Subjects are free text (1-30 characters) using letters, digits, spaces,
+ * <p>Subjects are free text (1-30 characters) using letters of any language, digits, spaces,
  * {@code &} and {@code -}. Case is preserved for display but comparison is
  * case-insensitive, so {@code math} and {@code Math} are treated as the same subject.
  */
 public class Subject {
 
     public static final String MESSAGE_CONSTRAINTS =
-            "Subjects must be 1-30 characters using only letters, digits, spaces, & and -.";
+            "Subjects must be 1-30 characters using only letters (in any language), digits, spaces, & and -.";
 
-    public static final String VALIDATION_REGEX = "[\\p{Alpha}\\d][\\p{Alpha}\\d &-]{0,29}";
+    public static final String VALIDATION_REGEX = "[\\p{L}\\p{N}][\\p{L}\\p{M}\\p{N} &-]{0,29}";
 
     public final String value;
 
