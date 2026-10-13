@@ -86,6 +86,16 @@ public class SubjectTest {
     }
 
     @Test
+    public void constructor_accentTypedAsSeparateCharacter_isSameSubjectAsComposedAccent() {
+        Subject composed = new Subject("Fran\u00e7ais");
+        Subject decomposed = new Subject("Franc\u0327ais");
+
+        assertEquals(composed, decomposed);
+        assertEquals(composed.hashCode(), decomposed.hashCode());
+        assertEquals("Fran\u00e7ais", decomposed.toString());
+    }
+
+    @Test
     public void hashCode_equalSubjectsInTurkishLocale_sameHashCode() {
         Locale defaultLocale = Locale.getDefault();
         try {

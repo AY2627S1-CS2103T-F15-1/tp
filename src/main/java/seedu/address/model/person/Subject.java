@@ -3,6 +3,7 @@ package seedu.address.model.person;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
+import java.text.Normalizer;
 import java.util.Locale;
 
 /**
@@ -11,7 +12,8 @@ import java.util.Locale;
  *
  * <p>Subjects are free text (1-30 characters) using letters of any language, digits, spaces,
  * {@code &} and {@code -}. Case is preserved for display but comparison is
- * case-insensitive, so {@code math} and {@code Math} are treated as the same subject.
+ * case-insensitive, so {@code math} and {@code Math} are treated as the same subject. An accented letter is stored
+ * in its composed form, so it does not matter how an accent was typed.
  */
 public class Subject {
 
@@ -29,7 +31,7 @@ public class Subject {
      */
     public Subject(String subject) {
         requireNonNull(subject);
-        String trimmed = subject.strip().replaceAll("\\s+", " ");
+        String trimmed = Normalizer.normalize(subject.strip().replaceAll("\\s+", " "), Normalizer.Form.NFC);
         checkArgument(isValidSubject(trimmed), MESSAGE_CONSTRAINTS);
         value = trimmed;
     }
