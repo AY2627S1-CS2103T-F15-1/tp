@@ -4,13 +4,35 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.testutil.Assert.assertThrows;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
 
 public class UserGuideTest {
+    @Test
+    public void loadHtml_missingGuide_throwsIoException() {
+        assertThrows(IOException.class, "Missing resource: /missing-guide.md", () -> {
+            UserGuide.loadHtml("/missing-guide.md", "/view/UserGuide.css");
+        });
+    }
+
+    @Test
+    public void loadHtml_missingStylesheet_throwsIoException() {
+        assertThrows(IOException.class, "Missing resource: /missing-style.css", () -> {
+            UserGuide.loadHtml("/guide/UserGuide.md", "/missing-style.css");
+        });
+    }
+
+    @Test
+    public void loadHtml_unbundledImage_preservesDestinationAndAltText() throws Exception {
+        String html = UserGuide.loadHtml("/view/UserGuideTest/unbundled-image.md", "/view/UserGuide.css");
+        assertTrue(html.contains("src=\"images/missing.png\" alt=\"Missing screenshot\""));
+    }
+
     @Test
     public void loadHtml_currentGuide_rendersOfflineContent() throws Exception {
         String html = UserGuide.loadHtml();
