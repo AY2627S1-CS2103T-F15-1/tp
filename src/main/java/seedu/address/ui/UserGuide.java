@@ -27,7 +27,14 @@ public final class UserGuide {
      * @throws IOException if a required resource cannot be read
      */
     public static String loadHtml() throws IOException {
-        String markdown = readResource("/guide/UserGuide.md")
+        return loadHtml("/guide/UserGuide.md", "/view/UserGuide.css");
+    }
+
+    /**
+     * Renders the guide at the given resource paths.
+     */
+    static String loadHtml(String guidePath, String stylesheetPath) throws IOException {
+        String markdown = readResource(guidePath)
                 .replace("<page-nav-print />", "")
                 .replaceAll("<box[^>]*>", "<div class=\"callout\">")
                 .replace("</box>", "</div>");
@@ -46,7 +53,7 @@ public final class UserGuide {
         String body = HtmlRenderer.builder().extensions(extensions).build().render(document);
         return "<!DOCTYPE html><html><head><meta charset=\"UTF-8\">"
                 + "<title>TutorFlow User Guide</title><style>"
-                + readResource("/view/UserGuide.css") + "</style></head><body>" + body + "</body></html>";
+                + readResource(stylesheetPath) + "</style></head><body>" + body + "</body></html>";
     }
 
     private static String readResource(String path) throws IOException {

@@ -17,6 +17,7 @@ public class HelpWindow extends UiPart<Stage> {
 
     private static final Logger logger = LogsCenter.getLogger(HelpWindow.class);
     private static final String FXML = "HelpWindow.fxml";
+    private final GuideLoader guideLoader;
 
     @FXML
     private WebView userGuide;
@@ -30,7 +31,15 @@ public class HelpWindow extends UiPart<Stage> {
      * @param root Stage to use as the root of the HelpWindow.
      */
     public HelpWindow(Stage root) {
+        this(root, UserGuide::loadHtml);
+    }
+
+    /**
+     * Creates a help window with a loader, allowing read failures to be handled independently of the viewer.
+     */
+    HelpWindow(Stage root, GuideLoader guideLoader) {
         super(FXML, root);
+        this.guideLoader = guideLoader;
         userGuide.getEngine().getLoadWorker().stateProperty().addListener((observable, oldState, newState) -> {
             switch (newState) {
                 case SCHEDULED, RUNNING -> loadStatus.setText("Loading User Guide...");
@@ -104,10 +113,15 @@ public class HelpWindow extends UiPart<Stage> {
     @FXML
     private void reloadGuide() {
         try {
-            userGuide.getEngine().loadContent(UserGuide.loadHtml());
+            userGuide.getEngine().loadContent(guideLoader.load());
         } catch (IOException e) {
             logger.warning("Could not read the bundled User Guide: " + e);
             loadStatus.setText("Could not read the bundled User Guide. Click Reload guide to try again.");
         }
+    }
+
+    @FunctionalInterface
+    interface GuideLoader {
+        String load() throws IOException;
     }
 }
