@@ -112,6 +112,22 @@ public class LessonSchedulingIntegrationTest {
     }
 
     @Test
+    public void execute_bookAgainAfterCancelling_succeedsAndKeepsTheCancelledRecord() throws Exception {
+        logic.execute("lesson add st/1 d/" + DAY + " t/10:00");
+        logic.execute("lesson cancel 1 r/Student unwell");
+
+        logic.execute("lesson add st/1 d/" + DAY + " t/10:00");
+
+        assertEquals(2, savedLessons().size());
+        assertEquals(LessonStatus.CANCELLED, savedLessons().get(0).getStatus());
+        assertEquals(LessonStatus.SCHEDULED, savedLessons().get(1).getStatus());
+        // both are still readable after a restart
+        assertEquals(2, addressBookStorage.readAddressBook().orElseThrow().getLessonList().size());
+        // but two live bookings of the slot are still rejected
+        assertThrows(CommandException.class, () -> logic.execute("lesson add st/1 d/" + DAY + " t/10:00"));
+    }
+
+    @Test
     public void execute_rejectedCommands_leaveSavedLessonsUnchanged() throws Exception {
         logic.execute("lesson add st/1 d/" + DAY + " t/10:00");
         List<Lesson> before = savedLessons();

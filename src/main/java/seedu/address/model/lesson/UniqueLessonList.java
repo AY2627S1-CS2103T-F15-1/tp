@@ -31,11 +31,12 @@ public class UniqueLessonList implements Iterable<Lesson> {
             FXCollections.unmodifiableObservableList(internalList);
 
     /**
-     * Returns true if the list contains an equivalent lesson as the given argument.
+     * Returns true if the list contains a lesson that {@code toCheck} would duplicate. A cancelled lesson never
+     * counts as a duplicate, so that its slot can be booked again.
      */
     public boolean contains(Lesson toCheck) {
         requireNonNull(toCheck);
-        return internalList.stream().anyMatch(toCheck::isSameLesson);
+        return internalList.stream().anyMatch(toCheck::isDuplicateOf);
     }
 
     /**
@@ -161,7 +162,7 @@ public class UniqueLessonList implements Iterable<Lesson> {
     private boolean lessonsAreUnique(List<Lesson> lessons) {
         for (int i = 0; i < lessons.size() - 1; i++) {
             for (int j = i + 1; j < lessons.size(); j++) {
-                if (lessons.get(i).isSameLesson(lessons.get(j))) {
+                if (lessons.get(i).isDuplicateOf(lessons.get(j))) {
                     return false;
                 }
             }

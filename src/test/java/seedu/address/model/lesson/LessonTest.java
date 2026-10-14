@@ -165,6 +165,16 @@ public class LessonTest {
     }
 
     @Test
+    public void isDuplicateOf_cancelledLesson_returnsFalse() {
+        Lesson cancelled = new LessonBuilder(ALICE_MATH).withStatus(LessonStatus.CANCELLED).build();
+        assertTrue(ALICE_MATH.isDuplicateOf(ALICE_MATH));
+        assertFalse(ALICE_MATH.isDuplicateOf(cancelled));
+        assertFalse(cancelled.isDuplicateOf(ALICE_MATH));
+        assertFalse(cancelled.isDuplicateOf(cancelled));
+        assertTrue(cancelled.isCancelled());
+    }
+
+    @Test
     public void isSameLesson() {
         // same object -> returns true
         assertTrue(ALICE_MATH.isSameLesson(ALICE_MATH));
