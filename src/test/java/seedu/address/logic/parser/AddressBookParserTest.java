@@ -82,7 +82,7 @@ public class AddressBookParserTest {
     @Test
     public void parseCommand_exit() throws Exception {
         assertTrue(parser.parseCommand(ExitCommand.COMMAND_WORD) instanceof ExitCommand);
-        assertTrue(parser.parseCommand(ExitCommand.COMMAND_WORD + " 3") instanceof ExitCommand);
+        assertParseException(ExitCommand.COMMAND_WORD + " 3", ExitCommand.COMMAND_WORD);
     }
 
     @Test
@@ -141,7 +141,12 @@ public class AddressBookParserTest {
     @Test
     public void parseCommand_today() throws Exception {
         assertTrue(parser.parseCommand(TodayCommand.COMMAND_WORD) instanceof TodayCommand);
-        assertTrue(parser.parseCommand(TodayCommand.COMMAND_WORD + " 3") instanceof TodayCommand);
+        assertParseException(TodayCommand.COMMAND_WORD + " 3", TodayCommand.COMMAND_WORD);
+    }
+
+    private void assertParseException(String input, String commandWord) {
+        String expectedMessage = String.format(AddressBookParser.MESSAGE_TAKES_NO_PARAMETERS, commandWord);
+        assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand(input));
     }
 
     @Test

@@ -30,6 +30,8 @@ import seedu.address.logic.parser.exceptions.ParseException;
  */
 public class AddressBookParser {
 
+    public static final String MESSAGE_TAKES_NO_PARAMETERS = "The '%1$s' command takes no parameters.";
+
     /**
      * Used for initial separation of command word and args.
      */
@@ -68,15 +70,31 @@ public class AddressBookParser {
             case SortCommand.COMMAND_WORD -> new SortCommandParser().parse(arguments);
             case AgendaCommand.COMMAND_WORD -> new AgendaCommandParser().parse(arguments);
             case ViewCommand.COMMAND_WORD -> new ViewCommandParser().parse(arguments);
-            case TodayCommand.COMMAND_WORD -> new TodayCommand(LocalDate.now());
+            case TodayCommand.COMMAND_WORD -> {
+                requireNoArguments(commandWord, arguments);
+                yield new TodayCommand(LocalDate.now());
+            }
             case LessonCommandParser.COMMAND_WORD -> new LessonCommandParser().parse(arguments);
-            case ExitCommand.COMMAND_WORD -> new ExitCommand();
+            case ExitCommand.COMMAND_WORD -> {
+                requireNoArguments(commandWord, arguments);
+                yield new ExitCommand();
+            }
             case HelpCommand.COMMAND_WORD -> new HelpCommandParser().parse(arguments);
             default -> {
                 logger.finer("This user input caused a ParseException: " + userInput);
                 throw new ParseException(MESSAGE_UNKNOWN_COMMAND);
             }
         };
+    }
+
+    /**
+     * Throws a {@code ParseException} if the user typed anything after {@code commandWord}, so that a command that
+     * takes no parameters is not run when the user meant something else, such as {@code exit now}.
+     */
+    private static void requireNoArguments(String commandWord, String arguments) throws ParseException {
+        if (!arguments.isBlank()) {
+            throw new ParseException(String.format(MESSAGE_TAKES_NO_PARAMETERS, commandWord));
+        }
     }
 
 }
