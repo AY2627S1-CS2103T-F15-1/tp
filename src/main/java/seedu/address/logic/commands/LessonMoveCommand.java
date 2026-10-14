@@ -44,6 +44,8 @@ public class LessonMoveCommand extends Command {
             + "Use 'lesson done' to correct its notes instead.";
     public static final String MESSAGE_CANCELLED_LESSON = "Cannot reschedule a cancelled lesson. "
             + "Schedule a new one instead.";
+    public static final String MESSAGE_MISSED_LESSON = "Cannot reschedule a missed lesson, as that would "
+            + "lose the record that it was missed. Use 'lesson add' to schedule a make-up lesson instead.";
 
     private static final Logger logger = LogsCenter.getLogger(LessonMoveCommand.class);
 
@@ -91,6 +93,9 @@ public class LessonMoveCommand extends Command {
         }
         if (lesson.getStatus() == LessonStatus.CANCELLED) {
             throw new CommandException(MESSAGE_CANCELLED_LESSON);
+        }
+        if (lesson.getStatus() == LessonStatus.MISSED) {
+            throw new CommandException(MESSAGE_MISSED_LESSON);
         }
     }
 

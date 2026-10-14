@@ -129,6 +129,14 @@ public class LessonMoveCommandTest {
     }
 
     @Test
+    public void execute_missedLesson_throwsCommandException() {
+        model.addLesson(new LessonBuilder(lesson).withStatus(LessonStatus.MISSED).build());
+
+        assertCommandFailure(new LessonMoveCommand(INDEX_FIRST_PERSON, NEW_DATE, null, null, null), model,
+                LessonMoveCommand.MESSAGE_MISSED_LESSON);
+    }
+
+    @Test
     public void execute_newDateInPast_throwsCommandException() {
         model.addLesson(lesson);
         LessonDate yesterday = new LessonDate(LocalDate.now().minusDays(1).toString());
