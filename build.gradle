@@ -29,13 +29,6 @@ test {
     finalizedBy jacocoTestReport
 }
 
-processResources {
-    from('docs') {
-        include 'UserGuide.md', 'images/**'
-        into 'guide'
-    }
-}
-
 task coverage(type: JacocoReport) {
     dependsOn test
     sourceDirectories.from files(sourceSets.main.allSource.srcDirs)
@@ -68,18 +61,9 @@ dependencies {
     implementation "org.openjfx:javafx-graphics:${javaFxVersion}:win"
     implementation "org.openjfx:javafx-graphics:${javaFxVersion}:mac"
     implementation "org.openjfx:javafx-graphics:${javaFxVersion}:linux"
-    implementation "org.openjfx:javafx-media:${javaFxVersion}:win"
-    implementation "org.openjfx:javafx-media:${javaFxVersion}:mac"
-    implementation "org.openjfx:javafx-media:${javaFxVersion}:linux"
-    implementation "org.openjfx:javafx-web:${javaFxVersion}:win"
-    implementation "org.openjfx:javafx-web:${javaFxVersion}:mac"
-    implementation "org.openjfx:javafx-web:${javaFxVersion}:linux"
 
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.7.0'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.7.4'
-    implementation 'org.commonmark:commonmark:0.30.1'
-    implementation 'org.commonmark:commonmark-ext-gfm-tables:0.30.1'
-    implementation 'org.commonmark:commonmark-ext-heading-anchor:0.30.1'
 
     testImplementation "org.junit.jupiter:junit-jupiter-api:${jUnitVersion}"
 

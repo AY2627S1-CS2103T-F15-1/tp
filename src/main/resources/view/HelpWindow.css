@@ -1,19 +1,19 @@
-.tool-bar {
-    -fx-background-color: derive(#1d1d1d, 20%);
-}
-
-.tool-bar .label, .tool-bar .button {
+#copyButton, #helpMessage {
     -fx-text-fill: white;
 }
 
-.tool-bar .button {
+#copyButton {
     -fx-background-color: dimgray;
 }
 
-.tool-bar .button:hover {
+#copyButton:hover {
     -fx-background-color: gray;
 }
 
-.tool-bar .button:armed {
+#copyButton:armed {
     -fx-background-color: darkgray;
+}
+
+#helpMessageContainer {
+    -fx-background-color: derive(#1d1d1d, 20%);
 }
