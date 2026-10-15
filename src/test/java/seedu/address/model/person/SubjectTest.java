@@ -5,11 +5,21 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 
 import org.junit.jupiter.api.Test;
 
 public class SubjectTest {
+
+    @Test
+    public void hashCode_unicodeCaseVariants_deduplicatesEqualSubjects() {
+        assertEquals(1, new HashSet<>(List.of(new Subject("I"), new Subject("i"),
+                new Subject("\u0130"), new Subject("\u0131"))).size());
+        assertEquals(1, new HashSet<>(List.of(new Subject("\u03a3"), new Subject("\u03c3"),
+                new Subject("\u03c2"))).size());
+    }
 
     @Test
     public void constructor_null_throwsNullPointerException() {

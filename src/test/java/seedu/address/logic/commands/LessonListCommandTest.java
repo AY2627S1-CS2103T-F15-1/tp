@@ -74,6 +74,18 @@ public class LessonListCommandTest {
     }
 
     @Test
+    public void execute_studentWithoutLessons_keepsUpcomingFilterForLaterChanges() throws Exception {
+        new LessonListCommand(INDEX_FIRST_PERSON, false).execute(model);
+        Lesson lesson = new LessonBuilder().withStudent(ALICE).withDate(LocalDate.now()).build();
+        model.addLesson(lesson);
+        assertEquals(List.of(lesson), model.getFilteredLessonList());
+
+        new LessonDoneCommand(Index.fromOneBased(1), null).execute(model);
+
+        assertTrue(model.getFilteredLessonList().isEmpty());
+    }
+
+    @Test
     public void execute_onlyPastLessons_suggestsAll() throws Exception {
         addLessons(past);
 

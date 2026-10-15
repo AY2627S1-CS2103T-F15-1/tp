@@ -4,7 +4,6 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
 import java.text.Normalizer;
-import java.util.Locale;
 
 /**
  * Represents a subject taught to a student in TutorFlow.
@@ -65,6 +64,8 @@ public class Subject {
 
     @Override
     public int hashCode() {
-        return value.toLowerCase(Locale.ROOT).hashCode();
+        // Match equalsIgnoreCase's case folding, including dotless i and the Greek final sigma.
+        return value.codePoints().map(point -> Character.toLowerCase(Character.toUpperCase(point)))
+                .reduce(0, (hash, point) -> 31 * hash + point);
     }
 }

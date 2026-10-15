@@ -59,15 +59,18 @@ public class LessonListCommand extends Command {
 
         Predicate<Lesson> isStudentsLesson = lesson -> lesson.isWith(student);
         model.updateFilteredLessonList(isStudentsLesson);
-        if (model.getFilteredLessonList().isEmpty()) {
-            return new CommandResult(String.format(MESSAGE_NO_LESSONS, student.getName()));
+        boolean hasLessons = !model.getFilteredLessonList().isEmpty();
+        if (!isShowingAll) {
+            LocalDate today = LocalDate.now();
+            model.updateFilteredLessonList(isStudentsLesson.and(lesson -> lesson.isUpcoming(today)));
         }
 
+        if (!hasLessons) {
+            return new CommandResult(String.format(MESSAGE_NO_LESSONS, student.getName()));
+        }
         if (isShowingAll) {
             return new CommandResult(format(MESSAGE_HEADER_ALL, student, model.getFilteredLessonList()));
         }
-        LocalDate today = LocalDate.now();
-        model.updateFilteredLessonList(isStudentsLesson.and(lesson -> lesson.isUpcoming(today)));
         if (model.getFilteredLessonList().isEmpty()) {
             return new CommandResult(String.format(MESSAGE_NO_UPCOMING_LESSONS, student.getName()));
         }

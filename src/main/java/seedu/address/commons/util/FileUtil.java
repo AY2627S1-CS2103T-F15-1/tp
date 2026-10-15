@@ -1,8 +1,12 @@
 package seedu.address.commons.util;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
 /**
  * Writes and reads files
@@ -44,11 +48,31 @@ public class FileUtil {
     }
 
     /**
-     * Writes given string to a file.
-     * Will create the file if it does not exist yet.
+     * Writes the given string to a file, creating it if needed.
+     * Replaces the saved file only after the complete content has been written successfully.
      */
     public static void writeToFile(Path file, String content) throws IOException {
-        Files.write(file, content.getBytes(CHARSET));
+        try (InputStream bytes = new ByteArrayInputStream(content.getBytes(CHARSET))) {
+            writeToFile(file, bytes);
+        }
+    }
+
+    /**
+     * Writes to a sibling temporary file before replacing the saved file atomically.
+     * Leaves the saved file untouched if writing or replacement fails, and does not close the caller's stream.
+     */
+    static void writeToFile(Path file, InputStream content) throws IOException {
+        Path target = file.toAbsolutePath();
+        if (Files.exists(target) && !Files.isWritable(target)) {
+            throw new AccessDeniedException(target.toString());
+        }
+        Path temporaryFile = Files.createTempFile(target.getParent(), ".tutorflow-", ".tmp");
+        try {
+            Files.copy(content, temporaryFile, StandardCopyOption.REPLACE_EXISTING);
+            Files.move(temporaryFile, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+        } finally {
+            Files.deleteIfExists(temporaryFile);
+        }
     }
 
 }

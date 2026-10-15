@@ -130,6 +130,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [l/LEVEL] [s/SUBJECT]...
 * At least one of the optional fields must be provided.
 * Existing values will be updated to the input values.
 * When editing subjects, all of the student's existing subjects are replaced; adding subjects is not cumulative. A student must keep at least one subject.
+* After changing a student's name or phone number, run `lesson list st/STUDENT_INDEX` again before using lesson numbers.
 * The values for the level, subjects, rate and venue follow the same rules as for [`add`](#adding-a-student-add).
 * If the edit gives the student the name of another student, it is accepted and TutorFlow shows a note. If the phone number is also the same as that student's, the edit is rejected as a duplicate.
 
@@ -393,6 +394,8 @@ Format: `exit`
 ### Saving the data
 
 TutorFlow automatically saves data after every command. You do not need to save manually.
+
+Each save is written completely to a temporary file beside the data file before replacing the previous save. If writing fails, the previous saved contents remain intact. If your file system cannot replace files atomically, TutorFlow reports a save error; move the app to a local folder that supports atomic file replacement and retry.
 
 If a change cannot be saved, for example because the disk is full or the file is read-only, TutorFlow says `Your change was applied in this session but could not be saved`, and the reason. The change is still in the running app, so fix the problem (free some space, or make the file writable) and run any command again to save. Closing TutorFlow with `exit` is refused while the last save has failed, so that you do not lose the change.
 

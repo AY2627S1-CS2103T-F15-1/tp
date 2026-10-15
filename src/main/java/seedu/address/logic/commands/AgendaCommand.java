@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.util.ToStringBuilder;
@@ -74,7 +75,7 @@ public class AgendaCommand extends Command {
             return new CommandResult(String.format(MESSAGE_NO_LESSONS_ON_DAY, DAY_FORMAT.format(date)));
         }
         return new CommandResult(String.format(MESSAGE_DAY_HEADER, DAY_FORMAT.format(date), summarise(lessons))
-                + formatLessons(model, lessons, lessons));
+                + formatLessons(model, lessons, date));
     }
 
     private static String formatWeek(Model model, LocalDate first, LocalDate last, List<Lesson> lessons) {
@@ -87,7 +88,7 @@ public class AgendaCommand extends Command {
             week.append("\n").append(DAY_FORMAT.format(day)).append(" (").append(summarise(lessonsOfDay))
                     .append(")");
             week.append(lessonsOfDay.isEmpty() ? "\n" + MESSAGE_EMPTY_DAY
-                    : formatLessons(model, lessons, lessonsOfDay));
+                    : formatLessons(model, lessons, day));
         }
         return week.toString();
     }
@@ -105,13 +106,14 @@ public class AgendaCommand extends Command {
     }
 
     /**
-     * Returns one numbered line for each of {@code lessonsToShow}. The number of a lesson is its position in
+     * Returns one numbered line for each lesson on {@code day}. The number of a lesson is its position in
      * {@code shownLessons}, which is the index that other commands use for it.
      */
-    private static String formatLessons(Model model, List<Lesson> shownLessons, List<Lesson> lessonsToShow) {
-        return lessonsToShow.stream()
-                .map(lesson -> "\n" + formatLine(shownLessons.indexOf(lesson) + 1, lesson,
-                        !model.getConflictingLessons(lesson).isEmpty()))
+    private static String formatLessons(Model model, List<Lesson> shownLessons, LocalDate day) {
+        return IntStream.range(0, shownLessons.size())
+                .filter(i -> shownLessons.get(i).getDate().value.equals(day))
+                .mapToObj(i -> "\n" + formatLine(i + 1, shownLessons.get(i),
+                        !model.getConflictingLessons(shownLessons.get(i)).isEmpty()))
                 .collect(Collectors.joining());
     }
 

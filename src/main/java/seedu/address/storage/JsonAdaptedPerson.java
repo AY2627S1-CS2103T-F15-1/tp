@@ -81,6 +81,9 @@ class JsonAdaptedPerson {
     public Person toModelType() throws IllegalValueException {
         final List<Subject> personSubjects = new ArrayList<>();
         for (JsonAdaptedSubject subject : subjects) {
+            if (subject == null) {
+                throw new IllegalValueException("Student's subjects contain a null subject.");
+            }
             personSubjects.add(subject.toModelType());
         }
 
