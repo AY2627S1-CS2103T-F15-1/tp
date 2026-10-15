@@ -6,7 +6,8 @@ jobs:
   build:
     strategy:
       matrix:
-        platform: [ubuntu-latest, macos-latest, windows-latest]
+        # The project's JavaFX mac libraries target Intel Macs.
+        platform: [ubuntu-latest, macos-15-intel, windows-latest]
     runs-on: ${{ matrix.platform }}
 
     steps:
@@ -26,7 +27,8 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: '25'
-          java-package: jdk+fx
+          # Use the JavaFX version declared in Gradle, matching the headless test runtime.
+          java-package: jdk
 
       - name: Build and check with Gradle
         run: ./gradlew check coverage

@@ -1,12 +1,12 @@
 package seedu.address.ui;
 
+import java.io.IOException;
 import java.util.logging.Logger;
 
+import javafx.concurrent.Worker;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.input.Clipboard;
-import javafx.scene.input.ClipboardContent;
+import javafx.scene.web.WebView;
 import javafx.stage.Stage;
 import seedu.address.commons.core.LogsCenter;
 
@@ -15,17 +15,15 @@ import seedu.address.commons.core.LogsCenter;
  */
 public class HelpWindow extends UiPart<Stage> {
 
-    public static final String USERGUIDE_URL = "https://ay2627s1-cs2103t-f15-1.github.io/tp/UserGuide.html";
-    public static final String HELP_MESSAGE = "Refer to the user guide: " + USERGUIDE_URL;
-
     private static final Logger logger = LogsCenter.getLogger(HelpWindow.class);
     private static final String FXML = "HelpWindow.fxml";
+    private final GuideLoader guideLoader;
 
     @FXML
-    private Button copyButton;
+    private WebView userGuide;
 
     @FXML
-    private Label helpMessage;
+    private Label loadStatus;
 
     /**
      * Creates a new HelpWindow.
@@ -33,8 +31,24 @@ public class HelpWindow extends UiPart<Stage> {
      * @param root Stage to use as the root of the HelpWindow.
      */
     public HelpWindow(Stage root) {
+        this(root, UserGuide::loadHtml);
+    }
+
+    /**
+     * Creates a help window with a loader, allowing read failures to be handled independently of the viewer.
+     */
+    HelpWindow(Stage root, GuideLoader guideLoader) {
         super(FXML, root);
-        helpMessage.setText(HELP_MESSAGE);
+        this.guideLoader = guideLoader;
+        userGuide.getEngine().getLoadWorker().stateProperty().addListener((observable, oldState, newState) -> {
+            switch (newState) {
+                case SCHEDULED, RUNNING -> loadStatus.setText("Loading User Guide...");
+                case SUCCEEDED -> loadStatus.setText("");
+                case FAILED, CANCELLED -> loadStatus.setText(
+                        "Could not load the bundled User Guide. Click Reload guide to try again.");
+                default -> loadStatus.setText("");
+            }
+        });
     }
 
     /**
@@ -66,6 +80,10 @@ public class HelpWindow extends UiPart<Stage> {
         logger.fine("Showing help page about the application.");
         getRoot().show();
         getRoot().centerOnScreen();
+        Worker.State state = userGuide.getEngine().getLoadWorker().getState();
+        if (state == Worker.State.READY || state == Worker.State.FAILED || state == Worker.State.CANCELLED) {
+            reloadGuide();
+        }
     }
 
     /**
@@ -90,13 +108,20 @@ public class HelpWindow extends UiPart<Stage> {
     }
 
     /**
-     * Copies the URL to the user guide to the clipboard.
+     * Loads the User Guide bundled from this project's documentation in the help window.
      */
     @FXML
-    private void copyUrl() {
-        final Clipboard clipboard = Clipboard.getSystemClipboard();
-        final ClipboardContent url = new ClipboardContent();
-        url.putString(USERGUIDE_URL);
-        clipboard.setContent(url);
+    private void reloadGuide() {
+        try {
+            userGuide.getEngine().loadContent(guideLoader.load());
+        } catch (IOException e) {
+            logger.warning("Could not read the bundled User Guide: " + e);
+            loadStatus.setText("Could not read the bundled User Guide. Click Reload guide to try again.");
+        }
+    }
+
+    @FunctionalInterface
+    interface GuideLoader {
+        String load() throws IOException;
     }
 }
