@@ -34,31 +34,39 @@ public class HelpCommandTest {
     }
 
     @Test
+    public void execute_overviewAndHelpUsage_pointToFullOfflineGuide() throws Exception {
+        assertTrue(helpFor("").contains("Help menu or F1"));
+        assertTrue(helpFor("help").contains("Help menu or F1"));
+        assertTrue(helpFor("lesson").contains("Help menu or F1"));
+        assertTrue(helpFor("lesson done").contains("Help menu or F1"));
+    }
+
+    @Test
     public void execute_everyListedCommand_showsItsUsage() throws Exception {
-        assertEquals(AddCommand.MESSAGE_USAGE, helpFor("add"));
-        assertEquals(EditCommand.MESSAGE_USAGE, helpFor("edit"));
-        assertEquals(DeleteCommand.MESSAGE_USAGE, helpFor("delete"));
-        assertEquals(ListCommand.MESSAGE_USAGE, helpFor("list"));
-        assertEquals(FindCommand.MESSAGE_USAGE, helpFor("find"));
-        assertEquals(ViewCommand.MESSAGE_USAGE, helpFor("view"));
-        assertEquals(SortCommand.MESSAGE_USAGE, helpFor("sort"));
-        assertEquals(RemarkCommand.MESSAGE_USAGE, helpFor("remark"));
-        assertEquals(LessonAddCommand.MESSAGE_USAGE, helpFor("lesson add"));
-        assertEquals(LessonListCommand.MESSAGE_USAGE, helpFor("lesson list"));
-        assertEquals(LessonMoveCommand.MESSAGE_USAGE, helpFor("lesson move"));
-        assertEquals(LessonCancelCommand.MESSAGE_USAGE, helpFor("lesson cancel"));
-        assertEquals(LessonDoneCommand.MESSAGE_USAGE, helpFor("lesson done"));
-        assertEquals(LessonMissedCommand.MESSAGE_USAGE, helpFor("lesson missed"));
-        assertEquals(AgendaCommand.MESSAGE_USAGE, helpFor("agenda"));
-        assertEquals(TodayCommand.MESSAGE_USAGE, helpFor("today"));
-        assertEquals(ClearCommand.MESSAGE_USAGE, helpFor("clear"));
-        assertEquals(HelpCommand.MESSAGE_USAGE, helpFor("help"));
-        assertEquals(ExitCommand.MESSAGE_USAGE, helpFor("exit"));
+        assertHelpUsage(AddCommand.MESSAGE_USAGE, "add");
+        assertHelpUsage(EditCommand.MESSAGE_USAGE, "edit");
+        assertHelpUsage(DeleteCommand.MESSAGE_USAGE, "delete");
+        assertHelpUsage(ListCommand.MESSAGE_USAGE, "list");
+        assertHelpUsage(FindCommand.MESSAGE_USAGE, "find");
+        assertHelpUsage(ViewCommand.MESSAGE_USAGE, "view");
+        assertHelpUsage(SortCommand.MESSAGE_USAGE, "sort");
+        assertHelpUsage(RemarkCommand.MESSAGE_USAGE, "remark");
+        assertHelpUsage(LessonAddCommand.MESSAGE_USAGE, "lesson add");
+        assertHelpUsage(LessonListCommand.MESSAGE_USAGE, "lesson list");
+        assertHelpUsage(LessonMoveCommand.MESSAGE_USAGE, "lesson move");
+        assertHelpUsage(LessonCancelCommand.MESSAGE_USAGE, "lesson cancel");
+        assertHelpUsage(LessonDoneCommand.MESSAGE_USAGE, "lesson done");
+        assertHelpUsage(LessonMissedCommand.MESSAGE_USAGE, "lesson missed");
+        assertHelpUsage(AgendaCommand.MESSAGE_USAGE, "agenda");
+        assertHelpUsage(TodayCommand.MESSAGE_USAGE, "today");
+        assertHelpUsage(ClearCommand.MESSAGE_USAGE, "clear");
+        assertHelpUsage(HelpCommand.MESSAGE_USAGE, "help");
+        assertHelpUsage(ExitCommand.MESSAGE_USAGE, "exit");
     }
 
     @Test
     public void execute_extraSpacesInCommandName_stillFindsCommand() throws Exception {
-        assertEquals(LessonAddCommand.MESSAGE_USAGE, helpFor("  lesson    add  "));
+        assertHelpUsage(LessonAddCommand.MESSAGE_USAGE, "  lesson    add  ");
     }
 
     @Test
@@ -96,6 +104,10 @@ public class HelpCommandTest {
     public void toStringMethod() {
         String expected = HelpCommand.class.getCanonicalName() + "{commandName=lesson add}";
         assertEquals(expected, new HelpCommand("lesson   add").toString());
+    }
+
+    private void assertHelpUsage(String usage, String commandName) throws Exception {
+        assertEquals(usage + "\n" + HelpCommand.MESSAGE_USER_GUIDE, helpFor(commandName));
     }
 
     private String helpFor(String commandName) throws Exception {

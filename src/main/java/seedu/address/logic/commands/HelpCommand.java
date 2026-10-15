@@ -16,15 +16,18 @@ import seedu.address.model.Model;
 public class HelpCommand extends Command {
 
     public static final String COMMAND_WORD = "help";
+    public static final String MESSAGE_USER_GUIDE =
+            "Read the full User Guide from the Help menu or F1 (works offline).";
 
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Shows every command with a one-line summary, "
             + "or how to use one command.\n"
             + "Parameters: [COMMAND]\n"
             + "Examples: " + COMMAND_WORD + ", " + COMMAND_WORD + " lesson add, " + COMMAND_WORD + " lesson";
 
-    public static final String MESSAGE_ALL_COMMANDS = "Commands (type 'help COMMAND' to see how to use one):";
+    public static final String MESSAGE_ALL_COMMANDS = MESSAGE_USER_GUIDE
+            + "\nCommands (type 'help COMMAND' to see how to use one):";
     public static final String MESSAGE_COMMANDS_STARTING_WITH = "Commands that start with '%1$s' (type 'help COMMAND' "
-            + "to see how to use one):";
+            + "to see how to use one):\n" + MESSAGE_USER_GUIDE;
     public static final String MESSAGE_NO_HELP = "No help available for '%1$s'. Type 'help' for the full list.";
 
     /** Every command, in the order that it is listed. */
@@ -77,7 +80,7 @@ public class HelpCommand extends Command {
         Optional<CommandHelp> exactMatch = COMMANDS.stream()
                 .filter(command -> command.name.equals(commandName)).findFirst();
         if (exactMatch.isPresent()) {
-            return new CommandResult(exactMatch.get().usage);
+            return new CommandResult(exactMatch.get().usage + "\n" + MESSAGE_USER_GUIDE);
         }
 
         // A word such as "lesson" is not a command on its own, so show the commands that start with it

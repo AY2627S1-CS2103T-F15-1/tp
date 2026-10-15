@@ -5,6 +5,8 @@ import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.commonmark.Extension;
 import org.commonmark.ext.gfm.tables.TablesExtension;
@@ -19,6 +21,10 @@ import org.commonmark.renderer.html.HtmlRenderer;
  * Renders the project's bundled Markdown User Guide for the help window.
  */
 public final class UserGuide {
+    private static final String CONTENTS_PLACEHOLDER = "<!-- user-guide-contents -->";
+    private static final Pattern SECTION_HEADING = Pattern.compile("<h([23]) id=\"([^\"]+)\">(.*?)</h\\1>",
+            Pattern.DOTALL);
+
     private UserGuide() {}
 
     /**
@@ -35,7 +41,7 @@ public final class UserGuide {
      */
     static String loadHtml(String guidePath, String stylesheetPath) throws IOException {
         String markdown = readResource(guidePath)
-                .replace("<page-nav-print />", "")
+                .replace("<page-nav-print />", CONTENTS_PLACEHOLDER)
                 .replaceAll("<box[^>]*>", "<div class=\"callout\">")
                 .replace("</box>", "</div>");
         List<Extension> extensions = List.of(TablesExtension.create(), HeadingAnchorExtension.create());
@@ -51,9 +57,23 @@ public final class UserGuide {
             }
         });
         String body = HtmlRenderer.builder().extensions(extensions).build().render(document);
+        body = body.replace(CONTENTS_PLACEHOLDER, formatContents(body));
         return "<!DOCTYPE html><html><head><meta charset=\"UTF-8\">"
                 + "<title>TutorFlow User Guide</title><style>"
                 + readResource(stylesheetPath) + "</style></head><body>" + body + "</body></html>";
+    }
+
+    /**
+     * Replaces the website's navigation component with links to the anchors produced by the Markdown renderer.
+     */
+    private static String formatContents(String body) {
+        Matcher headings = SECTION_HEADING.matcher(body);
+        StringBuilder contents = new StringBuilder("<nav aria-label=\"Contents\"><h2>Contents</h2><ul>");
+        while (headings.find()) {
+            contents.append("<li><a href=\"#").append(headings.group(2)).append("\">")
+                    .append(headings.group(3)).append("</a></li>");
+        }
+        return contents.append("</ul></nav>").toString();
     }
 
     private static String readResource(String path) throws IOException {
