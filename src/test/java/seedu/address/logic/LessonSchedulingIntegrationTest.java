@@ -84,11 +84,59 @@ public class LessonSchedulingIntegrationTest {
         logic.execute("agenda d/" + DAY);
 
         // a lesson on another day is added, but the agenda on screen is unchanged
-        logic.execute("lesson add st/1 d/" + DAY.minusDays(3) + " t/09:00");
+        String added = logic.execute("lesson add st/1 d/" + DAY.minusDays(3) + " t/09:00").getFeedbackToUser();
+        assertFalse(added.contains("Current lesson list:"));
         logic.execute("lesson cancel 2");
 
         assertEquals(LessonStatus.CANCELLED, savedLessons().get(1).getStatus());
         assertEquals(LessonStatus.SCHEDULED, savedLessons().get(2).getStatus());
+    }
+
+    @Test
+    public void execute_addEarlierLessonInDayAgenda_showsFreshNumbers() throws Exception {
+        assertEarlierAdditionRefreshesNumbers("agenda d/" + DAY);
+    }
+
+    @Test
+    public void execute_addEarlierLessonInWeekAgenda_showsFreshNumbers() throws Exception {
+        assertEarlierAdditionRefreshesNumbers("agenda d/" + DAY + " week/");
+    }
+
+    @Test
+    public void execute_addEarlierLessonInUpcomingList_showsFreshNumbers() throws Exception {
+        assertEarlierAdditionRefreshesNumbers("lesson list st/1");
+    }
+
+    @Test
+    public void execute_addEarlierLessonInAllLessonsList_showsFreshNumbers() throws Exception {
+        assertEarlierAdditionRefreshesNumbers("lesson list st/1 all/");
+    }
+
+    @Test
+    public void execute_addLaterLessonInAgenda_keepsExistingNumbers() throws Exception {
+        logic.execute("lesson add st/1 d/" + DAY + " t/10:00");
+        logic.execute("agenda d/" + DAY);
+
+        String added = logic.execute("lesson add st/1 d/" + DAY + " t/12:00").getFeedbackToUser();
+        assertFalse(added.contains("Current lesson list:"));
+        logic.execute("lesson cancel 1");
+
+        assertEquals(LessonStatus.CANCELLED, savedLessons().get(0).getStatus());
+        assertEquals(LessonStatus.SCHEDULED, savedLessons().get(1).getStatus());
+    }
+
+    @Test
+    public void execute_addOtherStudentsLesson_keepsStudentFilterAndNumbers() throws Exception {
+        logic.execute("lesson add st/1 d/" + DAY + " t/10:00");
+        logic.execute("lesson list st/1");
+
+        String added = logic.execute("lesson add st/2 s/Physics d/" + DAY + " t/09:00").getFeedbackToUser();
+        assertFalse(added.contains("Current lesson list:"));
+        assertEquals(1, model.getFilteredLessonList().size());
+        logic.execute("lesson cancel 1");
+
+        assertEquals(LessonStatus.CANCELLED, savedLessons().get(0).getStatus());
+        assertEquals(LessonStatus.SCHEDULED, savedLessons().get(1).getStatus());
     }
 
     @Test
@@ -160,6 +208,26 @@ public class LessonSchedulingIntegrationTest {
         assertThrows(CommandException.class, () -> logic.execute("lesson cancel 5"));
 
         assertEquals(before, savedLessons());
+    }
+
+    private void assertEarlierAdditionRefreshesNumbers(String view) throws Exception {
+        logic.execute("lesson add st/1 d/" + DAY + " t/10:00");
+        logic.execute("lesson add st/1 d/" + DAY + " t/12:00");
+        logic.execute(view);
+
+        String added = logic.execute("lesson add st/1 d/" + DAY + " t/09:00").getFeedbackToUser();
+
+        List<Lesson> shownLessons = model.getFilteredLessonList();
+        assertEquals(3, shownLessons.size());
+        assertTrue(added.contains("Current lesson list:"));
+        for (int i = 0; i < shownLessons.size(); i++) {
+            assertTrue(added.contains("\n" + (i + 1) + ". " + Messages.format(shownLessons.get(i))));
+        }
+        logic.execute("lesson cancel 2");
+
+        assertEquals(LessonStatus.CANCELLED, savedLessons().get(0).getStatus());
+        assertEquals(LessonStatus.SCHEDULED, savedLessons().get(1).getStatus());
+        assertEquals(LessonStatus.SCHEDULED, savedLessons().get(2).getStatus());
     }
 
     private List<Lesson> savedLessons() throws Exception {

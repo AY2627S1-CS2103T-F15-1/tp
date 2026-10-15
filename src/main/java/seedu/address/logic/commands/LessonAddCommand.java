@@ -8,9 +8,11 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TIME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_VENUE;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.core.index.Index;
@@ -89,11 +91,29 @@ public class LessonAddCommand extends Command {
         if (model.hasLesson(lesson)) {
             throw new CommandException(LessonCommandUtil.MESSAGE_DUPLICATE_LESSON);
         }
+        int previousLessonCount = model.getFilteredLessonList().size();
         model.addLesson(lesson);
         logger.info("Scheduled a lesson for " + student.getName());
 
         return new CommandResult(String.format(MESSAGE_SUCCESS, Messages.format(lesson),
-                Messages.formatVenue(lesson)) + LessonCommandUtil.getOverlapWarning(model, lesson));
+                Messages.formatVenue(lesson)) + LessonCommandUtil.getOverlapWarning(model, lesson)
+                + formatChangedLessonNumbers(model.getFilteredLessonList(), lesson, previousLessonCount));
+    }
+
+    /**
+     * Shows the new numbers if inserting a matching lesson moved any previously displayed lesson down the list.
+     * Additions outside the active filter, or after its last lesson, leave the existing numbers unchanged.
+     */
+    private static String formatChangedLessonNumbers(List<Lesson> lessons, Lesson added, int previousLessonCount) {
+        int addedIndex = lessons.indexOf(added);
+        if (addedIndex < 0 || addedIndex >= previousLessonCount) {
+            return "";
+        }
+        return "\n\nLesson numbers have changed. Current lesson list:"
+                + IntStream.range(0, lessons.size())
+                        .mapToObj(i -> "\n" + (i + 1) + ". " + Messages.format(lessons.get(i)) + ", "
+                                + Messages.formatVenue(lessons.get(i)) + "  (" + lessons.get(i).getStatus() + ")")
+                        .collect(Collectors.joining());
     }
 
     private Lesson createLesson(Person student) throws CommandException {
