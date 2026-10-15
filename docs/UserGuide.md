@@ -392,6 +392,8 @@ Format: `exit`
 
 TutorFlow automatically saves data after every command. You do not need to save manually.
 
+Each save is written completely to a temporary file beside the data file before replacing the previous save. If writing fails, the previous saved contents remain intact. If your file system cannot replace files atomically, TutorFlow reports a save error; move the app to a local folder that supports atomic file replacement and retry.
+
 If a change cannot be saved, for example because the disk is full or the file is read-only, TutorFlow says `Your change was applied in this session but could not be saved`, and the reason. The change is still in the running app, so fix the problem (free some space, or make the file writable) and run any command again to save. Closing TutorFlow with `exit` is refused while the last save has failed, so that you do not lose the change.
 
 ### Editing the data file
