@@ -103,7 +103,10 @@ public class LessonAddCommandTest {
 
         Model expectedModel = getExpectedModel(lesson);
         String expectedMessage = getSuccessMessage(lesson, ALICE.getVenue().get().value)
-                + String.format(LessonCommandUtil.MESSAGE_OVERLAP_WARNING, Messages.format(existing) + ".");
+                + String.format(LessonCommandUtil.MESSAGE_OVERLAP_WARNING, Messages.format(existing) + ".")
+                + "\n\nLesson numbers have changed. Current lesson list:"
+                + "\n1. " + Messages.format(lesson) + ", " + ALICE.getVenue().get().value + "  (scheduled)"
+                + "\n2. " + Messages.format(existing) + ", " + Messages.MESSAGE_NO_VENUE + "  (scheduled)";
 
         assertCommandSuccess(command, model, expectedMessage, expectedModel);
     }

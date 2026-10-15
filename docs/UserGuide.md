@@ -234,6 +234,7 @@ Format: `lesson add st/STUDENT_INDEX [s/SUBJECT] d/DATE t/TIME [dur/MINUTES] [v/
 * `VENUE` is up to 100 characters. If it is left out, the student's usual venue is used, or `—` if the student has none.
 * A lesson must end on the day it starts, so `t/23:00 dur/120` is rejected. Split it into two lessons.
 * Two lessons are duplicates if they have the same student, subject, date, time and duration. A duplicate is rejected.
+* Adding a lesson keeps the current day, week or student lesson filter. If the new lesson shifts existing lesson numbers, the result shows the complete current lesson list with fresh numbers. Use those numbers for your next lesson command.
 
 <box type="warning" seamless>
 
