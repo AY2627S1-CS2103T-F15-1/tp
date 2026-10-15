@@ -44,7 +44,18 @@ public class UserGuideTest {
         assertFalse(html.contains("<page-nav-print"));
         assertFalse(html.contains("<box"));
         assertTrue(html.contains(UserGuide.class.getResource("/guide/images/Ui.png").toExternalForm()));
-        assertNotNull(UserGuide.class.getResource("/guide/images/findAlexDavidResult.png"));
+    }
+
+    @Test
+    public void loadHtml_currentGuide_linksToCurrentLessonSectionsInContents() throws Exception {
+        String html = UserGuide.loadHtml();
+
+        assertTrue(html.contains("<nav aria-label=\"Contents\">"));
+        String contents = html.substring(html.indexOf("<nav"), html.indexOf("</nav>"));
+        assertTrue(contents.contains("href=\"#scheduling-a-lesson-lesson-add\""));
+        assertTrue(contents.contains("href=\"#rescheduling-a-lesson-lesson-move\""));
+        assertTrue(contents.contains("href=\"#completing-a-lesson-and-recording-notes-lesson-done\""));
+        assertTrue(contents.contains("href=\"#recording-a-missed-lesson-lesson-missed\""));
     }
 
     @Test

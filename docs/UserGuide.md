@@ -80,7 +80,9 @@ Format: `help [COMMAND]`
 * `help COMMAND` shows what the command does, its parameters and an example. `COMMAND` is the command as you type it, so for the lesson commands write both words, such as `help lesson add`.
 * `help lesson` lists the commands that start with `lesson`.
 * `COMMAND` is case-sensitive, like every command. For a name that is not a command, such as `help foo`, TutorFlow says `No help available for 'foo'. Type 'help' for the full list.`
-* To read this guide inside TutorFlow, use the `Help` menu or press `F1`. The guide opens in a resizable window and works offline. It shows the User Guide bundled with your version of the app. Click `Reload guide` to return to the guide.
+* To read this guide inside TutorFlow, use the `Help` menu or press `F1`. The guide opens in a resizable window and works offline. Use its Contents links to jump to any feature. It shows the User Guide bundled with your version of the app. Click `Reload guide` to return to that bundled guide.
+* The command list and `help COMMAND` are short syntax references. The full guide includes the field limits, examples and behavior rules.
+* Documentation changes appear in the next build of the app. When running from source, restart with `./gradlew run` (Windows: `.\gradlew.bat run`) to bundle the current `docs/UserGuide.md`. For a JAR, rebuild with `./gradlew shadowJar` or download an updated release, then restart with that JAR. `Reload guide` does not download newer documentation into an older JAR.
 
 Examples:
 * `help` lists all commands.
@@ -105,7 +107,7 @@ Format: `add n/NAME p/PHONE_NUMBER l/LEVEL s/SUBJECT... r/RATE [e/EMAIL] [v/VENU
 
 <box type="tip" seamless>
 
-**Tip:** A student can have any number of subjects, but must have at least one. The email and the venue are optional.
+**Tip:** A student must have between 1 and 10 subjects. The email and the venue are optional.
 </box>
 
 Examples:
@@ -150,8 +152,7 @@ Format: `find KEYWORD [MORE_KEYWORDS]`
 
 Examples:
 * `find John` returns `john` and `John Doe`
-* `find alex david` returns `Alex Yeoh`, `David Li`<br>
-  ![result for 'find alex david'](images/findAlexDavidResult.png)
+* `find alex david` lists `Alex Yeoh` and `David Li` if those students are recorded. If only those two students match, the result says `2 student(s) listed!` and the student list shows their current details with new index numbers.
 
 ### Viewing a student's overview: `view`
 

@@ -72,6 +72,11 @@ public class HelpWindowTest {
         onFx(() -> {
             assertTrue(viewer().getEngine().getDocument().getDocumentElement().getTextContent()
                     .contains("TutorFlow User Guide"));
+            assertEquals(1, viewer().getEngine().getDocument().getElementsByTagName("nav").getLength());
+            assertTrue((Boolean) viewer().getEngine().executeScript(
+                    "document.querySelector('nav a[href=\"#recording-a-missed-lesson-lesson-missed\"]') !== null"));
+            assertTrue(viewer().getEngine().getDocument().getDocumentElement().getTextContent()
+                    .contains("A student must have between 1 and 10 subjects."));
             assertEquals("", status().getText());
             window.focus();
             window.hide();
