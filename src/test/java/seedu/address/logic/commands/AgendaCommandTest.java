@@ -78,6 +78,27 @@ public class AgendaCommandTest {
     }
 
     @Test
+    public void execute_equalCancelledLessonsInDay_assignsDistinctNumbers() {
+        addLessons(mondayMath.cancel(null), mondayMath.cancel(null));
+
+        String message = new AgendaCommand(MONDAY, false).execute(model).getFeedbackToUser();
+
+        assertTrue(message.contains("\n 1. 16:30-18:00"));
+        assertTrue(message.contains("\n 2. 16:30-18:00"));
+    }
+
+    @Test
+    public void execute_equalCancelledLessonsInWeek_keepsNumbersAcrossDays() {
+        addLessons(mondayMath.cancel(null), mondayMath.cancel(null), tuesdayEnglish);
+
+        String message = new AgendaCommand(MONDAY, true).execute(model).getFeedbackToUser();
+
+        assertTrue(message.contains("\n 1. 16:30-18:00"));
+        assertTrue(message.contains("\n 2. 16:30-18:00"));
+        assertTrue(message.contains("\n 3. 19:00-20:00"));
+    }
+
+    @Test
     public void execute_week_showsSevenDaysOfTheWeekContainingTheDate() {
         addLessons(mondayMath, tuesdayEnglish, cancelledWednesday, nextMonday);
 
