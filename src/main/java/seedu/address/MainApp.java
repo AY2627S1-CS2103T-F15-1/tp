@@ -86,7 +86,10 @@ public class MainApp extends Application {
             initialData = new AddressBook();
         }
 
-        return new ModelManager(initialData, userPrefs);
+        ModelManager modelManager = new ModelManager(initialData, userPrefs);
+        // No lesson numbers are on screen at startup, so lesson commands must not act on a hidden list.
+        modelManager.updateFilteredLessonList(unused -> false);
+        return modelManager;
     }
 
     /**

@@ -120,7 +120,6 @@ public class ModelManager implements Model {
     public void addLesson(Lesson lesson) {
         addressBook.addLesson(lesson);
         logger.fine("Added lesson: " + lesson);
-        updateFilteredLessonList(PREDICATE_SHOW_ALL_LESSONS);
     }
 
     @Override
