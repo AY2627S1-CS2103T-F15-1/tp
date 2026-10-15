@@ -128,6 +128,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [l/LEVEL] [s/SUBJECT]...
 * At least one of the optional fields must be provided.
 * Existing values will be updated to the input values.
 * When editing subjects, all of the student's existing subjects are replaced; adding subjects is not cumulative. A student must keep at least one subject.
+* After changing a student's name or phone number, run `lesson list st/STUDENT_INDEX` again before using lesson numbers.
 * The values for the level, subjects, rate and venue follow the same rules as for [`add`](#adding-a-student-add).
 * If the edit gives the student the name of another student, it is accepted and TutorFlow shows a note. If the phone number is also the same as that student's, the edit is rejected as a duplicate.
 
