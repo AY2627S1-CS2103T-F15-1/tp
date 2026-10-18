@@ -41,6 +41,7 @@ public class HelpCommand extends Command {
             new CommandHelp("archive", "Archives a student while retaining history", "archive INDEX"),
             new CommandHelp("restore", "Restores an archived student", "student list archived/ then restore INDEX"),
             new CommandHelp("demo", "Previews sample data for an empty dataset", "demo [confirm]"),
+            new CommandHelp("undo", "Restores the data before the latest deletion", UndoCommand.MESSAGE_USAGE),
             new CommandHelp("find", "Finds students by name", FindCommand.MESSAGE_USAGE),
             new CommandHelp("view", "Shows a student's overview", ViewCommand.MESSAGE_USAGE),
             new CommandHelp("sort", "Sorts students by name", SortCommand.MESSAGE_USAGE),

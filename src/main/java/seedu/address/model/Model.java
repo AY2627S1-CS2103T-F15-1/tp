@@ -2,6 +2,7 @@ package seedu.address.model;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import javafx.collections.ObservableList;
@@ -45,6 +46,15 @@ public interface Model {
 
     /** Returns the AddressBook */
     ReadOnlyAddressBook getAddressBook();
+
+    /** Returns the one-step undo snapshot of this session, if there is one. */
+    Optional<UndoSnapshot> getUndoSnapshot();
+
+    /** Keeps {@code snapshot} as the only undo step, replacing any earlier one. */
+    void setUndoSnapshot(UndoSnapshot snapshot);
+
+    /** Discards the undo snapshot, if any. */
+    void clearUndoSnapshot();
 
     /**
      * Returns true if a person with the same identity as {@code person} exists in the address book.

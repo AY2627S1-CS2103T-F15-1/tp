@@ -26,6 +26,7 @@ import seedu.address.logic.commands.RemarkCommand;
 import seedu.address.logic.commands.SaveCommand;
 import seedu.address.logic.commands.SortCommand;
 import seedu.address.logic.commands.TodayCommand;
+import seedu.address.logic.commands.UndoCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 
@@ -74,6 +75,10 @@ public class AddressBookParser {
                     throw new ParseException("Usage: demo [confirm]");
                 }
                 yield new DemoCommand(arguments.strip().equals("confirm"));
+            }
+            case UndoCommand.COMMAND_WORD -> {
+                requireNoArguments(commandWord, arguments);
+                yield new UndoCommand();
             }
             case "task" -> new TaskCommandParser().parse(arguments);
             case "travel" -> new TravelCommandParser().parse(arguments);

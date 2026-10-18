@@ -10,6 +10,7 @@ import static seedu.address.testutil.TypicalPersons.ALICE;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import org.junit.jupiter.api.Test;
@@ -22,6 +23,7 @@ import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.ReadOnlyUserPrefs;
+import seedu.address.model.UndoSnapshot;
 import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
@@ -117,6 +119,21 @@ public class AddCommandTest {
      * A default model stub that has all of the methods failing.
      */
     private class ModelStub implements Model {
+        @Override
+        public Optional<UndoSnapshot> getUndoSnapshot() {
+            throw new AssertionError("Unexpected undo call.");
+        }
+
+        @Override
+        public void setUndoSnapshot(UndoSnapshot snapshot) {
+            throw new AssertionError("Unexpected undo call.");
+        }
+
+        @Override
+        public void clearUndoSnapshot() {
+            throw new AssertionError("Unexpected undo call.");
+        }
+
         @Override
         public void addTask(FollowUpTask task) {
             throw new AssertionError("Unexpected task call.");

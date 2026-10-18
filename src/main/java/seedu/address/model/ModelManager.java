@@ -5,6 +5,7 @@ import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
 
@@ -33,6 +34,7 @@ public class ModelManager implements Model {
     private List<LedgerEntry> displayedPayments = List.of();
     private List<FollowUpTask> displayedTasks = List.of();
     private List<Homework> displayedHomework = List.of();
+    private UndoSnapshot undoSnapshot;
 
     /**
      * Initializes a ModelManager with the given addressBook and userPrefs.
@@ -81,6 +83,22 @@ public class ModelManager implements Model {
     @Override
     public ReadOnlyAddressBook getAddressBook() {
         return addressBook;
+    }
+
+    @Override
+    public Optional<UndoSnapshot> getUndoSnapshot() {
+        return Optional.ofNullable(undoSnapshot);
+    }
+
+    @Override
+    public void setUndoSnapshot(UndoSnapshot snapshot) {
+        requireNonNull(snapshot);
+        undoSnapshot = snapshot;
+    }
+
+    @Override
+    public void clearUndoSnapshot() {
+        undoSnapshot = null;
     }
 
     @Override
