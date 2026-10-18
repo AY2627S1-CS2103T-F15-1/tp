@@ -126,7 +126,7 @@ public class LessonAddCommand extends Command {
 
         Venue lessonVenue = venue != null ? venue : student.getVenue().orElse(null);
         return new Lesson(student.getName(), student.getPhone(), chooseSubject(student), date, time, duration,
-                lessonVenue, LessonStatus.SCHEDULED, null, null);
+                lessonVenue, LessonStatus.SCHEDULED, null, null).snapshotStudent(student);
     }
 
     /**

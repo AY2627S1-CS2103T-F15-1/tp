@@ -48,7 +48,7 @@ public class LessonListCommandTest {
         assertEquals(List.of(upcoming), model.getFilteredLessonList());
         assertEquals(String.format(LessonListCommand.MESSAGE_HEADER_UPCOMING, ALICE.getName(), 1) + "\n1. "
                 + upcoming.getDate() + "  " + upcoming.getTimeRange() + "  Math  "
-                + Messages.formatVenue(upcoming) + "  scheduled", message);
+                + Messages.formatVenue(upcoming) + "  [Level at booking: unknown (not recorded)]  scheduled", message);
     }
 
     @Test

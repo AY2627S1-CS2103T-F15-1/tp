@@ -103,7 +103,8 @@ public class ViewCommand extends Command {
         Optional<Lesson> nextLesson = lessons.stream().filter(lesson -> lesson.isUpcoming(today)).findFirst();
         String body = nextLesson
                 .map(lesson -> String.format("  %s, %s%s%s%s%s", lesson.getDate(), lesson.getTimeRange(), SEPARATOR,
-                        lesson.getSubject(), SEPARATOR, Messages.formatVenue(lesson)))
+                        lesson.getSubject(), SEPARATOR, Messages.formatVenue(lesson))
+                        + lesson.getPreparation().map(notes -> "\n  Preparation: " + notes).orElse(""))
                 .orElse(MESSAGE_NO_UPCOMING_LESSON);
         return HEADING_NEXT_LESSON + "\n" + body;
     }

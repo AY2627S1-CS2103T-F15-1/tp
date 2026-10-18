@@ -87,7 +87,9 @@ public class LessonListCommand extends Command {
     }
 
     private static String describe(Lesson lesson) {
-        return Messages.formatVenue(lesson) + "  " + lesson.getStatus();
+        return Messages.formatVenue(lesson) + "  [" + Messages.formatAcademicLevel(lesson) + "]"
+                + lesson.getPreparation().map(notes -> "  [Preparation: " + notes + "]").orElse("")
+                + "  " + lesson.getStatus();
     }
 
     @Override

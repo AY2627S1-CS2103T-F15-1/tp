@@ -98,6 +98,9 @@ public class EditCommand extends Command {
         model.setPerson(personToEdit, editedPerson);
         model.updateFilteredPersonList(PREDICATE_SHOW_ACTIVE_PERSONS);
         String message = String.format(MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson));
+        if (!personToEdit.getLevel().equals(editedPerson.getLevel())) {
+            message += "\nPast lessons keep their original details.";
+        }
         if (hasNewSameName) {
             message += String.format(MESSAGE_SAME_NAME_WARNING, editedPerson.getName());
         }

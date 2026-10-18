@@ -98,6 +98,12 @@ public class Messages {
         return lesson.getVenue().map(venue -> venue.toString()).orElse(MESSAGE_NO_VENUE);
     }
 
+    /** Describes the recorded academic level without inventing a past level for migrated lessons. */
+    public static String formatAcademicLevel(Lesson lesson) {
+        return "Level at booking: " + lesson.getAcademicLevel().map(level -> level.value)
+                .orElse("unknown (not recorded)");
+    }
+
     /**
      * Formats the lessons that overlap with another lesson, separated by semicolons.
      */
