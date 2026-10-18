@@ -2,17 +2,24 @@ package seedu.address.logic.parser;
 
 import java.time.Clock;
 import java.time.LocalDate;
+import java.util.Locale;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.HomeworkAddCommand;
+import seedu.address.logic.commands.HomeworkDeleteCommand;
 import seedu.address.logic.commands.HomeworkEditCommand;
+import seedu.address.logic.commands.HomeworkFeedbackCommand;
 import seedu.address.logic.commands.HomeworkListCommand;
+import seedu.address.logic.commands.HomeworkStatusCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.homework.Homework;
+import seedu.address.model.homework.HomeworkStatus;
 
 /** Parses homework operations with an injectable local calendar clock. */
 public class HomeworkCommandParser implements Parser<Command> {
+    private static final Prefix STATUS = new Prefix("s/");
+    private static final Prefix FEEDBACK = new Prefix("f/");
     private static final Prefix DESCRIPTION = new Prefix("desc/");
     private static final Prefix DUE = new Prefix("due/");
     private static final Prefix STUDENT = new Prefix("st/");
@@ -39,8 +46,48 @@ public class HomeworkCommandParser implements Parser<Command> {
             case "add" -> parseAdd(" " + arguments);
             case "edit" -> parseEdit(" " + arguments);
             case "list" -> parseList(" " + arguments);
-            default -> throw new ParseException("Homework commands: hw add, hw edit, hw list");
+            case "status" -> parseStatus(" " + arguments);
+            case "feedback" -> parseFeedback(" " + arguments);
+            case "delete" -> parseDelete(arguments);
+            default -> throw new ParseException(
+                    "Homework commands: hw add, hw edit, hw list, hw status, hw feedback, hw delete");
         };
+    }
+
+    /** Parses a persisted lifecycle status; overdue is deliberately excluded. */
+    private Command parseStatus(String args) throws ParseException {
+        ArgumentMultimap values = ArgumentTokenizer.tokenize(args, STATUS);
+        values.verifyNoDuplicatePrefixesFor(STATUS);
+        values.verifyNoEmptyValuesFor(STATUS);
+        Index index = ParserUtil.parseIndex(values.getPreamble());
+        try {
+            HomeworkStatus status = HomeworkStatus.valueOf(values.getValue(STATUS).orElse("")
+                    .toUpperCase(Locale.ENGLISH));
+            return new HomeworkStatusCommand(index, status);
+        } catch (IllegalArgumentException e) {
+            throw new ParseException("Status must be one of: assigned, submitted, reviewed.", e);
+        }
+    }
+
+    /** Parses feedback using the shared printable one-line notes boundary. */
+    private Command parseFeedback(String args) throws ParseException {
+        ArgumentMultimap values = ArgumentTokenizer.tokenize(args, FEEDBACK);
+        values.verifyNoDuplicatePrefixesFor(FEEDBACK);
+        values.verifyNoEmptyValuesFor(FEEDBACK);
+        if (values.getValue(FEEDBACK).isEmpty()) {
+            throw new ParseException(HomeworkFeedbackCommand.MESSAGE_USAGE);
+        }
+        return new HomeworkFeedbackCommand(ParserUtil.parseIndex(values.getPreamble()),
+                ParserUtil.parseNotes(values.getValue(FEEDBACK).orElseThrow()));
+    }
+
+    /** Parses exactly an index and optional confirmation word. */
+    private Command parseDelete(String args) throws ParseException {
+        String[] words = args.strip().split("\\s+");
+        if (words.length > 2 || words.length == 2 && !words[1].equals("confirm")) {
+            throw new ParseException(HomeworkDeleteCommand.MESSAGE_USAGE);
+        }
+        return new HomeworkDeleteCommand(ParserUtil.parseIndex(words[0]), words.length == 2);
     }
 
     /** Parses required assignment fields without treating prose as unrelated command prefixes. */
@@ -78,7 +125,7 @@ public class HomeworkCommandParser implements Parser<Command> {
 
     /** Resolves relative dates against the injected clock and delegates explicit date formats. */
     private LocalDate parseDate(String text) throws ParseException {
-        return switch (text.strip().toLowerCase(java.util.Locale.ENGLISH)) {
+        return switch (text.strip().toLowerCase(Locale.ENGLISH)) {
             case "today" -> LocalDate.now(clock);
             case "tmr" -> LocalDate.now(clock).plusDays(1);
             default -> ParserUtil.parseDate(text).value;
