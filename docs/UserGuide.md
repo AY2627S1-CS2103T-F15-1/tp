@@ -674,7 +674,9 @@ Create a task with exactly one link:
 Student and lesson indices use the displayed student list and agenda. Run
 `hw list` or `pay list` before linking their numbered rows. Task descriptions
 are 1–200 printable characters; due dates are optional, accept `today` and
-`tmr`, and may be historical (an open task then shows overdue).
+`tmr`, and may be historical (an open task then shows overdue). A word such
+as `hw/2` or `pay/1` after a space inside a description is read as another
+link, so reword the description if it needs one.
 
 `task list [st/INDEX]` shows open tasks by due date, with undated tasks last.
 `task list all/ [st/INDEX]` includes completed history. `task done INDEX`
