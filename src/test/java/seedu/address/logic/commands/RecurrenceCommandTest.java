@@ -12,6 +12,7 @@ import java.time.ZoneId;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.index.Index;
+import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ModelManager;
@@ -30,7 +31,7 @@ public class RecurrenceCommandTest {
     }
 
     @Test
-    public void repeat_finiteBatch_refreshesIndicesAndRejectsDuplicateAtomically() throws Exception {
+    public void repeat_finiteBatch_refreshesVisibleIndices() throws Exception {
         model.addPerson(student);
         run("lesson add st/1 d/" + LocalDate.now().plusWeeks(5) + " t/10:00");
         CommandResult result = run("lesson repeat st/1 d/today t/10:00 count/3 every/2");
@@ -53,8 +54,9 @@ public class RecurrenceCommandTest {
         run("lesson repeat st/1 d/today t/10:00 count/3");
         run("charge l/1 amt/50");
         AddressBook before = new AddressBook(model.getAddressBook());
-        assertThrows(Exception.class, () ->
+        CommandException refusal = assertThrows(CommandException.class, () ->
                 new LessonSeriesCancelCommand(Index.fromOneBased(3), midnight()).execute(model));
+        assertTrue(refusal.getMessage().contains("Reverse the active charge"));
         assertEquals(before, model.getAddressBook());
         run("charge reverse l/1");
         run("lesson done 1");
@@ -83,6 +85,26 @@ public class RecurrenceCommandTest {
         Clock atStart = Clock.fixed(LocalDate.now().atTime(10, 0).atZone(zone).toInstant(), zone);
         new LessonSeriesCancelCommand(Index.fromOneBased(1), atStart).execute(model);
         assertTrue(model.getAddressBook().getLessonList().stream().allMatch(Lesson::isCancelled));
+    }
+
+    @Test
+    public void occurrences_everyOutcomeAndStudentRename_retainSeriesMembership() throws Exception {
+        model.addPerson(student);
+        run("lesson repeat st/1 d/today t/10:00 count/3");
+        run("lesson repeat st/1 d/today t/12:00 count/2");
+        run("lesson done 1");
+        run("lesson missed 2");
+        run("lesson cancel 3");
+        run("lesson prep 5 n/Revise fractions");
+        run("lesson move 4 d/" + LocalDate.now().plusDays(30));
+        run("edit 1 n/Amy Renamed");
+        assertEquals(5, model.getAddressBook().getLessonList().size());
+        assertTrue(model.getAddressBook().getLessonList().stream()
+                .allMatch(lesson -> lesson.getSeriesId().isPresent()));
+        assertEquals(2, model.getAddressBook().getLessonList().stream()
+                .map(lesson -> lesson.getSeriesId().orElseThrow()).distinct().count());
+        assertTrue(model.getAddressBook().getLessonList().stream()
+                .allMatch(lesson -> lesson.getStudentName().toString().equals("Amy Renamed")));
     }
 
     @Test
