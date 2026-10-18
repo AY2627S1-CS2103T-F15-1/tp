@@ -50,7 +50,8 @@ public class HomeworkStorageTest {
             assertTrue(book.getHomeworkList().isEmpty());
         }
         assertThrows(IllegalValueException.class, () -> JsonUtil.fromJsonString(
-                "{\"schemaVersion\":" + (StorageSchema.CURRENT_VERSION + 1) + ",\"persons\":[]}", JsonSerializableAddressBook.class).toModelType());
+                "{\"schemaVersion\":" + (StorageSchema.CURRENT_VERSION + 1) + ",\"persons\":[]}",
+                JsonSerializableAddressBook.class).toModelType());
     }
 
     @Test
