@@ -19,6 +19,7 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.homework.HomeworkStatus;
+import seedu.address.testutil.LessonBuilder;
 import seedu.address.testutil.TypicalPersons;
 
 public class HomeworkAssignmentTest {
@@ -30,6 +31,21 @@ public class HomeworkAssignmentTest {
         AddressBook book = new AddressBook();
         book.addPerson(TypicalPersons.ALICE);
         return new ModelManager(book, new UserPrefs());
+    }
+
+    @Test
+    public void add_upcomingLessonAndMaximumText_acceptsWithoutMissingLessonNote() throws Exception {
+        ModelManager model = model();
+        model.addLesson(new LessonBuilder().withStudent(TypicalPersons.ALICE).withDate(TODAY.plusDays(1)).build());
+        String message = parser.parse("add st/1 desc/" + "x".repeat(200) + " due/10/01/2030").execute(model)
+                .getFeedbackToUser();
+        assertTrue(!message.contains("no upcoming lessons"));
+        parser.parse("list").execute(model);
+        parser.parse("status 1 s/submitted").execute(model);
+        parser.parse("feedback 1 f/" + "x".repeat(1000)).execute(model);
+        assertEquals(1000, model.getAddressBook().getHomeworkList().getFirst().getFeedback().orElseThrow().length());
+        parser.parse("edit 1 desc/Read n/notes").execute(model);
+        assertEquals("Read n/notes", model.getAddressBook().getHomeworkList().getFirst().getDescription());
     }
 
     @Test

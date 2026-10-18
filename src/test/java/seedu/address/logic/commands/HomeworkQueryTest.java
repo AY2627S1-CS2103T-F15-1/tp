@@ -1,6 +1,7 @@
 package seedu.address.logic.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
@@ -9,6 +10,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.index.Index;
+import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
@@ -18,6 +20,28 @@ import seedu.address.testutil.TypicalPersons;
 
 public class HomeworkQueryTest {
     private static final LocalDate TODAY = LocalDate.of(2030, 1, 10);
+
+    @Test
+    public void list_emptyAndFilteredStudents_showsAccurateEmptyStatesAndSelection() throws Exception {
+        ModelManager empty = new ModelManager();
+        assertTrue(new HomeworkListCommand(null, false, false, TODAY).execute(empty)
+                .getFeedbackToUser().contains("No homework recorded yet."));
+        AddressBook book = new AddressBook();
+        book.addPerson(TypicalPersons.ALICE);
+        book.addPerson(TypicalPersons.BENSON);
+        Homework item = Homework.assign(TypicalPersons.ALICE.getId(), "A", TODAY);
+        book.addHomework(item);
+        ModelManager model = new ModelManager(book, new UserPrefs());
+        model.updateFilteredPersonList(person -> person.getId().equals(TypicalPersons.BENSON.getId()));
+        assertTrue(new HomeworkListCommand(Index.fromOneBased(1), false, false, TODAY).execute(model)
+                .getFeedbackToUser().contains("No homework matches those filters."));
+        assertThrows(CommandException.class, () -> new HomeworkListCommand(Index.fromOneBased(2),
+                false, false, TODAY).execute(model));
+        assertEquals(List.of(item), new HomeworkListCommand(null, false, true, TODAY).execute(model)
+                .getDisplayedHomework().orElseThrow());
+        assertTrue(new HomeworkListCommand(null, true, false, TODAY).execute(model)
+                .getDisplayedHomework().orElseThrow().isEmpty());
+    }
 
     @Test
     public void list_historyAndOverdue_sortAndRetainShownSelection() throws Exception {

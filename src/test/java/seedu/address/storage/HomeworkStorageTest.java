@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -51,6 +52,38 @@ public class HomeworkStorageTest {
         assertThrows(IllegalValueException.class, () -> JsonUtil.fromJsonString(
                 "{\"schemaVersion\":16,\"persons\":[]}", JsonSerializableAddressBook.class).toModelType());
         assertEquals(15, StorageSchema.CURRENT_VERSION);
+    }
+
+    @Test
+    public void load_invalidHomeworkFieldsAndDuplicateRecords_rejects() {
+        String id = UUID.randomUUID().toString();
+        String student = TypicalPersons.ALICE.getId().toString();
+        for (JsonAdaptedHomework item : List.of(
+                new JsonAdaptedHomework("bad", student, "A", "2030-01-10", "ASSIGNED", null),
+                new JsonAdaptedHomework(id, student, "", "2030-01-10", "ASSIGNED", null),
+                new JsonAdaptedHomework(id, student, "A", "2030-02-30", "ASSIGNED", null),
+                new JsonAdaptedHomework(id, student, "A", "2030-01-10", "OVERDUE", null),
+                new JsonAdaptedHomework(id, null, "A", "2030-01-10", "ASSIGNED", null),
+                new JsonAdaptedHomework(id, student, "A", "2030-01-10", "SUBMITTED", "A\nB"))) {
+            assertThrows(IllegalValueException.class, item::toModelType);
+        }
+        JsonAdaptedHomework valid = new JsonAdaptedHomework(id, student, "A", "2020-01-01", "ASSIGNED", "History");
+        assertThrows(IllegalValueException.class, () -> new JsonSerializableAddressBook(List.of(), List.of(),
+                List.of(valid)).toModelType());
+        assertThrows(IllegalValueException.class, () -> new JsonSerializableAddressBook(
+                List.of(new JsonAdaptedPerson(TypicalPersons.ALICE)), List.of(), List.of(valid, valid)).toModelType());
+    }
+
+    @Test
+    public void roundTrip_backwardCorrection_retainsFeedbackWhileAssigned() throws Exception {
+        AddressBook book = new AddressBook();
+        book.addPerson(TypicalPersons.ALICE);
+        Homework corrected = Homework.assign(TypicalPersons.ALICE.getId(), "A", LocalDate.of(2020, 1, 1))
+                .withStatus(HomeworkStatus.REVIEWED).withFeedback("Keep history").withStatus(HomeworkStatus.ASSIGNED);
+        book.addHomework(corrected);
+        AddressBook restored = JsonUtil.fromJsonString(JsonUtil.toJsonString(new JsonSerializableAddressBook(book)),
+                JsonSerializableAddressBook.class).toModelType();
+        assertEquals(corrected, restored.getHomeworkList().getFirst());
     }
 
     @Test

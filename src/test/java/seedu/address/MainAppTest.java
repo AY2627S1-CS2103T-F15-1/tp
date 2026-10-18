@@ -19,6 +19,7 @@ import seedu.address.commons.exceptions.UnsupportedSchemaException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.UserPrefs;
 import seedu.address.storage.JsonUserPrefsStorage;
+import seedu.address.storage.StorageSchema;
 import seedu.address.storage.VersionedAddressBookStorage;
 
 class MainAppTest {
@@ -27,22 +28,29 @@ class MainAppTest {
 
     @Test
     void init_futureSchema_refusesStartupAndLeavesOriginalInPlace() throws Exception {
-        assertUnsupportedStartup(true, "{\"schemaVersion\":15,\"persons\":[],\"lessons\":[],\"homework\":[1]}");
+        assertUnsupportedStartup(true,
+                "{\"schemaVersion\":" + (StorageSchema.CURRENT_VERSION + 1)
+                        + ",\"persons\":[],\"lessons\":[],\"homework\":[1]}");
     }
 
     @Test
     void init_futureSchemaWithChangedFields_refusesBeforeDecodingOldModel() throws Exception {
-        assertUnsupportedStartup(true, "{\"schemaVersion\":15,\"persons\":{\"newRepresentation\":true}}");
+        assertUnsupportedStartup(true,
+                "{\"schemaVersion\":" + (StorageSchema.CURRENT_VERSION + 1)
+                        + ",\"persons\":{\"newRepresentation\":true}}");
     }
 
     @Test
     void init_futureSchemaWithoutCurrentFields_refusesBeforeDecodingOldModel() throws Exception {
-        assertUnsupportedStartup(true, "{\"schemaVersion\":15,\"newDomain\":[]}");
+        assertUnsupportedStartup(true,
+                "{\"schemaVersion\":" + (StorageSchema.CURRENT_VERSION + 1) + ",\"newDomain\":[]}");
     }
 
     @Test
     void init_futureSchemaAtLegacyPath_refusesMigrationAndLeavesOriginalInPlace() throws Exception {
-        assertUnsupportedStartup(false, "{\"schemaVersion\":15,\"persons\":[],\"lessons\":[]}");
+        assertUnsupportedStartup(false,
+                "{\"schemaVersion\":" + (StorageSchema.CURRENT_VERSION + 1)
+                        + ",\"persons\":[],\"lessons\":[]}");
     }
 
     @Test
