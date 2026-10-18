@@ -2,6 +2,7 @@ package seedu.address.model.lesson;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalLessons.ALICE_MATH;
@@ -10,6 +11,9 @@ import static seedu.address.testutil.TypicalLessons.CARL_ENGLISH;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BENSON;
 
+import java.time.Duration;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -17,6 +21,9 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.model.lesson.exceptions.DuplicateLessonException;
 import seedu.address.model.lesson.exceptions.LessonNotFoundException;
+import seedu.address.model.person.Name;
+import seedu.address.model.person.Phone;
+import seedu.address.model.person.Subject;
 import seedu.address.testutil.LessonBuilder;
 
 public class UniqueLessonListTest {
@@ -280,5 +287,112 @@ public class UniqueLessonListTest {
 
         assertFalse(uniqueLessonList.removeIf(lesson -> lesson.isWith(BENSON)));
         assertTrue(uniqueLessonList.removeIf(lesson -> lesson.isWith(ALICE)));
+    }
+
+    @Test
+    public void setLessons_manyDistinctLessons_isFastEnoughForTheLargestDataset() {
+        List<Lesson> lessons = distinctLessons(30_000);
+
+        assertTimeout(Duration.ofSeconds(2), () -> uniqueLessonList.setLessons(lessons));
+        assertEquals(30_000, uniqueLessonList.asUnmodifiableObservableList().size());
+    }
+
+    @Test
+    public void add_manyDistinctLessons_isFastEnoughForTheLargestDataset() {
+        List<Lesson> lessons = distinctLessons(30_000);
+
+        assertTimeout(Duration.ofSeconds(2), () -> lessons.forEach(uniqueLessonList::add));
+        assertEquals(30_000, uniqueLessonList.asUnmodifiableObservableList().size());
+    }
+
+    @Test
+    public void add_sameSlotWithOtherLetterCaseInStudentName_throwsDuplicateLessonException() {
+        uniqueLessonList.add(ALICE_MATH);
+        Lesson shouting = new LessonBuilder(ALICE_MATH)
+                .withStudent(ALICE.getName().fullName.toUpperCase(), ALICE.getPhone().value).build();
+
+        assertThrows(DuplicateLessonException.class, () -> uniqueLessonList.add(shouting));
+    }
+
+    @Test
+    public void add_sameSlotAfterTheLessonWasRemoved_success() {
+        uniqueLessonList.add(ALICE_MATH);
+        uniqueLessonList.remove(ALICE_MATH);
+
+        uniqueLessonList.add(ALICE_MATH);
+
+        assertEquals(List.of(ALICE_MATH), uniqueLessonList.asUnmodifiableObservableList());
+    }
+
+    @Test
+    public void add_sameSlotAfterTheLessonWasCancelled_success() {
+        uniqueLessonList.add(ALICE_MATH);
+        uniqueLessonList.setLesson(ALICE_MATH, new LessonBuilder(ALICE_MATH).withStatus(LessonStatus.CANCELLED)
+                .build());
+
+        uniqueLessonList.add(ALICE_MATH);
+
+        assertEquals(2, uniqueLessonList.asUnmodifiableObservableList().size());
+    }
+
+    @Test
+    public void add_sameSlotAfterTheLessonMovedAway_success() {
+        uniqueLessonList.add(ALICE_MATH);
+        uniqueLessonList.setLesson(ALICE_MATH, new LessonBuilder(ALICE_MATH).withDate("2031-01-01").build());
+
+        uniqueLessonList.add(ALICE_MATH);
+
+        assertEquals(2, uniqueLessonList.asUnmodifiableObservableList().size());
+    }
+
+    @Test
+    public void add_sameSlotAfterRemoveIf_success() {
+        uniqueLessonList.add(ALICE_MATH);
+        uniqueLessonList.removeIf(lesson -> lesson.isWith(ALICE));
+
+        uniqueLessonList.add(ALICE_MATH);
+
+        assertEquals(List.of(ALICE_MATH), uniqueLessonList.asUnmodifiableObservableList());
+    }
+
+    @Test
+    public void add_sameSlotAfterListReplacedFromAnotherList_throwsDuplicateLessonException() {
+        UniqueLessonList other = new UniqueLessonList();
+        other.add(ALICE_MATH);
+        uniqueLessonList.setLessons(other);
+
+        assertThrows(DuplicateLessonException.class, () -> uniqueLessonList.add(ALICE_MATH));
+    }
+
+    @Test
+    public void add_sameSlotAfterListReplacedByAnotherSetOfLessons_onlyTheNewSlotsAreTaken() {
+        uniqueLessonList.add(ALICE_MATH);
+        uniqueLessonList.setLessons(List.of(BENSON_PHYSICS));
+
+        uniqueLessonList.add(ALICE_MATH);
+
+        assertThrows(DuplicateLessonException.class, () -> uniqueLessonList.add(BENSON_PHYSICS));
+    }
+
+    private static List<Lesson> distinctLessons(int count) {
+        Subject math = new Subject("Math");
+        List<Lesson> lessons = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            lessons.add(new Lesson(new Name("Student " + letters(i % 300)),
+                    new Phone("9" + String.format("%07d", i % 300)), math,
+                    new LessonDate(LocalDate.of(2026, 1, 1).plusDays(i / 300).toString()), new LessonTime("10:00"),
+                    new LessonDuration(60)));
+        }
+        return lessons;
+    }
+
+    private static String letters(int number) {
+        StringBuilder result = new StringBuilder();
+        int rest = number;
+        do {
+            result.append((char) ('a' + rest % 26));
+            rest /= 26;
+        } while (rest > 0);
+        return result.reverse().toString();
     }
 }
