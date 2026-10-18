@@ -1,5 +1,7 @@
 package seedu.address.logic.commands;
 
+import java.util.Optional;
+
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
@@ -15,6 +17,11 @@ public class TaskDeleteCommand extends Command {
     public TaskDeleteCommand(Index index, boolean confirmed) {
         this.index = index;
         this.confirmed = confirmed;
+    }
+
+    @Override
+    public Optional<String> undoLabel() {
+        return Optional.of("task deletion");
     }
 
     @Override

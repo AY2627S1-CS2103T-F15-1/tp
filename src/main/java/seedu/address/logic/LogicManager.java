@@ -13,10 +13,13 @@ import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.SaveCommand;
 import seedu.address.logic.commands.TodayCommand;
+import seedu.address.logic.commands.UndoCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
+import seedu.address.model.UndoSnapshot;
 import seedu.address.model.person.Person;
 import seedu.address.storage.Storage;
 
@@ -79,6 +82,8 @@ public class LogicManager implements Logic {
         CommandResult commandResult;
         Command command = addressBookParser.parseCommand(commandText);
         String before = snapshot();
+        // A destructive command needs a private copy of the data from before it runs.
+        AddressBook undoCopy = command.undoLabel().isPresent() ? new AddressBook(model.getAddressBook()) : null;
         List<String> shownBefore = lessonSelection();
         boolean wasDirty = dirty;
         boolean changed;
@@ -90,6 +95,7 @@ public class LogicManager implements Logic {
             changed = !before.equals(snapshot());
             dirty = wasDirty || changed;
         }
+        updateUndoSnapshot(command, undoCopy, changed);
 
         String numbering = "";
         List<String> shownAfter = lessonSelection();
@@ -114,6 +120,22 @@ public class LogicManager implements Logic {
             return commandResult.withFeedback(commandResult.getFeedbackToUser() + "\n" + UNSAVED_WARNING);
         }
         return commandResult;
+    }
+
+    /**
+     * Keeps the undo step in step with what a command did. A destructive command that changed data keeps the
+     * copy taken before it ran, any other change discards the step so that an undo cannot erase newer work,
+     * and a command that changed nothing leaves it alone. The undo command manages the step itself.
+     */
+    private void updateUndoSnapshot(Command command, AddressBook undoCopy, boolean changed) {
+        if (!changed || command instanceof UndoCommand) {
+            return;
+        }
+        if (undoCopy != null) {
+            model.setUndoSnapshot(new UndoSnapshot(command.undoLabel().orElseThrow(), undoCopy));
+        } else {
+            model.clearUndoSnapshot();
+        }
     }
 
     /** Captures visible row identity and labels before mutation can reorder a live sorted list. */

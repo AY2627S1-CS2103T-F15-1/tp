@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.ToStringBuilder;
@@ -59,6 +60,11 @@ public class DeleteCommand extends Command {
         requireNonNull(targetIndex);
         this.targetIndex = targetIndex;
         this.isConfirmed = isConfirmed;
+    }
+
+    @Override
+    public Optional<String> undoLabel() {
+        return Optional.of("student deletion");
     }
 
     @Override

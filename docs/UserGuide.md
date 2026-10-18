@@ -202,7 +202,7 @@ Format: `delete INDEX [confirm]`
 * The index refers to the index number shown in the displayed student list.
 * The index **must be a positive integer** 1, 2, 3, ...
 * A student with no lessons, homework, tasks, or financial history is deleted immediately.
-* Deleting a student also deletes **all of their lessons, homework, and financial history**, including feedback, and this cannot be undone. If the student has linked records, TutorFlow shows their name, phone number, linked counts, and upcoming commitments, and asks you to repeat the command with `confirm`.
+* Deleting a student also deletes **all of their lessons, homework, and financial history**, including feedback. Type [`undo`](#undoing-a-deletion-undo) straight afterwards to bring everything back. If the student has linked records, TutorFlow shows their name, phone number, linked counts, and upcoming commitments, and asks you to repeat the command with `confirm`.
 * The keyword `confirm` is in lower case.
 
 Examples:
@@ -387,12 +387,29 @@ Format: `clear confirm`
 
 * Typing `clear` on its own deletes nothing. It only reminds you what would be deleted and how to confirm.
 * `confirm` must be written exactly in lower case. Anything else after `clear` is rejected, so a mistyped command can never wipe your data.
-* Clearing cannot be undone. TutorFlow saves the empty data straight away, so copy `data/tutorflow-v14.json` first if you may want your records back.
+* [`undo`](#undoing-a-deletion-undo) brings everything back straight after a clear, but only until you change any data or close TutorFlow. TutorFlow saves the empty data straight away, so copy `data/tutorflow-v14.json` first if you may want your records back after closing.
 * Clearing data that is already empty works and does nothing.
 
 Examples:
 * `clear` shows `This deletes ALL students, lessons, homework, and financial history. Type 'clear confirm' to proceed.`
 * `clear confirm` deletes everything.
+
+### Undoing a deletion: `undo`
+
+Restores all data as it was before your latest destructive command.
+
+Format: `undo`
+
+* `undo` takes no parameters.
+* It reverses the most recent student deletion (`delete`), `clear confirm`, `hw delete` or `task delete` that changed your data.
+* Everything returns together with its history. A deleted student comes back with their lessons, homework, payments, charges and tasks, and a cleared data set comes back with its travel buffer.
+* Only one step is remembered, and only until you close TutorFlow. Any later change to your data, however small, discards it, so `undo` can never wipe out newer work. Looking things up (`list`, `find`, `view`, `agenda`, `today`, `help`, `hw list`, `pay list`, `task list`) and previews that ask for `confirm` do not.
+* Undoing twice in a row is rejected, and there is no redo.
+* If TutorFlow could not save a deletion, `undo` still works. If it cannot save the restored data, it keeps the restored data in the session and asks you to fix the problem and type `save`.
+* Payments and charges are never deleted one by one. Correct them with `pay reverse` and `charge reverse`, which keep the history.
+
+Example:
+* `delete 2 confirm` followed by `undo` deletes the 2nd student and then restores them with all of their records.
 
 ### Exiting the program: `exit`
 
@@ -474,6 +491,7 @@ Action     | Format, Examples
 **Lesson cancel** | `lesson cancel INDEX [r/REASON]`<br> e.g., `lesson cancel 1 r/Student unwell`
 **Lesson done** | `lesson done INDEX [n/NOTES]`<br> e.g., `lesson done 1 n/Covered quadratic roots`
 **Lesson missed** | `lesson missed INDEX`<br> e.g., `lesson missed 1`
+**Undo** | `undo`
 
 
 ## Student continuity in v1.4 alpha

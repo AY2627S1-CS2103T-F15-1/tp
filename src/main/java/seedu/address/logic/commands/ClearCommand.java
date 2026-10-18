@@ -2,6 +2,8 @@ package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.Optional;
+
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
@@ -39,6 +41,11 @@ public class ClearCommand extends Command {
      */
     public ClearCommand(boolean isConfirmed) {
         this.isConfirmed = isConfirmed;
+    }
+
+    @Override
+    public Optional<String> undoLabel() {
+        return Optional.of("clear");
     }
 
     @Override
