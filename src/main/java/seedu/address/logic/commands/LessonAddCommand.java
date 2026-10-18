@@ -86,6 +86,9 @@ public class LessonAddCommand extends Command {
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
         Person student = LessonCommandUtil.getStudent(model, studentIndex);
+        if (student.isArchived()) {
+            throw new CommandException("Restore this archived student before scheduling a new lesson.");
+        }
         Lesson lesson = createLesson(student);
 
         if (model.hasLesson(lesson)) {

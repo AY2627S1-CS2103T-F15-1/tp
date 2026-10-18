@@ -15,6 +15,7 @@ import seedu.address.model.person.Person;
 public interface Model {
     /** {@code Predicate} that always evaluates to true */
     Predicate<Person> PREDICATE_SHOW_ALL_PERSONS = unused -> true;
+    Predicate<Person> PREDICATE_SHOW_ACTIVE_PERSONS = person -> !person.isArchived();
 
     /** {@code Predicate} that always evaluates to true for lessons */
     Predicate<Lesson> PREDICATE_SHOW_ALL_LESSONS = unused -> true;
