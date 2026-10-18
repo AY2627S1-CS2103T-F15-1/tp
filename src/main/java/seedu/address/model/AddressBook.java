@@ -12,6 +12,8 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.util.ToStringBuilder;
+import seedu.address.model.finance.Ledger;
+import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.UniqueLessonList;
@@ -29,6 +31,7 @@ public class AddressBook implements ReadOnlyAddressBook {
 
     private final UniquePersonList persons = new UniquePersonList();
     private final UniqueLessonList lessons = new UniqueLessonList();
+    private final ObservableList<LedgerEntry> ledgerEntries = FXCollections.observableArrayList();
     private final ObservableList<Homework> homework = FXCollections.observableArrayList();
 
     public AddressBook() {}
@@ -68,6 +71,7 @@ public class AddressBook implements ReadOnlyAddressBook {
         setPersons(newData.getPersonList());
         setLessons(newData.getLessonList());
         homework.setAll(newData.getHomeworkList());
+        ledgerEntries.setAll(newData.getLedgerEntries());
     }
 
     //// person-level operations
@@ -107,6 +111,7 @@ public class AddressBook implements ReadOnlyAddressBook {
      */
     public void removePerson(Person key) {
         persons.remove(key);
+        ledgerEntries.removeIf(entry -> entry.studentId().equals(key.getId()));
         homework.removeIf(item -> item.getStudentId().equals(key.getId()));
         boolean hasRemovedLessons = lessons.removeIf(lesson -> lesson.isWith(key));
         if (hasRemovedLessons) {
@@ -164,6 +169,9 @@ public class AddressBook implements ReadOnlyAddressBook {
      * {@code key} must exist in the address book.
      */
     public void removeLesson(Lesson key) {
+        if (ledgerEntries.stream().anyMatch(entry -> key.getId().equals(entry.lessonId()))) {
+            throw new IllegalArgumentException("A lesson with financial history cannot be deleted.");
+        }
         lessons.remove(key);
     }
 
@@ -223,6 +231,17 @@ public class AddressBook implements ReadOnlyAddressBook {
         return FXCollections.unmodifiableObservableList(homework);
     }
 
+    /** Appends a validated immutable event. Financial corrections use compensating entries. */
+    public void addLedgerEntry(LedgerEntry entry) {
+        Ledger.validateAppend(this, requireNonNull(entry));
+        ledgerEntries.add(entry);
+    }
+
+    @Override
+    public ObservableList<LedgerEntry> getLedgerEntries() {
+        return FXCollections.unmodifiableObservableList(ledgerEntries);
+    }
+
     //// util methods
 
     @Override
@@ -256,11 +275,12 @@ public class AddressBook implements ReadOnlyAddressBook {
 
         return persons.equals(otherAddressBook.persons)
                 && lessons.equals(otherAddressBook.lessons)
-                && homework.equals(otherAddressBook.homework);
+                && homework.equals(otherAddressBook.homework)
+                && ledgerEntries.equals(otherAddressBook.ledgerEntries);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(persons, lessons, homework);
+        return Objects.hash(persons, lessons, homework, ledgerEntries);
     }
 }
