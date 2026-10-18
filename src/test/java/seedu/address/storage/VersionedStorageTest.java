@@ -2,6 +2,7 @@ package seedu.address.storage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -29,7 +30,18 @@ public class VersionedStorageTest {
     public void startup_legacyData_copiesToNewFileWithoutChangingOriginal() throws Exception {
         Path legacy = directory.resolve("addressbook.json");
         Path current = directory.resolve("tutorflow-v14.json");
-        new JsonAddressBookStorage(legacy).saveAddressBook(TypicalPersons.getTypicalAddressBook());
+        Files.writeString(legacy, """
+                {
+                  "persons": [{"name":"Alice Pauline","phone":"94351253","level":"S3",
+                    "subjects":["Math"],"rate":"50"}],
+                  "lessons": [
+                    {"studentName":"Alice Pauline","studentPhone":"94351253","subject":"Math",
+                     "date":"2026-10-12","time":"10:00","duration":60,"status":"cancelled"},
+                    {"studentName":"Alice Pauline","studentPhone":"94351253","subject":"Math",
+                     "date":"2026-10-12","time":"10:00","duration":60,"status":"cancelled"}
+                  ]
+                }
+                """);
         String original = Files.readString(legacy);
         VersionedAddressBookStorage data = new VersionedAddressBookStorage(current, legacy);
         ModelManager model = new ModelManager(data.readAddressBook().orElseThrow(), new UserPrefs());
@@ -39,7 +51,13 @@ public class VersionedStorageTest {
         assertFalse(logic.hasUnsavedChanges());
         assertTrue(Files.exists(current));
         assertEquals(original, Files.readString(legacy));
-        assertEquals(model.getAddressBook(), data.readAddressBook().orElseThrow());
+        ReadOnlyAddressBook restored = data.readAddressBook().orElseThrow();
+        assertEquals(model.getAddressBook(), restored);
+        assertEquals(2, restored.getLessonList().size());
+        assertNotEquals(restored.getLessonList().get(0).getId(), restored.getLessonList().get(1).getId());
+        assertTrue(restored.getLessonList().get(0).getAcademicLevel().isEmpty());
+        assertEquals(restored.getPersonList().getFirst().getId(),
+                restored.getLessonList().getFirst().getStudentId().orElseThrow());
     }
     @Test
     public void startup_failedMigration_retainsDirtyStateAndRetriesBeforeExit() throws Exception {
