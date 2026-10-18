@@ -5,11 +5,16 @@ import java.time.LocalDate;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.Command;
+import seedu.address.logic.commands.HomeworkAddCommand;
+import seedu.address.logic.commands.HomeworkEditCommand;
 import seedu.address.logic.commands.HomeworkListCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.homework.Homework;
 
 /** Parses homework operations with an injectable local calendar clock. */
 public class HomeworkCommandParser implements Parser<Command> {
+    private static final Prefix DESCRIPTION = new Prefix("desc/");
+    private static final Prefix DUE = new Prefix("due/");
     private static final Prefix STUDENT = new Prefix("st/");
     private static final Prefix OVERDUE = new Prefix("overdue/");
     private static final Prefix OUTSTANDING = new Prefix("outstanding/");
@@ -30,10 +35,54 @@ public class HomeworkCommandParser implements Parser<Command> {
     public Command parse(String args) throws ParseException {
         String[] parts = args.strip().split("\\s+", 2);
         String arguments = parts.length == 2 ? parts[1] : "";
-        if (!parts[0].equals("list")) {
-            throw new ParseException("Homework commands: hw list");
+        return switch (parts[0]) {
+            case "add" -> parseAdd(" " + arguments);
+            case "edit" -> parseEdit(" " + arguments);
+            case "list" -> parseList(" " + arguments);
+            default -> throw new ParseException("Homework commands: hw add, hw edit, hw list");
+        };
+    }
+
+    /** Parses required assignment fields without treating prose as unrelated command prefixes. */
+    private Command parseAdd(String args) throws ParseException {
+        ArgumentMultimap values = ArgumentTokenizer.tokenize(args, STUDENT, DESCRIPTION, DUE);
+        values.verifyNoDuplicatePrefixesFor(STUDENT, DESCRIPTION, DUE);
+        values.verifyNoEmptyValuesFor(STUDENT, DESCRIPTION, DUE);
+        ParserUtil.requirePrefixesPresent(values, HomeworkAddCommand.MESSAGE_USAGE, STUDENT, DESCRIPTION, DUE);
+        return new HomeworkAddCommand(ParserUtil.parseIndex(values.getValue(STUDENT).orElseThrow()),
+                parseDescription(values.getValue(DESCRIPTION).orElseThrow()),
+                parseDate(values.getValue(DUE).orElseThrow()), LocalDate.now(clock));
+    }
+
+    /** Parses optional corrections, requiring at least one changed field. */
+    private Command parseEdit(String args) throws ParseException {
+        ArgumentMultimap values = ArgumentTokenizer.tokenize(args, DESCRIPTION, DUE);
+        values.verifyNoDuplicatePrefixesFor(DESCRIPTION, DUE);
+        values.verifyNoEmptyValuesFor(DESCRIPTION, DUE);
+        if (values.getValue(DESCRIPTION).isEmpty() && values.getValue(DUE).isEmpty()) {
+            throw new ParseException(HomeworkEditCommand.MESSAGE_USAGE);
         }
-        return parseList(" " + arguments);
+        return new HomeworkEditCommand(ParserUtil.parseIndex(values.getPreamble()),
+                ParserUtil.parseOptional(values, DESCRIPTION, this::parseDescription),
+                ParserUtil.parseOptional(values, DUE, this::parseDate), LocalDate.now(clock));
+    }
+
+    /** Validates description text before any whitespace can conceal control characters. */
+    private String parseDescription(String text) throws ParseException {
+        try {
+            return Homework.normalizeDescription(text);
+        } catch (IllegalArgumentException e) {
+            throw new ParseException(e.getMessage(), e);
+        }
+    }
+
+    /** Resolves relative dates against the injected clock and delegates explicit date formats. */
+    private LocalDate parseDate(String text) throws ParseException {
+        return switch (text.strip().toLowerCase(java.util.Locale.ENGLISH)) {
+            case "today" -> LocalDate.now(clock);
+            case "tmr" -> LocalDate.now(clock).plusDays(1);
+            default -> ParserUtil.parseDate(text).value;
+        };
     }
 
     /** Parses only the supported value prefix and two mutually exclusive flags. */

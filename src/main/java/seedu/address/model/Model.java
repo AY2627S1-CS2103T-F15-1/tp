@@ -135,4 +135,3 @@ public interface Model {
     /** Replaces the numbered selection only when a new list is explicitly displayed. */
     void showHomework(List<Homework> homework);
 }
-
