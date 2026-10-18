@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
@@ -22,6 +23,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+
+import com.sun.net.httpserver.HttpServer;
 
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
@@ -46,6 +49,47 @@ public class HelpWindowTest {
     public Path temporaryFolder;
 
     private HelpWindow window;
+
+    @Test
+    public void click_remoteLinkAndNewWindowLink_blocksLoopbackRequestsAndKeepsGuide() throws Exception {
+        AtomicInteger requests = new AtomicInteger();
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/", exchange -> {
+            requests.incrementAndGet();
+            exchange.sendResponseHeaders(200, -1);
+            exchange.close();
+        });
+        server.start();
+        try {
+            String url = "http://127.0.0.1:" + server.getAddress().getPort() + "/private";
+            CompletableFuture<Void> loaded = onFx(() -> {
+                window = new HelpWindow(new Stage(), () -> "<html><body><h1 id='local'>Local guide</h1>"
+                        + "<a id='remote' href='" + url + "'>Remote</a>"
+                        + "<a id='new-window' target='_blank' href='" + url + "'>New window</a>"
+                        + "<a id='anchor' href='#local'>Local section</a></body></html>");
+                CompletableFuture<Void> result = awaitState(Worker.State.SUCCEEDED);
+                window.show();
+                return result;
+            });
+            loaded.get(10, TimeUnit.SECONDS);
+            onFx(() -> {
+                viewer().getEngine().executeScript("document.getElementById('new-window').click()");
+                viewer().getEngine().executeScript("document.getElementById('anchor').click()");
+                viewer().getEngine().executeScript("document.getElementById('remote').click()");
+                return null;
+            });
+            Thread.sleep(500); // Allow a forbidden request to reach the controlled listener if the guard regresses.
+            assertEquals(0, requests.get());
+            onFx(() -> {
+                assertTrue(status().getText().contains("offline"));
+                assertTrue(viewer().getEngine().getDocument().getDocumentElement().getTextContent()
+                        .contains("Local guide"));
+                return null;
+            });
+        } finally {
+            server.stop(0);
+        }
+    }
 
     @Test
     public void execute_successRejectionAndMalformedFile_logsNoPrivatePayload() throws Exception {
