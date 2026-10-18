@@ -3,6 +3,7 @@ package seedu.address.logic;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import seedu.address.commons.core.index.Index;
@@ -102,6 +103,16 @@ public class Messages {
     public static String formatAcademicLevel(Lesson lesson) {
         return "Level at booking: " + lesson.getAcademicLevel().map(level -> level.value)
                 .orElse("unknown (not recorded)");
+    }
+
+    /** Formats the current numbered lesson selection after a mutation changes its rows. */
+    public static String formatLessonList(List<Lesson> lessons) {
+        return "\n\nLesson numbers have changed. Current lesson list:"
+                + (lessons.isEmpty() ? "\nNo lessons in the current list." : "")
+                + IntStream.range(0, lessons.size())
+                        .mapToObj(i -> "\n" + (i + 1) + ". " + format(lessons.get(i)) + ", "
+                                + formatVenue(lessons.get(i)) + "  (" + lessons.get(i).getStatus() + ")")
+                        .collect(Collectors.joining());
     }
 
     /**

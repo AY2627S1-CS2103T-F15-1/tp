@@ -69,12 +69,14 @@ public class LessonListCommand extends Command {
             return new CommandResult(String.format(MESSAGE_NO_LESSONS, student.getName()));
         }
         if (isShowingAll) {
-            return new CommandResult(format(MESSAGE_HEADER_ALL, student, model.getFilteredLessonList()));
+            return new CommandResult(format(MESSAGE_HEADER_ALL, student, model.getFilteredLessonList()))
+                    .withDisplayedLessons(model.getFilteredLessonList());
         }
         if (model.getFilteredLessonList().isEmpty()) {
             return new CommandResult(String.format(MESSAGE_NO_UPCOMING_LESSONS, student.getName()));
         }
-        return new CommandResult(format(MESSAGE_HEADER_UPCOMING, student, model.getFilteredLessonList()));
+        return new CommandResult(format(MESSAGE_HEADER_UPCOMING, student, model.getFilteredLessonList()))
+                .withDisplayedLessons(model.getFilteredLessonList());
     }
 
     private static String format(String headerFormat, Person student, List<Lesson> lessons) {
