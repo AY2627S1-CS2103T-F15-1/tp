@@ -22,5 +22,6 @@ public class CliSyntax {
     public static final Prefix PREFIX_NOTES = new Prefix("n/");
     public static final Prefix PREFIX_WEEK = new Prefix("week/");
     public static final Prefix PREFIX_ALL = new Prefix("all/");
+    public static final Prefix PREFIX_PAST = new Prefix("past/");
 
 }

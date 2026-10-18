@@ -21,10 +21,12 @@ import seedu.address.model.person.Person;
 final class LessonCommandUtil {
 
     static final String MESSAGE_DATE_TOO_FAR = "That date is more than 2 years away. Check the year.";
+    static final String MESSAGE_DATE_TOO_OLD = "That date is more than 2 years in the past. Check the year.";
     static final String MESSAGE_DUPLICATE_LESSON = "This exact lesson already exists.";
     static final String MESSAGE_OVERLAP_WARNING = "\nWarning: this overlaps with %1$s";
 
     private static final int MAX_YEARS_AHEAD = 2;
+    private static final int MAX_YEARS_BACK = 2;
 
     private LessonCommandUtil() {} // prevents instantiation
 
@@ -87,6 +89,17 @@ final class LessonCommandUtil {
     static void requireNotInPast(LessonDate date, String message) throws CommandException {
         if (date.value.isBefore(LocalDate.now())) {
             throw new CommandException(message);
+        }
+    }
+
+    /**
+     * Checks that {@code date} is not so far back that it is probably a mistyped year.
+     *
+     * @throws CommandException if the date is more than 2 years before today.
+     */
+    static void requireNotTooFarInPast(LessonDate date) throws CommandException {
+        if (date.value.isBefore(LocalDate.now().minusYears(MAX_YEARS_BACK))) {
+            throw new CommandException(MESSAGE_DATE_TOO_OLD);
         }
     }
 

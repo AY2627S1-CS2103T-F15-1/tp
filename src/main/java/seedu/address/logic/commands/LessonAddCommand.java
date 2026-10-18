@@ -3,6 +3,7 @@ package seedu.address.logic.commands;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_DATE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_DURATION;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_PAST;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_STUDENT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TIME;
@@ -43,13 +44,14 @@ public class LessonAddCommand extends Command {
             + LessonDuration.DEFAULT_MINUTES + " minutes, and the venue defaults to the student's venue.\n"
             + "Parameters: " + PREFIX_STUDENT + "STUDENT_INDEX [" + PREFIX_SUBJECT + "SUBJECT] "
             + PREFIX_DATE + "DATE " + PREFIX_TIME + "TIME [" + PREFIX_DURATION + "MINUTES] ["
-            + PREFIX_VENUE + "VENUE]\n"
+            + PREFIX_VENUE + "VENUE] [" + PREFIX_PAST + "]\n"
+            + PREFIX_PAST + " records a lesson that has already taken place.\n"
             + "Example: " + COMMAND_WORD + " " + PREFIX_STUDENT + "1 " + PREFIX_SUBJECT + "Math "
             + PREFIX_DATE + "2026-12-22 " + PREFIX_TIME + "16:30 " + PREFIX_DURATION + "90";
 
     public static final String MESSAGE_SUCCESS = "Scheduled: %1$s, %2$s";
-    public static final String MESSAGE_DATE_IN_PAST = "That date is in the past. Use 'lesson add' only for "
-            + "upcoming lessons.";
+    public static final String MESSAGE_DATE_IN_PAST = "That date is in the past. Add " + PREFIX_PAST
+            + " to record a lesson that has already taken place.";
     public static final String MESSAGE_SUBJECT_NOT_TAKEN = "%1$s is not recorded as taking %2$s. "
             + "Add the subject with 'edit' first.";
     public static final String MESSAGE_SUBJECT_REQUIRED = "%1$s takes more than one subject (%2$s). "
@@ -63,6 +65,7 @@ public class LessonAddCommand extends Command {
     private final LessonTime time;
     private final LessonDuration duration;
     private final Venue venue; // null if the student's venue is to be used
+    private final boolean isBackdated; // true if a date in the past is explicitly allowed
 
     /**
      * Creates a {@code LessonAddCommand} to schedule a lesson for the student at {@code studentIndex}.
@@ -70,6 +73,15 @@ public class LessonAddCommand extends Command {
      */
     public LessonAddCommand(Index studentIndex, Subject subject, LessonDate date, LessonTime time,
             LessonDuration duration, Venue venue) {
+        this(studentIndex, subject, date, time, duration, venue, false);
+    }
+
+    /**
+     * Creates a {@code LessonAddCommand} that also accepts a date in the past when {@code isBackdated} is true.
+     * The other rules for the subject, date, time, duration and venue are unchanged.
+     */
+    public LessonAddCommand(Index studentIndex, Subject subject, LessonDate date, LessonTime time,
+            LessonDuration duration, Venue venue, boolean isBackdated) {
         requireNonNull(studentIndex);
         requireNonNull(date);
         requireNonNull(time);
@@ -80,6 +92,7 @@ public class LessonAddCommand extends Command {
         this.time = time;
         this.duration = duration;
         this.venue = venue;
+        this.isBackdated = isBackdated;
     }
 
     @Override
@@ -118,7 +131,11 @@ public class LessonAddCommand extends Command {
     }
 
     Lesson createLesson(Person student) throws CommandException {
-        LessonCommandUtil.requireNotInPast(date, MESSAGE_DATE_IN_PAST);
+        if (isBackdated) {
+            LessonCommandUtil.requireNotTooFarInPast(date);
+        } else {
+            LessonCommandUtil.requireNotInPast(date, MESSAGE_DATE_IN_PAST);
+        }
         LessonCommandUtil.requireNearFuture(date);
         LessonCommandUtil.requireEndsBeforeMidnight(time, duration);
 
@@ -165,7 +182,8 @@ public class LessonAddCommand extends Command {
                 && date.equals(otherCommand.date)
                 && time.equals(otherCommand.time)
                 && duration.equals(otherCommand.duration)
-                && Objects.equals(venue, otherCommand.venue);
+                && Objects.equals(venue, otherCommand.venue)
+                && isBackdated == otherCommand.isBackdated;
     }
 
     @Override
@@ -177,6 +195,7 @@ public class LessonAddCommand extends Command {
                 .add("time", time)
                 .add("duration", duration)
                 .add("venue", venue)
+                .add("isBackdated", isBackdated)
                 .toString();
     }
 }

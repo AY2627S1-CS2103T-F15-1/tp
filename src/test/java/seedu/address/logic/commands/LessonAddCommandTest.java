@@ -196,6 +196,8 @@ public class LessonAddCommandTest {
                 new LessonDuration(60), null)));
         assertFalse(command.equals(new LessonAddCommand(INDEX_FIRST_PERSON, MATH, DATE, TIME, DURATION,
                 new Venue("Online"))));
+        assertFalse(command.equals(new LessonAddCommand(INDEX_FIRST_PERSON, MATH, DATE, TIME, DURATION,
+                null, true)));
     }
 
     @Test
@@ -203,7 +205,7 @@ public class LessonAddCommandTest {
         LessonAddCommand command = new LessonAddCommand(INDEX_FIRST_PERSON, MATH, DATE, TIME, DURATION, null);
         String expected = LessonAddCommand.class.getCanonicalName() + "{studentIndex=" + INDEX_FIRST_PERSON
                 + ", subject=" + MATH + ", date=" + DATE + ", time=" + TIME + ", duration=" + DURATION
-                + ", venue=null}";
+                + ", venue=null, isBackdated=false}";
         assertEquals(expected, command.toString());
     }
 

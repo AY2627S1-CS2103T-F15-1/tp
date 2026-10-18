@@ -229,7 +229,7 @@ Examples:
 
 Schedules a lesson for a student.
 
-Format: `lesson add st/STUDENT_INDEX [s/SUBJECT] d/DATE t/TIME [dur/MINUTES] [v/VENUE]`
+Format: `lesson add st/STUDENT_INDEX [s/SUBJECT] d/DATE t/TIME [dur/MINUTES] [v/VENUE] [past/]`
 
 * `STUDENT_INDEX` is the index number shown in the displayed student list, and **must be a positive integer** 1, 2, 3, ...
 * `DATE` is written as `YYYY-MM-DD`, such as `2026-12-22`, or as `D/M/YYYY`, such as `22/12/2026`, or as the word `today` or `tmr` (tomorrow), which is not case-sensitive. The same forms work in `agenda d/DATE` and `lesson move d/DATE`. It must be today or later, and no more than 2 years ahead, which catches a mistyped year.
@@ -237,6 +237,7 @@ Format: `lesson add st/STUDENT_INDEX [s/SUBJECT] d/DATE t/TIME [dur/MINUTES] [v/
 * `MINUTES` is the length of the lesson, from `15` to `480` in steps of `15`. If it is left out, it is `60`.
 * `SUBJECT` must be one of the student's subjects, and is not case-sensitive. If the student has only one subject, it can be left out. If the student has several, it must be given.
 * `VENUE` is up to 100 characters. If it is left out, the student's usual venue is used, or `—` if the student has none.
+* `past/` takes no value. A date before today is rejected unless you add it, which records a lesson that has already taken place, for example one you forgot to enter. The date may then be up to 2 years in the past; every other rule still applies. Complete the lesson afterwards with [`lesson done`](#completing-a-lesson-and-recording-notes-lesson-done).
 * A lesson must end on the day it starts, so `t/23:00 dur/120` is rejected. Split it into two lessons.
 * Two lessons are duplicates if they have the same student, subject, date, time and duration. A duplicate is rejected.
 * Adding a lesson keeps the current day, week or student lesson filter. If the new lesson shifts existing lesson numbers, the result shows the complete current lesson list with fresh numbers. Use those numbers for your next lesson command.
@@ -250,6 +251,7 @@ Examples:
 * `lesson add st/1 s/Math d/2026-12-22 t/16:30 dur/90` Schedules a 90-minute Math lesson for the 1st student at the student's usual venue.
 * `lesson add st/2 d/2026-12-23 t/19:00 v/Online` Schedules a 60-minute lesson online for the 2nd student, in the only subject that student takes.
 * `lesson add st/1 s/Math d/tmr t/16:30` Schedules a Math lesson for the 1st student tomorrow.
+* `lesson add st/1 s/Math d/2026-10-12 t/16:30 past/` Records a Math lesson on 12 October that has already happened.
 
 ### Viewing the agenda: `agenda`
 
@@ -464,7 +466,7 @@ Action     | Format, Examples
 **Sort**   | `sort [asc\|desc]`<br> e.g., `sort desc`
 **Remark** | `remark INDEX r/REMARK`<br> e.g., `remark 1 r/Prefers morning lessons`
 **Help**   | `help [COMMAND]`<br> e.g., `help`, `help lesson add`
-**Lesson add** | `lesson add st/STUDENT_INDEX [s/SUBJECT] d/DATE t/TIME [dur/MINUTES] [v/VENUE]`<br> e.g., `lesson add st/1 s/Math d/2026-12-22 t/16:30 dur/90`
+**Lesson add** | `lesson add st/STUDENT_INDEX [s/SUBJECT] d/DATE t/TIME [dur/MINUTES] [v/VENUE] [past/]`<br> e.g., `lesson add st/1 s/Math d/2026-12-22 t/16:30 dur/90`
 **Agenda** | `agenda [d/DATE] [week/]`<br> e.g., `agenda d/2026-12-22 week/`
 **Today** | `today`
 **Lesson list** | `lesson list st/STUDENT_INDEX [all/]`<br> e.g., `lesson list st/1 all/`

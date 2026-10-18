@@ -46,6 +46,17 @@ public class LessonAddCommandParserTest {
     }
 
     @Test
+    public void parse_pastFlag_createsBackdatedCommand() {
+        LessonAddCommand expected = new LessonAddCommand(INDEX_FIRST_PERSON, null, new LessonDate("2026-12-22"),
+                new LessonTime("16:30"), new LessonDuration(LessonDuration.DEFAULT_MINUTES), null, true);
+
+        assertParseSuccess(parser, REQUIRED_FIELDS + " past/", expected);
+        assertParseSuccess(parser, " past/ st/1 d/2026-12-22 t/16:30", expected);
+        assertParseFailure(parser, REQUIRED_FIELDS + " past/ past/",
+                Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_PAST));
+    }
+
+    @Test
     public void parse_missingRequiredFields_failure() {
         assertParseFailure(parser, " st/1 s/Math t/16:30",
                 String.format(ParserUtil.MESSAGE_MISSING_PARAMETERS, "d/", USAGE));
