@@ -122,6 +122,23 @@ public class FinanceQueriesCommandTest {
     }
 
     @Test
+    public void rendering_accountAndDues_useReadableSeparatorsWithoutReplacementCharacters() throws Exception {
+        model.addPerson(TypicalPersons.ALICE);
+        lesson(TypicalPersons.ALICE, 1);
+        String charge = run("charge l/1 amt/100");
+        run("pay st/1 amt/25 n/Bank transfer");
+        String account = run("balance st/1");
+        String dues = run("dues");
+        assertTrue(charge.contains("Alice Pauline \u2014 Math"));
+        assertTrue(account.startsWith("Account \u2014 Alice Pauline\n"));
+        assertTrue(account.contains("$100.00 \u00b7 total paid $25.00 (after reversals) \u00b7 OUTSTANDING $75.00"));
+        assertTrue(dues.contains("outstanding balances \u2014 $75.00 total"));
+        for (String text : List.of(charge, account, dues, run("view 1"), run("today"))) {
+            assertFalse(text.contains("\uFFFD"), "Financial output must not contain replacement characters");
+        }
+    }
+
+    @Test
     public void emptyAndInvalidQueries_reportClearFeedback() throws Exception {
         model.addPerson(TypicalPersons.ALICE);
         assertTrue(run("balance st/1").contains("No charges or payments recorded"));

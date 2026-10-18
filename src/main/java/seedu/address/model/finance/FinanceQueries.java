@@ -31,15 +31,15 @@ public final class FinanceQueries {
         if (rows.isEmpty()) {
             return "No charges or payments recorded for " + studentLabel(book, studentId) + ".";
         }
-        StringBuilder text = new StringBuilder("Account — " + studentLabel(book, studentId));
+        StringBuilder text = new StringBuilder("Account â€” " + studentLabel(book, studentId));
         for (Ledger.AccountRow row : rows) {
             text.append("\n").append(row.entry().date()).append(" ").append(description(book, row.entry()))
                     .append(" ").append(signedAmount(row.effect())).append(" bal ")
                     .append(signedAmount(row.balance()));
         }
         return text + "\nTotal charged " + Money.format(Ledger.total(book, studentId, LedgerEntry.Kind.CHARGE))
-                + " · total paid " + Money.format(Ledger.total(book, studentId, LedgerEntry.Kind.PAYMENT))
-                + " (after reversals) · " + balanceLabel(Ledger.balance(book, studentId));
+                + " Â· total paid " + Money.format(Ledger.total(book, studentId, LedgerEntry.Kind.PAYMENT))
+                + " (after reversals) Â· " + balanceLabel(Ledger.balance(book, studentId));
     }
 
     /** Returns debts ordered by the oldest unpaid charge, then name and stable student identity. */
@@ -65,7 +65,7 @@ public final class FinanceQueries {
             return "DUES\nNo outstanding balances. Everyone is up to date.";
         }
         BigDecimal total = dues.stream().map(Due::balance).reduce(Money.ZERO, BigDecimal::add);
-        StringBuilder text = new StringBuilder("DUES\n" + dues.size() + " student(s) with outstanding balances — "
+        StringBuilder text = new StringBuilder("DUES\n" + dues.size() + " student(s) with outstanding balances â€” "
                 + Money.format(total) + " total");
         for (Due due : dues) {
             text.append("\n  ").append(studentLabel(book, due.studentId())).append(" ")
