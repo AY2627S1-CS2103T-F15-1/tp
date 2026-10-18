@@ -232,7 +232,7 @@ Schedules a lesson for a student.
 Format: `lesson add st/STUDENT_INDEX [s/SUBJECT] d/DATE t/TIME [dur/MINUTES] [v/VENUE]`
 
 * `STUDENT_INDEX` is the index number shown in the displayed student list, and **must be a positive integer** 1, 2, 3, ...
-* `DATE` is written as `YYYY-MM-DD`, such as `2026-12-22`, or as `D/M/YYYY`, such as `22/12/2026`. It must be today or later, and no more than 2 years ahead, which catches a mistyped year.
+* `DATE` is written as `YYYY-MM-DD`, such as `2026-12-22`, or as `D/M/YYYY`, such as `22/12/2026`, or as the word `today` or `tmr` (tomorrow), which is not case-sensitive. The same forms work in `agenda d/DATE` and `lesson move d/DATE`. It must be today or later, and no more than 2 years ahead, which catches a mistyped year.
 * `TIME` is written in 24-hour time, such as `16:30`. `4:30pm` and `1630` are also accepted.
 * `MINUTES` is the length of the lesson, from `15` to `480` in steps of `15`. If it is left out, it is `60`.
 * `SUBJECT` must be one of the student's subjects, and is not case-sensitive. If the student has only one subject, it can be left out. If the student has several, it must be given.
@@ -249,6 +249,7 @@ Format: `lesson add st/STUDENT_INDEX [s/SUBJECT] d/DATE t/TIME [dur/MINUTES] [v/
 Examples:
 * `lesson add st/1 s/Math d/2026-12-22 t/16:30 dur/90` Schedules a 90-minute Math lesson for the 1st student at the student's usual venue.
 * `lesson add st/2 d/2026-12-23 t/19:00 v/Online` Schedules a 60-minute lesson online for the 2nd student, in the only subject that student takes.
+* `lesson add st/1 s/Math d/tmr t/16:30` Schedules a Math lesson for the 1st student tomorrow.
 
 ### Viewing the agenda: `agenda`
 

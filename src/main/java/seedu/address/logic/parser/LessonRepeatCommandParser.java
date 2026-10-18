@@ -12,13 +12,23 @@ import java.util.Objects;
 
 import seedu.address.logic.commands.LessonRepeatCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
-import seedu.address.model.lesson.LessonDate;
 import seedu.address.model.lesson.LessonDuration;
 
 /** Parses finite recurrence options without accepting repeated or empty values. */
 public class LessonRepeatCommandParser implements Parser<LessonRepeatCommand> {
     private static final Prefix COUNT = new Prefix("count/");
     private static final Prefix EVERY = new Prefix("every/");
+    private final Clock clock;
+
+    /** Uses the application's local time zone to resolve today and tmr. */
+    public LessonRepeatCommandParser() {
+        this(Clock.systemDefaultZone());
+    }
+
+    /** Uses {@code clock} to resolve today and tmr. */
+    public LessonRepeatCommandParser(Clock clock) {
+        this.clock = clock;
+    }
 
     @Override
     public LessonRepeatCommand parse(String args) throws ParseException {
@@ -34,8 +44,7 @@ public class LessonRepeatCommandParser implements Parser<LessonRepeatCommand> {
         int weeks = parseBounded(values.getValue(EVERY).orElse("1"), 1, 12);
         return new LessonRepeatCommand(ParserUtil.parseIndex(values.getValue(PREFIX_STUDENT).orElseThrow()),
                 ParserUtil.parseOptional(values, PREFIX_SUBJECT, ParserUtil::parseSubject),
-                new LessonDate(DateParser.parse(values.getValue(PREFIX_DATE).orElseThrow(),
-                        Clock.systemDefaultZone()).toString()),
+                DateParser.parseLessonDate(values.getValue(PREFIX_DATE).orElseThrow(), clock),
                 ParserUtil.parseTime(values.getValue(PREFIX_TIME).orElseThrow()),
                 Objects.requireNonNullElse(ParserUtil.parseOptional(values, PREFIX_DURATION, ParserUtil::parseDuration),
                         new LessonDuration(LessonDuration.DEFAULT_MINUTES)),
