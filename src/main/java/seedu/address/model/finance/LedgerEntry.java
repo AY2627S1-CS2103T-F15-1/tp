@@ -7,6 +7,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 import seedu.address.model.lesson.Lesson;
+import seedu.address.model.lesson.LessonDuration;
 import seedu.address.model.person.Person;
 
 /**
@@ -34,7 +35,8 @@ public record LedgerEntry(UUID id, UUID studentId, Kind kind, LocalDate date, Bi
         if (kind == Kind.CHARGE) {
             if (lessonId == null || reversalOf != null || hourlyRate == null || hourlyRate.signum() < 0
                     || hourlyRate.scale() > 2 || hourlyRate.compareTo(new BigDecimal("9999.99")) > 0
-                    || durationMinutes == null || durationMinutes <= 0 || description == null) {
+                    || durationMinutes == null || !LessonDuration.isValidDuration(durationMinutes)
+                    || description == null) {
                 throw new IllegalArgumentException("Invalid charge snapshot.");
             }
             hourlyRate = hourlyRate.setScale(2);

@@ -24,6 +24,8 @@ import seedu.address.logic.Messages;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.finance.LedgerEntry;
+import seedu.address.model.finance.Money;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonStatus;
 import seedu.address.testutil.LessonBuilder;
@@ -49,18 +51,16 @@ public class LessonDoneCommandTest {
     }
 
     @Test
-    public void execute_todayWithNotes_completesAndRetainsBookingDetails() {
+    public void execute_todayWithNotes_completesAndRetainsBookingDetails() throws Exception {
         model.addLesson(lesson);
-        assertCommandSuccess(command(NOTES), model, String.format(LessonDoneCommand.MESSAGE_SUCCESS,
-                Messages.format(lesson)), expectedModel(lesson, lesson.complete(NOTES)));
+        assertChargedSuccess(lesson, NOTES, CLOCK);
     }
 
     @Test
-    public void execute_pastWithoutNotes_completesLesson() {
+    public void execute_pastWithoutNotes_completesLesson() throws Exception {
         Lesson past = new LessonBuilder(lesson).withDate(TODAY.minusDays(1)).build();
         model.addLesson(past);
-        assertCommandSuccess(command(null), model, String.format(LessonDoneCommand.MESSAGE_SUCCESS,
-                Messages.format(past)), expectedModel(past, past.complete(null)));
+        assertChargedSuccess(past, null, CLOCK);
     }
 
     @Test
@@ -72,12 +72,10 @@ public class LessonDoneCommandTest {
     }
 
     @Test
-    public void execute_nearUtcMidnight_usesLocalDate() {
+    public void execute_nearUtcMidnight_usesLocalDate() throws Exception {
         Clock singaporeClock = Clock.fixed(Instant.parse("2026-10-07T17:00:00Z"), ZoneId.of("Asia/Singapore"));
         model.addLesson(lesson);
-        assertCommandSuccess(new LessonDoneCommand(INDEX_FIRST_PERSON, null, singaporeClock), model,
-                String.format(LessonDoneCommand.MESSAGE_SUCCESS, Messages.format(lesson)),
-                expectedModel(lesson, lesson.complete(null)));
+        assertChargedSuccess(lesson, null, singaporeClock);
     }
 
     @Test
@@ -103,11 +101,10 @@ public class LessonDoneCommandTest {
     }
 
     @Test
-    public void execute_missedLesson_changesStatusToCompleted() {
+    public void execute_missedLesson_changesStatusToCompleted() throws Exception {
         Lesson missed = new LessonBuilder(lesson).withStatus(LessonStatus.MISSED).build();
         model.addLesson(missed);
-        assertCommandSuccess(command(NOTES), model, String.format(LessonDoneCommand.MESSAGE_SUCCESS,
-                Messages.format(missed)), expectedModel(missed, missed.complete(NOTES)));
+        assertChargedSuccess(missed, NOTES, CLOCK);
     }
 
     @Test
@@ -161,6 +158,18 @@ public class LessonDoneCommandTest {
 
     private LessonDoneCommand command(String notes) {
         return new LessonDoneCommand(INDEX_FIRST_PERSON, notes, CLOCK);
+    }
+
+    private void assertChargedSuccess(Lesson original, String notes, Clock clock) throws Exception {
+        CommandResult result = new LessonDoneCommand(INDEX_FIRST_PERSON, notes, clock).execute(model);
+        assertEquals(original.complete(notes), model.getFilteredLessonList().getFirst());
+        assertEquals(1, model.getAddressBook().getLedgerEntries().size());
+        LedgerEntry charge = model.getAddressBook().getLedgerEntries().getFirst();
+        assertEquals(original.getId(), charge.lessonId());
+        assertEquals(ALICE.getId(), charge.studentId());
+        assertEquals(Money.charge(ALICE.getRate().value, original.getDuration().value), charge.amount());
+        assertEquals(String.format(LessonDoneCommand.MESSAGE_SUCCESS, Messages.format(original))
+                + "\nCharge of " + Money.format(charge.amount()) + " recorded.", result.getFeedbackToUser());
     }
 
     private Model expectedModel(Lesson original, Lesson completed) {

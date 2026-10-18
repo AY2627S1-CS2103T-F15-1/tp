@@ -22,6 +22,7 @@ import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.ReadOnlyUserPrefs;
+import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
@@ -115,6 +116,21 @@ public class AddCommandTest {
      * A default model stub that has all of the methods failing.
      */
     private class ModelStub implements Model {
+        @Override
+        public void addLedgerEntry(LedgerEntry entry) {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
+        public List<LedgerEntry> getDisplayedPayments() {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
+        public void showPayments(List<LedgerEntry> payments) {
+            throw new AssertionError("This method should not be called.");
+        }
+
         @Override
         public void addHomework(Homework homework) {
             throw new AssertionError("Unexpected homework operation");

@@ -14,8 +14,11 @@ import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.LessonCommandParser;
 import seedu.address.model.Model;
+import seedu.address.model.finance.LedgerEntry;
+import seedu.address.model.finance.Money;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonStatus;
+import seedu.address.model.person.Person;
 
 /**
  * Records completion and optional teaching notes for a lesson in the displayed lesson list.
@@ -68,10 +71,28 @@ public class LessonDoneCommand extends Command {
             return new CommandResult(MESSAGE_ALREADY_COMPLETED);
         }
 
+        String financeMessage = "";
+        LedgerEntry charge = null;
+        boolean hasChargeHistory = model.getAddressBook().getLedgerEntries().stream()
+                .anyMatch(entry -> target.getId().equals(entry.lessonId()));
+        if (target.getStatus() != LessonStatus.COMPLETED && !hasChargeHistory) {
+            Person student = FinanceCommandSupport.lessonStudent(model, target);
+            if (Money.charge(student.getRate().value, target.getDuration().value).signum() == 0) {
+                financeMessage = "\nNo automatic charge: " + (student.getRate().value.signum() == 0
+                        ? FinanceCommandSupport.ZERO_RATE
+                        : "Computed charge rounds to $0.00. Use charge l/INDEX amt/.");
+            } else {
+                charge = LedgerEntry.charge(target, student, null);
+                financeMessage = "\nCharge of " + Money.format(charge.amount()) + " recorded.";
+            }
+        }
         model.setLesson(target, target.complete(notes));
+        if (charge != null) {
+            model.addLedgerEntry(charge);
+        }
         logger.fine("Completed lesson");
         String message = target.getStatus() == LessonStatus.COMPLETED ? MESSAGE_UPDATED_NOTES : MESSAGE_SUCCESS;
-        return new CommandResult(String.format(message, Messages.format(target)));
+        return new CommandResult(String.format(message, Messages.format(target)) + financeMessage);
     }
 
     @Override

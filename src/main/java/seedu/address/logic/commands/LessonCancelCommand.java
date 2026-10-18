@@ -60,6 +60,7 @@ public class LessonCancelCommand extends Command {
             throw new CommandException(MESSAGE_COMPLETED_LESSON);
         }
 
+        FinanceCommandSupport.requireUncharged(model, target);
         model.setLesson(target, target.cancel(reason));
         logger.fine("Cancelled lesson");
 

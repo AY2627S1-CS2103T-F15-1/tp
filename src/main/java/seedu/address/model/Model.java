@@ -6,6 +6,7 @@ import java.util.function.Predicate;
 
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
+import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
@@ -120,6 +121,15 @@ public interface Model {
      * @throws NullPointerException if {@code predicate} is null.
      */
     void updateFilteredLessonList(Predicate<Lesson> predicate);
+    /** Appends a validated financial event. */
+    void addLedgerEntry(LedgerEntry entry);
+
+    /** Returns the immutable payment rows last explicitly shown, retaining deleted placeholders. */
+    List<LedgerEntry> getDisplayedPayments();
+
+    /** Replaces payment numbering only when a new list is explicitly displayed. */
+    void showPayments(List<LedgerEntry> payments);
+
     /** Adds an assignment belonging to a known student. */
     void addHomework(Homework homework);
 

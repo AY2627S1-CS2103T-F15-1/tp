@@ -13,6 +13,7 @@ import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
+import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
@@ -28,6 +29,7 @@ public class ModelManager implements Model {
     private final FilteredList<Person> filteredPersons;
     private final FilteredList<Lesson> filteredLessons;
     private final SortedList<Lesson> sortedLessons;
+    private List<LedgerEntry> displayedPayments = List.of();
     private List<Homework> displayedHomework = List.of();
 
     /**
@@ -133,6 +135,21 @@ public class ModelManager implements Model {
     @Override
     public void showHomework(List<Homework> homework) {
         displayedHomework = List.copyOf(homework);
+    }
+
+    @Override
+    public void addLedgerEntry(LedgerEntry entry) {
+        addressBook.addLedgerEntry(entry);
+    }
+
+    @Override
+    public List<LedgerEntry> getDisplayedPayments() {
+        return displayedPayments;
+    }
+
+    @Override
+    public void showPayments(List<LedgerEntry> payments) {
+        displayedPayments = List.copyOf(payments);
     }
 
     //=========== Lessons ====================================================================================
