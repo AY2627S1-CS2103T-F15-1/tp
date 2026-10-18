@@ -86,6 +86,54 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_caseOnlyContactAndSubjectEdits_savesExactDisplayValues() throws Exception {
+        model.addPerson(new PersonBuilder().withEmail("Alice@Example.com").withSubjects("Math").build());
+        JsonAddressBookStorage addressStorage = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+        addressStorage.saveAddressBook(model.getAddressBook());
+        logic.execute("edit 1 e/alice@example.com");
+        assertEquals("alice@example.com", addressStorage.readAddressBook().orElseThrow().getPersonList().getFirst()
+                .getEmail().orElseThrow().value);
+        logic.execute("edit 1 s/MATH");
+        assertEquals("MATH", addressStorage.readAddressBook().orElseThrow().getPersonList().getFirst()
+                .getSubjects().iterator().next().value);
+        assertFalse(logic.hasUnsavedChanges());
+    }
+
+    @Test
+    public void execute_caseOnlyEditWriteFailure_retainsDirtyAndGuardsExitUntilSaved() throws Exception {
+        for (String edit : new String[] {"edit 1 e/alice@example.com", "edit 1 s/MATH"}) {
+            boolean[] fail = {false};
+            JsonAddressBookStorage addressStorage = new JsonAddressBookStorage(temporaryFolder.resolve("case.json")) {
+                @Override
+                public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
+                    if (fail[0]) {
+                        throw DUMMY_IO_EXCEPTION;
+                    }
+                    super.saveAddressBook(addressBook);
+                }
+            };
+            model = new ModelManager();
+            model.addPerson(new PersonBuilder().withEmail("Alice@Example.com").withSubjects("Math").build());
+            addressStorage.saveAddressBook(model.getAddressBook());
+            logic = new LogicManager(model, new StorageManager(addressStorage,
+                    new JsonUserPrefsStorage(temporaryFolder.resolve("prefs.json"))));
+            fail[0] = true;
+            assertThrows(CommandException.class, () -> logic.execute(edit));
+            assertTrue(logic.hasUnsavedChanges());
+            assertThrows(CommandException.class, () -> logic.execute("exit"));
+            fail[0] = false;
+            assertTrue(logic.execute("exit").isExit());
+            Person restored = addressStorage.readAddressBook().orElseThrow().getPersonList().getFirst();
+            if (edit.contains("e/")) {
+                assertEquals("alice@example.com", restored.getEmail().orElseThrow().value);
+            } else {
+                assertEquals("MATH", restored.getSubjects().iterator().next().value);
+            }
+            assertFalse(logic.hasUnsavedChanges());
+        }
+    }
+
+    @Test
     public void execute_failedSave_retainsDirtyStateUntilExplicitRetry() throws Exception {
         boolean[] fail = {true};
         JsonAddressBookStorage addressStorage = new JsonAddressBookStorage(temporaryFolder.resolve("retry.json")) {

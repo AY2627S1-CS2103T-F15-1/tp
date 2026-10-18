@@ -15,7 +15,6 @@ import seedu.address.logic.commands.TodayCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.logic.parser.exceptions.ParseException;
-import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.person.Person;
 import seedu.address.storage.Storage;
@@ -64,15 +63,20 @@ public class LogicManager implements Logic {
 
         CommandResult commandResult;
         Command command = addressBookParser.parseCommand(commandText);
-        AddressBook before = new AddressBook(model.getAddressBook());
+        String before = snapshot();
+        boolean wasDirty = dirty;
+        boolean changed;
         try {
             commandResult = command.execute(model);
         } finally {
-            dirty |= !before.equals(model.getAddressBook());
+            // An unavailable snapshot must never clear a previous save failure or permit an unchecked exit.
+            dirty = true;
+            changed = !before.equals(snapshot());
+            dirty = wasDirty || changed;
         }
 
         if (dirty && (commandResult.isExit() || command instanceof SaveCommand
-                || !before.equals(model.getAddressBook()))) {
+                || changed)) {
             saveChanges();
         }
         if (dirty) {
@@ -80,6 +84,15 @@ public class LogicManager implements Logic {
                     commandResult.isShowHelp(), commandResult.isExit());
         }
         return commandResult;
+    }
+
+    /** Captures serialized state without writing, keeping persistence comparison separate from domain equality. */
+    private String snapshot() throws CommandException {
+        try {
+            return storage.snapshotAddressBook(model.getAddressBook());
+        } catch (IOException e) {
+            throw new CommandException("Could not inspect the data to save. Retry 'save' before closing TutorFlow.", e);
+        }
     }
 
     /** Saves pending changes, retaining the retry state if persistence fails. */

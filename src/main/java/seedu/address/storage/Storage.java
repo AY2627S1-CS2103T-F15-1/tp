@@ -54,4 +54,7 @@ public interface Storage {
      */
     void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException;
 
+    /** Returns an exact snapshot of the persisted representation, including display spelling and all saved domains. */
+    String snapshotAddressBook(ReadOnlyAddressBook addressBook) throws IOException;
+
 }

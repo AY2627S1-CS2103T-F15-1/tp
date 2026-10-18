@@ -111,5 +111,10 @@ public class JsonAddressBookStorage {
         FileUtil.createIfMissing(filePath);
         JsonUtil.saveJsonFile(new JsonSerializableAddressBook(addressBook), filePath);
     }
+    /** Uses the same representation as saving, so future persisted fields also participate in change detection. */
+    public String snapshotAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
+        return JsonUtil.toJsonString(new JsonSerializableAddressBook(addressBook));
+    }
+
 
 }
