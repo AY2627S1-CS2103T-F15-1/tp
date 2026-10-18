@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 import seedu.address.commons.exceptions.DataLoadingException;
+import seedu.address.commons.exceptions.UnsupportedSchemaException;
 import seedu.address.model.ReadOnlyAddressBook;
 
 /** Reads the current data file, with a separate legacy source for migration. */
@@ -35,13 +36,14 @@ public class VersionedAddressBookStorage extends JsonAddressBookStorage {
             initialSave = migrated.isPresent();
             return migrated;
         } catch (DataLoadingException e) {
-            failedLegacyRead = true;
+            failedLegacyRead = !(e.getCause() instanceof UnsupportedSchemaException);
             throw e;
         }
     }
 
     @Override
     public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
+        requireSupportedSource(readSource);
         if (sourcePresence(getAddressBookFilePath()) == SourcePresence.UNKNOWN) {
             throw new IOException("Restore access to the data files and restart before saving.");
         }

@@ -895,6 +895,18 @@ precreates the current destination, so an interrupted first save leaves legacy f
 on restart. The storage writeSnapshot seam passes the actual serialized bytes to this writer.
 Unreadable source protection is retained until positive absence or successful preservation.
 
+`StorageSchema.MINIMUM_VERSION` and `CURRENT_VERSION` centralize the supported range (both 14 now).
+The shared `tutorflow-v14.json` path stays fixed as later domains are added. Homework must increment
+the current schema to 15, finance to 16, and workflows to 17. Each build accepts unversioned legacy
+data and versions 14 through its current version, with explicit defaults for missing older fields.
+Add prior-version loading and future-version refusal tests alongside each schema increment.
+
+Storage checks the raw JSON schema before binding current student/lesson fields. An unsupported
+version produces `UnsupportedSchemaException` as the cause of `DataLoadingException`; `MainApp.init`
+propagates it before constructing a model, logic, or UI. The original stays at its original path,
+and storage refuses subsequent saves. Never route this exception through corruption recovery or
+silently ignore newer domain fields. Users need a compatible binary or a matching backup.
+
 The command-result seam for later detail-pane integration is
 `CommandResult.getDisplayedLessons()`: when present, it is an immutable typed snapshot in the
 same order as rendered lesson numbers. `withDisplayedLessons` and `withFeedback` retain it

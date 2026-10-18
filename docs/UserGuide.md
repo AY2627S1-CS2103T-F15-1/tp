@@ -501,7 +501,10 @@ v1.4 writes `data/tutorflow-v14.json`. If this file is absent, it reads legacy
 `data/addressbook.json`, assigns stable internal student and lesson identifiers, and saves
 an initial v1.4 copy. The legacy file remains untouched so an older application cannot erase
 v1.4 fields. If both files exist, the v1.4 file takes precedence. Keep both in your backup.
-Unsupported schema versions and invalid files are rejected rather than partially loaded.
+An unsupported schema version stops startup and leaves the original file in place. Open that data
+with a compatible TutorFlow build, or restore a backup made by your installed build. An older alpha
+cannot open data saved by a newer alpha that added data fields. Invalid files use the recovery flow
+described above; unsupported versions never enter that flow.
 The current file is created only after a complete atomic save. If the first write fails, a restart
 can still resume migration from the unchanged legacy source.
 If the initial migration save fails, the startup message reports unsaved changes: fix access
