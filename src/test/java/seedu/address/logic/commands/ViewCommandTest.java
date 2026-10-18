@@ -158,7 +158,7 @@ public class ViewCommandTest {
         Index outOfBoundIndex = Index.fromOneBased(model.getFilteredPersonList().size() + 1);
 
         assertCommandFailure(new ViewCommand(outOfBoundIndex, TODAY), model,
-                Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+                Messages.invalidPersonIndex(outOfBoundIndex, model.getFilteredPersonList().size()));
     }
 
     @Test

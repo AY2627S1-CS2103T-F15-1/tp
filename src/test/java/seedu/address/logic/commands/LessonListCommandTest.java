@@ -99,7 +99,7 @@ public class LessonListCommandTest {
         Index outOfBoundIndex = Index.fromOneBased(model.getFilteredPersonList().size() + 1);
 
         assertCommandFailure(new LessonListCommand(outOfBoundIndex, false), model,
-                Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+                Messages.invalidPersonIndex(outOfBoundIndex, model.getFilteredPersonList().size()));
     }
 
     @Test

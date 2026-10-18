@@ -5,6 +5,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import seedu.address.commons.core.index.Index;
 import seedu.address.logic.parser.Prefix;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
@@ -24,6 +25,18 @@ public class Messages {
     public static final String MESSAGE_PERSONS_LISTED_OVERVIEW = "%1$d student(s) listed!";
     public static final String MESSAGE_DUPLICATE_FIELDS =
                 "Multiple values specified for the following single-valued field(s): ";
+
+    /** Identifies a rejected student number in the currently visible list. */
+    public static String invalidPersonIndex(Index index, int count) {
+        return MESSAGE_INVALID_PERSON_DISPLAYED_INDEX + " No student numbered " + index.getOneBased()
+                + " in the current list. The list has " + count + " item(s).";
+    }
+
+    /** Identifies a rejected lesson number in the currently visible list. */
+    public static String invalidLessonIndex(Index index, int count) {
+        return MESSAGE_INVALID_LESSON_DISPLAYED_INDEX + " No lesson numbered " + index.getOneBased()
+                + " in the current list. The list has " + count + " item(s).";
+    }
 
     /**
      * Returns an error message indicating the duplicate prefixes.

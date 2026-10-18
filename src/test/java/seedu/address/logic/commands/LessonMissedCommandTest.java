@@ -99,10 +99,10 @@ public class LessonMissedCommandTest {
 
     @Test
     public void execute_invalidIndex_rejectsWithoutChangingData() {
-        assertCommandFailure(command(), model, Messages.MESSAGE_INVALID_LESSON_DISPLAYED_INDEX);
+        assertCommandFailure(command(), model, Messages.invalidLessonIndex(Index.fromOneBased(1), 0));
         model.addLesson(lesson);
         assertCommandFailure(new LessonMissedCommand(Index.fromOneBased(2), CLOCK), model,
-                Messages.MESSAGE_INVALID_LESSON_DISPLAYED_INDEX);
+                Messages.invalidLessonIndex(Index.fromOneBased(2), 1));
     }
 
     @Test

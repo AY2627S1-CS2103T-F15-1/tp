@@ -112,10 +112,10 @@ public class LessonDoneCommandTest {
 
     @Test
     public void execute_invalidIndex_rejectsWithoutChangingData() {
-        assertCommandFailure(command(NOTES), model, Messages.MESSAGE_INVALID_LESSON_DISPLAYED_INDEX);
+        assertCommandFailure(command(NOTES), model, Messages.invalidLessonIndex(Index.fromOneBased(1), 0));
         model.addLesson(lesson);
         assertCommandFailure(new LessonDoneCommand(Index.fromOneBased(2), NOTES, CLOCK), model,
-                Messages.MESSAGE_INVALID_LESSON_DISPLAYED_INDEX);
+                Messages.invalidLessonIndex(Index.fromOneBased(2), 1));
     }
 
     @Test

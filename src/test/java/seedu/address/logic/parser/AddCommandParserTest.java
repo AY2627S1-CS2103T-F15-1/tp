@@ -185,34 +185,35 @@ public class AddCommandParserTest {
 
     @Test
     public void parse_compulsoryFieldMissing_failure() {
-        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE);
 
         // missing name prefix
         assertParseFailure(parser, VALID_NAME_BOB + PHONE_DESC_BOB + LEVEL_DESC_BOB + SUBJECT_DESC_MATH
-                + RATE_DESC_BOB, expectedMessage);
+                + RATE_DESC_BOB, String.format(ParserUtil.MESSAGE_MISSING_PARAMETERS, "n/", AddCommand.MESSAGE_USAGE));
 
         // missing phone prefix
         assertParseFailure(parser, NAME_DESC_BOB + VALID_PHONE_BOB + LEVEL_DESC_BOB + SUBJECT_DESC_MATH
-                + RATE_DESC_BOB, expectedMessage);
+                + RATE_DESC_BOB, String.format(ParserUtil.MESSAGE_MISSING_PARAMETERS, "p/", AddCommand.MESSAGE_USAGE));
 
         // missing level prefix
         assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + VALID_LEVEL_BOB + SUBJECT_DESC_MATH
-                + RATE_DESC_BOB, expectedMessage);
+                + RATE_DESC_BOB, String.format(ParserUtil.MESSAGE_MISSING_PARAMETERS, "l/", AddCommand.MESSAGE_USAGE));
 
         // missing subject prefix
         assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + LEVEL_DESC_BOB + VALID_SUBJECT_MATH
-                + RATE_DESC_BOB, expectedMessage);
+                + RATE_DESC_BOB, String.format(ParserUtil.MESSAGE_MISSING_PARAMETERS, "s/", AddCommand.MESSAGE_USAGE));
 
         // missing rate prefix
         assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + LEVEL_DESC_BOB + SUBJECT_DESC_MATH
-                + VALID_RATE_BOB, expectedMessage);
+                + VALID_RATE_BOB, String.format(ParserUtil.MESSAGE_MISSING_PARAMETERS, "r/", AddCommand.MESSAGE_USAGE));
 
         // optional fields only
-        assertParseFailure(parser, EMAIL_DESC_BOB + VENUE_DESC_BOB, expectedMessage);
+        assertParseFailure(parser, EMAIL_DESC_BOB + VENUE_DESC_BOB, String.format(
+                ParserUtil.MESSAGE_MISSING_PARAMETERS, "n/, p/, l/, s/, r/", AddCommand.MESSAGE_USAGE));
 
         // all prefixes missing
         assertParseFailure(parser, VALID_NAME_BOB + VALID_PHONE_BOB + VALID_EMAIL_BOB + VALID_LEVEL_BOB
-                + VALID_SUBJECT_MATH + VALID_RATE_BOB, expectedMessage);
+                + VALID_SUBJECT_MATH + VALID_RATE_BOB, String.format(ParserUtil.MESSAGE_MISSING_PARAMETERS,
+                "n/, p/, l/, s/, r/", AddCommand.MESSAGE_USAGE));
     }
 
     @Test

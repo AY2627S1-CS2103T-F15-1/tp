@@ -125,7 +125,8 @@ public class LessonAddCommandTest {
         Index outOfBoundIndex = Index.fromOneBased(model.getFilteredPersonList().size() + 1);
         LessonAddCommand command = new LessonAddCommand(outOfBoundIndex, MATH, DATE, TIME, DURATION, null);
 
-        assertCommandFailure(command, model, Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+        assertCommandFailure(command, model,
+                Messages.invalidPersonIndex(outOfBoundIndex, model.getFilteredPersonList().size()));
     }
 
     @Test
