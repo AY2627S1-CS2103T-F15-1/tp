@@ -108,6 +108,15 @@ public class RecurrenceCommandTest {
     }
 
     @Test
+    public void seriesCancel_singleOccurrence_usesSingularWording() throws Exception {
+        model.addPerson(student);
+        run("lesson repeat st/1 d/tmr t/10:00 count/2");
+        run("lesson cancel 2");
+        String feedback = run("lesson series cancel 1 confirm").getFeedbackToUser();
+        assertTrue(feedback.startsWith("Cancelled 1 series occurrence."));
+    }
+
+    @Test
     public void repeat_boundsOverlapAndArchivedStudent_enforceContract() throws Exception {
         model.addPerson(student);
         for (String arguments : new String[] {"count/1", "count/53", "count/2 every/0",

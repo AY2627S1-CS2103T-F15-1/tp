@@ -43,7 +43,8 @@ public class LessonSeriesCancelCommand extends Command {
             proposed.setLesson(lesson, lesson.cancel("Series cancelled"));
         }
         model.setAddressBook(proposed);
-        return new CommandResult("Cancelled " + targets.size() + " series occurrences."
+        return new CommandResult("Cancelled " + targets.size() + " series "
+                + (targets.size() == 1 ? "occurrence." : "occurrences.")
                 + Messages.formatLessonList(model.getFilteredLessonList()))
                 .withDisplayedLessons(model.getFilteredLessonList());
     }
