@@ -78,6 +78,9 @@ public class JsonAddressBookStorage {
 
     /** Reads and validates data without changing the protected-source state. */
     private Optional<ReadOnlyAddressBook> readModel(Path filePath) throws DataLoadingException {
+        if (sourcePresence(filePath) == SourcePresence.UNKNOWN) {
+            throw new DataLoadingException(new IOException("Cannot determine whether the data file exists."));
+        }
         Optional<JsonSerializableAddressBook> jsonAddressBook = JsonUtil.readJsonFile(
                 filePath, JsonSerializableAddressBook.class);
         if (!jsonAddressBook.isPresent()) {

@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.logic.LogicManager;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.AddressBook;
@@ -81,6 +82,34 @@ public class VersionedStorageTest {
         VersionedAddressBookStorage data = new VersionedAddressBookStorage(current, legacy);
         assertTrue(data.readAddressBook().orElseThrow().getPersonList().isEmpty());
         assertFalse(data.requiresInitialSave());
+    }
+
+    @Test
+    public void startup_unknownCurrentSource_remainsProtectedWhenMetadataRecovers() throws Exception {
+        Path current = directory.resolve("tutorflow-v14.json");
+        Files.writeString(current, "original inaccessible bytes");
+        class UnknownStorage extends VersionedAddressBookStorage {
+            private boolean unknown = true;
+
+            UnknownStorage() {
+                super(current, directory.resolve("addressbook.json"));
+            }
+
+            @Override
+            protected SourcePresence sourcePresence(Path path) {
+                return unknown && path.equals(current) ? SourcePresence.UNKNOWN : super.sourcePresence(path);
+            }
+
+            @Override
+            protected void preserveUnreadableFile(Path path) throws IOException {
+                throw new IOException("Recovery copy denied");
+            }
+        }
+        UnknownStorage data = new UnknownStorage();
+        assertThrows(DataLoadingException.class, data::readAddressBook);
+        data.unknown = false;
+        assertThrows(IOException.class, () -> data.saveAddressBook(new AddressBook()));
+        assertEquals("original inaccessible bytes", Files.readString(current));
     }
 
 }

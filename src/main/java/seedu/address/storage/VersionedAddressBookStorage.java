@@ -24,9 +24,6 @@ public class VersionedAddressBookStorage extends JsonAddressBookStorage {
         initialSave = false;
         inaccessibleLegacy = false;
         if (sourcePresence(getAddressBookFilePath()) != SourcePresence.ABSENT) {
-            if (sourcePresence(getAddressBookFilePath()) == SourcePresence.UNKNOWN) {
-                throw new DataLoadingException(new IOException("Cannot inspect the v1.4 data file."));
-            }
             return super.readAddressBook();
         }
         if (sourcePresence(legacy) == SourcePresence.UNKNOWN) {
