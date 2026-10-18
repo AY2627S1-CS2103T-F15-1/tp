@@ -9,9 +9,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
-import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 
@@ -52,8 +51,9 @@ public class HomeworkJourneyTest {
     @Test
     public void journey_assignOverdueSubmitFeedbackReviewEditRestart_preservesHistory() throws Exception {
         ModelManager model = model();
+        ZoneId localZone = ZoneId.systemDefault();
         HomeworkCommandParser yesterday = new HomeworkCommandParser(Clock.fixed(
-                Instant.now().minusSeconds(86400), ZoneOffset.UTC));
+                LocalDate.now(localZone).minusDays(1).atStartOfDay(localZone).toInstant(), localZone));
         yesterday.parse("add st/1 desc/Algebra due/today").execute(model);
         JsonAddressBookStorage storage = new JsonAddressBookStorage(directory.resolve("nested/data.json"));
         storage.saveAddressBook(model.getAddressBook());
