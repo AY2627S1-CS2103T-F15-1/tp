@@ -55,7 +55,9 @@ public class ViewCommandTest {
         assertEquals(ViewCommand.MESSAGE_NO_NOTES, lines[8]);
         assertEquals(ViewCommand.HEADING_LESSON_HISTORY, lines[10]);
         assertEquals("  0 completed \u00b7 0 cancelled \u00b7 0 missed", lines[11]);
-        assertEquals(15, lines.length);
+        assertEquals("BALANCE", lines[13]);
+        assertEquals("OUTSTANDING $0.00", lines[14]);
+        assertEquals(18, lines.length);
     }
 
     @Test
@@ -140,7 +142,7 @@ public class ViewCommandTest {
 
         String[] lines = view(INDEX_FIRST_PERSON).split("\n");
 
-        assertEquals("  2 completed \u00b7 1 cancelled \u00b7 2 missed", lines[lines.length - 4]);
+        assertEquals("  2 completed \u00b7 1 cancelled \u00b7 2 missed", lines[lines.length - 7]);
     }
 
     @Test

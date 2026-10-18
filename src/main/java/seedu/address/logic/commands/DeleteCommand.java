@@ -10,13 +10,15 @@ import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
+import seedu.address.model.finance.FinanceQueries;
+import seedu.address.model.finance.Ledger;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
 
 /**
  * Deletes a student identified using the index shown in the displayed student list.
- * A student who has lessons or homework is only deleted when the command is confirmed, because deleting a student
+ * A student with lessons, homework, or financial history requires confirmation, because deleting a student
  * also deletes all of their lessons and this cannot be undone.
  */
 public class DeleteCommand extends Command {
@@ -28,7 +30,7 @@ public class DeleteCommand extends Command {
             + ": Deletes the student identified by the index number used in the displayed student list.\n"
             + "Parameters: INDEX (must be a positive integer) [" + CONFIRM_KEYWORD + "]\n"
             + "Example: " + COMMAND_WORD + " 1\n"
-            + "A student who has lessons or homework is only deleted if you add '" + CONFIRM_KEYWORD + "', "
+            + "Linked lessons, homework, and financial history require '" + CONFIRM_KEYWORD + "', "
             + "e.g. " + COMMAND_WORD + " 1 " + CONFIRM_KEYWORD;
 
     public static final String MESSAGE_DELETE_PERSON_SUCCESS = "Deleted student: %1$s";
@@ -51,7 +53,7 @@ public class DeleteCommand extends Command {
 
     /**
      * Creates a {@code DeleteCommand} that deletes the student at {@code targetIndex}.
-     * A student who has lessons or homework is only deleted if {@code isConfirmed} is true.
+     * A student who has lessons, homework, or financial history is only deleted if {@code isConfirmed} is true.
      */
     public DeleteCommand(Index targetIndex, boolean isConfirmed) {
         requireNonNull(targetIndex);
@@ -75,6 +77,11 @@ public class DeleteCommand extends Command {
 
         List<Homework> homeworkToDelete = model.getAddressBook().getHomeworkList().stream()
                 .filter(item -> item.getStudentId().equals(personToDelete.getId())).toList();
+        long financialEntries = model.getAddressBook().getLedgerEntries().stream()
+                .filter(entry -> entry.studentId().equals(personToDelete.getId())).count();
+        if (financialEntries > 0) {
+            return deleteWithFinance(model, personToDelete, lessonsToDelete, homeworkToDelete, financialEntries);
+        }
         if (!homeworkToDelete.isEmpty()) {
             return deleteWithHomework(model, personToDelete, lessonsToDelete, homeworkToDelete);
         }
@@ -91,6 +98,24 @@ public class DeleteCommand extends Command {
         model.deletePerson(personToDelete);
         return new CommandResult(String.format(MESSAGE_DELETE_PERSON_WITH_LESSONS_SUCCESS,
                 Messages.format(personToDelete), lessonsToDelete.size()));
+    }
+
+    /** Warns about every linked domain, including paid or reversed history, before cascading deletion. */
+    private CommandResult deleteWithFinance(Model model, Person student, List<Lesson> lessons,
+            List<Homework> homework, long financialEntries) {
+        if (!isConfirmed) {
+            long upcoming = homework.stream().filter(Homework::isOutstanding)
+                    .filter(item -> !item.getDueDate().isBefore(LocalDate.now())).count();
+            return new CommandResult(getConfirmationPrompt(student, lessons)
+                    + "\nThis also deletes " + homework.size() + " homework item(s), including " + upcoming
+                    + " upcoming homework item(s), and " + financialEntries + " financial event(s).\nBalance: "
+                    + FinanceQueries.balanceLabel(Ledger.balance(model.getAddressBook(), student.getId()))
+                    + ". Use 'archive INDEX' to retain these obligations and all history instead.");
+        }
+        model.deletePerson(student);
+        return new CommandResult("Deleted student: " + Messages.format(student) + ", along with "
+                + lessons.size() + " lesson(s), " + homework.size() + " homework item(s), and "
+                + financialEntries + " financial event(s).");
     }
 
     /** Shows all linked records and upcoming commitments before cascading a student deletion. */

@@ -886,7 +886,7 @@ Equal cancelled lessons remain separate records and exact-ID lookup chooses the 
 All domain extensions must update `ReadOnlyAddressBook`, `AddressBook.resetData` and its copy
 constructor/equality, the real JSON root/adapters, and focused round-trip tests together.
 `Storage.snapshotAddressBook` uses that exact persisted representation for dirty detection,
-so UI-only equality must never decide whether a write is required. Schema 15 is written to
+so UI-only equality must never decide whether a write is required. Schema 16 is written to
 `tutorflow-v14.json`; `VersionedAddressBookStorage` reads legacy data only when the current
 path is positively absent. The logic constructor's initial-save flag explicitly persists
 migrated IDs even before a command mutates the model. Failed initial writes remain dirty.
@@ -895,9 +895,9 @@ precreates the current destination, so an interrupted first save leaves legacy f
 on restart. The storage writeSnapshot seam passes the actual serialized bytes to this writer.
 Unreadable source protection is retained until positive absence or successful preservation.
 
-`StorageSchema.MINIMUM_VERSION` and `CURRENT_VERSION` centralize the supported range (14 through 15 now).
+`StorageSchema.MINIMUM_VERSION` and `CURRENT_VERSION` centralize the supported range (14 through 16 now).
 The shared `tutorflow-v14.json` path stays fixed as later domains are added. Homework uses
-schema 15; finance must advance it to 16, and workflows to 17. Each build accepts unversioned legacy
+schema 15; finance uses 16, and workflows must advance it to 17. Each build accepts unversioned legacy
 data and versions 14 through its current version, with explicit defaults for missing older fields.
 Add prior-version loading and future-version refusal tests alongside each schema increment.
 
@@ -950,3 +950,51 @@ guards must wrap homework/student deletion before removing any record to avoid o
 Focused regression tests cover historical feedback, schema progression and refusal, duplicate/orphan
 rejection, due-date boundaries, lifecycle correction, guarded deletion, filtered numbering, archive,
 rename, actual JSON restart, failed saves, protected original bytes, and retry before exit.
+
+
+### Finance domain and integration seams
+
+`LedgerEntry` is an immutable event record with UUID, student UUID, type, date, and exact BigDecimal
+amount. CHARGE stores lesson UUID, historical hourly rate, duration, subject description, and whether
+an override was used. PAYMENT stores optional notes. REVERSAL points to an earlier original event
+and carries its exact positive amount; it never replaces or deletes the original event. Root append
+validation rejects duplicate IDs, dangling or cross-student links, multiple active charges for one
+lesson UUID, reversal of reversals, and repeated reversals. Identical payments with distinct IDs are valid.
+
+`Ledger` is the shared accounting service: chronological account effects, active totals, balance,
+and oldest-charge-first allocation. Dates use stable persisted append order as their tie breaker.
+All active payments form available credit for FIFO allocation across active charges. Dues order by
+oldest *remaining* charge after allocation; account history retains original movements and dated
+compensating reversals. `FinanceQueries` formats complete account/dues summaries without modifying
+any selection. Totals after reversals, running balance, and unpaid allocation agree.
+
+`Money.charge` multiplies the exact rate by minutes, then divides by 60 with HALF_UP scale 2.
+Input amounts must already have at most two decimals and be positive; no floating-point arithmetic
+or silent input rounding is used. A zero computed charge creates no financial event, with explicit
+completion feedback. First completion snapshots a charge only if there is no charge history for the
+actual lesson UUID; repeated completions, legacy completed lessons, and note correction never bill
+again. Manual recharging after an explicit reversal is permitted. Active charge reversal is required
+before cancellation or rescheduling. A lesson with financial history cannot be deleted in isolation.
+
+`ReadOnlyAddressBook.getLedgerEntries`, `AddressBook` copy/reset/equality/hash, and JSON adapters
+include every financial event. Schema 16 defaults missing legacy/14/15 finance to empty; it never
+infers historical prices for existing completed lessons. Raw schema preflight/startup refusal,
+atomic parent-only writes, migration retry, dirty detection via exact `Storage.snapshotAddressBook`,
+and failed-exit protections remain intact. Student deletion and clear are explicit confirmed parent
+cascades; archive preserves all obligations. Future task-parent guards must run before these cascades.
+
+`Model.showPayments` / `getDisplayedPayments` hold immutable last-shown PAYMENT rows only. They stay
+fixed across mutations, resets, reversals, archive, rename, and save failure. Resolve a shown UUID
+against current ledger data before acting. Deleted IDs fail without shifting later rows; a restored
+snapshot with that identity can be resolved again after undo. `CommandResult.getDisplayedPayments`
+is an optional typed immutable snapshot for later UI integration, preserved by `withFeedback`,
+`withDisplayedLessons`, and `withDisplayedHomework`. Do not parse feedback strings. Only `pay list`
+sets this selection; account/dues/overview/dashboard remain unnumbered. Task links should resolve
+`pay/INDEX` by this same shown-ID rule and store the original payment UUID, including after reversal.
+
+Payment export can select PAYMENT originals by their inclusive date range and locate compensation
+with `reversalOf`; retain original/reversal identities and dates in export metadata. Do not export
+only active payments, which would hide corrections. Undo must snapshot the complete AddressBook
+and its ledger; payment/charge corrections themselves remain explicit reversals. `DateParser.parse`
+provides clock-injectable today/tmr aliases now shared by homework and payments; later command date
+unification can reuse it. No new dependencies or unused UI components were introduced.

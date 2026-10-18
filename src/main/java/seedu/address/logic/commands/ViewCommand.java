@@ -12,6 +12,8 @@ import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
+import seedu.address.model.finance.FinanceQueries;
+import seedu.address.model.finance.Ledger;
 import seedu.address.model.homework.HomeworkQueries;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonStatus;
@@ -78,6 +80,7 @@ public class ViewCommand extends Command {
                 + "\n\n" + formatNextLesson(lessons)
                 + "\n\n" + formatRecentNotes(lessons)
                 + "\n\n" + formatHistory(lessons)
+                + "\n\nBALANCE\n" + FinanceQueries.balanceLabel(Ledger.balance(model.getAddressBook(), student.getId()))
                 + "\n\n" + HomeworkQueries.summary(model.getAddressBook(), student.getId(), false, today));
     }
 

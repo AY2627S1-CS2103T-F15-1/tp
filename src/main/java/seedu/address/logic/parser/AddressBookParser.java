@@ -16,6 +16,7 @@ import seedu.address.logic.commands.ClearCommand;
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.DemoCommand;
+import seedu.address.logic.commands.DuesCommand;
 import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.FindCommand;
@@ -73,6 +74,11 @@ public class AddressBookParser {
                     throw new ParseException("Usage: demo [confirm]");
                 }
                 yield new DemoCommand(arguments.strip().equals("confirm"));
+            }
+            case "balance" -> new BalanceCommandParser().parse(arguments);
+            case "dues" -> {
+                requireNoArguments(commandWord, arguments);
+                yield new DuesCommand(LocalDate.now());
             }
             case "pay" -> new PayCommandParser().parse(arguments);
             case "charge" -> new ChargeCommandParser().parse(arguments);

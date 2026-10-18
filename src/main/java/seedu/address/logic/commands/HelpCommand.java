@@ -52,6 +52,8 @@ public class HelpCommand extends Command {
             new CommandHelp("lesson cancel", "Cancels a lesson", LessonCancelCommand.MESSAGE_USAGE),
             new CommandHelp("lesson done", "Completes a lesson and records notes", LessonDoneCommand.MESSAGE_USAGE),
             new CommandHelp("lesson missed", "Marks a lesson as missed (no-show)", LessonMissedCommand.MESSAGE_USAGE),
+            new CommandHelp("balance", "Shows a complete running account", BalanceCommand.MESSAGE_USAGE),
+            new CommandHelp("dues", "Lists debt by oldest unpaid charge", DuesCommand.MESSAGE_USAGE),
             new CommandHelp("pay", "Records a payment or advance credit", PayCommand.MESSAGE_USAGE),
             new CommandHelp("pay list", "Shows stable payment indices", PayListCommand.MESSAGE_USAGE),
             new CommandHelp("pay reverse", "Reverses a payment without erasing history",

@@ -201,7 +201,7 @@ Format: `delete INDEX [confirm]`
 * The index refers to the index number shown in the displayed student list.
 * The index **must be a positive integer** 1, 2, 3, ...
 * A student with no lessons or homework is deleted immediately.
-* Deleting a student also deletes **all of their lessons and homework**, including feedback, and this cannot be undone. If the student has linked records, TutorFlow shows their name, phone number, linked counts, and upcoming commitments, and asks you to repeat the command with `confirm`.
+* Deleting a student also deletes **all of their lessons, homework, and financial history**, including feedback, and this cannot be undone. If the student has linked records, TutorFlow shows their name, phone number, linked counts, and upcoming commitments, and asks you to repeat the command with `confirm`.
 * The keyword `confirm` is in lower case.
 
 Examples:
@@ -552,9 +552,10 @@ v1.4 writes `data/tutorflow-v14.json`. If this file is absent, it reads legacy
 `data/addressbook.json`, assigns stable internal student and lesson identifiers, and saves
 an initial v1.4 copy. The legacy file remains untouched so an older application cannot erase
 v1.4 fields. If both files exist, the v1.4 file takes precedence. Keep both in your backup.
-This homework alpha writes schema 15 and accepts unversioned legacy files plus schema 14 and 15.
+This finance alpha writes schema 16 and accepts unversioned legacy files plus schemas 14, 15, and 16.
 Older files without homework start with an empty homework domain. The foundation alpha cannot open
-schema 15, which protects homework from being dropped by an older build.
+schema 15 or 16; the homework-only alpha refuses schema 16. This protects newer domains from
+being dropped by an older build.
 An unsupported schema version stops startup and leaves the original file in place. Open that data
 with a compatible TutorFlow build, or restore a backup made by your installed build. An older alpha
 cannot open data saved by a newer alpha that added data fields. Invalid files use the recovery flow
@@ -564,3 +565,68 @@ can still resume migration from the unchanged legacy source.
 If the initial migration save fails, the startup message reports unsaved changes: fix access
 and use `save`. TutorFlow retries before exit and will not close through its normal exit flow
 while that write continues to fail.
+
+
+### Charges, payments, and accounts
+
+All money is SGD. Rates are per hour. On first completion, `lesson done INDEX` records one
+charge using the student's current rate multiplied by the lesson's duration divided by 60,
+rounded once to cents using HALF_UP. For example, $70.01/hour for 90 minutes is $105.02.
+The original rate, duration, amount, and subject description are retained. Editing the student
+rate or correcting completion notes never changes or adds another charge. A charge that has
+been reversed is never automatically restored by `lesson done`.
+
+If a rate is zero, or the computed amount rounds to zero, completion still records the outcome
+and explains why no automatic charge was raised. Use an explicit positive override if agreed.
+Missed lessons are charged only when you explicitly use `charge`.
+
+| Command | Purpose |
+| --- | --- |
+| `charge l/LESSON_INDEX [amt/AMOUNT]` | Record a charge at the current rate, or an agreed amount |
+| `charge reverse l/LESSON_INDEX` | Reverse the lesson's active charge |
+| `pay st/STUDENT_INDEX amt/AMOUNT [d/DATE] [n/NOTES]` | Record money received; date defaults to today |
+| `pay list [st/STUDENT_INDEX]` | Display numbered payments, including reversed history |
+| `pay reverse PAYMENT_INDEX` | Reverse a payment from the last displayed payment list |
+| `balance st/STUDENT_INDEX` | Show the complete account and running balance |
+| `dues` | List positive debts by age of the oldest unpaid charge |
+
+* `AMOUNT` must be greater than zero with at most two decimal places. An optional leading `$`
+  is accepted; negatives, scientific notation, and thousands separators are rejected.
+* Charges are allowed for past or today's scheduled, completed, and missed lessons. A cancelled
+  or future lesson cannot be charged. Each lesson may have only one active charge. To correct
+  an agreed amount, reverse it first and then record a replacement with `amt/`.
+* A booking with an active charge cannot be cancelled or rescheduled. Reverse its charge first;
+  the original charge and reversal stay in history. Rescheduling never rewrites past amounts.
+* Payment dates cannot be in the future. Existing date formats, `today`, and `tmr` are understood
+  (`tmr` is rejected as a payment date). Optional notes must be 1–200 printable characters.
+* Identical payments are accepted: two transfers for the same amount on the same date may be real.
+  Use `pay reverse` to correct accidental duplication. A charge or payment cannot be reversed twice.
+* Payments offset the oldest active charge first, including partially paid charges. Extra payments
+  remain as credit and offset later charges. Reversing a charge or payment recomputes allocation;
+  reversing an already paid charge can put the student into credit.
+* `balance` interleaves dated charges, payments, and compensating reversal rows, without truncation.
+  Same-day events keep their original recording order, including after restart. Charges use the
+  lesson date; payments use the entered date; reversals use the date the reversal is recorded.
+  Totals are net of reversals; credit is labelled `IN CREDIT` with a positive amount.
+* `dues` includes active and archived students with a positive balance, oldest unpaid charge first.
+  It excludes students with zero balance or credit. Ties are ordered by name, then stable identity.
+  `view` includes the student's balance, and `today` includes the same dues summary.
+* Only `pay list` changes payment numbering. Backdated additions, reversals, student renames, archive,
+  and failed saves leave those shown rows bound to their original payments. Run `pay list` again to
+  refresh. Accounts and dues are unnumbered summaries and do not change this selection. After restart,
+  run `pay list` before `pay reverse`. A deleted payment produces an error rather than selecting another.
+* Archived obligations remain usable: `student list archived/`, then `pay st/INDEX`,
+  `balance st/INDEX`, or `pay list st/INDEX`. Archive retains all debts and credit.
+* Student deletion requires confirmation when any financial history exists, even if fully paid or
+  reversed. Its preview includes linked counts and the balance. Confirmed deletion removes all linked
+  history; use archive to retain it. `clear confirm` also removes every financial event.
+
+For example, record `charge l/1 amt/105`, then `pay st/1 amt/150 n/PayNow ref 4471`.
+`balance st/1` shows $45.00 in credit. `pay list st/1` shows the payment's reversal index.
+If it was entered by mistake, `pay reverse 1` appends a reversal and restores $105.00 outstanding.
+
+Older files have an explicitly empty financial ledger. Previously completed lessons are **not**
+retrospectively billed at today's profile rate, and correcting their notes does not bill them.
+Use `charge l/INDEX amt/AGREED_AMOUNT` for a historical charge you have verified.
+All financial changes use the existing atomic save and retry protection. If a save fails, the change
+remains in the session and `save` retries it; do not re-enter a payment, as that creates a second transfer.
