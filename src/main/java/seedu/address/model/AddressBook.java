@@ -92,6 +92,7 @@ public class AddressBook implements ReadOnlyAddressBook {
     public void setPerson(Person target, Person editedPerson) {
         requireNonNull(editedPerson);
 
+        editedPerson = editedPerson.withId(target.getId());
         persons.setPerson(target, editedPerson);
         updateStudentOfLessons(target, editedPerson);
     }
