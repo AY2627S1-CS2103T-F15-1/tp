@@ -210,7 +210,8 @@ public class AddressBook implements ReadOnlyAddressBook {
                 .noneMatch(person -> person.getId().equals(item.getStudentId()))) {
             throw new IllegalArgumentException("Homework student does not exist.");
         }
-        if (homework.stream().filter(existing -> existing != target).anyMatch(existing ->
+        if (homework.stream().filter(existing -> target == null || !existing.getId().equals(target.getId()))
+                .anyMatch(existing ->
                 existing.getId().equals(item.getId()) || existing.isSameAssignment(item))) {
             throw new IllegalArgumentException("This student already has homework '" + item.getDescription()
                     + "' due " + item.getDueDate() + ".");

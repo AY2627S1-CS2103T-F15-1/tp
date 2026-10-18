@@ -291,7 +291,7 @@ public class ParserUtil {
     }
 
     /** Rejects non-printable text before trimming or whitespace normalization hides it. */
-    private static void requirePrintable(String value, String constraints) throws ParseException {
+    static void requirePrintable(String value, String constraints) throws ParseException {
         if (value.codePoints().anyMatch(character -> Character.isISOControl(character)
                 || character == '\u2028' || character == '\u2029')) {
             throw new ParseException(constraints);

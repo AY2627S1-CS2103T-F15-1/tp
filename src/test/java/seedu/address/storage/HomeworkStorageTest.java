@@ -54,6 +54,18 @@ public class HomeworkStorageTest {
     }
 
     @Test
+    public void replace_equalCopiedTarget_updatesExactIdentity() {
+        AddressBook book = new AddressBook();
+        book.addPerson(TypicalPersons.ALICE);
+        Homework original = Homework.assign(TypicalPersons.ALICE.getId(), "Algebra", LocalDate.now());
+        book.addHomework(original);
+        Homework copied = new Homework(original.getId(), original.getStudentId(), original.getDescription(),
+                original.getDueDate(), original.getStatus(), null);
+        book.setHomework(copied, copied.withStatus(HomeworkStatus.SUBMITTED));
+        assertEquals(HomeworkStatus.SUBMITTED, book.getHomeworkList().getFirst().getStatus());
+    }
+
+    @Test
     public void add_duplicateOrOrphan_rejectsWithoutChangingBook() {
         AddressBook book = new AddressBook();
         book.addPerson(TypicalPersons.ALICE);

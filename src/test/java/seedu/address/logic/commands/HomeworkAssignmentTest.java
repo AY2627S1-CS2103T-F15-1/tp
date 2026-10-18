@@ -76,6 +76,7 @@ public class HomeworkAssignmentTest {
         for (String args : new String[] {"add st/1 desc/ due/today", "add st/ desc/A due/today",
             "add st/1 desc/A due/", "add st/1 desc/A due/today due/tmr", "edit 1", "edit 1 desc/",
             "add st/1 desc/" + "x".repeat(201) + " due/today", "add st/1 desc/A\nB due/today",
+            "add st/1 desc/\nA due/today", "feedback 1 f/\tA", "list\n",
             "list overdue/yes", "list overdue/ outstanding/", "list st/", "list st/1 st/1"}) {
             assertThrows(ParseException.class, () -> parser.parse(args), args);
         }

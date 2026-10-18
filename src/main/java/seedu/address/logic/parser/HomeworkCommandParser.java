@@ -40,6 +40,7 @@ public class HomeworkCommandParser implements Parser<Command> {
 
     @Override
     public Command parse(String args) throws ParseException {
+        ParserUtil.requirePrintable(args, "Commands must contain printable text on one line.");
         String[] parts = args.strip().split("\\s+", 2);
         String arguments = parts.length == 2 ? parts[1] : "";
         return switch (parts[0]) {
