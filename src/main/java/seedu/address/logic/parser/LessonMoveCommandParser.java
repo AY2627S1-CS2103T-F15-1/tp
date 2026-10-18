@@ -36,6 +36,7 @@ public class LessonMoveCommandParser implements Parser<LessonMoveCommand> {
                     pe);
         }
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_DATE, PREFIX_TIME, PREFIX_DURATION, PREFIX_VENUE);
+        argMultimap.verifyNoEmptyValuesFor(PREFIX_DATE, PREFIX_TIME, PREFIX_DURATION, PREFIX_VENUE);
 
         LessonDate date = ParserUtil.parseOptional(argMultimap, PREFIX_DATE, ParserUtil::parseDate);
         LessonTime time = ParserUtil.parseOptional(argMultimap, PREFIX_TIME, ParserUtil::parseTime);

@@ -51,7 +51,6 @@ import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.Rate;
 import seedu.address.model.person.Subject;
-import seedu.address.model.person.Venue;
 import seedu.address.testutil.PersonBuilder;
 
 public class AddCommandParserTest {
@@ -251,7 +250,8 @@ public class AddCommandParserTest {
 
         // invalid venue
         assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + LEVEL_DESC_BOB
-                + SUBJECT_DESC_MATH + RATE_DESC_BOB + INVALID_VENUE_DESC, Venue.MESSAGE_CONSTRAINTS);
+                + SUBJECT_DESC_MATH + RATE_DESC_BOB + INVALID_VENUE_DESC,
+                "Empty value for v/. Enter a value after this prefix.");
 
         // two invalid values, only first invalid value reported
         assertParseFailure(parser, INVALID_NAME_DESC + PHONE_DESC_BOB + EMAIL_DESC_BOB + INVALID_LEVEL_DESC

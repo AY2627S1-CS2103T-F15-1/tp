@@ -62,6 +62,15 @@ public class ArgumentMultimap {
         return getValue(new Prefix("")).orElse("");
     }
 
+    /** Names empty values using only the prefixes recognized by the current command's tokenizer. */
+    public void verifyNoEmptyValuesFor(Prefix... prefixes) throws ParseException {
+        for (Prefix prefix : prefixes) {
+            if (getAllValues(prefix).stream().anyMatch(String::isEmpty)) {
+                throw new ParseException("Empty value for " + prefix + ". Enter a value after this prefix.");
+            }
+        }
+    }
+
     /**
      * Throws a {@code ParseException} if any of the prefixes given in {@code prefixes} appeared more than
      * once among the arguments.

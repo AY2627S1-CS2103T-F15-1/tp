@@ -4,7 +4,6 @@ import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 
 import java.time.LocalDate;
-import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -56,7 +55,6 @@ public class AddressBookParser {
 
         final String commandWord = matcher.group("commandWord");
         final String arguments = matcher.group("arguments");
-        validateEmptyValues(commandWord, arguments);
 
         // Note to developers: Change LOG_LEVEL in LogsCenter to enable lower level (i.e., FINE, FINER and lower)
         // log messages such as the one below.
@@ -100,18 +98,6 @@ public class AddressBookParser {
         if (input.codePoints().anyMatch(character -> Character.isISOControl(character)
                 || character == '\u2028' || character == '\u2029')) {
             throw new ParseException("Commands must contain printable text on one line.");
-        }
-    }
-
-    /** Names an empty value before field parsers lose the prefix context; empty flags and remarks remain valid. */
-    private static void validateEmptyValues(String command, String arguments) throws ParseException {
-        Set<String> values = Set.of("n/", "p/", "e/", "l/", "s/", "r/", "v/", "st/", "d/", "t/", "dur/");
-        Matcher empty = Pattern.compile("(?<!\\S)([a-z]+/)(?=\\s*(?:[a-z]+/|$))").matcher(arguments);
-        while (empty.find()) {
-            String prefix = empty.group(1);
-            if (values.contains(prefix) && !(command.equals("remark") && prefix.equals("r/"))) {
-                throw new ParseException("Empty value for " + prefix + ". Enter a value after this prefix.");
-            }
         }
     }
 

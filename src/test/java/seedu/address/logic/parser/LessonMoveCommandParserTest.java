@@ -53,7 +53,7 @@ public class LessonMoveCommandParserTest {
         assertParseFailure(parser, " 1 d/2026-13-01", LessonDate.MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, " 1 t/late", LessonTime.MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, " 1 dur/10", LessonDuration.MESSAGE_CONSTRAINTS);
-        assertParseFailure(parser, " 1 v/ ", Venue.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, " 1 v/ ", "Empty value for v/. Enter a value after this prefix.");
     }
 
     @Test

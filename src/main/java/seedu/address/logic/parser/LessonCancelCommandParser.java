@@ -28,6 +28,7 @@ public class LessonCancelCommandParser implements Parser<LessonCancelCommand> {
                     String.format(MESSAGE_INVALID_COMMAND_FORMAT, LessonCancelCommand.MESSAGE_USAGE), pe);
         }
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_REASON);
+        argMultimap.verifyNoEmptyValuesFor(PREFIX_REASON);
 
         return new LessonCancelCommand(index,
                 ParserUtil.parseOptional(argMultimap, PREFIX_REASON, ParserUtil::parseReason));

@@ -54,7 +54,6 @@ import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.Rate;
 import seedu.address.model.person.Subject;
-import seedu.address.model.person.Venue;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
 
 public class EditCommandParserTest {
@@ -101,14 +100,16 @@ public class EditCommandParserTest {
         assertParseFailure(parser, "1" + INVALID_LEVEL_DESC, Level.MESSAGE_CONSTRAINTS); // invalid level
         assertParseFailure(parser, "1" + INVALID_SUBJECT_DESC, Subject.MESSAGE_CONSTRAINTS); // invalid subject
         assertParseFailure(parser, "1" + INVALID_RATE_DESC, Rate.MESSAGE_CONSTRAINTS); // invalid rate
-        assertParseFailure(parser, "1" + INVALID_VENUE_DESC, Venue.MESSAGE_CONSTRAINTS); // invalid venue
+        assertParseFailure(parser, "1" + INVALID_VENUE_DESC,
+                "Empty value for v/. Enter a value after this prefix."); // invalid venue
 
         // invalid phone followed by valid email
         assertParseFailure(parser, "1" + INVALID_PHONE_DESC + EMAIL_DESC_AMY, Phone.MESSAGE_CONSTRAINTS);
 
         // a student must keep at least one subject, so an empty subject is invalid, even next to a valid one
-        assertParseFailure(parser, "1" + SUBJECT_EMPTY, Subject.MESSAGE_CONSTRAINTS);
-        assertParseFailure(parser, "1" + SUBJECT_DESC_MATH + SUBJECT_EMPTY, Subject.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "1" + SUBJECT_EMPTY, "Empty value for s/. Enter a value after this prefix.");
+        assertParseFailure(parser, "1" + SUBJECT_DESC_MATH + SUBJECT_EMPTY,
+                "Empty value for s/. Enter a value after this prefix.");
 
         // multiple invalid values, but only the first invalid value is captured
         assertParseFailure(parser, "1" + INVALID_NAME_DESC + INVALID_EMAIL_DESC + VALID_VENUE_AMY + VALID_PHONE_AMY,
