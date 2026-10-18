@@ -201,14 +201,15 @@ Format: `delete INDEX [confirm]`
 * Deletes the student at the specified `INDEX`.
 * The index refers to the index number shown in the displayed student list.
 * The index **must be a positive integer** 1, 2, 3, ...
-* A student with no lessons or homework is deleted immediately.
+* A student with no lessons, homework, or financial history is deleted immediately.
 * Deleting a student also deletes **all of their lessons, homework, and financial history**, including feedback, and this cannot be undone. If the student has linked records, TutorFlow shows their name, phone number, linked counts, and upcoming commitments, and asks you to repeat the command with `confirm`.
 * The keyword `confirm` is in lower case.
 
 Examples:
-* `list` followed by `delete 2` deletes the 2nd student, if they have no lessons or homework.
+* `list` followed by `delete 2` deletes the 2nd student, if they have no lessons, homework, or financial history.
+* `delete 2` on a student with only payment history still shows a confirmation prompt, including their balance. Use `archive 2` to retain that history, or `delete 2 confirm` to delete it.
 * `delete 3` on a student with 12 lessons shows a prompt; `delete 3 confirm` then deletes the student and the 12 lessons.
-* `find Betsy` followed by `delete 1` deletes the 1st student in the results of the `find` command.
+* `find Betsy` followed by `delete 1` selects the 1st student in the results for deletion; linked history still requires `confirm`.
 
 ### Sorting students by name: `sort`
 
