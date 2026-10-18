@@ -56,7 +56,7 @@ public class MainApp extends Application {
                 new VersionedAddressBookStorage(ADDRESS_BOOK_FILE_PATH, LEGACY_FILE_PATH);
         storage = new StorageManager(addressBookStorage, userPrefsStorage);
 
-        model = initModelManager(storage, userPrefs);
+        model = initModelManager(storage, userPrefs, addressBookStorage);
 
         logic = new LogicManager(model, storage, startupWarning, addressBookStorage.requiresInitialSave());
 
@@ -68,7 +68,8 @@ public class MainApp extends Application {
      * An empty address book will be used if {@code storage}'s address book is not found,
      * or if errors occur when reading {@code storage}'s address book.
      */
-    private Model initModelManager(Storage storage, ReadOnlyUserPrefs userPrefs) {
+    private Model initModelManager(Storage storage, ReadOnlyUserPrefs userPrefs,
+            VersionedAddressBookStorage addressBookStorage) {
         logger.info("Using data file : " + storage.getAddressBookFilePath());
 
         Optional<ReadOnlyAddressBook> addressBookOptional;
@@ -84,7 +85,7 @@ public class MainApp extends Application {
         } catch (DataLoadingException e) {
             logger.warning("Data file at " + storage.getAddressBookFilePath() + " could not be loaded."
                     + " Will be starting with no data.");
-            startupWarning = DataFileRecovery.setAside(storage.getAddressBookFilePath());
+            startupWarning = DataFileRecovery.setAside(addressBookStorage.getReadSource());
             initialData = new AddressBook();
         }
 

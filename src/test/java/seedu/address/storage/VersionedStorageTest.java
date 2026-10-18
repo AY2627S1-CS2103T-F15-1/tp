@@ -112,4 +112,34 @@ public class VersionedStorageTest {
         assertEquals("original inaccessible bytes", Files.readString(current));
     }
 
+    @Test
+    public void startup_invalidLegacySource_blocksSaveUntilOriginalIsPreserved() throws Exception {
+        Path current = directory.resolve("tutorflow-v14.json");
+        Path legacy = directory.resolve("addressbook.json");
+        Files.writeString(legacy, "broken legacy bytes");
+        VersionedAddressBookStorage data = new VersionedAddressBookStorage(current, legacy) {
+            @Override
+            protected void preserveUnreadableFile(Path path) throws IOException {
+                throw new IOException("Recovery copy denied");
+            }
+        };
+        assertThrows(DataLoadingException.class, data::readAddressBook);
+        assertThrows(IOException.class, () -> data.saveAddressBook(new AddressBook()));
+        assertEquals(legacy, data.getReadSource());
+        assertFalse(Files.exists(current));
+        assertEquals("broken legacy bytes", Files.readString(legacy));
+    }
+
+    @Test
+    public void startup_invalidLegacySource_successfulPreservationAllowsNewDataset() throws Exception {
+        Path current = directory.resolve("tutorflow-v14.json");
+        Path legacy = directory.resolve("addressbook.json");
+        Files.writeString(legacy, "broken legacy bytes");
+        VersionedAddressBookStorage data = new VersionedAddressBookStorage(current, legacy);
+        assertThrows(DataLoadingException.class, data::readAddressBook);
+        data.saveAddressBook(new AddressBook());
+        assertEquals("broken legacy bytes", Files.readString(directory.resolve("addressbook.json.corrupt")));
+        assertTrue(new JsonAddressBookStorage(current).readAddressBook().orElseThrow().getPersonList().isEmpty());
+    }
+
 }

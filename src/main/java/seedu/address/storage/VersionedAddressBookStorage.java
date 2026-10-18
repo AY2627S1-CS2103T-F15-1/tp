@@ -11,36 +11,55 @@ import seedu.address.model.ReadOnlyAddressBook;
 public class VersionedAddressBookStorage extends JsonAddressBookStorage {
     private final Path legacy;
     private boolean initialSave;
-    private boolean inaccessibleLegacy;
+    private boolean failedLegacyRead;
+    private Path readSource;
 
     /** Creates storage with separate current and legacy paths. */
     public VersionedAddressBookStorage(Path current, Path legacy) {
         super(current);
         this.legacy = legacy;
+        readSource = current;
     }
 
     @Override
     public Optional<ReadOnlyAddressBook> readAddressBook() throws DataLoadingException {
         initialSave = false;
-        inaccessibleLegacy = false;
+        failedLegacyRead = false;
+        readSource = getAddressBookFilePath();
         if (sourcePresence(getAddressBookFilePath()) != SourcePresence.ABSENT) {
             return super.readAddressBook();
         }
-        if (sourcePresence(legacy) == SourcePresence.UNKNOWN) {
-            inaccessibleLegacy = true;
-            throw new DataLoadingException(new IOException("Cannot inspect the legacy data file."));
+        readSource = legacy;
+        try {
+            Optional<ReadOnlyAddressBook> migrated = super.readAddressBook(legacy);
+            initialSave = migrated.isPresent();
+            return migrated;
+        } catch (DataLoadingException e) {
+            failedLegacyRead = true;
+            throw e;
         }
-        Optional<ReadOnlyAddressBook> migrated = super.readAddressBook(legacy);
-        initialSave = migrated.isPresent();
-        return migrated;
     }
 
     @Override
     public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
-        if (sourcePresence(getAddressBookFilePath()) == SourcePresence.UNKNOWN || inaccessibleLegacy) {
+        if (sourcePresence(getAddressBookFilePath()) == SourcePresence.UNKNOWN) {
             throw new IOException("Restore access to the data files and restart before saving.");
         }
+        if (failedLegacyRead) {
+            switch (sourcePresence(legacy)) {
+                case PRESENT -> preserveUnreadableFile(legacy);
+                case ABSENT -> {
+                    // Startup may already have preserved the legacy source.
+                }
+                default -> throw new IOException("Restore access to the legacy source before saving.");
+            }
+            failedLegacyRead = false;
+        }
         super.saveAddressBook(addressBook);
+    }
+
+    public Path getReadSource() {
+        return readSource;
     }
 
     public boolean requiresInitialSave() {
