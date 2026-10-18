@@ -15,9 +15,14 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.commons.util.JsonUtil;
+import seedu.address.logic.LogicManager;
 import seedu.address.model.AddressBook;
+import seedu.address.model.ModelManager;
+import seedu.address.model.UserPrefs;
 import seedu.address.model.finance.Ledger;
 import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.lesson.Lesson;
@@ -63,6 +68,33 @@ public class FinanceStorageTest {
             AddressBook book = JsonUtil.fromJsonString("{" + version + "\"persons\":[]}",
                     JsonSerializableAddressBook.class).toModelType();
             assertTrue(book.getLedgerEntries().isEmpty());
+        }
+    }
+
+    @Test
+    public void upgrade_oldCompletedLessons_preservesEmptyLedgerUntilManualCharge() throws Exception {
+        for (int version : new int[] {14, 15}) {
+            AddressBook book = new AddressBook();
+            book.addPerson(TypicalPersons.ALICE);
+            Lesson completed = new LessonBuilder().withDate("2020-01-01").build()
+                    .withStudent(TypicalPersons.ALICE).complete("Legacy notes");
+            book.addLesson(completed);
+            JsonAddressBookStorage storage = new JsonAddressBookStorage(directory.resolve("old-" + version + ".json"));
+            ObjectNode old = JsonUtil.fromJsonString(storage.snapshotAddressBook(book), ObjectNode.class);
+            old.put("schemaVersion", version);
+            old.remove("ledgerEntries");
+            Files.writeString(storage.getAddressBookFilePath(), old.toString());
+            ModelManager model = new ModelManager(storage.readAddressBook().orElseThrow(), new UserPrefs());
+            LogicManager logic = new LogicManager(model, new StorageManager(storage,
+                    new JsonUserPrefsStorage(directory.resolve("prefs.json"))));
+            logic.execute("lesson done 1 n/Corrected historical notes");
+            logic.execute("lesson done 1");
+            assertTrue(storage.readAddressBook().orElseThrow().getLedgerEntries().isEmpty());
+            logic.execute("charge l/1 amt/45");
+            assertEquals(new BigDecimal("45.00"), storage.readAddressBook().orElseThrow()
+                    .getLedgerEntries().getFirst().amount());
+            assertEquals(completed.getId(), storage.readAddressBook().orElseThrow()
+                    .getLedgerEntries().getFirst().lessonId());
         }
     }
 

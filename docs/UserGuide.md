@@ -169,6 +169,7 @@ Format: `view INDEX`
   * the **next lesson**: the date, time, subject and venue of the first scheduled lesson from today onwards
   * the **recent lesson notes**: the notes of the 3 most recent completed lessons, newest first
   * the **lesson history**: how many lessons are completed, cancelled and missed
+  * the **balance**: outstanding amount or credit from charges, payments, and reversals
   * the **outstanding homework**: assignments awaiting submission or review, with due dates and feedback
 * A section with nothing to show says so, for example `No upcoming lessons.`, instead of disappearing.
 * The command only shows information. It does not change the student list, so the indexes you use for other commands stay the same.
@@ -268,13 +269,14 @@ Examples:
 
 ### Viewing today's dashboard: `today`
 
-Shows what today requires: today's lessons, past lessons not yet marked completed, and overdue homework. TutorFlow also shows this when it starts.
+Shows what today requires: today's lessons, past lessons not yet marked completed, overdue homework, and outstanding balances. TutorFlow also shows this when it starts.
 
 Format: `today`
 
 * The first section, `TODAY'S LESSONS`, shows the number of lessons today and their total time, followed by the time, student, subject and venue of each lesson. Lessons that overlap another lesson are marked `⚠ overlaps`. Cancelled lessons are left out.
 * The second section, `LESSONS AWAITING NOTES`, shows the scheduled lessons from earlier days that were not marked completed, the most recent first.
 * The third section, `OVERDUE HOMEWORK`, shows assigned work due before today, or `No overdue homework.`. Run `hw list overdue/` to get selectable numbers.
+* The fourth section, `DUES`, shows positive balances ordered by the age of the oldest unpaid charge.
 * An empty section is not an error: it shows `No lessons today.` or `All past lessons are recorded.`
 * Today is the date on your computer, so a wrong system clock shows the wrong day.
 
@@ -346,6 +348,7 @@ Format: `lesson done INDEX [n/NOTES]`
 * `INDEX` is the lesson number from the current `agenda` or `lesson list`, not the student number. It must be a positive integer.
 * Only lessons dated today or earlier can be completed, using your computer's local date. A cancelled lesson cannot be completed.
 * `NOTES` is optional free text of 1–1000 printable characters on one line. Leading/trailing whitespace is trimmed and repeated spaces are collapsed. An empty `n/`, line breaks and repeated `n/` parameters are rejected.
+* First completion also records a charge at the current hourly rate unless the amount rounds to zero. Charge corrections use `charge reverse`; see [Charges, payments, and accounts](#charges-payments-and-accounts).
 * Completing a lesson retains its student, subject, date, time, duration and venue. The status and notes are saved automatically. Use `view STUDENT_INDEX` to see recent notes and the completed-lesson count.
 * Repeating the command with `n/NOTES` updates the notes on the same completed lesson. Omitting `n/` retains existing notes. A lesson previously marked missed can also be changed to completed.
 * A completed lesson disappears from an upcoming-only `lesson list`. Use `lesson list st/STUDENT_INDEX all/` to include it again; check the current lesson number before updating notes.
@@ -374,7 +377,7 @@ Examples:
 
 ### Clearing all entries: `clear`
 
-Deletes **all** students, lessons, and homework from TutorFlow.
+Deletes **all** students, lessons, homework, and financial history from TutorFlow.
 
 Format: `clear confirm`
 
@@ -384,7 +387,7 @@ Format: `clear confirm`
 * Clearing data that is already empty works and does nothing.
 
 Examples:
-* `clear` shows `This deletes ALL students, lessons, and homework. Type 'clear confirm' to proceed.`
+* `clear` shows `This deletes ALL students, lessons, homework, and financial history. Type 'clear confirm' to proceed.`
 * `clear confirm` deletes everything.
 
 ### Exiting the program: `exit`

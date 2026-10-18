@@ -24,6 +24,7 @@ public class ChargeCommandParser implements Parser<ChargeCommand> {
 
     @Override
     public ChargeCommand parse(String args) throws ParseException {
+        ParserUtil.requirePrintable(args, "Commands must contain printable text on one line.");
         ArgumentMultimap values = ArgumentTokenizer.tokenize(" " + args.strip(), LESSON, AMOUNT);
         values.verifyNoDuplicatePrefixesFor(LESSON, AMOUNT);
         values.verifyNoEmptyValuesFor(LESSON, AMOUNT);

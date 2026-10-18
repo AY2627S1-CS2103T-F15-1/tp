@@ -10,7 +10,10 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -18,6 +21,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.exceptions.CommandException;
+import seedu.address.logic.parser.PayCommandParser;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
@@ -96,6 +100,61 @@ public class PaymentJourneyTest {
         assertEquals(model.getAddressBook().getLedgerEntries(),
                 storage.readAddressBook().orElseThrow().getLedgerEntries());
         assertTrue(logic.execute("pay list").getFeedbackToUser().contains("Current name"));
+    }
+
+    @Test
+    public void dateAliases_injectedLocalClock_acceptsTodayAndRejectsTomorrow() throws Exception {
+        model.addPerson(TypicalPersons.ALICE);
+        Clock clock = Clock.fixed(Instant.parse("2026-10-17T17:30:00Z"), ZoneId.of("Asia/Singapore"));
+        PayCommandParser parser = new PayCommandParser(clock);
+        parser.parse("st/1 amt/$2.50 d/today").execute(model);
+        assertEquals(LocalDate.of(2026, 10, 18), model.getAddressBook().getLedgerEntries().getFirst().date());
+        assertThrows(CommandException.class, () -> parser.parse("st/1 amt/2 d/tmr").execute(model));
+        assertEquals(1, model.getAddressBook().getLedgerEntries().size());
+    }
+
+    @Test
+    public void selection_filteredList_backdatedAdditionAndAccountKeepOriginalTarget() throws Exception {
+        model.addPerson(TypicalPersons.ALICE);
+        model.addPerson(TypicalPersons.BENSON);
+        LogicManager logic = logic(new JsonAddressBookStorage(directory.resolve("filtered.json")));
+        logic.execute("pay st/1 amt/10");
+        logic.execute("pay st/2 amt/20");
+        LedgerEntry shown = logic.execute("pay list st/2").getDisplayedPayments().orElseThrow().getFirst();
+        logic.execute("pay st/2 amt/30 d/2020-01-01");
+        logic.execute("balance st/1");
+        logic.execute("pay reverse 1");
+        assertTrue(Ledger.isReversed(model.getAddressBook(), shown.id()));
+        assertEquals(new BigDecimal("-30.00"), Ledger.balance(model.getAddressBook(), TypicalPersons.BENSON.getId()));
+        assertEquals(new BigDecimal("-10.00"), Ledger.balance(model.getAddressBook(), TypicalPersons.ALICE.getId()));
+    }
+
+    @Test
+    public void automaticCharge_failedSaveAndRepeatedCompletion_doesNotBillTwice() throws Exception {
+        model.addPerson(TypicalPersons.ALICE);
+        model.addLesson(new LessonBuilder().withDate(LocalDate.now()).build().withStudent(TypicalPersons.ALICE));
+        boolean[] fail = {false};
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(directory.resolve("charge-failure.json")) {
+            @Override
+            public void saveAddressBook(ReadOnlyAddressBook book) throws IOException {
+                if (fail[0]) {
+                    throw new IOException("Simulated save failure");
+                }
+                super.saveAddressBook(book);
+            }
+        };
+        storage.saveAddressBook(model.getAddressBook());
+        LogicManager logic = logic(storage);
+        fail[0] = true;
+        assertThrows(CommandException.class, () -> logic.execute("lesson done 1 n/First notes"));
+        assertTrue(logic.execute("lesson done 1").getFeedbackToUser().contains(LogicManager.UNSAVED_WARNING));
+        assertThrows(CommandException.class, () -> logic.execute("lesson done 1 n/Corrected notes"));
+        assertEquals(1, model.getAddressBook().getLedgerEntries().size());
+        assertTrue(storage.readAddressBook().orElseThrow().getLedgerEntries().isEmpty());
+        fail[0] = false;
+        logic.execute("save");
+        assertEquals(1, storage.readAddressBook().orElseThrow().getLedgerEntries().size());
+        assertFalse(logic.hasUnsavedChanges());
     }
 
     @Test

@@ -100,9 +100,10 @@ public class AddressBook implements ReadOnlyAddressBook {
     public void setPerson(Person target, Person editedPerson) {
         requireNonNull(editedPerson);
 
-        editedPerson = editedPerson.withId(target.getId());
-        persons.setPerson(target, editedPerson);
-        updateStudentOfLessons(target, editedPerson);
+        Person stored = storedPerson(target);
+        editedPerson = editedPerson.withId(stored.getId());
+        persons.setPerson(stored, editedPerson);
+        updateStudentOfLessons(stored, editedPerson);
     }
 
     /**
@@ -110,10 +111,11 @@ public class AddressBook implements ReadOnlyAddressBook {
      * {@code key} must exist in the address book.
      */
     public void removePerson(Person key) {
-        persons.remove(key);
-        ledgerEntries.removeIf(entry -> entry.studentId().equals(key.getId()));
-        homework.removeIf(item -> item.getStudentId().equals(key.getId()));
-        boolean hasRemovedLessons = lessons.removeIf(lesson -> lesson.isWith(key));
+        Person stored = storedPerson(key);
+        persons.remove(stored);
+        ledgerEntries.removeIf(entry -> entry.studentId().equals(stored.getId()));
+        homework.removeIf(item -> item.getStudentId().equals(stored.getId()));
+        boolean hasRemovedLessons = lessons.removeIf(lesson -> lesson.isWith(stored));
         if (hasRemovedLessons) {
             logger.fine("Removed linked lessons");
         }
@@ -161,7 +163,22 @@ public class AddressBook implements ReadOnlyAddressBook {
     public void setLesson(Lesson target, Lesson editedLesson) {
         requireNonNull(editedLesson);
 
-        lessons.setLesson(target, editedLesson);
+        Lesson stored = storedLesson(target);
+        boolean hasHistory = ledgerEntries.stream().anyMatch(entry -> stored.getId().equals(entry.lessonId()));
+        if (hasHistory) {
+            boolean sameStudent = persons.asUnmodifiableObservableList().stream()
+                    .anyMatch(person -> stored.isWith(person) && editedLesson.isWith(person));
+            if (!stored.getId().equals(editedLesson.getId()) || !sameStudent) {
+                throw new IllegalArgumentException(
+                        "A lesson with financial history must retain its identity and student.");
+            }
+            if (Ledger.activeCharge(this, stored.getId()).isPresent()
+                    && (editedLesson.isCancelled() || !stored.isSameLesson(editedLesson)
+                    || !stored.getVenue().equals(editedLesson.getVenue()))) {
+                throw new IllegalArgumentException("Reverse the active charge before cancelling or rescheduling.");
+            }
+        }
+        lessons.setLesson(stored, editedLesson);
     }
 
     /**
@@ -169,10 +186,11 @@ public class AddressBook implements ReadOnlyAddressBook {
      * {@code key} must exist in the address book.
      */
     public void removeLesson(Lesson key) {
-        if (ledgerEntries.stream().anyMatch(entry -> key.getId().equals(entry.lessonId()))) {
+        Lesson stored = storedLesson(key);
+        if (ledgerEntries.stream().anyMatch(entry -> stored.getId().equals(entry.lessonId()))) {
             throw new IllegalArgumentException("A lesson with financial history cannot be deleted.");
         }
-        lessons.remove(key);
+        lessons.remove(stored);
     }
 
     /**
@@ -240,6 +258,22 @@ public class AddressBook implements ReadOnlyAddressBook {
     @Override
     public ObservableList<LedgerEntry> getLedgerEntries() {
         return FXCollections.unmodifiableObservableList(ledgerEntries);
+    }
+
+    /** Resolves a stored student before cascades; detached equal values must not substitute their new UUID. */
+    private Person storedPerson(Person target) {
+        return persons.asUnmodifiableObservableList().stream()
+                .filter(person -> person.getId().equals(target.getId())).findFirst()
+                .orElseGet(() -> persons.asUnmodifiableObservableList().stream()
+                        .filter(target::equals).findFirst().orElse(target));
+    }
+
+    /** Matches the lesson list's ID-first lookup before applying financial integrity guards. */
+    private Lesson storedLesson(Lesson target) {
+        return lessons.asUnmodifiableObservableList().stream()
+                .filter(lesson -> lesson.getId().equals(target.getId())).findFirst()
+                .orElseGet(() -> lessons.asUnmodifiableObservableList().stream()
+                        .filter(target::equals).findFirst().orElse(target));
     }
 
     //// util methods

@@ -73,6 +73,41 @@ public class ChargeCommandTest {
     }
 
     @Test
+    public void charge_missedLesson_explicitBillingAndCompletionDoesNotDoubleCharge() throws Exception {
+        lesson(LocalDate.now(), LessonStatus.SCHEDULED);
+        run("lesson missed 1");
+        assertTrue(model.getAddressBook().getLedgerEntries().isEmpty());
+        run("charge l/1");
+        run("lesson done 1");
+        assertEquals(1, model.getAddressBook().getLedgerEntries().size());
+        assertEquals(new BigDecimal("105.02"), model.getAddressBook().getLedgerEntries().getFirst().amount());
+    }
+
+    @Test
+    public void charge_tinyRateRoundingToZero_requiresOverrideWithoutLosingOutcome() throws Exception {
+        model.addPerson(student);
+        model.setPerson(student, new PersonBuilder(student).withRate("0.01").build());
+        model.addLesson(new LessonBuilder().withStudent(student).withDate(LocalDate.now()).withDuration(15).build()
+                .withStudent(student));
+        assertThrows(CommandException.class, () -> run("charge l/1"));
+        assertTrue(run("lesson done 1").getFeedbackToUser().contains("rounds to $0.00"));
+        assertTrue(model.getAddressBook().getLedgerEntries().isEmpty());
+        run("charge l/1 amt/0.01");
+        assertEquals(new BigDecimal("0.01"), model.getAddressBook().getLedgerEntries().getFirst().amount());
+    }
+
+    @Test
+    public void charge_reverseThenMove_retainsHistoricalSnapshots() throws Exception {
+        lesson(LocalDate.now().minusDays(1), LessonStatus.SCHEDULED);
+        run("charge l/1");
+        LedgerEntry original = model.getAddressBook().getLedgerEntries().getFirst();
+        run("charge reverse l/1");
+        run("lesson move 1 d/" + LocalDate.now().plusDays(1) + " dur/120");
+        assertEquals(original, model.getAddressBook().getLedgerEntries().getFirst());
+        assertThrows(CommandException.class, () -> run("charge l/1"));
+    }
+
+    @Test
     public void charge_futureOrCancelled_rejectsWithoutMutation() throws Exception {
         lesson(LocalDate.now().plusDays(1), LessonStatus.SCHEDULED);
         assertThrows(CommandException.class, () -> run("charge l/1 amt/10"));

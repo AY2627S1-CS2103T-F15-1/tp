@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import seedu.address.model.AddressBook;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.testutil.LessonBuilder;
+import seedu.address.testutil.PersonBuilder;
 import seedu.address.testutil.TypicalPersons;
 
 public class LedgerTest {
@@ -69,6 +70,46 @@ public class LedgerTest {
         assertEquals(new BigDecimal("10.00"), Ledger.balance(book, TypicalPersons.ALICE.getId()));
         assertEquals(book, new AddressBook(book));
         assertThrows(UnsupportedOperationException.class, () -> book.getLedgerEntries().clear());
+    }
+
+    @Test
+    public void delete_detachedEqualLesson_cannotLeaveOrphanedCharge() {
+        Lesson original = lesson("2026-09-01");
+        book.addLedgerEntry(LedgerEntry.charge(original, TypicalPersons.ALICE, BigDecimal.TEN));
+        Lesson detached = new LessonBuilder(original).build().withStudent(TypicalPersons.ALICE);
+        assertEquals(original, detached);
+        assertThrows(IllegalArgumentException.class, () -> book.removeLesson(detached));
+        assertEquals(1, book.getLessonList().size());
+    }
+
+    @Test
+    public void delete_detachedEqualStudent_cascadesActualIdentity() {
+        Lesson original = lesson("2026-09-01");
+        book.addLedgerEntry(LedgerEntry.charge(original, TypicalPersons.ALICE, BigDecimal.TEN));
+        book.removePerson(new PersonBuilder(TypicalPersons.ALICE).build());
+        assertTrue(book.getLedgerEntries().isEmpty());
+        assertTrue(book.getLessonList().isEmpty());
+    }
+
+    @Test
+    public void edit_detachedEqualStudent_preservesActualIdentity() {
+        Lesson original = lesson("2026-09-01");
+        book.addLedgerEntry(LedgerEntry.charge(original, TypicalPersons.ALICE, BigDecimal.TEN));
+        book.setPerson(new PersonBuilder(TypicalPersons.ALICE).build(),
+                new PersonBuilder(TypicalPersons.ALICE).withName("Renamed").build());
+        assertEquals(TypicalPersons.ALICE.getId(), book.getPersonList().getFirst().getId());
+        assertEquals("Renamed", book.getLessonList().getFirst().getStudentName().fullName);
+    }
+
+    @Test
+    public void replace_chargedLesson_cannotChangeIdentityOrCancelWithoutReversal() {
+        Lesson original = lesson("2026-09-01");
+        book.addLedgerEntry(LedgerEntry.charge(original, TypicalPersons.ALICE, BigDecimal.TEN));
+        assertThrows(IllegalArgumentException.class, () -> book.setLesson(original, original.cancel(null)));
+        assertThrows(IllegalArgumentException.class, () -> book.setLesson(original,
+                new LessonBuilder(original).build().withStudent(TypicalPersons.ALICE)));
+        book.setLesson(original, original.complete("Notes"));
+        assertEquals(original.getId(), book.getLessonList().getFirst().getId());
     }
 
     @Test
