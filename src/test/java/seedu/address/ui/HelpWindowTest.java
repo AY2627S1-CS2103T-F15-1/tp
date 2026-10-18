@@ -31,12 +31,15 @@ import javafx.concurrent.Worker;
 import javafx.event.ActionEvent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.MenuBar;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToolBar;
 import javafx.scene.web.WebView;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import seedu.address.logic.LogicManager;
 import seedu.address.model.ModelManager;
+import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
@@ -49,6 +52,49 @@ public class HelpWindowTest {
     public Path temporaryFolder;
 
     private HelpWindow window;
+
+    @Test
+    public void exit_failedSave_guardsCommandWindowAndMenuUntilRetrySucceeds() throws Exception {
+        onFx(() -> {
+            boolean[] fail = {true};
+            JsonAddressBookStorage addressStorage = new JsonAddressBookStorage(temporaryFolder.resolve("exit.json")) {
+                @Override
+                public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
+                    if (fail[0]) {
+                        throw new IOException("Synthetic write failure");
+                    }
+                    super.saveAddressBook(addressBook);
+                }
+            };
+            LogicManager logic = new LogicManager(new ModelManager(), new StorageManager(addressStorage,
+                    new JsonUserPrefsStorage(temporaryFolder.resolve("prefs.json"))));
+            MainWindow main = new MainWindow(new Stage(), logic, addressStorage.getAddressBookFilePath());
+            main.fillInnerParts();
+            main.show();
+            try {
+                TextField input = (TextField) main.getRoot().getScene().lookup("#commandTextField");
+                input.setText("add n/Alice p/91234567 l/J1 s/Math r/100");
+                input.fireEvent(new ActionEvent());
+                assertTrue(logic.hasUnsavedChanges());
+                input.setText("exit");
+                input.fireEvent(new ActionEvent());
+                assertTrue(main.getRoot().isShowing());
+                main.getRoot().fireEvent(new WindowEvent(main.getRoot(), WindowEvent.WINDOW_CLOSE_REQUEST));
+                assertTrue(main.getRoot().isShowing());
+                MenuBar menu = (MenuBar) main.getRoot().getScene().lookup("#menuBar");
+                menu.getMenus().getFirst().getItems().getFirst().fire();
+                assertTrue(main.getRoot().isShowing());
+                fail[0] = false;
+                menu.getMenus().getFirst().getItems().getFirst().fire();
+                assertFalse(main.getRoot().isShowing());
+                assertFalse(logic.hasUnsavedChanges());
+                assertEquals(1, addressStorage.readAddressBook().orElseThrow().getPersonList().size());
+            } finally {
+                main.getRoot().hide();
+            }
+            return null;
+        });
+    }
 
     @Test
     public void click_remoteLinkAndNewWindowLink_blocksLoopbackRequestsAndKeepsGuide() throws Exception {

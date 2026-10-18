@@ -16,7 +16,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.commons.exceptions.DataLoadingException;
+import seedu.address.logic.LogicManager;
+import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.AddressBook;
+import seedu.address.model.ModelManager;
 
 public class DataFileRecoveryTest {
 
@@ -117,11 +120,22 @@ public class DataFileRecoveryTest {
             JsonAddressBookStorage storage = new JsonAddressBookStorage(dataFile);
             assertThrows(DataLoadingException.class, storage::readAddressBook);
             assertTrue(DataFileRecovery.setAside(dataFile).contains("could not be set aside"));
-            assertThrows(IOException.class, () -> storage.saveAddressBook(new AddressBook()));
+            LogicManager logic = new LogicManager(new ModelManager(), new StorageManager(storage,
+                    new JsonUserPrefsStorage(testFolder.resolve("prefs.json"))));
+            logic.execute("help");
+            assertEquals(UNREADABLE_CONTENT, Files.readString(dataFile));
+            assertThrows(CommandException.class, () -> {
+                logic.execute("add n/Alice p/91234567 l/J1 s/Math r/100");
+            });
+            assertThrows(CommandException.class, () -> logic.execute("exit"));
             lock.getOutputStream().write('\n');
             lock.getOutputStream().flush();
             assertTrue(lock.waitFor(10, java.util.concurrent.TimeUnit.SECONDS));
-            storage.saveAddressBook(getTypicalAddressBook());
+            logic.execute("help");
+            assertEquals(UNREADABLE_CONTENT, Files.readString(dataFile));
+            assertTrue(logic.execute("exit").isExit());
+            assertFalse(logic.hasUnsavedChanges());
+            assertEquals(1, storage.readAddressBook().orElseThrow().getPersonList().size());
             assertEquals(UNREADABLE_CONTENT, Files.readString(testFolder.resolve("locked.json.corrupt")));
         } finally {
             lock.destroyForcibly();
