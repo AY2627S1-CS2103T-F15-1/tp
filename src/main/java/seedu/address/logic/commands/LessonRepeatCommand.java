@@ -1,6 +1,7 @@
 package seedu.address.logic.commands;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,6 +24,9 @@ public class LessonRepeatCommand extends Command {
     public static final String MESSAGE_USAGE = "lesson repeat st/INDEX [s/SUBJECT] d/START t/TIME "
             + "[dur/MINUTES] [v/VENUE] count/COUNT [every/WEEKS]"
             + "\nCOUNT is 2-52; WEEKS is 1-12 (default 1). All occurrences must be within two years.";
+
+    /** Number of overlap or travel warnings listed before the remainder is only counted. */
+    private static final int MAX_SHOWN_WARNINGS = 5;
 
     private final Index studentIndex;
     private final Subject subject;
@@ -71,11 +75,49 @@ public class LessonRepeatCommand extends Command {
         }
         model.setAddressBook(proposed);
         StringBuilder feedback = new StringBuilder("Scheduled " + count + " weekly occurrences.");
-        for (Lesson lesson : added) {
-            feedback.append(LessonCommandUtil.getOverlapWarning(model, lesson));
+        appendOverlapWarnings(feedback, model, added);
+        feedback.append(summarize(TravelWarnings.format(model.getAddressBook(), added)));
+
+        List<Lesson> shown = model.getFilteredLessonList();
+        if (added.stream().noneMatch(shown::contains)) {
+            feedback.append("\nThe new lessons are not in the displayed list. Run 'agenda' or 'lesson list st/")
+                    .append(studentIndex.getOneBased()).append("' to number them.");
+            return new CommandResult(feedback.toString());
         }
-        feedback.append(TravelWarnings.format(model.getAddressBook(), added));
-        feedback.append(Messages.formatLessonList(model.getFilteredLessonList()));
-        return new CommandResult(feedback.toString()).withDisplayedLessons(model.getFilteredLessonList());
+        feedback.append(Messages.formatLessonList(shown));
+        return new CommandResult(feedback.toString()).withDisplayedLessons(shown);
+    }
+
+    /** Adds the first few overlap warnings and counts the rest, so a long series cannot bury the result. */
+    private static void appendOverlapWarnings(StringBuilder feedback, Model model, List<Lesson> added) {
+        int shownWarnings = 0;
+        int hiddenWarnings = 0;
+        for (Lesson lesson : added) {
+            String warning = LessonCommandUtil.getOverlapWarning(model, lesson);
+            if (warning.isEmpty()) {
+                continue;
+            }
+            if (shownWarnings < MAX_SHOWN_WARNINGS) {
+                feedback.append(warning);
+                shownWarnings++;
+            } else {
+                hiddenWarnings++;
+            }
+        }
+        if (hiddenWarnings > 0) {
+            feedback.append("\n... and ").append(hiddenWarnings)
+                    .append(hiddenWarnings == 1 ? " more occurrence overlaps existing lessons."
+                            : " more occurrences overlap existing lessons.");
+        }
+    }
+
+    /** Keeps the first few lines of a multi-line warning block and counts the remainder. */
+    private static String summarize(String warnings) {
+        String[] lines = warnings.split("\n", -1);
+        if (lines.length <= MAX_SHOWN_WARNINGS + 1) {
+            return warnings;
+        }
+        String kept = String.join("\n", Arrays.copyOfRange(lines, 0, MAX_SHOWN_WARNINGS + 1));
+        return kept + "\n... and " + (lines.length - MAX_SHOWN_WARNINGS - 1) + " more travel warnings.";
     }
 }

@@ -1,6 +1,7 @@
 package seedu.address.logic.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -82,6 +83,28 @@ public class RecurrenceCommandTest {
         Clock atStart = Clock.fixed(LocalDate.now().atTime(10, 0).atZone(zone).toInstant(), zone);
         new LessonSeriesCancelCommand(Index.fromOneBased(1), atStart).execute(model);
         assertTrue(model.getAddressBook().getLessonList().stream().allMatch(Lesson::isCancelled));
+    }
+
+    @Test
+    public void repeat_hiddenLessonList_explainsHowToNumberNewLessons() throws Exception {
+        model.addPerson(student);
+        model.updateFilteredLessonList(unused -> false);
+        CommandResult result = run("lesson repeat st/1 d/tmr t/10:00 count/2");
+        assertFalse(result.getFeedbackToUser().contains("No lessons in the current list"));
+        assertTrue(result.getFeedbackToUser().contains("lesson list st/1"));
+        assertTrue(result.getDisplayedLessons().isEmpty());
+        assertTrue(model.getFilteredLessonList().isEmpty());
+        assertEquals(2, model.getAddressBook().getLessonList().size());
+    }
+
+    @Test
+    public void repeat_longOverlappingSeries_summarizesWarnings() throws Exception {
+        model.addPerson(student);
+        run("lesson repeat st/1 d/tmr t/10:00 count/52");
+        String feedback = run("lesson repeat st/1 d/tmr t/10:30 count/52 v/Tampines").getFeedbackToUser();
+        assertTrue(feedback.contains("more occurrences overlap"));
+        assertTrue(feedback.split("overlaps", -1).length - 1 <= 5);
+        assertEquals(104, model.getAddressBook().getLessonList().size());
     }
 
     @Test
