@@ -4,10 +4,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.Clock;
 import java.time.LocalDate;
+import java.time.ZoneId;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.commons.core.index.Index;
 import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ModelManager;
@@ -49,16 +52,36 @@ public class RecurrenceCommandTest {
         run("lesson repeat st/1 d/today t/10:00 count/3");
         run("charge l/1 amt/50");
         AddressBook before = new AddressBook(model.getAddressBook());
-        assertThrows(Exception.class, () -> run("lesson series cancel 3 confirm"));
+        assertThrows(Exception.class, () ->
+                new LessonSeriesCancelCommand(Index.fromOneBased(3), midnight()).execute(model));
         assertEquals(before, model.getAddressBook());
         run("charge reverse l/1");
         run("lesson done 1");
         run("lesson move 2 d/" + LocalDate.now().plusDays(8));
         assertThrows(Exception.class, () -> run("lesson series cancel 2"));
-        run("lesson series cancel 2 confirm");
+        new LessonSeriesCancelCommand(Index.fromOneBased(2), midnight()).execute(model);
         assertEquals(LessonStatus.COMPLETED, model.getFilteredLessonList().get(0).getStatus());
         assertEquals(2, model.getAddressBook().getLessonList().stream().filter(Lesson::isCancelled).count());
         assertEquals(2, model.getAddressBook().getLedgerEntries().size());
+    }
+
+    private Clock midnight() {
+        ZoneId zone = ZoneId.of("Asia/Singapore");
+        return Clock.fixed(LocalDate.now().atStartOfDay(zone).toInstant(), zone);
+    }
+
+    @Test
+    public void seriesCancel_startTimeBoundary_preservesEarlierToday() throws Exception {
+        model.addPerson(student);
+        run("lesson repeat st/1 d/today t/10:00 count/3");
+        ZoneId zone = ZoneId.of("Asia/Singapore");
+        Clock afterStart = Clock.fixed(LocalDate.now().atTime(10, 1).atZone(zone).toInstant(), zone);
+        new LessonSeriesCancelCommand(Index.fromOneBased(1), afterStart).execute(model);
+        assertEquals(LessonStatus.SCHEDULED, model.getFilteredLessonList().getFirst().getStatus());
+        assertEquals(2, model.getAddressBook().getLessonList().stream().filter(Lesson::isCancelled).count());
+        Clock atStart = Clock.fixed(LocalDate.now().atTime(10, 0).atZone(zone).toInstant(), zone);
+        new LessonSeriesCancelCommand(Index.fromOneBased(1), atStart).execute(model);
+        assertTrue(model.getAddressBook().getLessonList().stream().allMatch(Lesson::isCancelled));
     }
 
     @Test

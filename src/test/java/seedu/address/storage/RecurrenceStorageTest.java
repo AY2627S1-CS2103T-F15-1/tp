@@ -22,7 +22,7 @@ public class RecurrenceStorageTest {
         ModelManager model = new ModelManager();
         model.addPerson(new PersonBuilder().withSubjects("Math").build());
         AddressBookParser parser = new AddressBookParser();
-        parser.parseCommand("lesson repeat st/1 d/today t/10:00 count/3").execute(model);
+        parser.parseCommand("lesson repeat st/1 d/tmr t/10:00 count/3").execute(model);
         parser.parseCommand("lesson prep 2 n/Review fractions").execute(model);
         JsonAddressBookStorage storage = new JsonAddressBookStorage(directory.resolve("series.json"));
         storage.saveAddressBook(model.getAddressBook());

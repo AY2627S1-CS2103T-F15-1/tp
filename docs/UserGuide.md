@@ -646,7 +646,7 @@ agenda is numbered again after a successful batch.
 
 Move or cancel one occurrence with the existing lesson commands. Its series
 association remains. `lesson series cancel 2 confirm` selects the series
-through lesson 2 and cancels all its scheduled occurrences dated today or
-later, including moved occurrences. Past, completed, missed, and already
+through lesson 2 and cancels all its scheduled occurrences starting at the current local time or
+later, including moved occurrences. Earlier-today, past-day, completed, missed, and already
 cancelled history remains. An active charge on any affected occurrence
 requires explicit reversal before any occurrence is cancelled.

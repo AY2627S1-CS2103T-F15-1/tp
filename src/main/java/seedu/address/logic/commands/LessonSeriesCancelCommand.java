@@ -1,7 +1,7 @@
 package seedu.address.logic.commands;
 
 import java.time.Clock;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -15,7 +15,7 @@ import seedu.address.model.lesson.Lesson;
 /** Cancels upcoming scheduled occurrences while retaining past teaching and financial history. */
 public class LessonSeriesCancelCommand extends Command {
     public static final String MESSAGE_USAGE = "lesson series cancel LESSON_INDEX confirm"
-            + "\nCancels this series' scheduled occurrences dated today or later, including moved occurrences.";
+            + "\nCancels this series' scheduled occurrences starting now or later, including moved occurrences.";
     private final Index index;
     private final Clock clock;
 
@@ -31,9 +31,11 @@ public class LessonSeriesCancelCommand extends Command {
                 .orElseThrow(() -> new CommandException("That lesson is not part of a recurring series."));
         List<Lesson> targets = model.getAddressBook().getLessonList().stream()
                 .filter(lesson -> lesson.getSeriesId().filter(series::equals).isPresent())
-                .filter(lesson -> lesson.isUpcoming(LocalDate.now(clock))).toList();
+                .filter(Lesson::isScheduled)
+                .filter(lesson -> !lesson.getDate().value.atTime(lesson.getTime().value)
+                        .isBefore(LocalDateTime.now(clock))).toList();
         if (targets.isEmpty()) {
-            throw new CommandException("This series has no scheduled occurrences today or later.");
+            throw new CommandException("This series has no scheduled occurrences starting now or later.");
         }
         AddressBook proposed = new AddressBook(model.getAddressBook());
         for (Lesson lesson : targets) {
