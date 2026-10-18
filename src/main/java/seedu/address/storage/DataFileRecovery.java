@@ -19,7 +19,7 @@ public final class DataFileRecovery {
             + "aside as %2$s. TutorFlow has started with an empty list. The original is never overwritten in place.";
     public static final String MESSAGE_NOT_SET_ASIDE = "Your data file at %1$s could not be read, and it could "
             + "not be set aside (%2$s). TutorFlow has started with an empty list. Copy that file somewhere safe "
-            + "before you change anything, because the next change replaces it.";
+            + "for recovery. Saving will retry preservation and is blocked until the original can be preserved.";
 
     private static final Logger logger = LogsCenter.getLogger(DataFileRecovery.class);
 
@@ -32,7 +32,7 @@ public final class DataFileRecovery {
      */
     public static String setAside(Path dataFile) {
         try {
-            Path setAsideFile = moveToFreeName(dataFile);
+            Path setAsideFile = preserve(dataFile);
             logger.warning("Data file " + dataFile + " could not be read and was set aside as " + setAsideFile);
             return String.format(MESSAGE_SET_ASIDE, dataFile, setAsideFile);
         } catch (IOException e) {
@@ -41,7 +41,8 @@ public final class DataFileRecovery {
         }
     }
 
-    private static Path moveToFreeName(Path dataFile) throws IOException {
+    /** Moves an unreadable source without replacing an earlier backup; failure prevents the caller's save. */
+    public static Path preserve(Path dataFile) throws IOException {
         Path target = dataFile.resolveSibling(dataFile.getFileName() + CORRUPT_SUFFIX);
         for (int copy = 1; Files.exists(target); copy++) {
             target = dataFile.resolveSibling(dataFile.getFileName() + CORRUPT_SUFFIX + "." + copy);

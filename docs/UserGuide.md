@@ -397,11 +397,15 @@ TutorFlow automatically saves data after every command. You do not need to save 
 
 Each save is written completely to a temporary file beside the data file before replacing the previous save. If writing fails, the previous saved contents remain intact. If your file system cannot replace files atomically, TutorFlow reports a save error; move the app to a local folder that supports atomic file replacement and retry.
 
-If a change cannot be saved, for example because the disk is full or the file is read-only, TutorFlow says `Your change was applied in this session but could not be saved`, and the reason. The change is still in the running app, so fix the problem (free some space, or make the file writable) and run any command again to save. Closing TutorFlow with `exit` is refused while the last save has failed, so that you do not lose the change.
+If a change cannot be saved, for example because the disk is full or the file is read-only, TutorFlow says `Your change was applied in this session but could not be saved`, and the reason. The change is still in the running app, so fix the problem (free some space, or make the file writable) and run `save` to retry saving. Read-only commands do not write the data file. Closing TutorFlow with `exit`, the window close button, or File > Exit retries saving and is refused if saving still fails, so that you do not lose the change.
+
+Read-only commands do not routinely save. After a failed save, they display an unsaved-changes reminder. Run `save` after fixing the problem; a successful retry clears that reminder.
+
+Only open one instance for a data file: concurrent instances use last-write-wins and can overwrite each other's changes.
 
 ### Editing the data file
 
-TutorFlow data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
+TutorFlow data is saved automatically as a JSON file `data/addressbook.json` relative to the folder from which TutorFlow is launched. Advanced users are welcome to update data directly by editing that data file.
 
 Every lesson in the file must be with a student in the same file, with the same name and phone number. A file with a lesson whose student is missing is treated as invalid, as described below.
 
@@ -409,6 +413,8 @@ Every lesson in the file must be with a student in the same file, with the same 
 
 **Caution:**
 If your changes make the data file invalid, TutorFlow does not delete it. At the next run it renames the file to `addressbook.json.corrupt` (or `addressbook.json.corrupt.1` and so on, if that name is taken), starts with no students and lessons, and tells you where the file went. Fix the file and rename it back to `addressbook.json` while TutorFlow is closed to get your records back. We still recommend backing up the file before editing it.<br>
+If the original cannot be renamed (for example, while another program holds it open), saving is blocked and retries preservation before replacing it. The original bytes are retained in the `.corrupt` copy once the lock clears.
+
 Furthermore, certain edits can cause TutorFlow to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
 </box>
 
