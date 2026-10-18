@@ -634,3 +634,19 @@ retrospectively billed at today's profile rate, and correcting their notes does 
 Use `charge l/INDEX amt/AGREED_AMOUNT` for a historical charge you have verified.
 All financial changes use the existing atomic save and retry protection. If a save fails, the change
 remains in the session and `save` retries it; do not re-enter a payment, as that creates a second transfer.
+
+### Repeating weekly lessons
+
+`lesson repeat st/1 d/tmr t/16:00 count/8 every/1` books eight weekly
+lessons. Optional subject, duration, and venue use the same defaults as
+`lesson add`. Count must be 2–52 and the interval 1–12 weeks; the final
+occurrence must be within two years. Any duplicate or invalid occurrence
+rejects the entire batch; overlaps warn without blocking it. The visible
+agenda is numbered again after a successful batch.
+
+Move or cancel one occurrence with the existing lesson commands. Its series
+association remains. `lesson series cancel 2 confirm` selects the series
+through lesson 2 and cancels all its scheduled occurrences dated today or
+later, including moved occurrences. Past, completed, missed, and already
+cancelled history remains. An active charge on any affected occurrence
+requires explicit reversal before any occurrence is cancelled.

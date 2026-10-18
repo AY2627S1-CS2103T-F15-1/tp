@@ -27,6 +27,7 @@ class JsonAdaptedLesson {
     public static final String MISSING_FIELD_MESSAGE_FORMAT = "Lesson's %s field is missing!";
 
     private String id;
+    private String seriesId;
     private String studentId;
     private String academicLevel;
     private String preparation;
@@ -70,6 +71,7 @@ class JsonAdaptedLesson {
      */
     public JsonAdaptedLesson(Lesson source) {
         id = source.getId().toString();
+        seriesId = source.getSeriesId().map(UUID::toString).orElse(null);
         studentId = source.getStudentId().map(UUID::toString).orElse(null);
         academicLevel = source.getAcademicLevel().map(level -> level.value).orElse(null);
         preparation = source.getPreparation().orElse(null);
@@ -125,7 +127,8 @@ class JsonAdaptedLesson {
                     studentId == null ? null : UUID.fromString(studentId),
                     academicLevel == null ? null : new Level(academicLevel), preparation,
                     modelStudentName, modelStudentPhone, modelSubject, modelDate, modelTime, modelDuration,
-                    modelVenue, modelStatus, notes, cancelReason);
+                    modelVenue, modelStatus, notes, cancelReason,
+                    seriesId == null ? null : UUID.fromString(seriesId));
         } catch (IllegalArgumentException e) {
             throw new IllegalValueException("Invalid lesson ID, historical level, or preparation notes.");
         }

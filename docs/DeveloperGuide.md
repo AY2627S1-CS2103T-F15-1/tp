@@ -998,3 +998,12 @@ only active payments, which would hide corrections. Undo must snapshot the compl
 and its ledger; payment/charge corrections themselves remain explicit reversals. `DateParser.parse`
 provides clock-injectable today/tmr aliases now shared by homework and payments; later command date
 unification can reuse it. No new dependencies or unused UI components were introduced.
+
+### Finite recurrence (schema 17)
+
+Each recurring occurrence is a full lesson with its own UUID and a shared
+optional series UUID. Immutable lesson transformations preserve that link.
+Older schemas default to no series. Recurrence and series cancellation build
+a complete proposed AddressBook, validating duplicates, date limits, and
+financial guards before installing it once. No scheduler or network is
+required. Typed visible lesson rows are refreshed after a batch.

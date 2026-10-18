@@ -3,10 +3,12 @@ package seedu.address.logic.parser;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 
+import java.time.Clock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import seedu.address.logic.commands.Command;
+import seedu.address.logic.commands.LessonSeriesCancelCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 
 /**
@@ -32,6 +34,8 @@ public class LessonCommandParser implements Parser<Command> {
 
         String arguments = matcher.group("arguments");
         return switch (matcher.group("subCommandWord")) {
+            case "repeat" -> new LessonRepeatCommandParser().parse(arguments);
+            case "series" -> parseSeries(arguments);
             case "prep" -> new LessonPrepCommandParser().parse(arguments);
             case "add" -> new LessonAddCommandParser().parse(arguments);
             case "list" -> new LessonListCommandParser().parse(arguments);
@@ -41,6 +45,15 @@ public class LessonCommandParser implements Parser<Command> {
             case "missed" -> new LessonMissedCommandParser().parse(arguments);
             default -> throw new ParseException(MESSAGE_UNKNOWN_COMMAND);
         };
+    }
+
+    /** Requires explicit confirmation before any series cancellation. */
+    private static Command parseSeries(String arguments) throws ParseException {
+        String[] words = arguments.strip().split("\\s+");
+        if (words.length != 3 || !words[0].equals("cancel") || !words[2].equals("confirm")) {
+            throw new ParseException(LessonSeriesCancelCommand.MESSAGE_USAGE);
+        }
+        return new LessonSeriesCancelCommand(ParserUtil.parseIndex(words[1]), Clock.systemDefaultZone());
     }
 
     private static String getUsage() {

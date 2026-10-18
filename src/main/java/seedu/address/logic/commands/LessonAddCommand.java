@@ -115,7 +115,7 @@ public class LessonAddCommand extends Command {
         return Messages.formatLessonList(lessons);
     }
 
-    private Lesson createLesson(Person student) throws CommandException {
+    Lesson createLesson(Person student) throws CommandException {
         LessonCommandUtil.requireNotInPast(date, MESSAGE_DATE_IN_PAST);
         LessonCommandUtil.requireNearFuture(date);
         LessonCommandUtil.requireEndsBeforeMidnight(time, duration);

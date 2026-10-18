@@ -52,7 +52,8 @@ public class FinanceStorageTest {
         assertEquals(book.hashCode(), restored.hashCode());
         assertEquals(storage.snapshotAddressBook(book), storage.snapshotAddressBook(restored));
         assertEquals(new BigDecimal("-300.00"), Ledger.balance(restored, TypicalPersons.ALICE.getId()));
-        assertTrue(Files.readString(storage.getAddressBookFilePath()).contains("\"schemaVersion\" : 16"));
+        assertTrue(Files.readString(storage.getAddressBookFilePath())
+                .contains("\"schemaVersion\" : " + StorageSchema.CURRENT_VERSION));
         restored.addLedgerEntry(LedgerEntry.reverse(payment, LocalDate.of(2026, 1, 4)));
         assertNotEquals(book, restored);
         restored.resetData(book);
