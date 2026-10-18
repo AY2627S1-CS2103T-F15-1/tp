@@ -47,7 +47,7 @@ public class ParserUtilTest {
     private static final String VALID_RATE = "62.50";
     private static final String VALID_VENUE = "123 Main Street #0505";
 
-    private static final String WHITESPACE = " \t\r\n";
+    private static final String WHITESPACE = "    ";
 
     @Test
     public void parseNotes_null_throwsNullPointerException() {

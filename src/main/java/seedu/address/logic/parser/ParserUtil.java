@@ -61,6 +61,7 @@ public class ParserUtil {
      */
     public static Name parseName(String name) throws ParseException {
         requireNonNull(name);
+        requirePrintable(name, Name.MESSAGE_CONSTRAINTS);
         String trimmedName = name.trim();
         if (!Name.isValidName(trimmedName)) {
             throw new ParseException(Name.MESSAGE_CONSTRAINTS);
@@ -172,6 +173,7 @@ public class ParserUtil {
      */
     public static Venue parseVenue(String venue) throws ParseException {
         requireNonNull(venue);
+        requirePrintable(venue, Venue.MESSAGE_CONSTRAINTS);
         String trimmedVenue = venue.trim();
         if (!Venue.isValidVenue(trimmedVenue)) {
             throw new ParseException(Venue.MESSAGE_CONSTRAINTS);
@@ -222,6 +224,8 @@ public class ParserUtil {
      * @throws ParseException if the given {@code reason} is invalid.
      */
     public static String parseReason(String reason) throws ParseException {
+        requireNonNull(reason);
+        requirePrintable(reason, Lesson.MESSAGE_REASON_CONSTRAINTS);
         return parseValue(reason, Lesson::isValidCancelReason, Lesson.MESSAGE_REASON_CONSTRAINTS,
                 value -> value.replaceAll(" {2,}", " "));
     }
@@ -233,6 +237,7 @@ public class ParserUtil {
      */
     public static String parseNotes(String notes) throws ParseException {
         requireNonNull(notes);
+        requirePrintable(notes, Lesson.MESSAGE_NOTES_CONSTRAINTS);
         String normalisedNotes = notes.trim().replaceAll(" {2,}", " ");
         if (!Lesson.isValidNotes(normalisedNotes)) {
             throw new ParseException(Lesson.MESSAGE_NOTES_CONSTRAINTS);
@@ -282,6 +287,14 @@ public class ParserUtil {
         }
         if (!argMultimap.getPreamble().isEmpty()) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, usage));
+        }
+    }
+
+    /** Rejects non-printable text before trimming or whitespace normalization hides it. */
+    private static void requirePrintable(String value, String constraints) throws ParseException {
+        if (value.codePoints().anyMatch(character -> Character.isISOControl(character)
+                || character == '\u2028' || character == '\u2029')) {
+            throw new ParseException(constraints);
         }
     }
 

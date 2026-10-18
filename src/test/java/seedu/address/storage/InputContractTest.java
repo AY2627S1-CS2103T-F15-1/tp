@@ -19,6 +19,7 @@ import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.Subject;
 import seedu.address.model.person.Venue;
 import seedu.address.testutil.PersonBuilder;
 
@@ -42,6 +43,11 @@ public class InputContractTest {
             assertFalse(Venue.isValidVenue("Home" + separator + "room"));
             assertThrows(IllegalArgumentException.class, () -> new Venue("Home" + separator + "room"));
             assertFalse(Lesson.isValidCancelReason("unwell" + separator));
+            assertThrows(ParseException.class, () -> ParserUtil.parseVenue("Home" + separator));
+            assertThrows(ParseException.class, () -> ParserUtil.parseName("Alice" + separator));
+            assertThrows(ParseException.class, () -> ParserUtil.parseReason("unwell" + separator));
+            assertThrows(ParseException.class, () -> ParserUtil.parseNotes("Notes" + separator));
+            assertThrows(IllegalArgumentException.class, () -> new Subject("Math" + separator + "Science"));
         }
     }
 

@@ -31,7 +31,7 @@ public class Subject {
     public Subject(String subject) {
         requireNonNull(subject);
         String trimmed = Normalizer.normalize(subject.strip().replaceAll("\\s+", " "), Normalizer.Form.NFC);
-        checkArgument(isValidSubject(trimmed), MESSAGE_CONSTRAINTS);
+        checkArgument(isValidSubject(subject), MESSAGE_CONSTRAINTS);
         value = trimmed;
     }
 
@@ -39,7 +39,10 @@ public class Subject {
      * Returns true if a given string is a valid subject name.
      */
     public static boolean isValidSubject(String test) {
-        return test.matches(VALIDATION_REGEX);
+        return test.codePoints().noneMatch(character -> Character.isISOControl(character)
+                || character == '\u2028' || character == '\u2029')
+                && Normalizer.normalize(test.strip().replaceAll(" {2,}", " "), Normalizer.Form.NFC)
+                        .matches(VALIDATION_REGEX);
     }
 
     @Override
