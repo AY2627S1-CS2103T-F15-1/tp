@@ -27,6 +27,9 @@ public class JsonAddressBookStorage {
     private Path filePath;
     private final Set<Path> unreadableFiles = new HashSet<>();
 
+    /** Separates positively absent files from sources whose metadata cannot be read. */
+    protected enum SourcePresence { PRESENT, ABSENT, UNKNOWN }
+
     public JsonAddressBookStorage(Path filePath) {
         this.filePath = filePath;
     }
@@ -34,6 +37,12 @@ public class JsonAddressBookStorage {
     /** Preserves the unreadable source before the next replacement. */
     protected void preserveUnreadableFile(Path path) throws IOException {
         DataFileRecovery.preserve(path);
+    }
+
+    /** Queries metadata without treating an inconclusive existence check as evidence of absence. */
+    protected SourcePresence sourcePresence(Path path) {
+        return Files.exists(path) ? SourcePresence.PRESENT
+                : Files.notExists(path) ? SourcePresence.ABSENT : SourcePresence.UNKNOWN;
     }
 
     public Path getAddressBookFilePath() {
@@ -103,18 +112,22 @@ public class JsonAddressBookStorage {
 
         Path normalizedPath = filePath.toAbsolutePath().normalize();
         if (unreadableFiles.contains(normalizedPath)) {
-            if (Files.exists(filePath)) {
-                preserveUnreadableFile(filePath);
+            switch (sourcePresence(filePath)) {
+                case PRESENT -> preserveUnreadableFile(filePath);
+                case ABSENT -> {
+                    // Startup may already have moved the protected original to its recovery copy.
+                }
+                default -> throw new IOException("Cannot determine whether the unreadable source exists. "
+                        + "Restore access and retry saving.");
             }
             unreadableFiles.remove(normalizedPath);
         }
         FileUtil.createIfMissing(filePath);
         JsonUtil.saveJsonFile(new JsonSerializableAddressBook(addressBook), filePath);
     }
+
     /** Uses the same representation as saving, so future persisted fields also participate in change detection. */
     public String snapshotAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
         return JsonUtil.toJsonString(new JsonSerializableAddressBook(addressBook));
     }
-
-
 }

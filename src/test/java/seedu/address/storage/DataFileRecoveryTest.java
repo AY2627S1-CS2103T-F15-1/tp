@@ -105,6 +105,26 @@ public class DataFileRecoveryTest {
     }
 
     @Test
+    public void save_unknownSourcePresence_retainsProtectionUntilAccessReturns() throws Exception {
+        Path dataFile = testFolder.resolve("unknown.json");
+        Files.writeString(dataFile, UNREADABLE_CONTENT);
+        boolean[] unknown = {true};
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(dataFile) {
+            @Override
+            protected SourcePresence sourcePresence(Path path) {
+                return unknown[0] ? SourcePresence.UNKNOWN : super.sourcePresence(path);
+            }
+        };
+        assertThrows(DataLoadingException.class, storage::readAddressBook);
+        assertThrows(IOException.class, () -> storage.saveAddressBook(new AddressBook()));
+        assertEquals(UNREADABLE_CONTENT, Files.readString(dataFile));
+        unknown[0] = false;
+        storage.saveAddressBook(getTypicalAddressBook());
+        assertEquals(UNREADABLE_CONTENT, Files.readString(testFolder.resolve("unknown.json.corrupt")));
+        assertEquals(getTypicalAddressBook(), new AddressBook(storage.readAddressBook().orElseThrow()));
+    }
+
+    @Test
     public void save_windowsDeleteLockReleased_preservesLockedOriginal() throws Exception {
         if (!System.getProperty("os.name").startsWith("Windows")) {
             return; // File sharing locks are Windows-specific; the portable failure/retry test also runs.
