@@ -6,6 +6,7 @@ import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
+import seedu.address.model.task.FollowUpTask;
 
 /**
  * Unmodifiable view of an address book
@@ -23,6 +24,11 @@ public interface ReadOnlyAddressBook {
      * This list will not contain any duplicate lessons.
      */
     ObservableList<Lesson> getLessonList();
+
+    /** Returns persisted follow-ups; older datasets have none. */
+    default ObservableList<FollowUpTask> getTaskList() {
+        return FXCollections.emptyObservableList();
+    }
 
     /** Returns the offline travel buffer; older datasets default to thirty minutes. */
     default int getTravelBufferMinutes() {

@@ -31,6 +31,8 @@ class JsonSerializableAddressBook {
     private Integer schemaVersion;
     private Integer travelBufferMinutes;
 
+    private final List<JsonAdaptedTask> tasks = new ArrayList<>();
+
     private final List<JsonAdaptedPerson> persons = new ArrayList<>();
     private final List<JsonAdaptedLesson> lessons = new ArrayList<>();
     private final List<JsonAdaptedHomework> homework = new ArrayList<>();
@@ -44,7 +46,11 @@ class JsonSerializableAddressBook {
     public JsonSerializableAddressBook(@JsonProperty("persons") List<JsonAdaptedPerson> persons,
             @JsonProperty("lessons") List<JsonAdaptedLesson> lessons,
             @JsonProperty("homework") List<JsonAdaptedHomework> homework,
-            @JsonProperty("ledgerEntries") List<JsonAdaptedLedgerEntry> ledgerEntries) {
+            @JsonProperty("ledgerEntries") List<JsonAdaptedLedgerEntry> ledgerEntries,
+            @JsonProperty("tasks") List<JsonAdaptedTask> tasks) {
+        if (tasks != null) {
+            this.tasks.addAll(tasks);
+        }
         this.persons.addAll(persons);
         // Legacy, schema 14, and schema 15 files explicitly default to an empty ledger.
         if (ledgerEntries != null) {
@@ -57,6 +63,12 @@ class JsonSerializableAddressBook {
         if (lessons != null) {
             this.lessons.addAll(lessons);
         }
+    }
+
+    /** Loads a pre-workflow dataset with an explicitly empty task domain. */
+    public JsonSerializableAddressBook(List<JsonAdaptedPerson> persons, List<JsonAdaptedLesson> lessons,
+            List<JsonAdaptedHomework> homework, List<JsonAdaptedLedgerEntry> ledgerEntries) {
+        this(persons, lessons, homework, ledgerEntries, null);
     }
 
     /** Loads legacy constructor calls with an explicitly empty homework domain. */
@@ -78,6 +90,7 @@ class JsonSerializableAddressBook {
     public JsonSerializableAddressBook(ReadOnlyAddressBook source) {
         schemaVersion = StorageSchema.CURRENT_VERSION;
         travelBufferMinutes = source.getTravelBufferMinutes();
+        source.getTaskList().stream().map(JsonAdaptedTask::new).forEach(tasks::add);
         source.getLedgerEntries().stream().map(JsonAdaptedLedgerEntry::new).forEach(ledgerEntries::add);
         source.getHomeworkList().stream().map(JsonAdaptedHomework::new).forEach(homework::add);
         persons.addAll(source.getPersonList().stream().map(JsonAdaptedPerson::new).collect(Collectors.toList()));
@@ -152,6 +165,16 @@ class JsonSerializableAddressBook {
             }
             try {
                 addressBook.addLedgerEntry(entry.toModelType());
+            } catch (IllegalArgumentException e) {
+                throw new IllegalValueException(e.getMessage());
+            }
+        }
+        for (JsonAdaptedTask task : tasks) {
+            if (task == null) {
+                throw new IllegalValueException("Task list contains a null item.");
+            }
+            try {
+                addressBook.addTask(task.toModelType());
             } catch (IllegalArgumentException e) {
                 throw new IllegalValueException(e.getMessage());
             }

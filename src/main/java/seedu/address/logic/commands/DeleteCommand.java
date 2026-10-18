@@ -30,7 +30,7 @@ public class DeleteCommand extends Command {
             + ": Deletes the student identified by the index number used in the displayed student list.\n"
             + "Parameters: INDEX (must be a positive integer) [" + CONFIRM_KEYWORD + "]\n"
             + "Example: " + COMMAND_WORD + " 1\n"
-            + "Linked lessons, homework, and financial history require '" + CONFIRM_KEYWORD + "', "
+            + "Linked lessons, homework, tasks, and financial history require '" + CONFIRM_KEYWORD + "', "
             + "e.g. " + COMMAND_WORD + " 1 " + CONFIRM_KEYWORD;
 
     public static final String MESSAGE_DELETE_PERSON_SUCCESS = "Deleted student: %1$s";
@@ -77,6 +77,11 @@ public class DeleteCommand extends Command {
 
         List<Homework> homeworkToDelete = model.getAddressBook().getHomeworkList().stream()
                 .filter(item -> item.getStudentId().equals(personToDelete.getId())).toList();
+        long taskCount = model.getAddressBook().getTaskList().stream()
+                .filter(task -> task.studentId().equals(personToDelete.getId())).count();
+        if (taskCount > 0) {
+            return deleteWithTasks(model, personToDelete, lessonsToDelete, homeworkToDelete, taskCount);
+        }
         long financialEntries = model.getAddressBook().getLedgerEntries().stream()
                 .filter(entry -> entry.studentId().equals(personToDelete.getId())).count();
         if (financialEntries > 0) {
@@ -98,6 +103,24 @@ public class DeleteCommand extends Command {
         model.deletePerson(personToDelete);
         return new CommandResult(String.format(MESSAGE_DELETE_PERSON_WITH_LESSONS_SUCCESS,
                 Messages.format(personToDelete), lessonsToDelete.size()));
+    }
+
+    /** Previews all task links and parent history before the confirmed root cascade. */
+    private CommandResult deleteWithTasks(Model model, Person student, List<Lesson> lessons,
+            List<Homework> homework, long taskCount) {
+        long events = model.getAddressBook().getLedgerEntries().stream()
+                .filter(entry -> entry.studentId().equals(student.getId())).count();
+        if (!isConfirmed) {
+            return new CommandResult(getConfirmationPrompt(student, lessons)
+                    + "\nThis also deletes " + taskCount + " task(s), " + homework.size()
+                    + " homework item(s) with feedback, and " + events + " financial event(s). Balance: "
+                    + FinanceQueries.balanceLabel(Ledger.balance(model.getAddressBook(), student.getId()))
+                    + ". Use 'archive INDEX' to retain obligations and history instead.");
+        }
+        model.deletePerson(student);
+        return new CommandResult("Deleted student: " + Messages.format(student) + ", along with "
+                + lessons.size() + " lesson(s), " + homework.size() + " homework item(s), "
+                + events + " financial event(s), and " + taskCount + " task(s).");
     }
 
     /** Warns about every linked domain, including paid or reversed history, before cascading deletion. */

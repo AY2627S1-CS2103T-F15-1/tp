@@ -17,6 +17,7 @@ import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
+import seedu.address.model.task.FollowUpTask;
 
 /**
  * Represents the in-memory model of the address book data.
@@ -30,6 +31,7 @@ public class ModelManager implements Model {
     private final FilteredList<Lesson> filteredLessons;
     private final SortedList<Lesson> sortedLessons;
     private List<LedgerEntry> displayedPayments = List.of();
+    private List<FollowUpTask> displayedTasks = List.of();
     private List<Homework> displayedHomework = List.of();
 
     /**
@@ -150,6 +152,31 @@ public class ModelManager implements Model {
     @Override
     public void showPayments(List<LedgerEntry> payments) {
         displayedPayments = List.copyOf(payments);
+    }
+
+    @Override
+    public void addTask(FollowUpTask task) {
+        addressBook.addTask(task);
+    }
+
+    @Override
+    public void setTask(FollowUpTask target, FollowUpTask replacement) {
+        addressBook.setTask(target, replacement);
+    }
+
+    @Override
+    public void deleteTask(FollowUpTask task) {
+        addressBook.removeTask(task);
+    }
+
+    @Override
+    public List<FollowUpTask> getDisplayedTasks() {
+        return displayedTasks;
+    }
+
+    @Override
+    public void showTasks(List<FollowUpTask> tasks) {
+        displayedTasks = List.copyOf(tasks);
     }
 
     //=========== Lessons ====================================================================================

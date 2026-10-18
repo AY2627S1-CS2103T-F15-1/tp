@@ -1016,3 +1016,25 @@ snapshots include it. TravelWarnings compares chronological adjacent
 scheduled lessons using full local date-times and duration, including
 midnight boundaries. It limits presentation to pairs touching relevant
 visible or changed lessons; it makes no network calls.
+
+### Follow-up task lifecycle (schema 17)
+
+FollowUpTask is immutable: UUID id, UUID studentId, LinkType, UUID targetId,
+printable description, optional LocalDate dueDate, and boolean done. The root
+validates student ownership, target existence, unique task IDs, and PAYMENT
+originals. Content/status edits retain identity and link. Archive and reversal
+retain tasks; student deletion cascades every task for that student, and
+individual homework/uncharged-lesson deletion cascades direct task links.
+
+Model.showTasks/getDisplayedTasks retain immutable last-numbered rows;
+TaskCommandSupport resolves their UUID against the current root before any
+action. Adds, edits, completion, reset, and deletions do not renumber that
+selection. TaskQueries provides complete filtered queries and live linked
+history rendering. CommandResult.getDisplayedTasks is typed immutable data
+and survives withFeedback and the other typed result setters.
+
+JSON restores tasks after every parent domain and rejects orphan, mismatched,
+duplicate, missing, or corrupt task fields. Schemas through 16 default to
+empty tasks, no series membership, and a 30-minute buffer. Root copy/reset,
+equality/hash, clear, demo safety, and storage dirty snapshots cover all
+workflow state. Destructive commands preview task cascades before mutation.

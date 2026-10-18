@@ -17,7 +17,8 @@ public class DemoCommand extends Command {
     public CommandResult execute(Model model) throws CommandException {
         if (!model.getAddressBook().getPersonList().isEmpty() || !model.getAddressBook().getLessonList().isEmpty()
                 || !model.getAddressBook().getHomeworkList().isEmpty()
-                || !model.getAddressBook().getLedgerEntries().isEmpty()) {
+                || !model.getAddressBook().getLedgerEntries().isEmpty()
+                || !model.getAddressBook().getTaskList().isEmpty()) {
             throw new CommandException("Demo requires an empty dataset. Your records have been retained.");
         }
         if (!confirmed) {

@@ -201,12 +201,12 @@ Format: `delete INDEX [confirm]`
 * Deletes the student at the specified `INDEX`.
 * The index refers to the index number shown in the displayed student list.
 * The index **must be a positive integer** 1, 2, 3, ...
-* A student with no lessons, homework, or financial history is deleted immediately.
+* A student with no lessons, homework, tasks, or financial history is deleted immediately.
 * Deleting a student also deletes **all of their lessons, homework, and financial history**, including feedback, and this cannot be undone. If the student has linked records, TutorFlow shows their name, phone number, linked counts, and upcoming commitments, and asks you to repeat the command with `confirm`.
 * The keyword `confirm` is in lower case.
 
 Examples:
-* `list` followed by `delete 2` deletes the 2nd student, if they have no lessons, homework, or financial history.
+* `list` followed by `delete 2` deletes the 2nd student, if they have no lessons, homework, tasks, or financial history.
 * `delete 2` on a student with only payment history still shows a confirmation prompt, including their balance. Use `archive 2` to retain that history, or `delete 2 confirm` to delete it.
 * `delete 3` on a student with 12 lessons shows a prompt; `delete 3 confirm` then deletes the student and the 12 lessons.
 * `find Betsy` followed by `delete 1` selects the 1st student in the results for deletion; linked history still requires `confirm`.
@@ -661,3 +661,36 @@ case; missing venues and Online lessons do not trigger a travel warning.
 Overlap warnings remain separate. These are offline reminders, not route
 estimates, and never block a booking. The setting survives restart; clear
 resets it to 30 minutes.
+
+### Linked follow-up tasks
+
+Create a task with exactly one link:
+
+* `task add st/1 desc/Call parent due/tmr`
+* `task add lesson/2 desc/Prepare revision slides`
+* `task add hw/1 desc/Check worksheet due/today`
+* `task add pay/1 desc/Send receipt`
+
+Student and lesson indices use the displayed student list and agenda. Run
+`hw list` or `pay list` before linking their numbered rows. Task descriptions
+are 1–200 printable characters; due dates are optional, accept `today` and
+`tmr`, and may be historical (an open task then shows overdue).
+
+`task list [st/INDEX]` shows open tasks by due date, with undated tasks last.
+`task list all/ [st/INDEX]` includes completed history. `task done INDEX`
+completes a task. `task edit INDEX desc/TEXT [due/DATE]` retains its link and
+completion state; omitting due/ retains the old date, while `due/-` removes it.
+`task delete INDEX` previews deletion; repeat with `confirm` to delete.
+
+Task indices keep referring to the exact last shown rows after additions,
+due-date edits, completion, and deletion. A deleted row is rejected until
+`task list` refreshes numbering. Restart requires a fresh list. The same
+protection applies when linking last-shown homework and payment rows.
+
+Archived students remain usable for follow-ups. Task lists show the linked
+record's current identity, cancelled/completed lesson state, homework state,
+and reversed-payment history. Payments always link to the original transfer.
+Deleting a student deletes all their linked tasks, including tasks on lessons,
+homework, and payments; the preview requires confirmation and offers archive.
+Deleting homework with linked tasks also requires confirmation and cascades
+those tasks. `clear confirm` deletes all tasks and resets the travel buffer.

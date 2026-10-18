@@ -19,6 +19,7 @@ import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.UniqueLessonList;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.UniquePersonList;
+import seedu.address.model.task.FollowUpTask;
 
 /**
  * Wraps all data at the address-book level.
@@ -33,6 +34,8 @@ public class AddressBook implements ReadOnlyAddressBook {
     private final UniqueLessonList lessons = new UniqueLessonList();
     private final ObservableList<LedgerEntry> ledgerEntries = FXCollections.observableArrayList();
     private final ObservableList<Homework> homework = FXCollections.observableArrayList();
+
+    private final ObservableList<FollowUpTask> tasks = FXCollections.observableArrayList();
 
     private int travelBufferMinutes = 30;
 
@@ -75,6 +78,7 @@ public class AddressBook implements ReadOnlyAddressBook {
         homework.setAll(newData.getHomeworkList());
         ledgerEntries.setAll(newData.getLedgerEntries());
         setTravelBufferMinutes(newData.getTravelBufferMinutes());
+        tasks.setAll(newData.getTaskList());
     }
 
     @Override
@@ -129,6 +133,7 @@ public class AddressBook implements ReadOnlyAddressBook {
     public void removePerson(Person key) {
         Person stored = storedPerson(key);
         persons.remove(stored);
+        tasks.removeIf(task -> task.studentId().equals(stored.getId()));
         ledgerEntries.removeIf(entry -> entry.studentId().equals(stored.getId()));
         homework.removeIf(item -> item.getStudentId().equals(stored.getId()));
         boolean hasRemovedLessons = lessons.removeIf(lesson -> lesson.isWith(stored));
@@ -181,12 +186,14 @@ public class AddressBook implements ReadOnlyAddressBook {
 
         Lesson stored = storedLesson(target);
         boolean hasHistory = ledgerEntries.stream().anyMatch(entry -> stored.getId().equals(entry.lessonId()));
-        if (hasHistory) {
+        boolean hasTasks = tasks.stream().anyMatch(task -> task.linkType() == FollowUpTask.LinkType.LESSON
+                && task.targetId().equals(stored.getId()));
+        if (hasHistory || hasTasks) {
             boolean sameStudent = persons.asUnmodifiableObservableList().stream()
                     .anyMatch(person -> stored.isWith(person) && editedLesson.isWith(person));
             if (!stored.getId().equals(editedLesson.getId()) || !sameStudent) {
                 throw new IllegalArgumentException(
-                        "A lesson with financial history must retain its identity and student.");
+                        "A lesson with linked history must retain its identity and student.");
             }
             if (Ledger.activeCharge(this, stored.getId()).isPresent()
                     && (editedLesson.isCancelled() || !stored.isSameLesson(editedLesson)
@@ -207,6 +214,8 @@ public class AddressBook implements ReadOnlyAddressBook {
             throw new IllegalArgumentException("A lesson with financial history cannot be deleted.");
         }
         lessons.remove(stored);
+        tasks.removeIf(task -> task.linkType() == FollowUpTask.LinkType.LESSON
+                && task.targetId().equals(stored.getId()));
     }
 
     /**
@@ -231,7 +240,8 @@ public class AddressBook implements ReadOnlyAddressBook {
 
     /** Replaces an assignment while preserving its identity. */
     public void setHomework(Homework target, Homework replacement) {
-        if (!target.getId().equals(replacement.getId()) || !homework.contains(target)) {
+        if (!target.getId().equals(replacement.getId()) || !target.getStudentId().equals(replacement.getStudentId())
+                || !homework.contains(target)) {
             throw new IllegalArgumentException("Homework identity must be preserved.");
         }
         validateHomework(replacement, target);
@@ -243,6 +253,8 @@ public class AddressBook implements ReadOnlyAddressBook {
         if (!homework.remove(target)) {
             throw new IllegalArgumentException("Homework no longer exists.");
         }
+        tasks.removeIf(task -> task.linkType() == FollowUpTask.LinkType.HOMEWORK
+                && task.targetId().equals(target.getId()));
     }
 
     /** Rejects duplicate identities, duplicate assignments, and dangling student links. */
@@ -263,6 +275,59 @@ public class AddressBook implements ReadOnlyAddressBook {
     @Override
     public ObservableList<Homework> getHomeworkList() {
         return FXCollections.unmodifiableObservableList(homework);
+    }
+
+    @Override
+    public ObservableList<FollowUpTask> getTaskList() {
+        return FXCollections.unmodifiableObservableList(tasks);
+    }
+
+    /** Adds a follow-up only when its target and owning student exist. */
+    public void addTask(FollowUpTask task) {
+        validateTask(task);
+        if (tasks.stream().anyMatch(existing -> existing.id().equals(task.id()))) {
+            throw new IllegalArgumentException("Duplicate task ID.");
+        }
+        tasks.add(task);
+    }
+
+    /** Replaces content or status without changing a task's identity or link. */
+    public void setTask(FollowUpTask target, FollowUpTask replacement) {
+        FollowUpTask stored = tasks.stream().filter(task -> task.id().equals(target.id())).findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Task no longer exists."));
+        if (!stored.id().equals(replacement.id()) || !stored.studentId().equals(replacement.studentId())
+                || stored.linkType() != replacement.linkType() || !stored.targetId().equals(replacement.targetId())) {
+            throw new IllegalArgumentException("Task identity and link must be preserved.");
+        }
+        validateTask(replacement);
+        tasks.set(tasks.indexOf(stored), replacement);
+    }
+
+    /** Removes only the requested persistent task identity. */
+    public void removeTask(FollowUpTask target) {
+        if (!tasks.removeIf(task -> task.id().equals(target.id()))) {
+            throw new IllegalArgumentException("Task no longer exists.");
+        }
+    }
+
+    /** Rejects orphaned, mismatched, or non-payment financial links. */
+    private void validateTask(FollowUpTask task) {
+        requireNonNull(task);
+        Person student = persons.asUnmodifiableObservableList().stream()
+                .filter(person -> person.getId().equals(task.studentId())).findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Task student does not exist."));
+        boolean valid = switch (task.linkType()) {
+            case STUDENT -> task.targetId().equals(student.getId());
+            case LESSON -> lessons.asUnmodifiableObservableList().stream()
+                    .anyMatch(lesson -> lesson.getId().equals(task.targetId()) && lesson.isWith(student));
+            case HOMEWORK -> homework.stream().anyMatch(item -> item.getId().equals(task.targetId())
+                    && item.getStudentId().equals(student.getId()));
+            case PAYMENT -> ledgerEntries.stream().anyMatch(entry -> entry.id().equals(task.targetId())
+                    && entry.kind() == LedgerEntry.Kind.PAYMENT && entry.studentId().equals(student.getId()));
+        };
+        if (!valid) {
+            throw new IllegalArgumentException("Task target does not exist or belongs to another student.");
+        }
     }
 
     /** Appends a validated immutable event. Financial corrections use compensating entries. */
@@ -327,11 +392,12 @@ public class AddressBook implements ReadOnlyAddressBook {
                 && lessons.equals(otherAddressBook.lessons)
                 && homework.equals(otherAddressBook.homework)
                 && ledgerEntries.equals(otherAddressBook.ledgerEntries)
-                && travelBufferMinutes == otherAddressBook.travelBufferMinutes;
+                && travelBufferMinutes == otherAddressBook.travelBufferMinutes
+                && tasks.equals(otherAddressBook.tasks);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(persons, lessons, homework, ledgerEntries, travelBufferMinutes);
+        return Objects.hash(persons, lessons, homework, ledgerEntries, travelBufferMinutes, tasks);
     }
 }

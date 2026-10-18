@@ -10,6 +10,7 @@ import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
+import seedu.address.model.task.FollowUpTask;
 
 /**
  * The API of the Model component.
@@ -129,6 +130,21 @@ public interface Model {
 
     /** Replaces payment numbering only when a new list is explicitly displayed. */
     void showPayments(List<LedgerEntry> payments);
+
+    /** Adds a linked follow-up task. */
+    void addTask(FollowUpTask task);
+
+    /** Replaces task content or status, retaining the stable link. */
+    void setTask(FollowUpTask target, FollowUpTask replacement);
+
+    /** Deletes one task. */
+    void deleteTask(FollowUpTask task);
+
+    /** Returns immutable task rows last numbered, retaining deleted slots. */
+    List<FollowUpTask> getDisplayedTasks();
+
+    /** Changes task numbering only when a list is explicitly shown. */
+    void showTasks(List<FollowUpTask> tasks);
 
     /** Adds an assignment belonging to a known student. */
     void addHomework(Homework homework);

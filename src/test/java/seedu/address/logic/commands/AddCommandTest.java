@@ -26,6 +26,7 @@ import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
+import seedu.address.model.task.FollowUpTask;
 import seedu.address.testutil.PersonBuilder;
 
 public class AddCommandTest {
@@ -116,6 +117,31 @@ public class AddCommandTest {
      * A default model stub that has all of the methods failing.
      */
     private class ModelStub implements Model {
+        @Override
+        public void addTask(FollowUpTask task) {
+            throw new AssertionError("Unexpected task call.");
+        }
+
+        @Override
+        public void setTask(FollowUpTask target, FollowUpTask replacement) {
+            throw new AssertionError("Unexpected task call.");
+        }
+
+        @Override
+        public void deleteTask(FollowUpTask task) {
+            throw new AssertionError("Unexpected task call.");
+        }
+
+        @Override
+        public List<FollowUpTask> getDisplayedTasks() {
+            throw new AssertionError("Unexpected task call.");
+        }
+
+        @Override
+        public void showTasks(List<FollowUpTask> tasks) {
+            throw new AssertionError("Unexpected task call.");
+        }
+
         @Override
         public void addLedgerEntry(LedgerEntry entry) {
             throw new AssertionError("This method should not be called.");
