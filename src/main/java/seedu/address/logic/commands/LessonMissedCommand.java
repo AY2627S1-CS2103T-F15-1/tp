@@ -67,7 +67,7 @@ public class LessonMissedCommand extends Command {
         }
 
         model.setLesson(target, target.miss());
-        logger.info("Marked a lesson of " + target.getStudentName() + " as missed");
+        logger.fine("Marked lesson missed");
         return new CommandResult(String.format(MESSAGE_SUCCESS, Messages.format(target)));
     }
 

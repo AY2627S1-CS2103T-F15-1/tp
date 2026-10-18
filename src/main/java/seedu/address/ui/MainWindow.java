@@ -168,7 +168,7 @@ public class MainWindow extends UiPart<Stage> {
         try {
             executeCommand(ExitCommand.COMMAND_WORD);
         } catch (CommandException | ParseException e) {
-            logger.info("The window was not closed: " + e.getMessage()); // the result box shows why
+            logger.info("Window close refused: pending changes could not be saved"); // the result box shows why
         }
     }
 
@@ -196,7 +196,7 @@ public class MainWindow extends UiPart<Stage> {
     private CommandResult executeCommand(String commandText) throws CommandException, ParseException {
         try {
             CommandResult commandResult = logic.execute(commandText);
-            logger.info("Result: " + commandResult.getFeedbackToUser());
+            logger.fine("Command succeeded");
             resultDisplay.setFeedbackToUser(commandResult.getFeedbackToUser());
 
             if (commandResult.isShowHelp()) {
@@ -209,7 +209,7 @@ public class MainWindow extends UiPart<Stage> {
 
             return commandResult;
         } catch (CommandException | ParseException e) {
-            logger.info("An error occurred while executing command: " + commandText);
+            logger.fine("Command rejected: " + e.getClass().getSimpleName());
             resultDisplay.setErrorToUser(e.getMessage());
             throw e;
         }

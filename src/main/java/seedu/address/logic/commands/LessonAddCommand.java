@@ -93,7 +93,7 @@ public class LessonAddCommand extends Command {
         }
         int previousLessonCount = model.getFilteredLessonList().size();
         model.addLesson(lesson);
-        logger.info("Scheduled a lesson for " + student.getName());
+        logger.fine("Scheduled lesson");
 
         return new CommandResult(String.format(MESSAGE_SUCCESS, Messages.format(lesson),
                 Messages.formatVenue(lesson)) + LessonCommandUtil.getOverlapWarning(model, lesson)
