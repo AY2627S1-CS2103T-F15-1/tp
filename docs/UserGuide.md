@@ -502,6 +502,8 @@ v1.4 writes `data/tutorflow-v14.json`. If this file is absent, it reads legacy
 an initial v1.4 copy. The legacy file remains untouched so an older application cannot erase
 v1.4 fields. If both files exist, the v1.4 file takes precedence. Keep both in your backup.
 Unsupported schema versions and invalid files are rejected rather than partially loaded.
+The current file is created only after a complete atomic save. If the first write fails, a restart
+can still resume migration from the unchanged legacy source.
 If the initial migration save fails, the startup message reports unsaved changes: fix access
 and use `save`. TutorFlow retries before exit and will not close through its normal exit flow
 while that write continues to fail.

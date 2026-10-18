@@ -890,6 +890,9 @@ so UI-only equality must never decide whether a write is required. Schema 14 is 
 `tutorflow-v14.json`; `VersionedAddressBookStorage` reads legacy data only when the current
 path is positively absent. The logic constructor's initial-save flag explicitly persists
 migrated IDs even before a command mutates the model. Failed initial writes remain dirty.
+The atomic writer creates only parent directories before its sibling temporary file. It never
+precreates the current destination, so an interrupted first save leaves legacy fallback available
+on restart. The storage writeSnapshot seam passes the actual serialized bytes to this writer.
 Unreadable source protection is retained until positive absence or successful preservation.
 
 The command-result seam for later detail-pane integration is

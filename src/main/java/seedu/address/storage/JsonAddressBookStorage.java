@@ -125,8 +125,12 @@ public class JsonAddressBookStorage {
             }
             unreadableFiles.remove(normalizedPath);
         }
-        FileUtil.createIfMissing(filePath);
-        JsonUtil.saveJsonFile(new JsonSerializableAddressBook(addressBook), filePath);
+        writeSnapshot(filePath, snapshotAddressBook(addressBook));
+    }
+
+    /** Writes a serialized snapshot through the atomic file writer. */
+    protected void writeSnapshot(Path filePath, String snapshot) throws IOException {
+        FileUtil.writeToFile(filePath, snapshot);
     }
 
     /** Uses the same representation as saving, so future persisted fields also participate in change detection. */
