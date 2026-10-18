@@ -12,6 +12,7 @@ import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
+import seedu.address.model.homework.HomeworkQueries;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonStatus;
 import seedu.address.model.person.Person;
@@ -76,7 +77,8 @@ public class ViewCommand extends Command {
         return new CommandResult(formatStudent(student)
                 + "\n\n" + formatNextLesson(lessons)
                 + "\n\n" + formatRecentNotes(lessons)
-                + "\n\n" + formatHistory(lessons));
+                + "\n\n" + formatHistory(lessons)
+                + "\n\n" + HomeworkQueries.summary(model.getAddressBook(), student.getId(), false, today));
     }
 
     private static String formatStudent(Person student) {

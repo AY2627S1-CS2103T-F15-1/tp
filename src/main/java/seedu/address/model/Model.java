@@ -6,6 +6,7 @@ import java.util.function.Predicate;
 
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
+import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
 
@@ -119,4 +120,19 @@ public interface Model {
      * @throws NullPointerException if {@code predicate} is null.
      */
     void updateFilteredLessonList(Predicate<Lesson> predicate);
+    /** Adds an assignment belonging to a known student. */
+    void addHomework(Homework homework);
+
+    /** Replaces an assignment without changing its persistent identity. */
+    void setHomework(Homework target, Homework replacement);
+
+    /** Deletes an assignment. */
+    void deleteHomework(Homework homework);
+
+    /** Returns the immutable rows last explicitly numbered by hw list, including deleted placeholders. */
+    List<Homework> getDisplayedHomework();
+
+    /** Replaces the numbered selection only when a new list is explicitly displayed. */
+    void showHomework(List<Homework> homework);
 }
+

@@ -13,6 +13,7 @@ import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
 import seedu.address.model.Model;
+import seedu.address.model.homework.HomeworkQueries;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonDuration;
 import seedu.address.model.lesson.LessonStatus;
@@ -71,7 +72,8 @@ public class TodayCommand extends Command {
 
         return new CommandResult(DATE_FORMAT.format(today)
                 + "\n\n" + formatLessonsToday(model, lessonsToday)
-                + "\n\n" + formatLessonsAwaitingNotes(lessonsAwaitingNotes));
+                + "\n\n" + formatLessonsAwaitingNotes(lessonsAwaitingNotes)
+                + "\n\n" + HomeworkQueries.summary(model.getAddressBook(), null, true, today));
     }
 
     private static String formatLessonsToday(Model model, List<Lesson> lessons) {

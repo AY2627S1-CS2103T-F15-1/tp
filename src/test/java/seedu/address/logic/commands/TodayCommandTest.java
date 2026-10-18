@@ -53,7 +53,8 @@ public class TodayCommandTest {
 
         assertEquals("Thursday, 10 January 2030\n\n"
                 + "TODAY'S LESSONS (0, 0m)\n" + TodayCommand.MESSAGE_NO_LESSONS_TODAY + "\n\n"
-                + "LESSONS AWAITING NOTES (0)\n" + TodayCommand.MESSAGE_ALL_RECORDED, message);
+                + "LESSONS AWAITING NOTES (0)\n" + TodayCommand.MESSAGE_ALL_RECORDED
+                + "\n\nOVERDUE HOMEWORK (0)\n  No overdue homework.", message);
     }
 
     @Test
@@ -93,7 +94,7 @@ public class TodayCommandTest {
         assertTrue(lines[6].startsWith("  Wed 9 Jan   Alice Pauline"));
         assertTrue(lines[6].endsWith(TodayCommand.MESSAGE_NOT_COMPLETED));
         assertTrue(lines[7].startsWith("  Thu 3 Jan   Carl Kurz"));
-        assertEquals(8, lines.length);
+        assertEquals(11, lines.length);
     }
 
     @Test
