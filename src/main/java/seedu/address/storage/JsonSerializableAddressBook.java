@@ -32,6 +32,7 @@ class JsonSerializableAddressBook {
 
     private final List<JsonAdaptedPerson> persons = new ArrayList<>();
     private final List<JsonAdaptedLesson> lessons = new ArrayList<>();
+    private final List<JsonAdaptedHomework> homework = new ArrayList<>();
 
     /**
      * Constructs a {@code JsonSerializableAddressBook} with the given persons and lessons.
@@ -39,11 +40,21 @@ class JsonSerializableAddressBook {
      */
     @JsonCreator
     public JsonSerializableAddressBook(@JsonProperty("persons") List<JsonAdaptedPerson> persons,
-            @JsonProperty("lessons") List<JsonAdaptedLesson> lessons) {
+            @JsonProperty("lessons") List<JsonAdaptedLesson> lessons,
+            @JsonProperty("homework") List<JsonAdaptedHomework> homework) {
         this.persons.addAll(persons);
+        // Absent homework is the explicit default for legacy and earlier schema files.
+        if (homework != null) {
+            this.homework.addAll(homework);
+        }
         if (lessons != null) {
             this.lessons.addAll(lessons);
         }
+    }
+
+    /** Loads legacy constructor calls with an explicitly empty homework domain. */
+    public JsonSerializableAddressBook(List<JsonAdaptedPerson> persons, List<JsonAdaptedLesson> lessons) {
+        this(persons, lessons, null);
     }
 
     /**
@@ -53,6 +64,7 @@ class JsonSerializableAddressBook {
      */
     public JsonSerializableAddressBook(ReadOnlyAddressBook source) {
         schemaVersion = StorageSchema.CURRENT_VERSION;
+        source.getHomeworkList().stream().map(JsonAdaptedHomework::new).forEach(homework::add);
         persons.addAll(source.getPersonList().stream().map(JsonAdaptedPerson::new).collect(Collectors.toList()));
         lessons.addAll(source.getLessonList().stream().map(lesson -> {
             Lesson linked = lesson.getStudentId().isPresent() ? lesson : source.getPersonList().stream()
@@ -108,6 +120,16 @@ class JsonSerializableAddressBook {
                 .anyMatch(lesson -> addressBook.getPersonList().stream().noneMatch(lesson::isWith));
         if (hasLessonWithoutStudent) {
             throw new IllegalValueException(MESSAGE_LESSON_WITHOUT_STUDENT);
+        }
+        for (JsonAdaptedHomework item : homework) {
+            if (item == null) {
+                throw new IllegalValueException("Homework list contains a null item.");
+            }
+            try {
+                addressBook.addHomework(item.toModelType());
+            } catch (IllegalArgumentException e) {
+                throw new IllegalValueException(e.getMessage());
+            }
         }
         return addressBook;
     }
