@@ -8,6 +8,7 @@ plugins {
 
 application {
     mainClass = 'seedu.address.Main'
+    applicationDefaultJvmArgs = ['-ea']
 }
 
 java {
