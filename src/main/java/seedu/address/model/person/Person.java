@@ -1,5 +1,6 @@
 package seedu.address.model.person;
 
+import static seedu.address.commons.util.AppUtil.checkArgument;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.util.Collections;
@@ -16,6 +17,9 @@ import seedu.address.commons.util.ToStringBuilder;
  * field values are validated, immutable.
  */
 public class Person {
+
+    public static final int MAX_SUBJECTS = 10;
+    public static final String MESSAGE_SUBJECT_COUNT = "A student must have between 1 and 10 subjects.";
 
     // Identity fields
     private final Name name;
@@ -43,6 +47,7 @@ public class Person {
     public Person(Name name, Phone phone, Email email, Level level, Set<Subject> subjects, Rate rate, Venue venue,
             Remark remark) {
         requireAllNonNull(name, phone, level, subjects, rate, remark);
+        checkArgument(isValidSubjectCount(subjects.size()), MESSAGE_SUBJECT_COUNT);
         this.name = name;
         this.phone = phone;
         this.email = email;
@@ -51,6 +56,11 @@ public class Person {
         this.rate = rate;
         this.venue = venue;
         this.remark = remark;
+    }
+
+    /** Returns whether a new or replacement subject set meets the shared domain limit. */
+    public static boolean isValidSubjectCount(int size) {
+        return size >= 1 && size <= MAX_SUBJECTS;
     }
 
     public Name getName() {

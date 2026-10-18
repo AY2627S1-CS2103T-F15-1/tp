@@ -77,6 +77,7 @@ public class LessonMissedIntegrationTest {
         for (Lesson lesson : rejected) {
             model.addLesson(lesson);
             logic.execute("lesson list st/1 all/");
+            addressBookStorage.saveAddressBook(model.getAddressBook());
             String savedBefore = Files.readString(addressBookStorage.getAddressBookFilePath());
             assertThrows(CommandException.class, () -> logic.execute("lesson missed 1"));
             assertEquals(savedBefore, Files.readString(addressBookStorage.getAddressBookFilePath()));
@@ -90,6 +91,7 @@ public class LessonMissedIntegrationTest {
         Lesson original = new LessonBuilder().withStudent(ALICE).withDate(LocalDate.now()).build();
         model.addLesson(original);
         logic.execute("lesson list st/1 all/");
+        addressBookStorage.saveAddressBook(model.getAddressBook());
         String savedBefore = Files.readString(addressBookStorage.getAddressBookFilePath());
         assertThrows(ParseException.class, () -> logic.execute("lesson missed 1 n/Notes"));
         assertThrows(CommandException.class, () -> logic.execute("lesson missed 2"));

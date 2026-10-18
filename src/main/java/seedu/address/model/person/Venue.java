@@ -12,7 +12,8 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
  */
 public class Venue {
 
-    public static final String MESSAGE_CONSTRAINTS = "Venue must be 1-100 characters and cannot be blank.";
+    public static final String MESSAGE_CONSTRAINTS =
+            "Venue must be 1-100 printable characters on one line and cannot be blank.";
 
     public static final String VALIDATION_REGEX = "[^\\s].{0,99}";
 
@@ -24,9 +25,14 @@ public class Venue {
      * @param venue A valid venue.
      */
     public Venue(String venue) {
+        this(venue, false);
+    }
+
+    /** Constructs a checked new or grandfathered stored venue. */
+    private Venue(String venue, boolean stored) {
         requireNonNull(venue);
         String normalized = normalize(venue);
-        checkArgument(isValidVenue(normalized), MESSAGE_CONSTRAINTS);
+        checkArgument(stored ? isValidStoredVenue(venue) : isValidVenue(venue), MESSAGE_CONSTRAINTS);
         value = normalized;
     }
 
@@ -35,9 +41,21 @@ public class Venue {
      */
     public static boolean isValidVenue(String test) {
         requireNonNull(test);
-        return normalize(test).matches(VALIDATION_REGEX);
+        return normalize(test).matches(VALIDATION_REGEX) && test.codePoints().noneMatch(character ->
+                Character.isISOControl(character) || character == '\u2028' || character == '\u2029');
     }
 
+    /** Accepts only previously accepted normalized venues when restoring older data. */
+    public static boolean isValidStoredVenue(String value) {
+        return normalize(value).matches(VALIDATION_REGEX);
+    }
+
+    /** Restores a legacy venue, retaining the v1.3 whitespace normalization. */
+    public static Venue fromStored(String value) {
+        return new Venue(value, true);
+    }
+
+    /** Collapses spaces for storage and comparison. */
     private static String normalize(String venue) {
         return venue.strip().replaceAll("\\s+", " ");
     }

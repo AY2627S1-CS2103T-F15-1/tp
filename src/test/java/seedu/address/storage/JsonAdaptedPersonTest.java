@@ -24,7 +24,7 @@ import seedu.address.model.person.Venue;
 import seedu.address.testutil.PersonBuilder;
 
 public class JsonAdaptedPersonTest {
-    private static final String INVALID_NAME = "R@chel";
+    private static final String INVALID_NAME = "R*chel";
     private static final String INVALID_PHONE = "91a4";
     private static final String INVALID_EMAIL = "example.com";
     private static final String INVALID_LEVEL = "S9";
@@ -142,10 +142,10 @@ public class JsonAdaptedPersonTest {
     }
 
     @Test
-    public void toModelType_nullSubjects_returnsPersonWithoutSubjects() throws Exception {
+    public void toModelType_nullSubjects_throwsIllegalValueException() {
         JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_LEVEL,
                 null, VALID_RATE, VALID_VENUE, VALID_REMARK);
-        assertTrue(person.toModelType().getSubjects().isEmpty());
+        assertThrows(IllegalValueException.class, Person.MESSAGE_SUBJECT_COUNT, person::toModelType);
     }
 
     @Test

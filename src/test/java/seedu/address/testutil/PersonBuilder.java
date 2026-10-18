@@ -74,6 +74,12 @@ public class PersonBuilder {
         return this;
     }
 
+    /** Sets a historical phone accepted before the current eight-digit minimum. */
+    public PersonBuilder withLegacyPhone(String phone) {
+        this.phone = Phone.fromStored(phone);
+        return this;
+    }
+
     /**
      * Sets the {@code Phone} of the {@code Person} that we are building.
      */

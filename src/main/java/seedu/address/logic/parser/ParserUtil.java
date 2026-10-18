@@ -22,6 +22,7 @@ import seedu.address.model.lesson.LessonTime;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Level;
 import seedu.address.model.person.Name;
+import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.Rate;
 import seedu.address.model.person.Subject;
@@ -34,7 +35,7 @@ public class ParserUtil {
 
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
     public static final String MESSAGE_MISSING_PARAMETERS = "Missing required parameter(s): %1$s\n%2$s";
-    public static final int MAX_SUBJECTS_PER_STUDENT = 10;
+    public static final int MAX_SUBJECTS_PER_STUDENT = Person.MAX_SUBJECTS;
     public static final String MESSAGE_TOO_MANY_SUBJECTS = "A student can have at most "
             + MAX_SUBJECTS_PER_STUDENT + " subjects.";
     public static final String MESSAGE_FLAG_TAKES_NO_VALUE = "The '%1$s' flag does not take a value.";
@@ -139,6 +140,9 @@ public class ParserUtil {
         for (String subject : subjects) {
             subjectSet.add(parseSubject(subject));
         }
+        if (subjectSet.isEmpty()) {
+            throw new ParseException("A student must have at least one subject.");
+        }
         if (subjectSet.size() > MAX_SUBJECTS_PER_STUDENT) {
             throw new ParseException(MESSAGE_TOO_MANY_SUBJECTS);
         }
@@ -218,7 +222,8 @@ public class ParserUtil {
      * @throws ParseException if the given {@code reason} is invalid.
      */
     public static String parseReason(String reason) throws ParseException {
-        return parseValue(reason, Lesson::isValidCancelReason, Lesson.MESSAGE_REASON_CONSTRAINTS, Function.identity());
+        return parseValue(reason, Lesson::isValidCancelReason, Lesson.MESSAGE_REASON_CONSTRAINTS,
+                value -> value.replaceAll(" {2,}", " "));
     }
 
     /**
