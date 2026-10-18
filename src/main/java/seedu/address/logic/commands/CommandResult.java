@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import seedu.address.commons.util.ToStringBuilder;
+import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 
@@ -18,6 +19,7 @@ public class CommandResult {
     private final String feedbackToUser;
     private final List<Lesson> displayedLessons;
     private final List<Homework> displayedHomework;
+    private final List<LedgerEntry> displayedPayments;
 
     /** Help information should be shown to the user. */
     private final boolean showHelp;
@@ -29,11 +31,12 @@ public class CommandResult {
      * Constructs a {@code CommandResult} with the specified fields.
      */
     public CommandResult(String feedbackToUser, boolean showHelp, boolean exit) {
-        this(feedbackToUser, showHelp, exit, null, null);
+        this(feedbackToUser, showHelp, exit, null, null, null);
     }
 
     private CommandResult(String feedbackToUser, boolean showHelp, boolean exit, List<Lesson> displayedLessons,
-            List<Homework> displayedHomework) {
+            List<Homework> displayedHomework, List<LedgerEntry> displayedPayments) {
+        this.displayedPayments = displayedPayments == null ? null : List.copyOf(displayedPayments);
         this.displayedHomework = displayedHomework == null ? null : List.copyOf(displayedHomework);
         this.displayedLessons = displayedLessons == null ? null : List.copyOf(displayedLessons);
         this.feedbackToUser = requireNonNull(feedbackToUser);
@@ -59,7 +62,7 @@ public class CommandResult {
 
     /** Attaches the immutable numbered selection actually rendered in this result. */
     public CommandResult withDisplayedLessons(List<Lesson> lessons) {
-        return new CommandResult(feedbackToUser, showHelp, exit, lessons, displayedHomework);
+        return new CommandResult(feedbackToUser, showHelp, exit, lessons, displayedHomework, displayedPayments);
     }
 
     public Optional<List<Homework>> getDisplayedHomework() {
@@ -68,12 +71,21 @@ public class CommandResult {
 
     /** Attaches immutable homework rows actually numbered in this result. */
     public CommandResult withDisplayedHomework(List<Homework> homework) {
-        return new CommandResult(feedbackToUser, showHelp, exit, displayedLessons, homework);
+        return new CommandResult(feedbackToUser, showHelp, exit, displayedLessons, homework, displayedPayments);
+    }
+
+    public Optional<List<LedgerEntry>> getDisplayedPayments() {
+        return Optional.ofNullable(displayedPayments);
+    }
+
+    /** Attaches immutable payment rows actually numbered in this result. */
+    public CommandResult withDisplayedPayments(List<LedgerEntry> payments) {
+        return new CommandResult(feedbackToUser, showHelp, exit, displayedLessons, displayedHomework, payments);
     }
 
     /** Replaces feedback while retaining presentation data and command flags. */
     public CommandResult withFeedback(String feedback) {
-        return new CommandResult(feedback, showHelp, exit, displayedLessons, displayedHomework);
+        return new CommandResult(feedback, showHelp, exit, displayedLessons, displayedHomework, displayedPayments);
     }
 
     public boolean isShowHelp() {

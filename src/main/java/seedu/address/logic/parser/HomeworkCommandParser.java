@@ -126,11 +126,7 @@ public class HomeworkCommandParser implements Parser<Command> {
 
     /** Resolves relative dates against the injected clock and delegates explicit date formats. */
     private LocalDate parseDate(String text) throws ParseException {
-        return switch (text.strip().toLowerCase(Locale.ENGLISH)) {
-            case "today" -> LocalDate.now(clock);
-            case "tmr" -> LocalDate.now(clock).plusDays(1);
-            default -> ParserUtil.parseDate(text).value;
-        };
+        return DateParser.parse(text, clock);
     }
 
     /** Parses only the supported value prefix and two mutually exclusive flags. */

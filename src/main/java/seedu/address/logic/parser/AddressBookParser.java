@@ -74,6 +74,7 @@ public class AddressBookParser {
                 }
                 yield new DemoCommand(arguments.strip().equals("confirm"));
             }
+            case "pay" -> new PayCommandParser().parse(arguments);
             case "charge" -> new ChargeCommandParser().parse(arguments);
             case "hw" -> new HomeworkCommandParser().parse(arguments);
             case "student" -> new StudentCommandParser().parse(arguments);
