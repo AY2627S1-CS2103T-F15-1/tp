@@ -67,7 +67,7 @@ public class Messages {
                         .sorted(String.CASE_INSENSITIVE_ORDER)
                         .collect(Collectors.joining(", ")))
                 .append("; Rate: ")
-                .append(person.getRate().toDisplayString());
+                .append(person.getRate().toDisplayString()).append("/hour");
         person.getVenue().ifPresent(venue -> builder.append("; Venue: ").append(venue));
         if (!person.getRemark().value.isEmpty()) {
             builder.append("; Remark: ").append(person.getRemark());

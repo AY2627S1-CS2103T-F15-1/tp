@@ -51,6 +51,7 @@ public class LessonHistoryWorkflowTest {
         var loaded = new JsonAddressBookStorage(directory.resolve("data.json")).readAddressBook().orElseThrow();
         assertEquals("P1", loaded.getLessonList().getFirst().getAcademicLevel().orElseThrow().value);
         assertEquals(lessonId, loaded.getLessonList().getFirst().getId());
+        assertTrue(logic.execute("student view 1").getFeedbackToUser().contains("/hour"));
     }
 
 

@@ -90,7 +90,7 @@ public class ViewCommand extends Command {
 
         StringBuilder text = new StringBuilder(String.format(MESSAGE_VIEWING, student.getName()));
         text.append("\nLevel ").append(student.getLevel()).append(SEPARATOR).append(subjects)
-                .append(SEPARATOR).append(student.getRate().toDisplayString()).append("/lesson");
+                .append(SEPARATOR).append(student.getRate().toDisplayString()).append("/hour");
         text.append("\n").append(contact);
         if (!student.getRemark().value.isEmpty()) {
             text.append("\nRemark: ").append(student.getRemark());
