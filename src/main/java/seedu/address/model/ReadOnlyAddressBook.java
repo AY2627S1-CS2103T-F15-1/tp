@@ -24,6 +24,11 @@ public interface ReadOnlyAddressBook {
      */
     ObservableList<Lesson> getLessonList();
 
+    /** Returns the offline travel buffer; older datasets default to thirty minutes. */
+    default int getTravelBufferMinutes() {
+        return 30;
+    }
+
     /** Returns append-only financial history; legacy models have no financial events. */
     default ObservableList<LedgerEntry> getLedgerEntries() {
         return FXCollections.emptyObservableList();

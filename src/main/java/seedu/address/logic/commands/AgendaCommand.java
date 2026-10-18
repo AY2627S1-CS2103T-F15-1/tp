@@ -21,6 +21,7 @@ import seedu.address.model.Model;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonDuration;
 import seedu.address.model.lesson.LessonStatus;
+import seedu.address.model.lesson.TravelWarnings;
 
 /**
  * Shows the lessons of a day or of the week containing the day, in the order that they take place. The numbers it
@@ -69,13 +70,14 @@ public class AgendaCommand extends Command {
 
         List<Lesson> lessons = model.getFilteredLessonList();
         if (isWeek) {
-            return new CommandResult(formatWeek(model, first, last, lessons));
+            return new CommandResult(formatWeek(model, first, last, lessons)
+                    + TravelWarnings.format(model.getAddressBook(), lessons));
         }
         if (lessons.isEmpty()) {
             return new CommandResult(String.format(MESSAGE_NO_LESSONS_ON_DAY, DAY_FORMAT.format(date)));
         }
         return new CommandResult(String.format(MESSAGE_DAY_HEADER, DAY_FORMAT.format(date), summarise(lessons))
-                + formatLessons(model, lessons, date));
+                + formatLessons(model, lessons, date) + TravelWarnings.format(model.getAddressBook(), lessons));
     }
 
     private static String formatWeek(Model model, LocalDate first, LocalDate last, List<Lesson> lessons) {

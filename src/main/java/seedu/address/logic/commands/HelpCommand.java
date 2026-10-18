@@ -72,6 +72,7 @@ public class HelpCommand extends Command {
             new CommandHelp("hw feedback", "Records feedback after submission", HomeworkFeedbackCommand.MESSAGE_USAGE),
             new CommandHelp("hw delete", "Deletes homework with feedback protection",
                     HomeworkDeleteCommand.MESSAGE_USAGE),
+            new CommandHelp("travel", "Sets the offline travel buffer", TravelCommand.MESSAGE_USAGE),
             new CommandHelp("agenda", "Shows the lessons of a day or a week", AgendaCommand.MESSAGE_USAGE),
             new CommandHelp("today", "Shows today's lessons", TodayCommand.MESSAGE_USAGE),
             new CommandHelp("clear", "Deletes all data, after confirmation", ClearCommand.MESSAGE_USAGE),

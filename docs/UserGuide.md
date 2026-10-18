@@ -650,3 +650,14 @@ through lesson 2 and cancels all its scheduled occurrences starting at the curre
 later, including moved occurrences. Earlier-today, past-day, completed, missed, and already
 cancelled history remains. An active charge on any affected occurrence
 requires explicit reversal before any occurrence is cancelled.
+
+### Offline travel warnings
+
+`travel buffer/45` sets a global buffer from 0 to 180 minutes (default 30).
+Add, repeat, move, agenda, and today warn when consecutive scheduled
+lessons at different physical venues leave less time than this buffer.
+The warning shows available and required minutes. Equal venues ignore
+case; missing venues and Online lessons do not trigger a travel warning.
+Overlap warnings remain separate. These are offline reminders, not route
+estimates, and never block a booking. The setting survives restart; clear
+resets it to 30 minutes.

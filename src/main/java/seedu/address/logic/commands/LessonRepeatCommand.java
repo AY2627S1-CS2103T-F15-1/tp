@@ -13,6 +13,7 @@ import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonDate;
 import seedu.address.model.lesson.LessonDuration;
 import seedu.address.model.lesson.LessonTime;
+import seedu.address.model.lesson.TravelWarnings;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Subject;
 import seedu.address.model.person.Venue;
@@ -73,6 +74,7 @@ public class LessonRepeatCommand extends Command {
         for (Lesson lesson : added) {
             feedback.append(LessonCommandUtil.getOverlapWarning(model, lesson));
         }
+        feedback.append(TravelWarnings.format(model.getAddressBook(), added));
         feedback.append(Messages.formatLessonList(model.getFilteredLessonList()));
         return new CommandResult(feedback.toString()).withDisplayedLessons(model.getFilteredLessonList());
     }

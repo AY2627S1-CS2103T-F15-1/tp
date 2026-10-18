@@ -34,6 +34,8 @@ public class AddressBook implements ReadOnlyAddressBook {
     private final ObservableList<LedgerEntry> ledgerEntries = FXCollections.observableArrayList();
     private final ObservableList<Homework> homework = FXCollections.observableArrayList();
 
+    private int travelBufferMinutes = 30;
+
     public AddressBook() {}
 
     /**
@@ -72,6 +74,20 @@ public class AddressBook implements ReadOnlyAddressBook {
         setLessons(newData.getLessonList());
         homework.setAll(newData.getHomeworkList());
         ledgerEntries.setAll(newData.getLedgerEntries());
+        setTravelBufferMinutes(newData.getTravelBufferMinutes());
+    }
+
+    @Override
+    public int getTravelBufferMinutes() {
+        return travelBufferMinutes;
+    }
+
+    /** Sets the offline global buffer in minutes. */
+    public void setTravelBufferMinutes(int minutes) {
+        if (minutes < 0 || minutes > 180) {
+            throw new IllegalArgumentException("Travel buffer must be 0-180 minutes.");
+        }
+        travelBufferMinutes = minutes;
     }
 
     //// person-level operations
@@ -310,11 +326,12 @@ public class AddressBook implements ReadOnlyAddressBook {
         return persons.equals(otherAddressBook.persons)
                 && lessons.equals(otherAddressBook.lessons)
                 && homework.equals(otherAddressBook.homework)
-                && ledgerEntries.equals(otherAddressBook.ledgerEntries);
+                && ledgerEntries.equals(otherAddressBook.ledgerEntries)
+                && travelBufferMinutes == otherAddressBook.travelBufferMinutes;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(persons, lessons, homework, ledgerEntries);
+        return Objects.hash(persons, lessons, homework, ledgerEntries, travelBufferMinutes);
     }
 }

@@ -29,6 +29,7 @@ class JsonSerializableAddressBook {
             "Lessons list contains a lesson whose student is not in the persons list.";
 
     private Integer schemaVersion;
+    private Integer travelBufferMinutes;
 
     private final List<JsonAdaptedPerson> persons = new ArrayList<>();
     private final List<JsonAdaptedLesson> lessons = new ArrayList<>();
@@ -76,6 +77,7 @@ class JsonSerializableAddressBook {
      */
     public JsonSerializableAddressBook(ReadOnlyAddressBook source) {
         schemaVersion = StorageSchema.CURRENT_VERSION;
+        travelBufferMinutes = source.getTravelBufferMinutes();
         source.getLedgerEntries().stream().map(JsonAdaptedLedgerEntry::new).forEach(ledgerEntries::add);
         source.getHomeworkList().stream().map(JsonAdaptedHomework::new).forEach(homework::add);
         persons.addAll(source.getPersonList().stream().map(JsonAdaptedPerson::new).collect(Collectors.toList()));
@@ -153,6 +155,11 @@ class JsonSerializableAddressBook {
             } catch (IllegalArgumentException e) {
                 throw new IllegalValueException(e.getMessage());
             }
+        }
+        try {
+            addressBook.setTravelBufferMinutes(travelBufferMinutes == null ? 30 : travelBufferMinutes);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalValueException(e.getMessage());
         }
         return addressBook;
     }

@@ -18,6 +18,7 @@ import seedu.address.model.homework.HomeworkQueries;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonDuration;
 import seedu.address.model.lesson.LessonStatus;
+import seedu.address.model.lesson.TravelWarnings;
 
 /**
  * Shows what a day requires: the lessons that take place on it, and the past lessons that are still waiting to be
@@ -73,6 +74,7 @@ public class TodayCommand extends Command {
 
         return new CommandResult(DATE_FORMAT.format(today)
                 + "\n\n" + formatLessonsToday(model, lessonsToday)
+                + TravelWarnings.format(model.getAddressBook(), lessonsToday)
                 + "\n\n" + formatLessonsAwaitingNotes(lessonsAwaitingNotes)
                 + "\n\n" + HomeworkQueries.summary(model.getAddressBook(), null, true, today)
                 + "\n\n" + FinanceQueries.duesSummary(model.getAddressBook(), today));

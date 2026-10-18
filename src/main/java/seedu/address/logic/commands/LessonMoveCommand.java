@@ -6,6 +6,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_DURATION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TIME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_VENUE;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.logging.Logger;
 
@@ -21,6 +22,7 @@ import seedu.address.model.lesson.LessonDate;
 import seedu.address.model.lesson.LessonDuration;
 import seedu.address.model.lesson.LessonStatus;
 import seedu.address.model.lesson.LessonTime;
+import seedu.address.model.lesson.TravelWarnings;
 import seedu.address.model.person.Venue;
 
 /**
@@ -85,7 +87,8 @@ public class LessonMoveCommand extends Command {
 
         return new CommandResult(String.format(MESSAGE_SUCCESS, target.getStudentName(), target.getSubject(),
                 Messages.formatSlot(target), Messages.formatSlot(moved))
-                + LessonCommandUtil.getOverlapWarning(model, moved));
+                + LessonCommandUtil.getOverlapWarning(model, moved)
+                + TravelWarnings.format(model.getAddressBook(), List.of(moved)));
     }
 
     private static void requireMovable(Lesson lesson) throws CommandException {

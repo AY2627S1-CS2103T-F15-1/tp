@@ -1007,3 +1007,12 @@ Older schemas default to no series. Recurrence and series cancellation build
 a complete proposed AddressBook, validating duplicates, date limits, and
 financial guards before installing it once. No scheduler or network is
 required. Typed visible lesson rows are refreshed after a batch.
+
+### Travel settings and warnings
+
+AddressBook owns the persisted travelBufferMinutes setting; schema 16 and
+earlier default it to 30. Copy/reset/equality/hash and exact JSON save
+snapshots include it. TravelWarnings compares chronological adjacent
+scheduled lessons using full local date-times and duration, including
+midnight boundaries. It limits presentation to pairs touching relevant
+visible or changed lessons; it makes no network calls.

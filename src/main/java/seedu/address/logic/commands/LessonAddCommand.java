@@ -25,6 +25,7 @@ import seedu.address.model.lesson.LessonDate;
 import seedu.address.model.lesson.LessonDuration;
 import seedu.address.model.lesson.LessonStatus;
 import seedu.address.model.lesson.LessonTime;
+import seedu.address.model.lesson.TravelWarnings;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Subject;
 import seedu.address.model.person.Venue;
@@ -99,7 +100,8 @@ public class LessonAddCommand extends Command {
 
         String numbering = formatChangedLessonNumbers(model.getFilteredLessonList(), lesson, previousLessonCount);
         CommandResult result = new CommandResult(String.format(MESSAGE_SUCCESS, Messages.format(lesson),
-                Messages.formatVenue(lesson)) + LessonCommandUtil.getOverlapWarning(model, lesson) + numbering);
+                Messages.formatVenue(lesson)) + LessonCommandUtil.getOverlapWarning(model, lesson)
+                + TravelWarnings.format(model.getAddressBook(), List.of(lesson)) + numbering);
         return numbering.isEmpty() ? result : result.withDisplayedLessons(model.getFilteredLessonList());
     }
 
