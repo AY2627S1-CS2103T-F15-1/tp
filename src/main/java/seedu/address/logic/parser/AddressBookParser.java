@@ -15,6 +15,7 @@ import seedu.address.logic.commands.ArchiveCommand;
 import seedu.address.logic.commands.ClearCommand;
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.DeleteCommand;
+import seedu.address.logic.commands.DemoCommand;
 import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.FindCommand;
@@ -66,6 +67,12 @@ public class AddressBookParser {
             case SaveCommand.COMMAND_WORD -> {
                 requireNoArguments(commandWord, arguments);
                 yield new SaveCommand();
+            }
+            case "demo" -> {
+                if (!arguments.isBlank() && !arguments.strip().equals("confirm")) {
+                    throw new ParseException("Usage: demo [confirm]");
+                }
+                yield new DemoCommand(arguments.strip().equals("confirm"));
             }
             case "student" -> new StudentCommandParser().parse(arguments);
             case "archive" -> new ArchiveCommand(ParserUtil.parseIndex(arguments), true);
