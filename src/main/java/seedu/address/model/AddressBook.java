@@ -56,6 +56,7 @@ public class AddressBook implements ReadOnlyAddressBook {
      * {@code persons} must not contain duplicate persons.
      */
     public void setPersons(List<Person> persons) {
+        tasks.forEach(task -> validateTask(task, persons, getLessonList()));
         this.persons.setPersons(persons);
     }
 
@@ -64,6 +65,7 @@ public class AddressBook implements ReadOnlyAddressBook {
      * {@code lessons} must not contain duplicate lessons.
      */
     public void setLessons(List<Lesson> lessons) {
+        tasks.forEach(task -> validateTask(task, getPersonList(), lessons));
         this.lessons.setLessons(lessons);
     }
 
@@ -73,12 +75,20 @@ public class AddressBook implements ReadOnlyAddressBook {
     public void resetData(ReadOnlyAddressBook newData) {
         requireNonNull(newData);
 
-        setPersons(newData.getPersonList());
-        setLessons(newData.getLessonList());
-        homework.setAll(newData.getHomeworkList());
-        ledgerEntries.setAll(newData.getLedgerEntries());
-        setTravelBufferMinutes(newData.getTravelBufferMinutes());
-        tasks.setAll(newData.getTaskList());
+        AddressBook validated = new AddressBook();
+        validated.persons.setPersons(newData.getPersonList());
+        validated.lessons.setLessons(newData.getLessonList());
+        validated.homework.setAll(newData.getHomeworkList());
+        validated.ledgerEntries.setAll(newData.getLedgerEntries());
+        validated.setTravelBufferMinutes(newData.getTravelBufferMinutes());
+        newData.getTaskList().forEach(validated::addTask);
+
+        persons.setPersons(validated.getPersonList());
+        lessons.setLessons(validated.getLessonList());
+        homework.setAll(validated.getHomeworkList());
+        ledgerEntries.setAll(validated.getLedgerEntries());
+        travelBufferMinutes = validated.getTravelBufferMinutes();
+        tasks.setAll(validated.getTaskList());
     }
 
     @Override
@@ -312,13 +322,18 @@ public class AddressBook implements ReadOnlyAddressBook {
 
     /** Rejects orphaned, mismatched, or non-payment financial links. */
     private void validateTask(FollowUpTask task) {
+        validateTask(task, getPersonList(), getLessonList());
+    }
+
+    /** Checks proposed bulk parent replacements before any observable list is mutated. */
+    private void validateTask(FollowUpTask task, List<Person> proposedPersons, List<Lesson> proposedLessons) {
         requireNonNull(task);
-        Person student = persons.asUnmodifiableObservableList().stream()
+        Person student = proposedPersons.stream()
                 .filter(person -> person.getId().equals(task.studentId())).findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Task student does not exist."));
         boolean valid = switch (task.linkType()) {
             case STUDENT -> task.targetId().equals(student.getId());
-            case LESSON -> lessons.asUnmodifiableObservableList().stream()
+            case LESSON -> proposedLessons.stream()
                     .anyMatch(lesson -> lesson.getId().equals(task.targetId()) && lesson.isWith(student));
             case HOMEWORK -> homework.stream().anyMatch(item -> item.getId().equals(task.targetId())
                     && item.getStudentId().equals(student.getId()));
