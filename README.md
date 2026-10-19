@@ -7,7 +7,8 @@
 **TutorFlow is a desktop app for independent private tutors to manage their students and lessons in one place.**
 
 * It is optimized for use via a **Command Line Interface (CLI)** while still having the benefits of a Graphical User Interface (GUI) built with JavaFX. If you can type fast, TutorFlow can get your day-to-day tutoring admin done faster than spreadsheets, chat apps and notebooks.
-* It helps a tutor answer two questions quickly: what does today require, and what does each student need. Homework and payment tracking are planned for later versions.
+* It helps a tutor answer two questions quickly: what does today require, and what does each student need.
+* Version 1.4 (alpha) keeps students, lessons (including weekly series and travel warnings), homework, charges and payments, and follow-up tasks in one place, and can undo the latest deletion.
 * It is written in Java, and is aimed at tutors who teach several students across different venues.
 * To get started, see the **[TutorFlow User Guide](https://ay2627s1-cs2103t-f15-1.github.io/tp/UserGuide.html)**.
 * To find out how TutorFlow is built, see the **[TutorFlow Developer Guide](https://ay2627s1-cs2103t-f15-1.github.io/tp/DeveloperGuide.html)**.

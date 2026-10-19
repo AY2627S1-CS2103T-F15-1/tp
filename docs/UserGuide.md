@@ -30,7 +30,7 @@ For power-users, TutorFlow can help you manage your students and lessons faster 
 
    * `delete 3` : Deletes the 3rd student shown in the current list.
 
-   * `clear confirm` : Deletes all students and lessons.
+   * `clear confirm` : Deletes all your data: students, lessons, homework, tasks and financial history.
 
    * `exit` : Exits the app.
 
@@ -381,7 +381,7 @@ Examples:
 
 ### Clearing all entries: `clear`
 
-Deletes **all** students, lessons, homework, and financial history from TutorFlow.
+Deletes **all** students, lessons, homework, tasks, and financial history from TutorFlow, and sets the travel buffer back to 30 minutes.
 
 Format: `clear confirm`
 
@@ -391,7 +391,7 @@ Format: `clear confirm`
 * Clearing data that is already empty works and does nothing.
 
 Examples:
-* `clear` shows `This deletes ALL students, lessons, homework, and financial history. Type 'clear confirm' to proceed.`
+* `clear` shows `This deletes ALL students, lessons, homework, tasks, and financial history. Type 'clear confirm' to proceed.`
 * `clear confirm` deletes everything.
 
 ### Undoing a deletion: `undo`
@@ -478,7 +478,7 @@ Action     | Format, Examples
 **Delete** | `delete INDEX [confirm]`<br> e.g., `delete 3`, `delete 3 confirm`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [l/LEVEL] [s/SUBJECT]... [r/RATE] [v/VENUE]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
-**List**   | `list`
+**List**   | `list [l/LEVEL] [s/SUBJECT] [archived/\|all/]`<br> e.g., `list l/S3 s/Math`, `list archived/`
 **View**   | `view INDEX`<br> e.g., `view 1`
 **Sort**   | `sort [asc\|desc]`<br> e.g., `sort desc`
 **Remark** | `remark INDEX r/REMARK`<br> e.g., `remark 1 r/Prefers morning lessons`
@@ -492,6 +492,34 @@ Action     | Format, Examples
 **Lesson done** | `lesson done INDEX [n/NOTES]`<br> e.g., `lesson done 1 n/Covered quadratic roots`
 **Lesson missed** | `lesson missed INDEX`<br> e.g., `lesson missed 1`
 **Undo** | `undo`
+**Student** | `student add\|edit\|delete\|find\|view\|list\|archive\|restore ...` (the same arguments as the command without `student`)<br> e.g., `student find James`
+**Archive** | `archive INDEX`<br> e.g., `archive 2`
+**Restore** | `restore INDEX` (after `student list archived/`)<br> e.g., `restore 1`
+**Demo** | `demo [confirm]`
+**Lesson repeat** | `lesson repeat st/INDEX [s/SUBJECT] d/START t/TIME [dur/MINUTES] [v/VENUE] count/COUNT [every/WEEKS]`<br> e.g., `lesson repeat st/1 s/Math d/2026-12-22 t/16:30 count/8`
+**Lesson series cancel** | `lesson series cancel LESSON_INDEX confirm`<br> e.g., `lesson series cancel 3 confirm`
+**Lesson prep** | `lesson prep INDEX n/NOTES`<br> e.g., `lesson prep 1 n/Bring past-year papers`
+**Balance** | `balance st/STUDENT_INDEX`<br> e.g., `balance st/1`
+**Dues** | `dues`
+**Pay** | `pay st/STUDENT_INDEX amt/AMOUNT [d/DATE] [n/NOTES]`<br> e.g., `pay st/1 amt/200 d/today`
+**Pay list** | `pay list [st/STUDENT_INDEX]`<br> e.g., `pay list st/1`
+**Pay reverse** | `pay reverse PAYMENT_INDEX`<br> e.g., `pay reverse 2`
+**Charge** | `charge l/LESSON_INDEX [amt/AMOUNT]`<br> e.g., `charge l/1 amt/60`
+**Charge reverse** | `charge reverse l/LESSON_INDEX`<br> e.g., `charge reverse l/1`
+**Hw add** | `hw add st/STUDENT_INDEX desc/DESCRIPTION due/DATE`<br> e.g., `hw add st/1 desc/Algebra Q1-10 due/tmr`
+**Hw list** | `hw list [st/STUDENT_INDEX] [overdue/\|outstanding/]`<br> e.g., `hw list st/1 overdue/`
+**Hw edit** | `hw edit INDEX [desc/DESCRIPTION] [due/DATE]`<br> e.g., `hw edit 1 due/2026-12-24`
+**Hw status** | `hw status INDEX s/assigned\|submitted\|reviewed`<br> e.g., `hw status 1 s/submitted`
+**Hw feedback** | `hw feedback INDEX f/FEEDBACK`<br> e.g., `hw feedback 1 f/Revisit sign errors`
+**Hw delete** | `hw delete INDEX [confirm]`<br> e.g., `hw delete 1 confirm`
+**Task add** | `task add st/INDEX\|lesson/INDEX\|hw/INDEX\|pay/INDEX desc/TEXT [due/DATE]`<br> e.g., `task add st/1 desc/Call parent due/tmr`
+**Task list** | `task list [all/] [st/INDEX]`<br> e.g., `task list st/1`
+**Task edit** | `task edit INDEX desc/TEXT [due/DATE\|due/-]`<br> e.g., `task edit 1 desc/Call parent again due/-`
+**Task done** | `task done INDEX`<br> e.g., `task done 1`
+**Task delete** | `task delete INDEX [confirm]`<br> e.g., `task delete 1 confirm`
+**Travel** | `travel buffer/MINUTES`<br> e.g., `travel buffer/45`
+**Save** | `save`
+**Exit** | `exit`
 
 
 ## Student continuity in v1.4 alpha
@@ -662,8 +690,10 @@ remains in the session and `save` retries it; do not re-enter a payment, as that
 lessons. Optional subject, duration, and venue use the same defaults as
 `lesson add`. Count must be 2–52 and the interval 1–12 weeks; the final
 occurrence must be within two years. Any duplicate or invalid occurrence
-rejects the entire batch; overlaps warn without blocking it. The visible
-agenda is numbered again after a successful batch.
+rejects the entire batch; overlaps warn without blocking it. If the new lessons are in the lesson list on
+screen, the result shows that list with fresh numbers. Otherwise it says so, and `agenda` or
+`lesson list st/INDEX` numbers them. With a gap of more than one week the first line reads, for example,
+`Scheduled 3 occurrences, every 2 weeks.`
 
 Move or cancel one occurrence with the existing lesson commands. Its series
 association remains. `lesson series cancel 2 confirm` selects the series
