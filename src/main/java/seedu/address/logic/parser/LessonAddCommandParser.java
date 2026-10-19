@@ -35,6 +35,8 @@ public class LessonAddCommandParser implements Parser<LessonAddCommand> {
                 PREFIX_TIME);
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_STUDENT, PREFIX_SUBJECT, PREFIX_DATE, PREFIX_TIME,
                 PREFIX_DURATION, PREFIX_VENUE);
+        argMultimap.verifyNoEmptyValuesFor(PREFIX_STUDENT, PREFIX_SUBJECT, PREFIX_DATE, PREFIX_TIME,
+                PREFIX_DURATION, PREFIX_VENUE);
 
         Index studentIndex = ParserUtil.parseIndex(argMultimap.getValue(PREFIX_STUDENT).get());
 

@@ -40,7 +40,8 @@ public class LessonDoneCommandParserTest {
     public void parse_invalidNotes_failure() {
         for (String notes : new String[] {"", "  ", "a".repeat(Lesson.MAX_NOTES_LENGTH + 1),
             "First\nSecond", "First\rSecond", "First\tSecond", "First\u2028Second"}) {
-            assertParseFailure(parser, " 1 n/" + notes, Lesson.MESSAGE_NOTES_CONSTRAINTS);
+            assertParseFailure(parser, " 1 n/" + notes, notes.isBlank()
+                    ? "Empty value for n/. Enter a value after this prefix." : Lesson.MESSAGE_NOTES_CONSTRAINTS);
         }
     }
 

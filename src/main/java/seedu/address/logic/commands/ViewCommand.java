@@ -64,7 +64,7 @@ public class ViewCommand extends Command {
         List<Person> lastShownList = model.getFilteredPersonList();
 
         if (targetIndex.getZeroBased() >= lastShownList.size()) {
-            throw new CommandException(Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+            throw new CommandException(Messages.invalidPersonIndex(targetIndex, lastShownList.size()));
         }
 
         Person student = lastShownList.get(targetIndex.getZeroBased());

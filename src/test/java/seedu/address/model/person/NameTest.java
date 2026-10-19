@@ -38,11 +38,11 @@ public class NameTest {
         assertFalse(Name.isValidName(" ")); // spaces only
         assertFalse(Name.isValidName("^")); // only non-alphanumeric characters
         assertFalse(Name.isValidName("peter*")); // contains a character that is not allowed
-        assertFalse(Name.isValidName("-peter")); // starts with punctuation
+        assertTrue(Name.isValidName("-peter")); // punctuation is allowed with a letter
 
         // valid name
         assertTrue(Name.isValidName("peter jack")); // alphabets only
-        assertTrue(Name.isValidName("12345")); // numbers only
+        assertFalse(Name.isValidName("12345")); // requires a letter
         assertTrue(Name.isValidName("peter the 2nd")); // alphanumeric characters
         assertTrue(Name.isValidName("Capital Tan")); // with capital letters
         assertTrue(Name.isValidName("David Roger Jackson Ray Jr 2nd")); // long names

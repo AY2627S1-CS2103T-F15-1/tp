@@ -36,7 +36,7 @@ public class LessonCancelCommandParserTest {
 
     @Test
     public void parse_invalidReason_failure() {
-        assertParseFailure(parser, " 1 r/ ", Lesson.MESSAGE_REASON_CONSTRAINTS);
+        assertParseFailure(parser, " 1 r/ ", "Empty value for r/. Enter a value after this prefix.");
         assertParseFailure(parser, " 1 r/" + "a".repeat(Lesson.MAX_REASON_LENGTH + 1),
                 Lesson.MESSAGE_REASON_CONSTRAINTS);
     }

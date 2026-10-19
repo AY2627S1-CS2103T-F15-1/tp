@@ -20,6 +20,7 @@ import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.RemarkCommand;
+import seedu.address.logic.commands.SaveCommand;
 import seedu.address.logic.commands.SortCommand;
 import seedu.address.logic.commands.TodayCommand;
 import seedu.address.logic.commands.ViewCommand;
@@ -46,6 +47,7 @@ public class AddressBookParser {
      * @throws ParseException if the user input does not conform to the expected format
      */
     public Command parseCommand(String userInput) throws ParseException {
+        validatePrintableInput(userInput);
         final Matcher matcher = BASIC_COMMAND_FORMAT.matcher(userInput.trim());
         if (!matcher.matches()) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, HelpCommand.MESSAGE_USAGE));
@@ -57,9 +59,13 @@ public class AddressBookParser {
         // Note to developers: Change LOG_LEVEL in LogsCenter to enable lower level (i.e., FINE, FINER and lower)
         // log messages such as the one below.
         // Lower level log messages are used sparingly to minimize noise in the code.
-        logger.fine("Command word: " + commandWord + "; Arguments: " + arguments);
+        logger.fine("Parsing command");
 
         return switch (commandWord) {
+            case SaveCommand.COMMAND_WORD -> {
+                requireNoArguments(commandWord, arguments);
+                yield new SaveCommand();
+            }
             case AddCommand.COMMAND_WORD -> new AddCommandParser().parse(arguments);
             case EditCommand.COMMAND_WORD -> new EditCommandParser().parse(arguments);
             case DeleteCommand.COMMAND_WORD -> new DeleteCommandParser().parse(arguments);
@@ -81,10 +87,18 @@ public class AddressBookParser {
             }
             case HelpCommand.COMMAND_WORD -> new HelpCommandParser().parse(arguments);
             default -> {
-                logger.finer("This user input caused a ParseException: " + userInput);
+                logger.finer("Command rejected: unknown command");
                 throw new ParseException(MESSAGE_UNKNOWN_COMMAND);
             }
         };
+    }
+
+    /** Rejects control characters before trimming can conceal invalid values. */
+    private static void validatePrintableInput(String input) throws ParseException {
+        if (input.codePoints().anyMatch(character -> Character.isISOControl(character)
+                || character == '\u2028' || character == '\u2029')) {
+            throw new ParseException("Commands must contain printable text on one line.");
+        }
     }
 
     /**

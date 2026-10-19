@@ -38,7 +38,7 @@ public class PhoneTest {
         assertFalse(Phone.isValidPhone("1234567890123456")); // more than 15 digits
 
         // valid phone numbers
-        assertTrue(Phone.isValidPhone("911")); // exactly 3 numbers
+        assertFalse(Phone.isValidPhone("911")); // fewer than eight digits
         assertTrue(Phone.isValidPhone("93121534"));
         assertTrue(Phone.isValidPhone("124293842033123")); // exactly 15 digits
         assertTrue(Phone.isValidPhone("+6591234567")); // starts with a plus sign
@@ -56,10 +56,10 @@ public class PhoneTest {
 
     @Test
     public void equals() {
-        Phone phone = new Phone("999");
+        Phone phone = new Phone("99999999");
 
         // same values -> returns true
-        assertTrue(phone.equals(new Phone("999")));
+        assertTrue(phone.equals(new Phone("99999999")));
 
         // same object -> returns true
         assertTrue(phone.equals(phone));
@@ -71,6 +71,6 @@ public class PhoneTest {
         assertFalse(phone.equals(5.0f));
 
         // different values -> returns false
-        assertFalse(phone.equals(new Phone("995")));
+        assertFalse(phone.equals(new Phone("99599599")));
     }
 }

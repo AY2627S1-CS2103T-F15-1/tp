@@ -10,9 +10,9 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
 public class Phone {
 
 
-    public static final String MESSAGE_CONSTRAINTS = "Phone numbers must contain 3 to 15 digits, optionally "
+    public static final String MESSAGE_CONSTRAINTS = "Phone numbers must contain 8 to 15 digits, optionally "
             + "starting with '+'. Spaces and hyphens between the digits are allowed.";
-    public static final String VALIDATION_REGEX = "\\+?\\d{3,15}";
+    public static final String VALIDATION_REGEX = "\\+?\\d{8,15}";
     private static final String INPUT_REGEX = "\\+?\\d[\\d -]*";
     public final String value;
 
@@ -23,8 +23,13 @@ public class Phone {
      *              {@code 91234567}.
      */
     public Phone(String phone) {
+        this(phone, false);
+    }
+
+    /** Constructs a checked new or grandfathered stored phone. */
+    private Phone(String phone, boolean stored) {
         requireNonNull(phone);
-        checkArgument(isValidPhone(phone), MESSAGE_CONSTRAINTS);
+        checkArgument(stored ? isValidStoredPhone(phone) : isValidPhone(phone), MESSAGE_CONSTRAINTS);
         value = normalize(phone);
     }
 
@@ -37,6 +42,16 @@ public class Phone {
 
     private static String normalize(String phone) {
         return phone.replaceAll("[ -]", "");
+    }
+
+    /** Accepts the old three-digit minimum only when restoring stored data. */
+    public static boolean isValidStoredPhone(String value) {
+        return value.matches(INPUT_REGEX) && value.replaceAll("[ -]", "").matches("\\+?\\d{3,15}");
+    }
+
+    /** Restores a phone accepted by v1.3 or the current input policy. */
+    public static Phone fromStored(String value) {
+        return new Phone(value, true);
     }
 
     @Override

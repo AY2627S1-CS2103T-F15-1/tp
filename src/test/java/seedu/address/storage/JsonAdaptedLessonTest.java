@@ -21,7 +21,7 @@ import seedu.address.model.person.Venue;
 import seedu.address.testutil.LessonBuilder;
 
 public class JsonAdaptedLessonTest {
-    private static final String INVALID_NAME = "R@chel";
+    private static final String INVALID_NAME = "R*chel";
     private static final String INVALID_PHONE = "91a4";
     private static final String INVALID_SUBJECT = "#math";
     private static final String INVALID_DATE = "2026-02-30";

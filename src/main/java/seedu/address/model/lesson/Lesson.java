@@ -74,6 +74,7 @@ public class Lesson {
         requireAllNonNull(studentName, studentPhone, subject, date, time, duration, status);
         checkArgument(isValidTimeRange(time, duration), MESSAGE_CONSTRAINTS);
         checkArgument(notes == null || isValidNotes(notes), MESSAGE_NOTES_CONSTRAINTS);
+        checkArgument(cancelReason == null || isValidCancelReason(cancelReason), MESSAGE_REASON_CONSTRAINTS);
         this.studentName = studentName;
         this.studentPhone = studentPhone;
         this.subject = subject;
@@ -83,7 +84,7 @@ public class Lesson {
         this.venue = venue;
         this.status = status;
         this.notes = notes;
-        this.cancelReason = cancelReason;
+        this.cancelReason = cancelReason == null ? null : cancelReason.strip().replaceAll(" {2,}", " ");
     }
 
     /**
@@ -98,7 +99,9 @@ public class Lesson {
      * Returns true if a given string can be recorded as the reason for cancelling a lesson.
      */
     public static boolean isValidCancelReason(String test) {
-        return !test.isBlank() && test.length() <= MAX_REASON_LENGTH && test.lines().count() == 1;
+        return !test.isBlank() && test.length() <= MAX_REASON_LENGTH
+                && test.codePoints().noneMatch(character -> Character.isISOControl(character)
+                || character == '\u2028' || character == '\u2029');
     }
 
     /**

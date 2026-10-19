@@ -79,7 +79,7 @@ public class LessonCancelCommandTest {
         Index outOfBoundIndex = Index.fromOneBased(model.getFilteredLessonList().size() + 1);
 
         assertCommandFailure(new LessonCancelCommand(outOfBoundIndex, null), model,
-                Messages.MESSAGE_INVALID_LESSON_DISPLAYED_INDEX);
+                Messages.invalidLessonIndex(outOfBoundIndex, model.getFilteredLessonList().size()));
     }
 
     @Test

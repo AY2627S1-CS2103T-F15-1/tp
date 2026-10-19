@@ -90,25 +90,25 @@ class JsonAdaptedPerson {
         if (name == null) {
             throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Name.class.getSimpleName()));
         }
-        if (!Name.isValidName(name)) {
+        if (!Name.isValidStoredName(name)) {
             throw new IllegalValueException(Name.MESSAGE_CONSTRAINTS);
         }
-        final Name modelName = new Name(name);
+        final Name modelName = Name.fromStored(name);
 
         if (phone == null) {
             throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Phone.class.getSimpleName()));
         }
-        if (!Phone.isValidPhone(phone)) {
+        if (!Phone.isValidStoredPhone(phone)) {
             throw new IllegalValueException(Phone.MESSAGE_CONSTRAINTS);
         }
-        final Phone modelPhone = new Phone(phone);
+        final Phone modelPhone = Phone.fromStored(phone);
 
         Email modelEmail = null;
         if (email != null) {
-            if (!Email.isValidEmail(email)) {
+            if (!Email.isValidStoredEmail(email)) {
                 throw new IllegalValueException(Email.MESSAGE_CONSTRAINTS);
             }
-            modelEmail = new Email(email);
+            modelEmail = Email.fromStored(email);
         }
 
         if (level == null) {
@@ -120,6 +120,9 @@ class JsonAdaptedPerson {
         final Level modelLevel = new Level(level);
 
         final Set<Subject> modelSubjects = new HashSet<>(personSubjects);
+        if (!Person.isValidSubjectCount(modelSubjects.size())) {
+            throw new IllegalValueException(Person.MESSAGE_SUBJECT_COUNT);
+        }
 
         if (rate == null) {
             throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Rate.class.getSimpleName()));
@@ -131,10 +134,10 @@ class JsonAdaptedPerson {
 
         Venue modelVenue = null;
         if (venue != null) {
-            if (!Venue.isValidVenue(venue)) {
+            if (!Venue.isValidStoredVenue(venue)) {
                 throw new IllegalValueException(Venue.MESSAGE_CONSTRAINTS);
             }
-            modelVenue = new Venue(venue);
+            modelVenue = Venue.fromStored(venue);
         }
 
         final Remark modelRemark = new Remark(remark);

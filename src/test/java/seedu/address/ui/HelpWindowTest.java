@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
@@ -12,19 +14,35 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import com.sun.net.httpserver.HttpServer;
+
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
+import javafx.event.ActionEvent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.MenuBar;
+import javafx.scene.control.TextField;
 import javafx.scene.control.ToolBar;
 import javafx.scene.web.WebView;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
+import seedu.address.logic.LogicManager;
+import seedu.address.model.ModelManager;
+import seedu.address.model.ReadOnlyAddressBook;
+import seedu.address.storage.JsonAddressBookStorage;
+import seedu.address.storage.JsonUserPrefsStorage;
+import seedu.address.storage.StorageManager;
 
 /** Tests the real FXML viewer on the JavaFX application thread, without a network connection. */
 public class HelpWindowTest {
@@ -34,6 +52,145 @@ public class HelpWindowTest {
     public Path temporaryFolder;
 
     private HelpWindow window;
+
+    @Test
+    public void exit_failedSave_guardsCommandWindowAndMenuUntilRetrySucceeds() throws Exception {
+        onFx(() -> {
+            boolean[] fail = {true};
+            JsonAddressBookStorage addressStorage = new JsonAddressBookStorage(temporaryFolder.resolve("exit.json")) {
+                @Override
+                public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
+                    if (fail[0]) {
+                        throw new IOException("Synthetic write failure");
+                    }
+                    super.saveAddressBook(addressBook);
+                }
+            };
+            LogicManager logic = new LogicManager(new ModelManager(), new StorageManager(addressStorage,
+                    new JsonUserPrefsStorage(temporaryFolder.resolve("prefs.json"))));
+            MainWindow main = new MainWindow(new Stage(), logic, addressStorage.getAddressBookFilePath());
+            main.fillInnerParts();
+            main.show();
+            try {
+                TextField input = (TextField) main.getRoot().getScene().lookup("#commandTextField");
+                input.setText("add n/Alice p/91234567 l/J1 s/Math r/100");
+                input.fireEvent(new ActionEvent());
+                assertTrue(logic.hasUnsavedChanges());
+                input.setText("exit");
+                input.fireEvent(new ActionEvent());
+                assertTrue(main.getRoot().isShowing());
+                main.getRoot().fireEvent(new WindowEvent(main.getRoot(), WindowEvent.WINDOW_CLOSE_REQUEST));
+                assertTrue(main.getRoot().isShowing());
+                MenuBar menu = (MenuBar) main.getRoot().getScene().lookup("#menuBar");
+                menu.getMenus().getFirst().getItems().getFirst().fire();
+                assertTrue(main.getRoot().isShowing());
+                fail[0] = false;
+                menu.getMenus().getFirst().getItems().getFirst().fire();
+                assertFalse(main.getRoot().isShowing());
+                assertFalse(logic.hasUnsavedChanges());
+                assertEquals(1, addressStorage.readAddressBook().orElseThrow().getPersonList().size());
+            } finally {
+                main.getRoot().hide();
+            }
+            return null;
+        });
+    }
+
+    @Test
+    public void click_remoteLinkAndNewWindowLink_blocksLoopbackRequestsAndKeepsGuide() throws Exception {
+        AtomicInteger requests = new AtomicInteger();
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/", exchange -> {
+            requests.incrementAndGet();
+            exchange.sendResponseHeaders(200, -1);
+            exchange.close();
+        });
+        server.start();
+        try {
+            String url = "http://127.0.0.1:" + server.getAddress().getPort() + "/private";
+            CompletableFuture<Void> loaded = onFx(() -> {
+                window = new HelpWindow(new Stage(), () -> "<html><body><h1 id='local'>Local guide</h1>"
+                        + "<a id='remote' href='" + url + "'>Remote</a>"
+                        + "<a id='new-window' target='_blank' href='" + url + "'>New window</a>"
+                        + "<a id='anchor' href='#local'>Local section</a></body></html>");
+                CompletableFuture<Void> result = awaitState(Worker.State.SUCCEEDED);
+                window.show();
+                return result;
+            });
+            loaded.get(10, TimeUnit.SECONDS);
+            onFx(() -> {
+                viewer().getEngine().executeScript("document.getElementById('new-window').click()");
+                viewer().getEngine().executeScript("document.getElementById('anchor').click()");
+                viewer().getEngine().executeScript("document.getElementById('remote').click()");
+                return null;
+            });
+            Thread.sleep(500); // Allow a forbidden request to reach the controlled listener if the guard regresses.
+            assertEquals(0, requests.get());
+            onFx(() -> {
+                assertTrue(status().getText().contains("offline"));
+                assertTrue(viewer().getEngine().getDocument().getDocumentElement().getTextContent()
+                        .contains("Local guide"));
+                return null;
+            });
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
+    public void execute_successRejectionAndMalformedFile_logsNoPrivatePayload() throws Exception {
+        String marker = "PrivateContactAlpha";
+        String phone = "98765432101234";
+        String rate = "876.54";
+        StringBuilder records = new StringBuilder();
+        seedu.address.commons.core.LogsCenter.getLogger(HelpWindowTest.class);
+        Logger applicationLogger = Logger.getLogger("ab3");
+        Level previousLevel = applicationLogger.getLevel();
+        Handler handler = new Handler() {
+            @Override
+            public void publish(LogRecord record) {
+                records.append(record.getMessage()).append(record.getThrown());
+            }
+
+            @Override
+            public void flush() {}
+
+            @Override
+            public void close() {}
+        };
+        applicationLogger.setLevel(Level.ALL);
+        handler.setLevel(Level.ALL);
+        applicationLogger.addHandler(handler);
+        try {
+            onFx(() -> {
+                StorageManager storage = new StorageManager(
+                        new JsonAddressBookStorage(temporaryFolder.resolve("privacy.json")),
+                        new JsonUserPrefsStorage(temporaryFolder.resolve("prefs.json")));
+                MainWindow main = new MainWindow(new Stage(), new LogicManager(new ModelManager(), storage),
+                        storage.getAddressBookFilePath());
+                main.fillInnerParts();
+                TextField input = (TextField) main.getRoot().getScene().lookup("#commandTextField");
+                input.setText("add n/" + marker + " p/" + phone + " l/J1 s/Math r/" + rate);
+                input.fireEvent(new ActionEvent());
+                input.setText("unknown " + marker + " " + phone + " " + rate);
+                input.fireEvent(new ActionEvent());
+                main.getRoot().hide();
+                return null;
+            });
+            Path malformed = temporaryFolder.resolve("malformed.json");
+            Files.writeString(malformed, "{\"persons\": [\"" + marker + phone + rate + "\"] invalid }");
+            org.junit.jupiter.api.Assertions.assertThrows(
+                    seedu.address.commons.exceptions.DataLoadingException.class, () -> {
+                        new JsonAddressBookStorage(malformed).readAddressBook();
+                    });
+            assertFalse(records.toString().contains(marker), records.toString());
+            assertFalse(records.toString().contains(phone), records.toString());
+            assertFalse(records.toString().contains(rate), records.toString());
+        } finally {
+            applicationLogger.removeHandler(handler);
+            applicationLogger.setLevel(previousLevel);
+        }
+    }
 
     @BeforeAll
     public static void startJavaFx() throws Exception {

@@ -80,7 +80,7 @@ public class LessonMoveCommand extends Command {
             throw new CommandException(LessonCommandUtil.MESSAGE_DUPLICATE_LESSON);
         }
         model.setLesson(target, moved);
-        logger.info("Rescheduled a lesson of " + target.getStudentName());
+        logger.fine("Rescheduled lesson");
 
         return new CommandResult(String.format(MESSAGE_SUCCESS, target.getStudentName(), target.getSubject(),
                 Messages.formatSlot(target), Messages.formatSlot(moved))

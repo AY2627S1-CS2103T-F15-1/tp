@@ -3,6 +3,10 @@ package seedu.address.ui;
 import java.io.IOException;
 import java.util.logging.Logger;
 
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.events.EventTarget;
+
 import javafx.concurrent.Worker;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -43,12 +47,18 @@ public class HelpWindow extends UiPart<Stage> {
         userGuide.getEngine().getLoadWorker().stateProperty().addListener((observable, oldState, newState) -> {
             switch (newState) {
                 case SCHEDULED, RUNNING -> loadStatus.setText("Loading User Guide...");
-                case SUCCEEDED -> loadStatus.setText("");
+                case SUCCEEDED -> {
+                    guardNavigation();
+                    loadStatus.setText("");
+                }
                 case FAILED, CANCELLED -> loadStatus.setText(
                         "Could not load the bundled User Guide. Click Reload guide to try again.");
                 default -> loadStatus.setText("");
             }
         });
+        userGuide.setContextMenuEnabled(false);
+        userGuide.getEngine().setCreatePopupHandler(features -> null);
+
     }
 
     /**
@@ -56,6 +66,29 @@ public class HelpWindow extends UiPart<Stage> {
      */
     public HelpWindow() {
         this(new Stage());
+    }
+
+    /** Cancels external links before WebKit can dispatch navigation, including keyboard and nested-link clicks. */
+    private void guardNavigation() {
+        if (userGuide.getEngine().getDocument() == null) {
+            return;
+        }
+        EventTarget document = (EventTarget) userGuide.getEngine().getDocument();
+        document.addEventListener("click", event -> {
+            Node target = (Node) event.getTarget();
+            while (target != null) {
+                if (target instanceof Element element && element.getTagName().equalsIgnoreCase("a")) {
+                    String destination = element.getAttribute("href");
+                    if (!destination.isEmpty() && !destination.startsWith("#")) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        loadStatus.setText("Help works offline. External navigation is disabled.");
+                    }
+                    return;
+                }
+                target = target.getParentNode();
+            }
+        }, true);
     }
 
     /**

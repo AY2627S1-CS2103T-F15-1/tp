@@ -104,7 +104,7 @@ public class AddressBook implements ReadOnlyAddressBook {
         persons.remove(key);
         boolean hasRemovedLessons = lessons.removeIf(lesson -> lesson.isWith(key));
         if (hasRemovedLessons) {
-            logger.info("Removed the lessons of the deleted student " + key.getName());
+            logger.fine("Removed linked lessons");
         }
     }
 
@@ -117,7 +117,7 @@ public class AddressBook implements ReadOnlyAddressBook {
             return;
         }
 
-        logger.info("Updating the lessons of the edited student " + target.getName());
+        logger.fine("Updating linked lessons");
         List<Lesson> updatedLessons = lessons.asUnmodifiableObservableList().stream()
                 .map(lesson -> lesson.isWith(target) ? lesson.withStudent(editedPerson) : lesson)
                 .collect(Collectors.toList());

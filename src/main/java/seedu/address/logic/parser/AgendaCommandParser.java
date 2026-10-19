@@ -25,6 +25,7 @@ public class AgendaCommandParser implements Parser<AgendaCommand> {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, AgendaCommand.MESSAGE_USAGE));
         }
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_DATE);
+        argMultimap.verifyNoEmptyValuesFor(PREFIX_DATE);
 
         LocalDate date = LocalDate.now();
         if (argMultimap.getValue(PREFIX_DATE).isPresent()) {

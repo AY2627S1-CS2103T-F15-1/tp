@@ -49,6 +49,7 @@ public class HelpCommand extends Command {
             new CommandHelp("agenda", "Shows the lessons of a day or a week", AgendaCommand.MESSAGE_USAGE),
             new CommandHelp("today", "Shows today's lessons", TodayCommand.MESSAGE_USAGE),
             new CommandHelp("clear", "Deletes all data, after confirmation", ClearCommand.MESSAGE_USAGE),
+            new CommandHelp("save", "Retries saving unsaved changes", SaveCommand.MESSAGE_USAGE),
             new CommandHelp("help", "Shows this list, or how to use one command", MESSAGE_USAGE),
             new CommandHelp("exit", "Exits TutorFlow", ExitCommand.MESSAGE_USAGE));
 

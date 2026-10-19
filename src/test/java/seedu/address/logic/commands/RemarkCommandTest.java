@@ -56,7 +56,8 @@ public class RemarkCommandTest {
     public void execute_invalidIndex_throwsCommandException() {
         Index outOfBounds = Index.fromOneBased(model.getFilteredPersonList().size() + 1);
         RemarkCommand command = new RemarkCommand(outOfBounds, new Remark("Likes baseball"));
-        assertCommandFailure(command, model, Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+        assertCommandFailure(command, model,
+                Messages.invalidPersonIndex(outOfBounds, model.getFilteredPersonList().size()));
     }
 
     @Test

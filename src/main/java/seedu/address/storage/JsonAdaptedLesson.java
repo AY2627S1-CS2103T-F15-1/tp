@@ -81,10 +81,10 @@ class JsonAdaptedLesson {
      * @throws IllegalValueException if there were any data constraints violated in the adapted lesson.
      */
     public Lesson toModelType() throws IllegalValueException {
-        final Name modelStudentName = convert("studentName", studentName, Name::isValidName,
-                Name.MESSAGE_CONSTRAINTS, Name::new);
-        final Phone modelStudentPhone = convert("studentPhone", studentPhone, Phone::isValidPhone,
-                Phone.MESSAGE_CONSTRAINTS, Phone::new);
+        final Name modelStudentName = convert("studentName", studentName, Name::isValidStoredName,
+                Name.MESSAGE_CONSTRAINTS, Name::fromStored);
+        final Phone modelStudentPhone = convert("studentPhone", studentPhone, Phone::isValidStoredPhone,
+                Phone.MESSAGE_CONSTRAINTS, Phone::fromStored);
         final Subject modelSubject = convert("subject", subject, Subject::isValidSubject,
                 Subject.MESSAGE_CONSTRAINTS, Subject::new);
         final LessonDate modelDate = convert("date", date, LessonDate::isValidDate,
@@ -97,13 +97,17 @@ class JsonAdaptedLesson {
             throw new IllegalValueException(Lesson.MESSAGE_CONSTRAINTS);
         }
 
-        final Venue modelVenue = venue == null ? null : convert("venue", venue, Venue::isValidVenue,
-                Venue.MESSAGE_CONSTRAINTS, Venue::new);
+        final Venue modelVenue = venue == null ? null : convert("venue", venue, Venue::isValidStoredVenue,
+                Venue.MESSAGE_CONSTRAINTS, Venue::fromStored);
         final LessonStatus modelStatus = status == null ? LessonStatus.SCHEDULED
                 : convert("status", status, LessonStatus::isValidStatus,
                         LessonStatus.MESSAGE_CONSTRAINTS, LessonStatus::fromString);
         if (notes != null && !Lesson.isValidNotes(notes)) {
             throw new IllegalValueException(Lesson.MESSAGE_NOTES_CONSTRAINTS);
+        }
+
+        if (cancelReason != null && !Lesson.isValidCancelReason(cancelReason)) {
+            throw new IllegalValueException(Lesson.MESSAGE_REASON_CONSTRAINTS);
         }
 
         return new Lesson(modelStudentName, modelStudentPhone, modelSubject, modelDate, modelTime, modelDuration,

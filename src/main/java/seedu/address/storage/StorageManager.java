@@ -65,4 +65,9 @@ public class StorageManager implements Storage {
         addressBookStorage.saveAddressBook(addressBook);
     }
 
+    @Override
+    public String snapshotAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
+        return addressBookStorage.snapshotAddressBook(addressBook);
+    }
+
 }

@@ -49,7 +49,7 @@ public class RemarkCommand extends Command {
         List<Person> lastShownList = model.getFilteredPersonList();
 
         if (index.getZeroBased() >= lastShownList.size()) {
-            throw new CommandException(Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+            throw new CommandException(Messages.invalidPersonIndex(index, lastShownList.size()));
         }
 
         Person personToEdit = lastShownList.get(index.getZeroBased());

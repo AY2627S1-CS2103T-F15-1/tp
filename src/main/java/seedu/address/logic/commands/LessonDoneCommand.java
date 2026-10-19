@@ -69,7 +69,7 @@ public class LessonDoneCommand extends Command {
         }
 
         model.setLesson(target, target.complete(notes));
-        logger.info("Completed a lesson of " + target.getStudentName());
+        logger.fine("Completed lesson");
         String message = target.getStatus() == LessonStatus.COMPLETED ? MESSAGE_UPDATED_NOTES : MESSAGE_SUCCESS;
         return new CommandResult(String.format(message, Messages.format(target)));
     }

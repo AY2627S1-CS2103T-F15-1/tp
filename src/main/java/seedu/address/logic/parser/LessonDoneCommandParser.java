@@ -23,6 +23,7 @@ public class LessonDoneCommandParser implements Parser<LessonDoneCommand> {
                     String.format(MESSAGE_INVALID_COMMAND_FORMAT, LessonDoneCommand.MESSAGE_USAGE), pe);
         }
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NOTES);
+        argMultimap.verifyNoEmptyValuesFor(PREFIX_NOTES);
         return new LessonDoneCommand(index,
                 ParserUtil.parseOptional(argMultimap, PREFIX_NOTES, ParserUtil::parseNotes));
     }

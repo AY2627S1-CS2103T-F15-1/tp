@@ -21,6 +21,7 @@ public class LessonListCommandParser implements Parser<LessonListCommand> {
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_STUDENT, PREFIX_ALL);
         ParserUtil.requirePrefixesPresent(argMultimap, LessonListCommand.MESSAGE_USAGE, PREFIX_STUDENT);
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_STUDENT);
+        argMultimap.verifyNoEmptyValuesFor(PREFIX_STUDENT);
 
         Index studentIndex = ParserUtil.parseIndex(argMultimap.getValue(PREFIX_STUDENT).get());
         return new LessonListCommand(studentIndex, ParserUtil.parseFlag(argMultimap, PREFIX_ALL));

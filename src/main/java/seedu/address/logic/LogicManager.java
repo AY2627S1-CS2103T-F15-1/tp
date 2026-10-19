@@ -10,6 +10,7 @@ import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.CommandResult;
+import seedu.address.logic.commands.SaveCommand;
 import seedu.address.logic.commands.TodayCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddressBookParser;
@@ -28,12 +29,15 @@ public class LogicManager implements Logic {
     public static final String FILE_OPS_PERMISSION_ERROR_FORMAT = "Your change was applied in this session but "
             + "could not be saved: TutorFlow cannot write to %s. Fix this before closing TutorFlow.";
 
+    public static final String UNSAVED_WARNING = "Unsaved changes: type 'save' to retry before closing TutorFlow.";
+
     private final Logger logger = LogsCenter.getLogger(LogicManager.class);
 
     private final Model model;
     private final Storage storage;
     private final AddressBookParser addressBookParser;
     private final String startupWarning;
+    private boolean dirty;
 
     /**
      * Constructs a {@code LogicManager} with the given {@code Model} and {@code Storage}.
@@ -55,21 +59,58 @@ public class LogicManager implements Logic {
 
     @Override
     public CommandResult execute(String commandText) throws CommandException, ParseException {
-        logger.info("----------------[USER COMMAND][" + commandText + "]");
+        logger.fine("Executing command");
 
         CommandResult commandResult;
         Command command = addressBookParser.parseCommand(commandText);
-        commandResult = command.execute(model);
+        String before = snapshot();
+        boolean wasDirty = dirty;
+        boolean changed;
+        try {
+            commandResult = command.execute(model);
+        } finally {
+            // An unavailable snapshot must never clear a previous save failure or permit an unchecked exit.
+            dirty = true;
+            changed = !before.equals(snapshot());
+            dirty = wasDirty || changed;
+        }
 
+        if (dirty && (commandResult.isExit() || command instanceof SaveCommand
+                || changed)) {
+            saveChanges();
+        }
+        if (dirty) {
+            return new CommandResult(commandResult.getFeedbackToUser() + "\n" + UNSAVED_WARNING,
+                    commandResult.isShowHelp(), commandResult.isExit());
+        }
+        return commandResult;
+    }
+
+    /** Captures serialized state without writing, keeping persistence comparison separate from domain equality. */
+    private String snapshot() throws CommandException {
+        try {
+            return storage.snapshotAddressBook(model.getAddressBook());
+        } catch (IOException e) {
+            throw new CommandException("Could not inspect the data to save. Retry 'save' before closing TutorFlow.", e);
+        }
+    }
+
+    /** Saves pending changes, retaining the retry state if persistence fails. */
+    private void saveChanges() throws CommandException {
         try {
             storage.saveAddressBook(model.getAddressBook());
+            dirty = false;
         } catch (AccessDeniedException e) {
             throw new CommandException(String.format(FILE_OPS_PERMISSION_ERROR_FORMAT, e.getMessage()), e);
         } catch (IOException ioe) {
             throw new CommandException(String.format(FILE_OPS_ERROR_FORMAT, ioe.getMessage()), ioe);
         }
 
-        return commandResult;
+    }
+
+    @Override
+    public boolean hasUnsavedChanges() {
+        return dirty;
     }
 
     @Override

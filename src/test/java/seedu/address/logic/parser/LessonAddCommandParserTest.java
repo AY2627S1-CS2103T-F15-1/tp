@@ -66,7 +66,7 @@ public class LessonAddCommandParserTest {
         assertParseFailure(parser, " st/1 d/2026-12-22 t/4pm-ish", LessonTime.MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, REQUIRED_FIELDS + " dur/20", LessonDuration.MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, REQUIRED_FIELDS + " s/#math", Subject.MESSAGE_CONSTRAINTS);
-        assertParseFailure(parser, REQUIRED_FIELDS + " v/ ", Venue.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, REQUIRED_FIELDS + " v/ ", "Empty value for v/. Enter a value after this prefix.");
     }
 
     @Test

@@ -36,7 +36,7 @@ final class LessonCommandUtil {
     static Person getStudent(Model model, Index studentIndex) throws CommandException {
         List<Person> shownStudents = model.getFilteredPersonList();
         if (studentIndex.getZeroBased() >= shownStudents.size()) {
-            throw new CommandException(Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+            throw new CommandException(Messages.invalidPersonIndex(studentIndex, shownStudents.size()));
         }
         return shownStudents.get(studentIndex.getZeroBased());
     }
@@ -49,7 +49,7 @@ final class LessonCommandUtil {
     static Lesson getLesson(Model model, Index lessonIndex) throws CommandException {
         List<Lesson> shownLessons = model.getFilteredLessonList();
         if (lessonIndex.getZeroBased() >= shownLessons.size()) {
-            throw new CommandException(Messages.MESSAGE_INVALID_LESSON_DISPLAYED_INDEX);
+            throw new CommandException(Messages.invalidLessonIndex(lessonIndex, shownLessons.size()));
         }
         return shownLessons.get(lessonIndex.getZeroBased());
     }

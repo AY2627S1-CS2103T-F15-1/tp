@@ -61,7 +61,7 @@ public class LessonCancelCommand extends Command {
         }
 
         model.setLesson(target, target.cancel(reason));
-        logger.info("Cancelled a lesson of " + target.getStudentName());
+        logger.fine("Cancelled lesson");
 
         String message = String.format(MESSAGE_SUCCESS, Messages.format(target));
         return new CommandResult(reason == null ? message : message + String.format(MESSAGE_REASON, reason));

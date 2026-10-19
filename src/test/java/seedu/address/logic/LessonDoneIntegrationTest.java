@@ -72,6 +72,7 @@ public class LessonDoneIntegrationTest {
         Lesson future = new LessonBuilder().withStudent(ALICE).withDate(LocalDate.now().plusDays(10)).build();
         model.addLesson(future);
         logic.execute("lesson list st/1 all/");
+        addressBookStorage.saveAddressBook(model.getAddressBook());
         String savedBefore = Files.readString(addressBookStorage.getAddressBookFilePath());
 
         assertThrows(CommandException.class, () -> logic.execute("lesson done 1 n/Notes"));

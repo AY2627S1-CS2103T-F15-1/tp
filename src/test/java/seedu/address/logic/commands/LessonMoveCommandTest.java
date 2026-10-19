@@ -109,7 +109,8 @@ public class LessonMoveCommandTest {
         Index outOfBoundIndex = Index.fromOneBased(model.getFilteredLessonList().size() + 1);
         LessonMoveCommand command = new LessonMoveCommand(outOfBoundIndex, NEW_DATE, null, null, null);
 
-        assertCommandFailure(command, model, Messages.MESSAGE_INVALID_LESSON_DISPLAYED_INDEX);
+        assertCommandFailure(command, model,
+                Messages.invalidLessonIndex(outOfBoundIndex, model.getFilteredLessonList().size()));
     }
 
     @Test

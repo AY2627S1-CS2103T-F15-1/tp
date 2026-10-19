@@ -65,7 +65,7 @@ public class JsonUtil {
                 throw new IOException("JSON data must not be null.");
             }
         } catch (IOException e) {
-            logger.warning("Error reading from jsonFile file " + filePath + ": " + e);
+            logger.warning("Data file read failed: " + e.getClass().getSimpleName());
             throw new DataLoadingException(e);
         }
 

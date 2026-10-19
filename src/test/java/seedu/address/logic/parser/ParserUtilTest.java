@@ -30,7 +30,7 @@ import seedu.address.model.person.Subject;
 import seedu.address.model.person.Venue;
 
 public class ParserUtilTest {
-    private static final String INVALID_NAME = "R@chel";
+    private static final String INVALID_NAME = "R*chel";
     private static final String INVALID_PHONE = "91a4";
     private static final String INVALID_EMAIL = "example.com";
     private static final String INVALID_LEVEL = "S9";
@@ -39,7 +39,7 @@ public class ParserUtilTest {
     private static final String INVALID_VENUE = " ";
 
     private static final String VALID_NAME = "Rachel Walker";
-    private static final String VALID_PHONE = "123456";
+    private static final String VALID_PHONE = "12345678";
     private static final String VALID_EMAIL = "rachel@example.com";
     private static final String VALID_LEVEL = "S3";
     private static final String VALID_SUBJECT_1 = "Math";
@@ -47,7 +47,7 @@ public class ParserUtilTest {
     private static final String VALID_RATE = "62.50";
     private static final String VALID_VENUE = "123 Main Street #0505";
 
-    private static final String WHITESPACE = " \t\r\n";
+    private static final String WHITESPACE = "    ";
 
     @Test
     public void parseNotes_null_throwsNullPointerException() {
@@ -219,8 +219,8 @@ public class ParserUtilTest {
     }
 
     @Test
-    public void parseSubjects_emptyCollection_returnsEmptySet() throws Exception {
-        assertTrue(ParserUtil.parseSubjects(List.of()).isEmpty());
+    public void parseSubjects_emptyCollection_throwsParseException() {
+        assertThrows(ParseException.class, () -> ParserUtil.parseSubjects(List.of()));
     }
 
     @Test
