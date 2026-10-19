@@ -17,7 +17,9 @@ import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
+import seedu.address.model.UserPrefs;
 import seedu.address.model.homework.HomeworkStatus;
+import seedu.address.model.person.Person;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
@@ -131,6 +133,42 @@ public class UndoWorkflowTest {
         assertTrue(rejection.getMessage().startsWith("Nothing to undo"));
         assertEquals(withNewWork, stored());
         assertTrue(model.getUndoSnapshot().isEmpty());
+    }
+
+    @Test
+    public void undo_twoDestructiveCommandsInARow_restoresOnlyTheLatestOne() throws Exception {
+        richData();
+        logic.execute("delete 1 confirm");
+        String afterFirstDeletion = stored();
+        logic.execute("delete 1 confirm");
+        assertNotEquals(afterFirstDeletion, stored());
+
+        logic.execute("undo");
+
+        assertEquals(afterFirstDeletion, stored());
+        assertThrows(CommandException.class, () -> logic.execute("undo"));
+    }
+
+    @Test
+    public void undo_commandThatChangesDataAndThenFails_clearsTheOldSnapshot() throws Exception {
+        richData();
+        logic.execute("delete 1 confirm");
+        assertTrue(model.getUndoSnapshot().isPresent());
+        ModelManager flaky = new ModelManager(model.getAddressBook(), new UserPrefs()) {
+            @Override
+            public void addPerson(Person person) {
+                super.addPerson(person);
+                throw new IllegalStateException("Simulated failure after the data changed");
+            }
+        };
+        flaky.setUndoSnapshot(model.getUndoSnapshot().orElseThrow());
+        LogicManager flakyLogic = new LogicManager(flaky, new StorageManager(storage,
+                new JsonUserPrefsStorage(directory.resolve("flaky-prefs.json"))));
+
+        String addCara = "add n/Cara Ng p/93456789 l/S1 s/Math r/40";
+        assertThrows(IllegalStateException.class, () -> flakyLogic.execute(addCara));
+
+        assertTrue(flaky.getUndoSnapshot().isEmpty());
     }
 
     @Test

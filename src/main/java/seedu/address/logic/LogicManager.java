@@ -94,8 +94,9 @@ public class LogicManager implements Logic {
             dirty = true;
             changed = !before.equals(snapshot());
             dirty = wasDirty || changed;
+            // Also when the command failed after it changed data, so that an old snapshot cannot outlive the change
+            updateUndoSnapshot(command, undoCopy, changed);
         }
-        updateUndoSnapshot(command, undoCopy, changed);
 
         String numbering = "";
         List<String> shownAfter = lessonSelection();
