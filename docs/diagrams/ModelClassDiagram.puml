@@ -11,6 +11,7 @@ Class "<<interface>>\nModel" as Model
 Class AddressBook
 Class ModelManager
 Class UserPrefs
+Class UndoSnapshot
 
 Class UniquePersonList
 Class Person
@@ -30,6 +31,12 @@ Class LessonTime
 Class LessonDuration
 Class LessonStatus
 
+Class Homework
+Class HomeworkStatus
+Class LedgerEntry
+Class FollowUpTask
+
+
 Class I #FFFFFF
 }
 
@@ -43,10 +50,15 @@ Model .right.> ReadOnlyUserPrefs
 Model .left.> ReadOnlyAddressBook
 ModelManager -left-> "1" AddressBook
 ModelManager -right-> "1" UserPrefs
+ModelManager --> "0..1" UndoSnapshot
+UndoSnapshot --> "1" ReadOnlyAddressBook : data before\nthe command
 UserPrefs .up.|> ReadOnlyUserPrefs
 
 AddressBook *--> "1" UniquePersonList
 AddressBook *--> "1" UniqueLessonList
+AddressBook *--> "*" Homework
+AddressBook *--> "*" LedgerEntry
+AddressBook *--> "*" FollowUpTask
 UniquePersonList --> "~* all" Person
 Person *--> Name
 Person *--> Phone
@@ -63,7 +75,12 @@ Lesson *--> LessonTime
 Lesson *--> LessonDuration
 Lesson *--> LessonStatus
 Lesson *--> "0..1" Venue
-Lesson ..> Person : refers to its\nstudent by name\nand phone
+Lesson ..> Person : refers to its\nstudent by UUID
+Homework *--> HomeworkStatus
+Homework ..> Person : refers to its\nstudent by UUID
+LedgerEntry ..> Person : refers to its\nstudent by UUID
+FollowUpTask ..> Person : refers to its\nstudent by UUID
+
 
 Person -[hidden]up--> I
 UniquePersonList -[hidden]right-> I

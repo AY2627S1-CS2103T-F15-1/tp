@@ -15,9 +15,16 @@ Class JsonUserPrefsStorage
 
 package "AddressBook Storage" #F4F6F6{
 Class JsonAddressBookStorage
+Class VersionedAddressBookStorage
+Class StorageSchema
+Class DataFileRecovery
 Class JsonSerializableAddressBook
 Class JsonAdaptedPerson
-Class JsonAdaptedTag
+Class JsonAdaptedSubject
+Class JsonAdaptedLesson
+Class JsonAdaptedHomework
+Class JsonAdaptedLedgerEntry
+Class JsonAdaptedTask
 }
 
 }
@@ -29,8 +36,15 @@ StorageManager .up.|> Storage
 StorageManager -down-> "1" JsonUserPrefsStorage
 StorageManager -down-> "1" JsonAddressBookStorage
 
+VersionedAddressBookStorage -up-|> JsonAddressBookStorage
 JsonAddressBookStorage ..> JsonSerializableAddressBook
+JsonAddressBookStorage ..> StorageSchema : checks the version
+JsonAddressBookStorage ..> DataFileRecovery : sets aside\nunreadable files
 JsonSerializableAddressBook --> "*" JsonAdaptedPerson
-JsonAdaptedPerson --> "*" JsonAdaptedTag
+JsonSerializableAddressBook --> "*" JsonAdaptedLesson
+JsonSerializableAddressBook --> "*" JsonAdaptedHomework
+JsonSerializableAddressBook --> "*" JsonAdaptedLedgerEntry
+JsonSerializableAddressBook --> "*" JsonAdaptedTask
+JsonAdaptedPerson --> "*" JsonAdaptedSubject
 
 @enduml
