@@ -68,6 +68,50 @@ public class TravelCommandTest {
         assertFalse(run("agenda").getFeedbackToUser().contains("Travel warning"));
     }
 
+    private void threeStudents() {
+        model.addPerson(new PersonBuilder().withName("Amy Ng").withPhone("91110001").withSubjects("Math").build());
+        model.addPerson(new PersonBuilder().withName("Ben Ong").withPhone("91110002").withSubjects("Math").build());
+        model.addPerson(new PersonBuilder().withName("Cara Lim").withPhone("91110003").withSubjects("Math").build());
+    }
+
+    @Test
+    public void travel_overlappingLessonsBeforeTheNext_measuresFromTheOneThatEndsLast() throws Exception {
+        threeStudents();
+        run("lesson add st/1 d/" + LocalDate.now() + " t/14:00 dur/60 v/Blk 5");
+        run("lesson add st/2 d/" + LocalDate.now() + " t/14:00 dur/30 v/Blk 5");
+
+        String result = run("lesson add st/3 d/" + LocalDate.now() + " t/15:10 dur/60 v/Tampines")
+                .getFeedbackToUser();
+
+        assertTrue(result.contains("Travel warning: Amy Ng at Blk 5 -> Cara Lim at Tampines"));
+        assertTrue(result.contains("10 min available; 30 min required"));
+    }
+
+    @Test
+    public void travel_overlappingLessonsAndEnoughTimeAfterTheLastEnd_warnsNothing() throws Exception {
+        threeStudents();
+        run("lesson add st/1 d/" + LocalDate.now() + " t/14:00 dur/60 v/Blk 5");
+        run("lesson add st/2 d/" + LocalDate.now() + " t/14:00 dur/30 v/Blk 5");
+
+        String result = run("lesson add st/3 d/" + LocalDate.now() + " t/15:40 dur/60 v/Tampines")
+                .getFeedbackToUser();
+
+        assertFalse(result.contains("Travel warning"));
+    }
+
+    @Test
+    public void travel_lessonsEndingTogetherOneOnline_stillWarnsFromThePhysicalOne() throws Exception {
+        threeStudents();
+        run("lesson add st/1 d/" + LocalDate.now() + " t/16:30 dur/90 v/Bishan");
+        run("lesson add st/2 d/" + LocalDate.now() + " t/17:00 dur/60 v/Online");
+
+        String result = run("lesson add st/3 d/" + LocalDate.now() + " t/18:15 dur/60 v/Clementi")
+                .getFeedbackToUser();
+
+        assertTrue(result.contains("Travel warning: Amy Ng at Bishan -> Cara Lim at Clementi"));
+        assertTrue(result.contains("15 min available; 30 min required"));
+    }
+
     @Test
     public void travel_invalidBuffer_doesNotMutate() throws Exception {
         run("travel buffer/180");
