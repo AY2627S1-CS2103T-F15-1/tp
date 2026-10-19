@@ -19,8 +19,8 @@ import seedu.address.model.person.Person;
 
 /**
  * Deletes a student identified using the index shown in the displayed student list.
- * A student with lessons, homework, or financial history requires confirmation, because deleting a student
- * also deletes all of their lessons and this cannot be undone.
+ * A student with lessons, homework, tasks or financial history requires confirmation, because deleting a student
+ * also deletes all of those records. The latest deletion can be taken back once with {@code undo}.
  */
 public class DeleteCommand extends Command {
 
