@@ -315,6 +315,17 @@ public class UniqueLessonListTest {
     }
 
     @Test
+    public void add_sameSlotWithStudentNameDifferingByDotlessI_throwsDuplicateLessonException() {
+        Lesson lower = new LessonBuilder(ALICE_MATH)
+                .withStudent("K\u0131van\u00e7 Y\u0131lmaz", ALICE.getPhone().value).build();
+        Lesson upper = new LessonBuilder(ALICE_MATH)
+                .withStudent("KIVAN\u00c7 YILMAZ", ALICE.getPhone().value).build();
+        uniqueLessonList.add(lower);
+
+        assertThrows(DuplicateLessonException.class, () -> uniqueLessonList.add(upper));
+    }
+
+    @Test
     public void add_sameSlotAfterTheLessonWasRemoved_success() {
         uniqueLessonList.add(ALICE_MATH);
         uniqueLessonList.remove(ALICE_MATH);
