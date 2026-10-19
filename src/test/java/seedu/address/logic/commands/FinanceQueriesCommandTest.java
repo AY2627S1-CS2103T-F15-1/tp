@@ -62,6 +62,18 @@ public class FinanceQueriesCommandTest {
     }
 
     @Test
+    public void dues_chargeFromOneDayAgo_saysDayInTheSingular() throws Exception {
+        model.addPerson(TypicalPersons.ALICE);
+        lesson(TypicalPersons.ALICE, 1);
+        run("charge l/1 amt/10");
+
+        String dues = run("dues");
+
+        assertTrue(dues.contains("oldest unpaid 1 day"));
+        assertFalse(dues.contains("1 days"));
+    }
+
+    @Test
     public void account_sameDayReversals_showsEverySignedEventAndNetTotals() throws Exception {
         model.addPerson(TypicalPersons.ALICE);
         lesson(TypicalPersons.ALICE, 1);

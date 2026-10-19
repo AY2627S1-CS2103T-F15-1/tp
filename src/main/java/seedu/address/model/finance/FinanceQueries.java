@@ -68,9 +68,10 @@ public final class FinanceQueries {
         StringBuilder text = new StringBuilder("DUES\n" + dues.size() + " student(s) with outstanding balances — "
                 + Money.format(total) + " total");
         for (Due due : dues) {
+            long days = ChronoUnit.DAYS.between(due.oldestUnpaid(), today);
             text.append("\n  ").append(studentLabel(book, due.studentId())).append(" ")
                     .append(Money.format(due.balance())).append(" oldest unpaid ")
-                    .append(ChronoUnit.DAYS.between(due.oldestUnpaid(), today)).append(" days");
+                    .append(days).append(days == 1 ? " day" : " days");
         }
         return text.toString();
     }
