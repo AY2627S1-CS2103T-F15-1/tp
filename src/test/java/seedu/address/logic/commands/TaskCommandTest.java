@@ -11,7 +11,9 @@ import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddressBookParser;
+import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
@@ -26,6 +28,14 @@ public class TaskCommandTest {
 
     private CommandResult run(String input) throws Exception {
         return parser.parseCommand(input).execute(model);
+    }
+
+    /** Runs a command that must be refused with a message for the user, and returns that message. */
+    private String rejection(String input) {
+        Exception e = assertThrows(Exception.class, () -> run(input));
+        assertTrue(e instanceof CommandException || e instanceof ParseException,
+                "Expected a message for the user but got " + e);
+        return e.getMessage();
     }
 
     private void parents() throws Exception {
@@ -74,7 +84,7 @@ public class TaskCommandTest {
         // Refresh selects Earlier, Second edited, First by due date and creation order.
         run("task list all/");
         run("task delete 1 confirm");
-        assertThrows(Exception.class, () -> run("task done 1"));
+        assertEquals("That task was deleted. Run 'task list' to refresh.", rejection("task done 1"));
         run("task done 2");
         String all = run("task list all/").getFeedbackToUser();
         assertFalse(all.contains("Earlier"));
@@ -106,14 +116,17 @@ public class TaskCommandTest {
         ModelManager restored = new ModelManager(storage.readAddressBook().orElseThrow(), new UserPrefs());
         assertEquals(model.getAddressBook(), restored.getAddressBook());
         assertEquals(model.getAddressBook().hashCode(), restored.getAddressBook().hashCode());
-        assertThrows(Exception.class, () -> parser.parseCommand("task done 1").execute(restored));
+        Command done = parser.parseCommand("task done 1");
+        Exception notShown = assertThrows(CommandException.class, () -> done.execute(restored));
+        assertEquals("Invalid task index. Run 'task list' first.", notShown.getMessage());
         assertTrue(parser.parseCommand("task list").execute(restored).getFeedbackToUser().contains("Receipt"));
         parser.parseCommand("task done 1").execute(restored);
         storage.saveAddressBook(restored.getAddressBook());
         assertEquals(restored.getAddressBook(), storage.readAddressBook().orElseThrow());
         run("clear confirm");
-        assertThrows(Exception.class, () -> run("task add hw/1 desc/Dangling"));
-        assertThrows(Exception.class, () -> run("task add pay/1 desc/Dangling"));
+        assertEquals("That homework was deleted. Run 'hw list' to refresh.",
+                rejection("task add hw/1 desc/Dangling"));
+        assertEquals("That payment was deleted. Run 'pay list' to refresh.", rejection("task add pay/1 desc/Dangling"));
         assertFalse(run("task list all/").getFeedbackToUser().contains("Receipt"));
     }
 
@@ -121,10 +134,16 @@ public class TaskCommandTest {
     public void tasks_invalidFieldsOrMultipleLinks_rejectWithoutMutation() throws Exception {
         parents();
         AddressBook before = new AddressBook(model.getAddressBook());
-        for (String input : new String[] {"task add desc/No link", "task add st/1 hw/1 desc/Two links",
-            "task add st/1 desc/", "task add st/1 desc/" + "x".repeat(201),
-            "task add st/1 desc/Bad date due/2026-02-30", "task list all/yes", "task done 0"}) {
-            assertThrows(Exception.class, () -> run(input));
+        String[][] cases = {
+            {"task add desc/No link", "choose exactly one link"},
+            {"task add st/1 hw/1 desc/Two links", "choose exactly one link"},
+            {"task add st/1 desc/", "Empty value for desc/."},
+            {"task add st/1 desc/" + "x".repeat(201), "Task description must be 1-200 printable one-line characters."},
+            {"task add st/1 desc/Bad date due/2026-02-30", "Dates must be in YYYY-MM-DD or DD/MM/YYYY format"},
+            {"task list all/yes", "The 'all/' flag does not take a value."},
+            {"task done 0", "Index must be a positive integer."}};
+        for (String[] testCase : cases) {
+            assertTrue(rejection(testCase[0]).contains(testCase[1]), testCase[0]);
             assertEquals(before, model.getAddressBook());
         }
     }

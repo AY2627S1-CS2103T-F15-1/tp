@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddressBookParser;
+import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ModelManager;
 import seedu.address.model.lesson.Lesson;
@@ -30,6 +31,14 @@ public class RecurrenceCommandTest {
         return parser.parseCommand(input).execute(model);
     }
 
+    /** Runs a command that must be refused with a message for the user, and returns that message. */
+    private String rejection(String input) {
+        Exception e = assertThrows(Exception.class, () -> run(input));
+        assertTrue(e instanceof CommandException || e instanceof ParseException,
+                "Expected a message for the user but got " + e);
+        return e.getMessage();
+    }
+
     @Test
     public void repeat_finiteBatch_refreshesVisibleIndices() throws Exception {
         model.addPerson(student);
@@ -44,7 +53,8 @@ public class RecurrenceCommandTest {
         model.addPerson(student);
         run("lesson add st/1 d/" + LocalDate.now().plusWeeks(4) + " t/10:00");
         AddressBook before = new AddressBook(model.getAddressBook());
-        assertThrows(Exception.class, () -> run("lesson repeat st/1 d/today t/10:00 count/3 every/2"));
+        assertTrue(rejection("lesson repeat st/1 d/today t/10:00 count/3 every/2")
+                .contains("This exact lesson already exists. No occurrences were added."));
         assertEquals(before, model.getAddressBook());
     }
 
@@ -61,7 +71,7 @@ public class RecurrenceCommandTest {
         run("charge reverse l/1");
         run("lesson done 1");
         run("lesson move 2 d/" + LocalDate.now().plusDays(8));
-        assertThrows(Exception.class, () -> run("lesson series cancel 2"));
+        assertTrue(rejection("lesson series cancel 2").contains("lesson series cancel LESSON_INDEX confirm"));
         new LessonSeriesCancelCommand(Index.fromOneBased(2), midnight()).execute(model);
         assertEquals(LessonStatus.COMPLETED, model.getFilteredLessonList().get(0).getStatus());
         assertEquals(2, model.getAddressBook().getLessonList().stream().filter(Lesson::isCancelled).count());
@@ -143,13 +153,16 @@ public class RecurrenceCommandTest {
         model.addPerson(student);
         for (String arguments : new String[] {"count/1", "count/53", "count/2 every/0",
             "count/2 every/13", "count/52 every/12"}) {
-            assertThrows(Exception.class, () -> run("lesson repeat st/1 d/today t/10:00 " + arguments));
+            String expected = arguments.equals("count/52 every/12") ? "That date is more than 2 years away."
+                    : "COUNT is 2-52; WEEKS is 1-12 (default 1).";
+            assertTrue(rejection("lesson repeat st/1 d/today t/10:00 " + arguments).contains(expected), arguments);
             assertTrue(model.getAddressBook().getLessonList().isEmpty());
         }
         run("lesson add st/1 d/" + LocalDate.now() + " t/10:30");
         assertTrue(run("lesson repeat st/1 d/today t/10:00 count/2").getFeedbackToUser().contains("overlaps"));
         run("archive 1");
         run("list archived/");
-        assertThrows(Exception.class, () -> run("lesson repeat st/1 d/tmr t/10:00 count/2"));
+        assertTrue(rejection("lesson repeat st/1 d/tmr t/10:00 count/2")
+                .contains("Restore this archived student before scheduling a new lesson."));
     }
 }

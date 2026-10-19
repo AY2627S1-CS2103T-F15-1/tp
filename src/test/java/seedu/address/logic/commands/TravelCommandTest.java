@@ -11,7 +11,9 @@ import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddressBookParser;
+import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
@@ -26,6 +28,14 @@ public class TravelCommandTest {
 
     private CommandResult run(String input) throws Exception {
         return parser.parseCommand(input).execute(model);
+    }
+
+    /** Runs a command that must be refused with a message for the user, and returns that message. */
+    private String rejection(String input) {
+        Exception e = assertThrows(Exception.class, () -> run(input));
+        assertTrue(e instanceof CommandException || e instanceof ParseException,
+                "Expected a message for the user but got " + e);
+        return e.getMessage();
     }
 
     private void firstLesson() throws Exception {
@@ -116,10 +126,13 @@ public class TravelCommandTest {
     public void travel_invalidBuffer_doesNotMutate() throws Exception {
         run("travel buffer/180");
         AddressBook before = new AddressBook(model.getAddressBook());
-        for (String value : new String[] {"-1", "181", "1.5", "", "30 buffer/40"}) {
-            assertThrows(Exception.class, () -> run("travel buffer/" + value));
+        for (String value : new String[] {"-1", "181", "1.5", ""}) {
+            assertTrue(rejection("travel buffer/" + value).contains("travel buffer/MINUTES (0-180, default 30)."),
+                    value);
             assertEquals(before, model.getAddressBook());
         }
+        assertTrue(rejection("travel buffer/30 buffer/40").contains("Multiple values specified"));
+        assertEquals(before, model.getAddressBook());
         run("travel buffer/0");
         firstLesson();
         assertFalse(run("lesson add st/1 d/" + LocalDate.now()
