@@ -117,9 +117,11 @@ public class DeleteCommand extends Command {
         long events = model.getAddressBook().getLedgerEntries().stream()
                 .filter(entry -> entry.studentId().equals(student.getId())).count();
         if (!isConfirmed) {
+            long withFeedback = homework.stream().filter(item -> item.getFeedback().isPresent()).count();
             return new CommandResult(getConfirmationPrompt(student, lessons)
                     + "\nThis also deletes " + taskCount + " task(s), " + homework.size()
-                    + " homework item(s) with feedback, and " + events + " financial event(s). Balance: "
+                    + " homework item(s), " + withFeedback + " with feedback, and " + events
+                    + " financial event(s). Balance: "
                     + FinanceQueries.balanceLabel(Ledger.balance(model.getAddressBook(), student.getId()))
                     + ". Use 'archive INDEX' to retain obligations and history instead.");
         }

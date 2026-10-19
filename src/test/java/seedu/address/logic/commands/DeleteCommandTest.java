@@ -1,5 +1,6 @@
 package seedu.address.logic.commands;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -11,6 +12,7 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 
@@ -19,8 +21,11 @@ import seedu.address.logic.Messages;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.homework.Homework;
+import seedu.address.model.homework.HomeworkStatus;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
+import seedu.address.model.task.FollowUpTask;
 import seedu.address.testutil.LessonBuilder;
 
 /**
@@ -132,6 +137,25 @@ public class DeleteCommandTest {
         // only the deleted student's lessons are removed
         assertEquals(1, model.getAddressBook().getLessonList().size());
         assertTrue(model.getAddressBook().getLessonList().contains(lessonOfOtherStudent));
+    }
+
+    @Test
+    public void execute_studentWithTaskAndHomeworkNotConfirmed_countsOnlyTheHomeworkWithFeedback() {
+        Person person = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Homework plain = Homework.assign(person.getId(), "Practice set", LocalDate.now().plusDays(1));
+        Homework reviewed = Homework.assign(person.getId(), "Past paper", LocalDate.now().plusDays(2))
+                .withStatus(HomeworkStatus.SUBMITTED).withFeedback("Check the signs");
+        model.addHomework(plain);
+        model.addHomework(reviewed);
+        model.addTask(new FollowUpTask(UUID.randomUUID(), person.getId(), FollowUpTask.LinkType.STUDENT,
+                person.getId(), "Call the parent", LocalDate.now().plusDays(1), false));
+
+        String preview = assertDoesNotThrow(() -> new DeleteCommand(INDEX_FIRST_PERSON).execute(model))
+                .getFeedbackToUser();
+
+        assertTrue(preview.contains("1 task(s), 2 homework item(s), 1 with feedback, and 0 financial event(s)"),
+                preview);
+        assertTrue(model.getFilteredPersonList().contains(person));
     }
 
     @Test
