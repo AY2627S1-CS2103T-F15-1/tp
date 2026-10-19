@@ -74,7 +74,8 @@ public class LessonRepeatCommand extends Command {
             added.add(lesson);
         }
         model.setAddressBook(proposed);
-        StringBuilder feedback = new StringBuilder("Scheduled " + count + " weekly occurrences.");
+        StringBuilder feedback = new StringBuilder(weeks == 1 ? "Scheduled " + count + " weekly occurrences."
+                : "Scheduled " + count + " occurrences, every " + weeks + " weeks.");
         appendOverlapWarnings(feedback, model, added);
         feedback.append(summarize(TravelWarnings.format(model.getAddressBook(), added)));
 

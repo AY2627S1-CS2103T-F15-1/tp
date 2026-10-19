@@ -59,6 +59,25 @@ public class RecurrenceCommandTest {
     }
 
     @Test
+    public void repeat_everyWeek_saysWeeklyOccurrences() throws Exception {
+        model.addPerson(student);
+
+        String feedback = run("lesson repeat st/1 d/today t/10:00 count/3").getFeedbackToUser();
+
+        assertTrue(feedback.startsWith("Scheduled 3 weekly occurrences."), feedback);
+    }
+
+    @Test
+    public void repeat_everyTwoWeeks_saysTheGapAndNotWeekly() throws Exception {
+        model.addPerson(student);
+
+        String feedback = run("lesson repeat st/1 d/today t/10:00 count/3 every/2").getFeedbackToUser();
+
+        assertTrue(feedback.startsWith("Scheduled 3 occurrences, every 2 weeks."), feedback);
+        assertFalse(feedback.contains("weekly"));
+    }
+
+    @Test
     public void seriesCancel_historyMoveAndChargeGuard_validateWholeBatch() throws Exception {
         model.addPerson(student);
         run("lesson repeat st/1 d/today t/10:00 count/3");
