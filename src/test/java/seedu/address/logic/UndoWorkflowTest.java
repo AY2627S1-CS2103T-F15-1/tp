@@ -23,6 +23,7 @@ import seedu.address.model.person.Person;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
+import seedu.address.testutil.PersonBuilder;
 
 public class UndoWorkflowTest {
     @TempDir
@@ -169,6 +170,18 @@ public class UndoWorkflowTest {
         assertThrows(IllegalStateException.class, () -> flakyLogic.execute(addCara));
 
         assertTrue(flaky.getUndoSnapshot().isEmpty());
+    }
+
+    @Test
+    public void snapshot_takenByTheLogic_isAPrivateCopyThatLaterChangesCannotAlter() throws Exception {
+        richData();
+        String before = stored();
+        logic.execute("delete 1 confirm");
+        assertEquals(before, storage.snapshotAddressBook(model.getUndoSnapshot().orElseThrow().data()));
+
+        model.addPerson(new PersonBuilder().withName("Cara Ng").withPhone("93456789").build());
+
+        assertEquals(before, storage.snapshotAddressBook(model.getUndoSnapshot().orElseThrow().data()));
     }
 
     @Test

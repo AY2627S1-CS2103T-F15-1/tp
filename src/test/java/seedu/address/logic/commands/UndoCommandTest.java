@@ -46,7 +46,7 @@ public class UndoCommandTest {
     }
 
     @Test
-    public void snapshot_isIndependentOfLaterChangesToTheLiveData() {
+    public void snapshot_heldByTheModel_keepsTheDataItWasGiven() {
         model.addPerson(TypicalPersons.ALICE);
         AddressBook original = new AddressBook(model.getAddressBook());
         UndoSnapshot snapshot = new UndoSnapshot("clear", original);
