@@ -109,6 +109,7 @@ How the `Logic` component works:
 1. The command can communicate with the `Model` when it is executed (e.g. to delete a person).<br>
    Note that although this is shown as a single step in the diagram above for simplicity, the code can require several interactions between the command object and the `Model` to complete the operation.
 1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
+1. Around the call, `LogicManager` also keeps a copy of the data for `undo` when the command declares an `undoLabel()`, and saves the data when its saved representation changed. [Undoing destructive commands](#undoing-destructive-commands) gives the details.
 
 Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a user command:
 
@@ -126,9 +127,13 @@ How the parsing works:
 
 The `Model` component,
 
-* stores the address book data i.e., all `Person` objects, each of which represents a student with a name, phone number, level, subjects and rate, and optionally an email, a venue and a remark (the `Person` objects are contained in a `UniquePersonList` object). Two `Person` objects are the same student if they have the same phone number and the same name, ignoring case.
-* stores the `Lesson` objects, each of which is a lesson with a student, a subject, a date, a start time, a duration, a status and optionally a venue (the `Lesson` objects are contained in a `UniqueLessonList` object). A `Lesson` refers to its student by the student's name and phone number, which together identify a `Person`. Deleting a student deletes their lessons, and editing the name or phone number of a student keeps their lessons attached.
-* stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
+* stores the address book data i.e., all `Person` objects, each of which represents a student with a name, phone number, level, subjects and rate, and optionally an email, a venue and a remark (the `Person` objects are contained in a `UniquePersonList` object). A student can be archived. Two `Person` objects are the same student if they have the same phone number and the same name, ignoring case, but every `Person` also has a `UUID` that never changes and that other records use to refer to the student.
+* stores the `Lesson` objects, each of which is a lesson with its own `UUID`, the `UUID` of its student (and a copy of the student's name and phone number), a subject, a date, a start time, a duration, a status, the level of the student when the lesson was booked, and optionally preparation notes, a venue, teaching notes and the `UUID` of a weekly series (the `Lesson` objects are contained in a `UniqueLessonList` object). Deleting a student deletes their lessons, and editing the name or phone number of a student keeps their lessons attached.
+* stores the other records of the aggregate in the same `AddressBook`: `Homework` (with a `HomeworkStatus`), `LedgerEntry` events (charges, payments and reversals, in `Money`), `FollowUpTask` objects and the travel buffer in minutes. Each has a `UUID` and, except for the buffer, the `UUID` of its student. Balances, dues, overdue homework and travel warnings are derived by `FinanceQueries`, `HomeworkQueries`, `TaskQueries` and `TravelWarnings` instead of being stored.
+* replaces the whole aggregate only through `AddressBook#resetData`, which builds a complete copy, checks that students and lessons are unique, that the travel buffer is in range and that every task has its student and its target, and swaps the copy in only if those checks pass. Homework and ledger entries are copied as they are, so `resetData` is only as safe as its source: `undo` restores a copy that was valid when it was taken.
+* holds at most one `UndoSnapshot` (see [Undoing destructive commands](#undoing-destructive-commands)). It is never saved.
+* keeps the rows of the last numbered homework, payment and task lists as immutable lists, so a number stays attached to the same record until the next list is shown.
+* stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list, and does the same for lessons. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
 * stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
 * does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
 
@@ -140,8 +145,9 @@ The `Model` component,
 
 The `Storage` component,
 * can save both address book data and user preference data in JSON format, and read them back into corresponding objects.
-* is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonAddressBookStorage` and `JsonUserPrefsStorage` (one class per data file).
-* saves the students and the lessons in the same data file. A data file written before lessons existed has no lesson list, and still loads with no lessons.
+* is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonAddressBookStorage` and `JsonUserPrefsStorage` (one class per data file). `MainApp` supplies a `VersionedAddressBookStorage`, a `JsonAddressBookStorage` that reads the current file `tutorflow-v14.json`, and reads the legacy `addressbook.json` only when the current file is positively absent.
+* saves the students, lessons, homework, ledger entries, follow-up tasks and the travel buffer in the same data file. `StorageSchema` defines the supported versions (14 to 17). A file from an older version loads with defaults for the fields it lacks, and a file from a newer version is refused with `UnsupportedSchemaException` before anything is loaded.
+* sets aside a data file that cannot be read (`DataFileRecovery`), so that starting afresh never destroys the only copy of the records.
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
 
 ### Common classes
@@ -156,7 +162,7 @@ This section describes some noteworthy details on how certain features are imple
 
 ### Lesson scheduling, agenda and conflict detection
 
-The lesson commands are `lesson add`, `lesson list`, `lesson move`, `lesson cancel`, `lesson done` and `lesson missed`. They share the `lesson` command word, which `AddressBookParser` hands to `LessonCommandParser`. That parser reads the next word and passes the rest of the arguments to the parser of that command. `agenda` is its own command word.
+The lesson commands are `lesson add`, `lesson repeat`, `lesson series cancel`, `lesson list`, `lesson prep`, `lesson move`, `lesson cancel`, `lesson done` and `lesson missed`. They share the `lesson` command word, which `AddressBookParser` hands to `LessonCommandParser`. That parser reads the next word and passes the rest of the arguments to the parser of that command. `agenda` is its own command word.
 
 The sequence diagram below shows `execute("lesson move 1 d/2026-12-24")`.
 
@@ -164,7 +170,7 @@ The sequence diagram below shows `execute("lesson move 1 d/2026-12-24")`.
 
 How the pieces fit together:
 
-* **Lesson indices.** `Model#getFilteredLessonList()` returns the lessons that `agenda` or `lesson list` last chose, sorted by date, then start time, then student name. `agenda` and `lesson list` number the lessons they show in that order, and `lesson move` and `lesson cancel` take the same number, so the number a tutor sees is always the one that the next command acts on. `lesson add` resets the filter so that every lesson is shown.
+* **Lesson indices.** `Model#getFilteredLessonList()` returns the lessons that `agenda` or `lesson list` last chose, sorted by date, then start time, then student name. `agenda` and `lesson list` number the lessons they show in that order, and `lesson move` and `lesson cancel` take the same number, so the number a tutor sees is always the one that the next command acts on. `lesson add` keeps the current filter. If the new lesson shifts the numbers that are on screen, the result shows the complete current lesson list with fresh numbers.
 * **Overlaps.** `Lesson#overlaps(Lesson)` is true when both lessons are scheduled, are on the same date, and each starts before the other ends. It compares minutes since the start of the day, so back-to-back lessons are not an overlap and a lesson that ends at midnight can still be compared. `Model#getConflictingLessons(Lesson)` returns the other lessons that overlap a lesson, and `lesson add` and `lesson move` append the result to their message as a warning. `agenda` marks every lesson that has at least one overlap.
 * **Cancelling.** `Lesson#cancel(String)` returns a copy with the status `CANCELLED` and the reason. The lesson is kept, so it stays in the agenda for billing, but it is no longer scheduled and so it never overlaps.
 * **Immutability.** `Lesson` is immutable. `lesson move` and `lesson cancel` build a changed copy and ask the model to replace the old lesson with it, in the same way that `edit` replaces a `Person`.
@@ -174,12 +180,12 @@ How the pieces fit together:
 
 **Aspect: how a lesson refers to its student**
 
-* **Alternative 1 (current choice):** store the student's name and phone number in the lesson.
-    * Pros: The saved file stays flat and a lesson can be validated without loading students. A name and phone number already identify a student in TutorFlow.
-    * Cons: `AddressBook` must update the lessons when it edits or deletes a student. This is done in `setPerson` and `removePerson`, so no command has to remember it.
+* **Alternative 1 (current choice):** store the student's `UUID` in the lesson, together with a copy of the student's name and phone number.
+    * Pros: The saved file stays flat and a lesson can be shown without loading students. The `UUID` tells apart two students who share a name, and later records (homework, charges, tasks) use the same kind of link. A file written before `UUID`s existed is linked by name and phone number when it is loaded.
+    * Cons: `AddressBook` must update the copy when it edits or deletes a student. This is done in `setPerson` and `removePerson`, so no command has to remember it.
 * **Alternative 2:** store a reference to the `Person` object.
     * Pros: No update is needed when a student is edited.
-    * Cons: `Person` is immutable and is replaced on every edit, so the reference would have to be replaced as well, and the saved file would need ids that students do not have.
+    * Cons: `Person` is immutable and is replaced on every edit, so the reference would have to be replaced as well, and the saved file would still need an id to write.
 
 **Aspect: what to do when lessons overlap**
 
@@ -206,93 +212,50 @@ The command replaces a scheduled lesson with the immutable copy returned by `Les
 
 `LessonMissedIntegrationTest` exercises command parsing, status changes, student history and JSON reload together. It also verifies that invalid arguments, invalid indices and rejected status/date changes leave the saved file unchanged.
 
-### \[Proposed\] Undo/redo feature
+### Undoing destructive commands
 
-#### Proposed Implementation
+`undo` restores the data as it was before the latest destructive command of the session. It is deliberately one step deep and lives only in memory: a tutor who deletes the wrong student needs one reliable way back, not a history that can silently erase newer work.
 
-The proposed undo/redo mechanism is facilitated by `VersionedAddressBook`. It extends `AddressBook` with an undo/redo history, stored internally as an `addressBookStateList` and `currentStatePointer`. Additionally, it implements the following operations:
+#### Implementation
 
-* `VersionedAddressBook#commit()` -- Saves the current address book state in its history.
-* `VersionedAddressBook#undo()` -- Restores the previous address book state from its history.
-* `VersionedAddressBook#redo()` -- Restores a previously undone address book state from its history.
+The sequence diagram below shows a destructive command followed by `undo`.
 
-These operations are exposed in the `Model` interface as `Model#commitAddressBook()`, `Model#undoAddressBook()` and `Model#redoAddressBook()` respectively.
+<puml src="diagrams/UndoSequenceDiagram.puml" alt="Interactions between Logic, Model and Storage for a destructive command followed by undo" />
 
-Given below is an example usage scenario and how the undo/redo mechanism behaves at each step.
+The `Model` holds an optional `UndoSnapshot` (a label such as "student deletion" and a complete private copy of the `AddressBook`). `Model#setUndoSnapshot`, `Model#getUndoSnapshot` and `Model#clearUndoSnapshot` manage it, and it is never written to the data file.
 
-Step 1. The user launches the application for the first time. The `VersionedAddressBook` will be initialized with the initial address book state, and the `currentStatePointer` pointing to that single address book state.
+A command declares that it is destructive by overriding `Command#undoLabel()`, which is empty by default. `DeleteCommand` (student deletion), `ClearCommand`, `HomeworkDeleteCommand` and `TaskDeleteCommand` return a label. The decision about what to keep lives in `LogicManager#execute`, because it already compares the saved representation before and after every command:
 
-<puml src="diagrams/UndoRedoState0.puml" alt="UndoRedoState0" />
+1. Before the command runs, `LogicManager` makes a copy of the data only if the command has an undo label.
+2. After it runs, if the saved representation did not change (a read-only view, a preview that asks for `confirm`, or a rejected command), the existing snapshot is left alone.
+3. If the data changed and the command had a label, the copy becomes the new snapshot. If it changed and the command had no label, the snapshot is cleared, so an unrelated edit can never be rolled back over by an old `undo`. `UndoCommand` is the exception because it consumes the snapshot itself.
+4. Only then does `LogicManager` try to save. A failed save therefore never loses the snapshot, and `undo` still works after the deletion that could not be saved.
 
-Step 2. The user executes `delete 5` command to delete the 5th person in the address book. The `delete` command calls `Model#commitAddressBook()`, causing the modified state of the address book after the `delete 5` command executes to be saved in the `addressBookStateList`, and the `currentStatePointer` is shifted to the newly inserted address book state.
+`UndoCommand` restores the snapshot with `Model#setAddressBook`, which is `AddressBook#resetData`. That method builds a complete scratch aggregate first, checks students and lessons for duplicates, the travel buffer for its range and every task for its links, and swaps it in only on success. Homework and ledger entries are copied without such checks, which is safe here because the snapshot was a copy of valid data. Students, lessons, homework, payments and charges, tasks and the travel buffer return together with their original UUIDs. The command then clears the snapshot, which is why a second `undo` is rejected, and `LogicManager` saves the restored data as for any other change. If that save fails, the restored data stays in the session and is flagged unsaved.
 
-<puml src="diagrams/UndoRedoState1.puml" alt="UndoRedoState1" />
+Numbered selections need no special handling. Homework, payment and task rows hold UUIDs that are resolved against the current data on use, so a row that pointed at a deleted record becomes valid again once the record is restored, and never points at a different one.
 
-Step 3. The user executes `add n/David …​` to add a new person. The `add` command also calls `Model#commitAddressBook()`, causing another modified address book state to be saved into the `addressBookStateList`.
+#### Design considerations
 
-<puml src="diagrams/UndoRedoState2.puml" alt="UndoRedoState2" />
+**Aspect: how much history to keep:**
 
-<box type="info" seamless>
+* **Alternative 1 (current choice):** One snapshot, invalidated by any other change.
+  * Pros: Cannot overwrite newer work; trivial to reason about; memory is one copy of the data, and the records themselves are immutable and shared.
+  * Cons: Only the latest destructive command can be undone, and there is no redo.
 
-**Note:** If a command fails its execution, it will not call `Model#commitAddressBook()`, so the address book state will not be saved into the `addressBookStateList`.
-</box>
+* **Alternative 2:** A history of states with a pointer, as in the AddressBook-Level3 proposal.
+  * Pros: Several undo and redo steps.
+  * Cons: Every mutating command must commit, redo semantics must be defined for the financial history, and a bug in one command's commit silently breaks the chain.
 
-Step 4. The user now decides that adding the person was a mistake, and decides to undo that action by executing the `undo` command. The `undo` command will call `Model#undoAddressBook()`, which will shift the `currentStatePointer` once to the left, pointing it to the previous address book state, and restores the address book to that state.
+**Aspect: who decides when to capture:**
 
-<puml src="diagrams/UndoRedoState3.puml" alt="UndoRedoState3" />
+* **Alternative 1 (current choice):** Commands only declare a label; `LogicManager` captures and invalidates.
+  * Pros: The rule is in one place, it uses the same change detection as saving, and a new command cannot forget to invalidate the snapshot.
+  * Cons: A command executed directly against a `Model` in a test does not create a snapshot.
 
-
-<box type="info" seamless>
-
-**Note:** If the `currentStatePointer` is at index 0, pointing to the initial AddressBook state, then there are no previous AddressBook states to restore. The `undo` command uses `Model#canUndoAddressBook()` to check if this is the case. If so, it will return an error to the user rather
-than attempting to perform the undo.
-</box>
-
-The following sequence diagram shows how an undo operation goes through the `Logic` component:
-
-<puml src="diagrams/UndoSequenceDiagram-Logic.puml" alt="UndoSequenceDiagram-Logic" />
-
-<box type="info" seamless>
-
-**Note:** The lifeline for `UndoCommand` should end at the destroy marker (X), but due to a limitation of PlantUML, it continues to the end of the diagram.
-</box>
-
-Similarly, how an undo operation goes through the `Model` component is shown below:
-
-<puml src="diagrams/UndoSequenceDiagram-Model.puml" alt="UndoSequenceDiagram-Model" />
-
-The `redo` command does the opposite — it calls `Model#redoAddressBook()`, which shifts the `currentStatePointer` once to the right, pointing to the previously undone state, and restores the address book to that state.
-
-<box type="info" seamless>
-
-**Note:** If the `currentStatePointer` is at index `addressBookStateList.size() - 1`, pointing to the latest address book state, then there are no undone AddressBook states to restore. The `redo` command uses `Model#canRedoAddressBook()` to check if this is the case. If so, it will return an error to the user rather than attempting to perform the redo.
-</box>
-
-Step 5. The user then decides to execute the command `list`. Commands that do not modify the address book, such as `list`, will usually not call `Model#commitAddressBook()`, `Model#undoAddressBook()` or `Model#redoAddressBook()`. Thus, the `addressBookStateList` remains unchanged.
-
-<puml src="diagrams/UndoRedoState4.puml" alt="UndoRedoState4" />
-
-Step 6. The user executes `clear`, which calls `Model#commitAddressBook()`. Since the `currentStatePointer` is not pointing at the end of the `addressBookStateList`, all address book states after the `currentStatePointer` will be purged. Reason: It no longer makes sense to redo the `add n/David …` command. This is the behavior that most modern desktop applications follow.
-
-<puml src="diagrams/UndoRedoState5.puml" alt="UndoRedoState5" />
-
-The following activity diagram summarizes what happens when a user executes a new command:
-
-<puml src="diagrams/CommitActivityDiagram.puml" width="250" />
-
-#### Design considerations:
-
-**Aspect: How undo & redo execute:**
-
-* **Alternative 1 (current choice):** Saves the entire address book.
-  * Pros: Easy to implement.
-  * Cons: May have performance issues in terms of memory usage.
-
-* **Alternative 2:** Individual command knows how to undo/redo by
-  itself.
-  * Pros: Will use less memory (e.g. for `delete`, just save the person being deleted).
-  * Cons: We must ensure that the implementation of each individual command is correct.
-
+* **Alternative 2:** Each destructive command records its own snapshot.
+  * Pros: Easy to test a single command.
+  * Cons: Invalidation by unrelated commands would still have to be added to every other mutating command.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -873,6 +836,18 @@ testers are expected to do more *exploratory* testing.
       Expected: The result box says that the change was applied in this session but could not be saved, and why. `exit` does not close TutorFlow until the file can be written again.
 
 
+### Undoing a deletion
+
+1. Undoing a deletion
+
+   1. Prerequisites: At least two students are listed.
+
+   1. Test case: `delete 1` (add `confirm` if TutorFlow asks for it), then `undo`<br>
+      Expected: The student, with their lessons and other records, is back. A second `undo` is rejected.
+
+   1. Test case: `delete 1`, then `remark 1 r/Changed`, then `undo`<br>
+      Expected: `undo` is rejected, because another change happened after the deletion.
+
 ### v1.4 continuity and domain extension contract
 
 `Person.getId()` and `Lesson.getId()` are persisted UUIDs, distinct from visible indices and
@@ -886,7 +861,7 @@ Equal cancelled lessons remain separate records and exact-ID lookup chooses the 
 All domain extensions must update `ReadOnlyAddressBook`, `AddressBook.resetData` and its copy
 constructor/equality, the real JSON root/adapters, and focused round-trip tests together.
 `Storage.snapshotAddressBook` uses that exact persisted representation for dirty detection,
-so UI-only equality must never decide whether a write is required. Schema 16 is written to
+so UI-only equality must never decide whether a write is required. The current schema is written to
 `tutorflow-v14.json`; `VersionedAddressBookStorage` reads legacy data only when the current
 path is positively absent. The logic constructor's initial-save flag explicitly persists
 migrated IDs even before a command mutates the model. Failed initial writes remain dirty.
@@ -895,9 +870,9 @@ precreates the current destination, so an interrupted first save leaves legacy f
 on restart. The storage writeSnapshot seam passes the actual serialized bytes to this writer.
 Unreadable source protection is retained until positive absence or successful preservation.
 
-`StorageSchema.MINIMUM_VERSION` and `CURRENT_VERSION` centralize the supported range (14 through 16 now).
+`StorageSchema.MINIMUM_VERSION` and `CURRENT_VERSION` centralize the supported range (14 through 17 now).
 The shared `tutorflow-v14.json` path stays fixed as later domains are added. Homework uses
-schema 15; finance uses 16, and workflows must advance it to 17. Each build accepts unversioned legacy
+schema 15; finance uses 16, and recurrence, travel and tasks use 17. Each build accepts unversioned legacy
 data and versions 14 through its current version, with explicit defaults for missing older fields.
 Add prior-version loading and future-version refusal tests alongside each schema increment.
 
@@ -907,12 +882,11 @@ propagates it before constructing a model, logic, or UI. The original stays at i
 and storage refuses subsequent saves. Never route this exception through corruption recovery or
 silently ignore newer domain fields. Users need a compatible binary or a matching backup.
 
-The command-result seam for later detail-pane integration is
+The command-result seam for numbered lessons is
 `CommandResult.getDisplayedLessons()`: when present, it is an immutable typed snapshot in the
 same order as rendered lesson numbers. `withDisplayedLessons` and `withFeedback` retain it
 across numbering refreshes and unsaved warnings. The logic layer uses this data to avoid
-rendering duplicate refreshes; it does not parse command feedback. Task 7 can render these
-rows directly and add typed student/dashboard views. No unused UI components are introduced.
+rendering duplicate refreshes; it does not parse command feedback.
 Later homework/payment/task lists must likewise snapshot shown stable IDs or visibly refresh
 the numbered list when a mutation changes the mapping, including when persistence fails.
 
@@ -941,11 +915,11 @@ selection untouched. A restored snapshot with the same identity can be selected 
 A future linked task must resolve homework indices by this same shown-ID rule, then persist UUIDs.
 
 `CommandResult.getDisplayedHomework()` exposes optional immutable typed rows for the numbered
-list. `withFeedback` retains them across unsaved warnings. Task 7 can render those rows directly;
-non-indexed overview/dashboard summaries deliberately do not replace the selection. No unused UI
-component or feedback-string parsing is required. Finance can extend summaries independently.
-Future undo snapshots must copy the complete `AddressBook`, including homework; future task-parent
-guards must wrap homework/student deletion before removing any record to avoid orphaned tasks.
+list. `withFeedback` retains them across unsaved warnings. Non-indexed overview/dashboard
+summaries deliberately do not replace the selection, and no feedback-string parsing is required.
+Finance can extend summaries independently. Undo snapshots copy the complete `AddressBook`, including
+homework, and the task-parent guards wrap homework and student deletion so that no task is left without
+its parent.
 
 Focused regression tests cover historical feedback, schema progression and refusal, duplicate/orphan
 rejection, due-date boundaries, lifecycle correction, guarded deletion, filtered numbering, archive,
@@ -987,7 +961,7 @@ cascades; archive preserves all obligations. Future task-parent guards must run 
 fixed across mutations, resets, reversals, archive, rename, and save failure. Resolve a shown UUID
 against current ledger data before acting. Deleted IDs fail without shifting later rows; a restored
 snapshot with that identity can be resolved again after undo. `CommandResult.getDisplayedPayments`
-is an optional typed immutable snapshot for later UI integration, preserved by `withFeedback`,
+is an optional typed immutable snapshot, preserved by `withFeedback`,
 `withDisplayedLessons`, and `withDisplayedHomework`. Do not parse feedback strings. Only `pay list`
 sets this selection; account/dues/overview/dashboard remain unnumbered. Task links should resolve
 `pay/INDEX` by this same shown-ID rule and store the original payment UUID, including after reversal.
