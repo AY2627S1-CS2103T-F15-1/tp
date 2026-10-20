@@ -23,7 +23,7 @@ public class Person {
     public static final String MESSAGE_SUBJECT_COUNT = "A student must have between 1 and 10 subjects.";
 
     private final UUID id;
-    private final boolean archived;
+    private final boolean isArchived;
 
     // Identity fields
     private final Name name;
@@ -54,11 +54,11 @@ public class Person {
     }
 
     /** Creates an immutable student with a persisted identity and archive state. */
-    public Person(UUID id, boolean archived, Name name, Phone phone, Email email, Level level,
+    public Person(UUID id, boolean isArchived, Name name, Phone phone, Email email, Level level,
             Set<Subject> subjects, Rate rate, Venue venue, Remark remark) {
         requireAllNonNull(id, name, phone, level, subjects, rate, remark);
         this.id = id;
-        this.archived = archived;
+        this.isArchived = isArchived;
         checkArgument(isValidSubjectCount(subjects.size()), MESSAGE_SUBJECT_COUNT);
         this.name = name;
         this.phone = phone;
@@ -80,17 +80,17 @@ public class Person {
     }
 
     public boolean isArchived() {
-        return archived;
+        return isArchived;
     }
 
     /** Returns a copy with the requested archive state, retaining the persistent identity. */
-    public Person withArchived(boolean value) {
-        return new Person(id, value, name, phone, email, level, subjects, rate, venue, remark);
+    public Person withArchived(boolean shouldBeArchived) {
+        return new Person(id, shouldBeArchived, name, phone, email, level, subjects, rate, venue, remark);
     }
 
     /** Retains this student's details under the supplied persistent identity. */
     public Person withId(UUID value) {
-        return new Person(value, archived, name, phone, email, level, subjects, rate, venue, remark);
+        return new Person(value, isArchived, name, phone, email, level, subjects, rate, venue, remark);
     }
 
     public Name getName() {
@@ -180,13 +180,13 @@ public class Person {
                 && rate.equals(otherPerson.rate)
                 && Objects.equals(venue, otherPerson.venue)
                 && remark.equals(otherPerson.remark)
-                && archived == otherPerson.archived;
+                && isArchived == otherPerson.isArchived;
     }
 
     @Override
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
-        return Objects.hash(name, phone, email, level, subjects, rate, venue, remark, archived);
+        return Objects.hash(name, phone, email, level, subjects, rate, venue, remark, isArchived);
     }
 
     @Override
