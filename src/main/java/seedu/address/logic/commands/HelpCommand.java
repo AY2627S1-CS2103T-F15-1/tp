@@ -39,10 +39,11 @@ public class HelpCommand extends Command {
             new CommandHelp("student", "Groups student commands",
                     "student add|edit|delete|find|view|list|archive|restore (same arguments as top-level commands)",
                     "Example: student find wei"),
-            new CommandHelp("archive", "Archives a student while retaining history", "archive INDEX",
+            new CommandHelp("archive", "Archives a student while retaining history",
+                    ArchiveCommand.MESSAGE_USAGE_ARCHIVE,
                     "Parameters: INDEX of a student in the displayed list. The student leaves the active list; "
                             + "lessons and homework are kept.\nExample: archive 3"),
-            new CommandHelp("restore", "Restores an archived student", "student list archived/ then restore INDEX",
+            new CommandHelp("restore", "Restores an archived student", ArchiveCommand.MESSAGE_USAGE_RESTORE,
                     "Parameters: INDEX of a student in the archived list, so type 'list archived/' first.\n"
                             + "Example: restore 1"),
             new CommandHelp("demo", "Previews sample data for an empty dataset", "demo [confirm]",
