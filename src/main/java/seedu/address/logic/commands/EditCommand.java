@@ -57,8 +57,7 @@ public class EditCommand extends Command {
     public static final String MESSAGE_EDIT_PERSON_SUCCESS = "Edited student: %1$s";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
     public static final String MESSAGE_DUPLICATE_PERSON = "This student already exists in TutorFlow.";
-    public static final String MESSAGE_SAME_NAME_WARNING =
-            "\nNote: you already have another student named %1$s. Both are now in your list.";
+    public static final String MESSAGE_SAME_NAME_WARNING = AddCommand.MESSAGE_SAME_NAME_WARNING;
 
     private final Index index;
     private final EditPersonDescriptor editPersonDescriptor;
