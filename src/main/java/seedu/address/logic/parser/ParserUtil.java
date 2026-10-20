@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -39,6 +40,10 @@ public class ParserUtil {
     public static final String MESSAGE_TOO_MANY_SUBJECTS = "A student can have at most "
             + MAX_SUBJECTS_PER_STUDENT + " subjects.";
     public static final String MESSAGE_FLAG_TAKES_NO_VALUE = "The '%1$s' flag does not take a value.";
+
+    /** The word "s/o" ("son of"), which a name may contain although {@code s/} is the subject prefix. */
+    private static final Pattern SON_OF = Pattern.compile("(?<=\\s)s/o(?=\\s|$)");
+    private static final char SON_OF_MASK = '\uE000';
 
     /**
      * Parses {@code oneBasedIndex} into an {@code Index} and returns it. Leading and trailing whitespaces will be
@@ -321,6 +326,20 @@ public class ParserUtil {
         if (!missing.isEmpty()) {
             throw new ParseException(String.format(MESSAGE_MISSING_PARAMETERS, missing, usage));
         }
+    }
+
+    /**
+     * Returns {@code arguments} with every stand-alone {@code s/o} hidden from the tokenizer, so that a name such as
+     * {@code Priya s/o Kumar} can be typed as written. Pass the values of the fields that may contain it through
+     * {@link #unmaskSonOf(String)}.
+     */
+    public static String maskSonOf(String arguments) {
+        return SON_OF.matcher(arguments).replaceAll("s" + SON_OF_MASK + "o");
+    }
+
+    /** Returns {@code value} with every {@code s/o} hidden by {@link #maskSonOf(String)} written out again. */
+    public static String unmaskSonOf(String value) {
+        return value.replace(SON_OF_MASK, '/');
     }
 
     /** Rejects non-printable text before trimming or whitespace normalization hides it. */
