@@ -17,14 +17,16 @@ public class ListCommandParser implements Parser<ListCommand> {
                 PREFIX_LEVEL, PREFIX_SUBJECT, PREFIX_ARCHIVED, PREFIX_ALL);
         values.verifyNoDuplicatePrefixesFor(PREFIX_LEVEL, PREFIX_SUBJECT, PREFIX_ARCHIVED, PREFIX_ALL);
         values.verifyNoEmptyValuesFor(PREFIX_LEVEL, PREFIX_SUBJECT);
-        boolean archived = values.getValue(PREFIX_ARCHIVED).isPresent();
-        boolean all = values.getValue(PREFIX_ALL).isPresent();
-        if (!values.getPreamble().isBlank() || archived && all
-                || !values.getValue(PREFIX_ARCHIVED).orElse("").isEmpty()
-                || !values.getValue(PREFIX_ALL).orElse("").isEmpty()) {
+        if (!values.getPreamble().isBlank()) {
+            throw ParserUtil.invalidFormat(ListCommand.MESSAGE_USAGE);
+        }
+        boolean isArchivedOnly = ParserUtil.parseFlag(values, PREFIX_ARCHIVED);
+        boolean isArchivedIncluded = ParserUtil.parseFlag(values, PREFIX_ALL);
+        if (isArchivedOnly && isArchivedIncluded) {
             throw new ParseException(ListCommand.MESSAGE_USAGE);
         }
         return new ListCommand(ParserUtil.parseOptional(values, PREFIX_LEVEL, ParserUtil::parseLevel),
-                ParserUtil.parseOptional(values, PREFIX_SUBJECT, ParserUtil::parseSubject), archived, all);
+                ParserUtil.parseOptional(values, PREFIX_SUBJECT, ParserUtil::parseSubject),
+                isArchivedOnly, isArchivedIncluded);
     }
 }
