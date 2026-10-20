@@ -5,6 +5,7 @@ import static java.util.Objects.requireNonNull;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -189,7 +190,8 @@ public class AddressBook implements ReadOnlyAddressBook {
 
     /** Replaces an assignment while preserving its identity. */
     public void setHomework(Homework target, Homework replacement) {
-        if (!target.getId().equals(replacement.getId()) || !homework.contains(target)) {
+        if (!target.getId().equals(replacement.getId()) || !target.getStudentId().equals(replacement.getStudentId())
+                || !homework.contains(target)) {
             throw new IllegalArgumentException("Homework identity must be preserved.");
         }
         validateHomework(replacement, target);
@@ -210,11 +212,15 @@ public class AddressBook implements ReadOnlyAddressBook {
                 .noneMatch(person -> person.getId().equals(item.getStudentId()))) {
             throw new IllegalArgumentException("Homework student does not exist.");
         }
-        if (homework.stream().filter(existing -> target == null || !existing.getId().equals(target.getId()))
-                .anyMatch(existing ->
-                existing.getId().equals(item.getId()) || existing.isSameAssignment(item))) {
-            throw new IllegalArgumentException("This student already has homework '" + item.getDescription()
-                    + "' due " + item.getDueDate() + ".");
+        List<Homework> others = homework.stream()
+                .filter(existing -> target == null || !existing.getId().equals(target.getId())).toList();
+        if (others.stream().anyMatch(existing -> existing.getId().equals(item.getId()))) {
+            throw new IllegalArgumentException("Homework identity already exists.");
+        }
+        Optional<Homework> duplicate = others.stream().filter(existing -> existing.isSameAssignment(item)).findFirst();
+        if (duplicate.isPresent()) {
+            throw new IllegalArgumentException(String.format(Homework.MESSAGE_DUPLICATE,
+                    duplicate.get().getDescription(), duplicate.get().getDueDate()));
         }
     }
 
