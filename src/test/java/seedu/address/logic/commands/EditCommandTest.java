@@ -119,6 +119,14 @@ public class EditCommandTest {
     }
 
     @Test
+    public void execute_nameChangedToNameOfAnotherStudent_usesTheNoteOfAdd() {
+        String expected = "\nNote: you already have a student named Tan Wei Ming. Both are now in your list.";
+
+        assertEquals(expected, String.format(EditCommand.MESSAGE_SAME_NAME_WARNING, "Tan Wei Ming"));
+        assertEquals(AddCommand.MESSAGE_SAME_NAME_WARNING, EditCommand.MESSAGE_SAME_NAME_WARNING);
+    }
+
+    @Test
     public void execute_nameNotChanged_successWithoutWarning() {
         Person firstPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
         Person secondPerson = model.getFilteredPersonList().get(INDEX_SECOND_PERSON.getZeroBased());
