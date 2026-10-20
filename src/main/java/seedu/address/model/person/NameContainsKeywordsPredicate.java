@@ -44,6 +44,11 @@ public class NameContainsKeywordsPredicate implements Predicate<Person> {
     }
 
     @Override
+    public int hashCode() {
+        return keywords.hashCode();
+    }
+
+    @Override
     public String toString() {
         return new ToStringBuilder(this).add("keywords", keywords).toString();
     }
