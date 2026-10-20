@@ -1,6 +1,7 @@
 package seedu.address.storage;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -12,6 +13,9 @@ import seedu.address.model.homework.HomeworkStatus;
 
 /** JSON adapter retaining every homework field, including historical feedback. */
 class JsonAdaptedHomework {
+    public static final String MISSING_FIELD_MESSAGE_FORMAT = "Homework's %s field is missing!";
+    public static final String INVALID_FIELD_MESSAGE_FORMAT = "Homework's %s field is invalid: %s";
+
     private final String id;
     private final String studentId;
     private final String description;
@@ -38,13 +42,48 @@ class JsonAdaptedHomework {
                 homework.getDueDate().toString(), homework.getStatus().name(), homework.getFeedback().orElse(null));
     }
 
-    /** Restores an assignment, rejecting corrupt or missing required values. */
+    /**
+     * Restores an assignment, rejecting corrupt or missing required values with a message that names the field.
+     * The status is accepted in any letter case, because a data file may be edited by hand.
+     *
+     * @throws IllegalValueException if a field is missing or invalid.
+     */
     public Homework toModelType() throws IllegalValueException {
+        UUID modelId = parseIdentifier(id, "id");
+        UUID modelStudentId = parseIdentifier(studentId, "studentId");
+        requirePresent(description, "description");
+        requirePresent(dueDate, "dueDate");
+        requirePresent(status, "status");
+        LocalDate modelDueDate;
         try {
-            return new Homework(UUID.fromString(id), UUID.fromString(studentId), description,
-                    LocalDate.parse(dueDate), HomeworkStatus.valueOf(status), feedback);
-        } catch (RuntimeException e) {
-            throw new IllegalValueException("Invalid homework: " + e.getMessage());
+            modelDueDate = LocalDate.parse(dueDate);
+        } catch (DateTimeParseException e) {
+            throw new IllegalValueException(String.format(INVALID_FIELD_MESSAGE_FORMAT, "dueDate",
+                    "a date is written as YYYY-MM-DD"));
+        }
+        HomeworkStatus modelStatus = HomeworkStatus.fromText(status)
+                .orElseThrow(() -> new IllegalValueException(String.format(INVALID_FIELD_MESSAGE_FORMAT, "status",
+                        HomeworkStatus.MESSAGE_CONSTRAINTS)));
+        try {
+            return new Homework(modelId, modelStudentId, description, modelDueDate, modelStatus, feedback);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalValueException(e.getMessage());
+        }
+    }
+
+    private static void requirePresent(String value, String fieldName) throws IllegalValueException {
+        if (value == null) {
+            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, fieldName));
+        }
+    }
+
+    private static UUID parseIdentifier(String value, String fieldName) throws IllegalValueException {
+        requirePresent(value, fieldName);
+        try {
+            return UUID.fromString(value);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalValueException(String.format(INVALID_FIELD_MESSAGE_FORMAT, fieldName,
+                    "an identifier has 36 characters, as in 123e4567-e89b-12d3-a456-426614174000"));
         }
     }
 }
