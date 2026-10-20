@@ -10,8 +10,8 @@ import seedu.address.model.ReadOnlyAddressBook;
 /** Reads the current data file, with a separate legacy source for migration. */
 public class VersionedAddressBookStorage extends JsonAddressBookStorage {
     private final Path legacy;
-    private boolean initialSave;
-    private boolean inaccessibleLegacy;
+    private boolean isInitialSaveRequired;
+    private boolean isLegacyInaccessible;
 
     /** Creates storage with separate current and legacy paths. */
     public VersionedAddressBookStorage(Path current, Path legacy) {
@@ -21,8 +21,8 @@ public class VersionedAddressBookStorage extends JsonAddressBookStorage {
 
     @Override
     public Optional<ReadOnlyAddressBook> readAddressBook() throws DataLoadingException {
-        initialSave = false;
-        inaccessibleLegacy = false;
+        isInitialSaveRequired = false;
+        isLegacyInaccessible = false;
         if (sourcePresence(getAddressBookFilePath()) != SourcePresence.ABSENT) {
             if (sourcePresence(getAddressBookFilePath()) == SourcePresence.UNKNOWN) {
                 throw new DataLoadingException(new IOException("Cannot inspect the v1.4 data file."));
@@ -30,23 +30,23 @@ public class VersionedAddressBookStorage extends JsonAddressBookStorage {
             return super.readAddressBook();
         }
         if (sourcePresence(legacy) == SourcePresence.UNKNOWN) {
-            inaccessibleLegacy = true;
+            isLegacyInaccessible = true;
             throw new DataLoadingException(new IOException("Cannot inspect the legacy data file."));
         }
         Optional<ReadOnlyAddressBook> migrated = super.readAddressBook(legacy);
-        initialSave = migrated.isPresent();
+        isInitialSaveRequired = migrated.isPresent();
         return migrated;
     }
 
     @Override
     public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
-        if (sourcePresence(getAddressBookFilePath()) == SourcePresence.UNKNOWN || inaccessibleLegacy) {
+        if (sourcePresence(getAddressBookFilePath()) == SourcePresence.UNKNOWN || isLegacyInaccessible) {
             throw new IOException("Restore access to the data files and restart before saving.");
         }
         super.saveAddressBook(addressBook);
     }
 
     public boolean requiresInitialSave() {
-        return initialSave;
+        return isInitialSaveRequired;
     }
 }
