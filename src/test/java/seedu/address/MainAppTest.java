@@ -14,8 +14,6 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import seedu.address.commons.exceptions.DataLoadingException;
-import seedu.address.commons.exceptions.UnsupportedSchemaException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.UserPrefs;
 import seedu.address.storage.JsonUserPrefsStorage;
@@ -76,12 +74,14 @@ class MainAppTest {
             }
         };
 
-        DataLoadingException error = assertThrows(DataLoadingException.class, app::init);
-        assertTrue(error.getCause() instanceof UnsupportedSchemaException);
-        assertTrue(error.getMessage().contains("Unsupported data schema version"));
+        app.init();
+        // start() shows this text in a window, so it must be the plain message without a Java class name
+        assertTrue(app.startupRefusal.startsWith("Unsupported data schema version: "), app.startupRefusal);
+        assertTrue(app.startupRefusal.endsWith("The original data file has not been changed."), app.startupRefusal);
         assertNull(app.model);
         assertNull(app.logic);
         assertNull(app.ui);
+        app.stop(); // JavaFX calls stop() after the refusal, when there is no model to take preferences from
         assertThrows(IOException.class, () -> app.storage.saveAddressBook(new AddressBook()));
         assertArrayEquals(original, Files.readAllBytes(source));
         assertFalse(Files.exists(isCurrent ? legacy : current));
