@@ -7,6 +7,7 @@ import java.util.Optional;
 import java.util.logging.Logger;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.stage.Stage;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.exceptions.DataLoadingException;
@@ -45,6 +46,7 @@ public class MainApp extends Application {
     protected Storage storage;
     protected Model model;
     protected String startupWarning = "";
+    protected String startupRefusal; // null unless the data file was written by an unsupported version
 
     @Override
     public void init() throws Exception {
@@ -56,7 +58,13 @@ public class MainApp extends Application {
         VersionedAddressBookStorage addressBookStorage = createAddressBookStorage();
         storage = new StorageManager(addressBookStorage, userPrefsStorage);
 
-        model = initModelManager(storage, userPrefs, addressBookStorage);
+        try {
+            model = initModelManager(storage, userPrefs, addressBookStorage);
+        } catch (DataLoadingException e) {
+            // The data version is not supported, so nothing more is built: start() tells the user and stops
+            startupRefusal = e.getCause().getMessage();
+            return;
+        }
 
         logic = new LogicManager(model, storage, startupWarning, addressBookStorage.requiresInitialSave());
 
@@ -139,6 +147,12 @@ public class MainApp extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+        if (startupRefusal != null) {
+            // A user who starts the JAR from a file manager has no console, so the reason is shown in a window
+            UiManager.showStartupRefusal(startupRefusal);
+            Platform.exit();
+            System.exit(1);
+        }
         logger.info("Starting AddressBook " + MainApp.VERSION);
         ui.start(primaryStage);
     }
@@ -146,6 +160,9 @@ public class MainApp extends Application {
     @Override
     public void stop() {
         logger.info("============================ [ Stopping AddressBook ] =============================");
+        if (model == null) {
+            return;
+        }
         try {
             storage.saveUserPrefs(model.getUserPrefs());
         } catch (IOException e) {
