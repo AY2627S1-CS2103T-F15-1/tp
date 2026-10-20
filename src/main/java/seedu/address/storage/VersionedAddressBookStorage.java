@@ -11,8 +11,8 @@ import seedu.address.model.ReadOnlyAddressBook;
 /** Reads the current data file, with a separate legacy source for migration. */
 public class VersionedAddressBookStorage extends JsonAddressBookStorage {
     private final Path legacy;
-    private boolean initialSave;
-    private boolean failedLegacyRead;
+    private boolean isInitialSaveRequired;
+    private boolean hasLegacyReadFailed;
     private Path readSource;
 
     /** Creates storage with separate current and legacy paths. */
@@ -24,8 +24,8 @@ public class VersionedAddressBookStorage extends JsonAddressBookStorage {
 
     @Override
     public Optional<ReadOnlyAddressBook> readAddressBook() throws DataLoadingException {
-        initialSave = false;
-        failedLegacyRead = false;
+        isInitialSaveRequired = false;
+        hasLegacyReadFailed = false;
         readSource = getAddressBookFilePath();
         if (sourcePresence(getAddressBookFilePath()) != SourcePresence.ABSENT) {
             return super.readAddressBook();
@@ -33,10 +33,10 @@ public class VersionedAddressBookStorage extends JsonAddressBookStorage {
         readSource = legacy;
         try {
             Optional<ReadOnlyAddressBook> migrated = super.readAddressBook(legacy);
-            initialSave = migrated.isPresent();
+            isInitialSaveRequired = migrated.isPresent();
             return migrated;
         } catch (DataLoadingException e) {
-            failedLegacyRead = !(e.getCause() instanceof UnsupportedSchemaException);
+            hasLegacyReadFailed = !(e.getCause() instanceof UnsupportedSchemaException);
             throw e;
         }
     }
@@ -47,7 +47,7 @@ public class VersionedAddressBookStorage extends JsonAddressBookStorage {
         if (sourcePresence(getAddressBookFilePath()) == SourcePresence.UNKNOWN) {
             throw new IOException("Restore access to the data files and restart before saving.");
         }
-        if (failedLegacyRead) {
+        if (hasLegacyReadFailed) {
             switch (sourcePresence(legacy)) {
                 case PRESENT -> preserveUnreadableFile(legacy);
                 case ABSENT -> {
@@ -55,7 +55,7 @@ public class VersionedAddressBookStorage extends JsonAddressBookStorage {
                 }
                 default -> throw new IOException("Restore access to the legacy source before saving.");
             }
-            failedLegacyRead = false;
+            hasLegacyReadFailed = false;
         }
         super.saveAddressBook(addressBook);
     }
@@ -65,6 +65,6 @@ public class VersionedAddressBookStorage extends JsonAddressBookStorage {
     }
 
     public boolean requiresInitialSave() {
-        return initialSave;
+        return isInitialSaveRequired;
     }
 }
