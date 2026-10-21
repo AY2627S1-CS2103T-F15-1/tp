@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -75,6 +76,12 @@ public class DemoWorkflowTest {
                 message);
         assertEquals(List.of("Amy Tan"), names());
         assertFalse(logic.isDemoMode());
+    }
+
+    @Test
+    public void preview_offersTheConfirmingCommand() throws Exception {
+        assertEquals(Optional.of("demo confirm"), logic.execute("demo").getConfirmationCommand());
+        assertTrue(logic.execute("demo confirm").getConfirmationCommand().isEmpty());
     }
 
     @Test

@@ -78,7 +78,9 @@ public class DeleteCommand extends Command {
         }
 
         if (!isConfirmed) {
-            return new CommandResult(getConfirmationPreview(personToDelete, records));
+            return new CommandResult(getConfirmationPreview(personToDelete, records))
+                    .withConfirmationCommand(COMMAND_WORD + " " + targetIndex.getOneBased() + " "
+                            + CONFIRM_KEYWORD);
         }
 
         model.deletePerson(personToDelete);

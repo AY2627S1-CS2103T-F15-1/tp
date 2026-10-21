@@ -22,6 +22,7 @@ public class CommandResult {
     private final List<Homework> displayedHomework;
     private final DetailView detailView;
     private final List<Person> addedStudents;
+    private final String confirmationCommand;
 
     /** Help information should be shown to the user. */
     private final boolean showHelp;
@@ -33,11 +34,13 @@ public class CommandResult {
      * Constructs a {@code CommandResult} with the specified fields.
      */
     public CommandResult(String feedbackToUser, boolean showHelp, boolean exit) {
-        this(feedbackToUser, showHelp, exit, null, null, null, null);
+        this(feedbackToUser, showHelp, exit, null, null, null, null, null);
     }
 
     private CommandResult(String feedbackToUser, boolean showHelp, boolean exit, List<Lesson> displayedLessons,
-            List<Homework> displayedHomework, DetailView detailView, List<Person> addedStudents) {
+            List<Homework> displayedHomework, DetailView detailView, List<Person> addedStudents,
+            String confirmationCommand) {
+        this.confirmationCommand = confirmationCommand;
         this.detailView = detailView;
         this.addedStudents = addedStudents == null ? null : List.copyOf(addedStudents);
         this.displayedHomework = displayedHomework == null ? null : List.copyOf(displayedHomework);
@@ -66,7 +69,7 @@ public class CommandResult {
     /** Attaches the immutable numbered selection actually rendered in this result. */
     public CommandResult withDisplayedLessons(List<Lesson> lessons) {
         return new CommandResult(feedbackToUser, showHelp, exit, lessons, displayedHomework, detailView,
-                addedStudents);
+                addedStudents, confirmationCommand);
     }
 
     public Optional<List<Homework>> getDisplayedHomework() {
@@ -76,7 +79,7 @@ public class CommandResult {
     /** Attaches immutable homework rows actually numbered in this result. */
     public CommandResult withDisplayedHomework(List<Homework> homework) {
         return new CommandResult(feedbackToUser, showHelp, exit, displayedLessons, homework, detailView,
-                addedStudents);
+                addedStudents, confirmationCommand);
     }
 
     /** Returns what the detail pane shows for this result, if the command has something for it. */
@@ -87,7 +90,7 @@ public class CommandResult {
     /** Attaches the structured content that the detail pane shows instead of the text of this result. */
     public CommandResult withDetailView(DetailView view) {
         return new CommandResult(feedbackToUser, showHelp, exit, displayedLessons, displayedHomework,
-                requireNonNull(view), addedStudents);
+                requireNonNull(view), addedStudents, confirmationCommand);
     }
 
     /** Returns the students that this command added, which the student list highlights. */
@@ -95,16 +98,30 @@ public class CommandResult {
         return addedStudents == null ? List.of() : addedStudents;
     }
 
+    /**
+     * Returns the command that carries out what this result only previewed, such as {@code delete 3 confirm}, if
+     * the command asked for confirmation. A window offers it as a button, so it never has to read the text.
+     */
+    public Optional<String> getConfirmationCommand() {
+        return Optional.ofNullable(confirmationCommand);
+    }
+
+    /** Marks this result as a preview that {@code command} would carry out. */
+    public CommandResult withConfirmationCommand(String command) {
+        return new CommandResult(feedbackToUser, showHelp, exit, displayedLessons, displayedHomework, detailView,
+                addedStudents, requireNonNull(command));
+    }
+
     /** Marks {@code students} as added by this command. */
     public CommandResult withAddedStudents(List<Person> students) {
         return new CommandResult(feedbackToUser, showHelp, exit, displayedLessons, displayedHomework, detailView,
-                requireNonNull(students));
+                requireNonNull(students), confirmationCommand);
     }
 
     /** Replaces feedback while retaining presentation data and command flags. */
     public CommandResult withFeedback(String feedback) {
         return new CommandResult(feedback, showHelp, exit, displayedLessons, displayedHomework, detailView,
-                addedStudents);
+                addedStudents, confirmationCommand);
     }
 
     /**
@@ -115,7 +132,7 @@ public class CommandResult {
         requireNonNull(text);
         DetailView noted = detailView == null || text.isBlank() ? detailView : detailView.withNote(text.strip());
         return new CommandResult(feedbackToUser + text, showHelp, exit, displayedLessons, displayedHomework, noted,
-                addedStudents);
+                addedStudents, confirmationCommand);
     }
 
     public boolean isShowHelp() {

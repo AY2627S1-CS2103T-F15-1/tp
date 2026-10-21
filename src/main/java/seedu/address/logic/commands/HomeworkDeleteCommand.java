@@ -42,7 +42,8 @@ public class HomeworkDeleteCommand extends Command {
         Homework target = HomeworkCommandSupport.target(model, index);
         if (target.getFeedback().isPresent() && !isConfirmed) {
             return new CommandResult(String.format(MESSAGE_CONFIRM_FEEDBACK, target.getDescription(),
-                    index.getOneBased()));
+                    index.getOneBased()))
+                    .withConfirmationCommand("hw delete " + index.getOneBased() + " confirm");
         }
         model.deleteHomework(target);
         logger.fine("Deleted a homework item");

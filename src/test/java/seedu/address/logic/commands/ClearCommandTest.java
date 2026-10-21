@@ -7,6 +7,8 @@ import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
 import static seedu.address.testutil.TypicalLessons.getTypicalAddressBookWithLessons;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.model.AddressBook;
@@ -39,6 +41,14 @@ public class ClearCommandTest {
         Model expectedModel = new ModelManager();
 
         assertCommandSuccess(new ClearCommand(true), model, ClearCommand.MESSAGE_SUCCESS, expectedModel);
+    }
+
+    @Test
+    public void execute_notConfirmed_offersTheConfirmingCommand() {
+        Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
+
+        assertEquals(Optional.of("clear confirm"), new ClearCommand().execute(model).getConfirmationCommand());
+        assertTrue(new ClearCommand(true).execute(model).getConfirmationCommand().isEmpty());
     }
 
     @Test

@@ -3,7 +3,10 @@ package seedu.address.logic.commands;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
@@ -33,6 +36,21 @@ public class CommandResultTest {
 
         // different exit value -> returns false
         assertFalse(commandResult.equals(new CommandResult("feedback", false, true)));
+    }
+
+    @Test
+    public void withConfirmationCommand_keepsTheRestOfTheResult() {
+        CommandResult plain = new CommandResult("feedback", true, false);
+        assertTrue(plain.getConfirmationCommand().isEmpty());
+
+        CommandResult preview = plain.withConfirmationCommand("delete 1 confirm");
+
+        assertEquals(Optional.of("delete 1 confirm"), preview.getConfirmationCommand());
+        assertEquals("feedback", preview.getFeedbackToUser());
+        assertTrue(preview.isShowHelp());
+        assertEquals(Optional.of("delete 1 confirm"), preview.withFeedback("other").getConfirmationCommand());
+        assertEquals(Optional.of("delete 1 confirm"), preview.withAppendedText(" more").getConfirmationCommand());
+        assertThrows(NullPointerException.class, () -> plain.withConfirmationCommand(null));
     }
 
     @Test

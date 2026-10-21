@@ -10,6 +10,7 @@ import static seedu.address.testutil.TypicalPersons.ALICE;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
@@ -59,6 +60,15 @@ public class HomeworkDeleteCommandTest {
         assertEquals("This homework has feedback recorded: Algebra Q1-10. "
                 + "Type 'hw delete 1 confirm' to delete it anyway. Nothing is deleted.", message);
         assertEquals(1, model.getAddressBook().getHomeworkList().size());
+    }
+
+    @Test
+    public void execute_withFeedbackUnconfirmed_offersTheConfirmingCommand() throws Exception {
+        showWith(new HomeworkBuilder(ALICE).withStatus(HomeworkStatus.SUBMITTED).withFeedback("Keep").build());
+
+        CommandResult preview = new HomeworkDeleteCommand(INDEX_FIRST_PERSON, false).execute(model);
+
+        assertEquals(Optional.of("hw delete 1 confirm"), preview.getConfirmationCommand());
     }
 
     @Test

@@ -12,6 +12,7 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.time.LocalDate;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
@@ -102,6 +103,23 @@ public class DeleteCommandTest {
         assertCommandSuccess(new DeleteCommand(INDEX_FIRST_PERSON), model, expectedMessage, expectedModel);
         assertTrue(model.getFilteredPersonList().contains(student));
         assertEquals(2, model.getAddressBook().getLessonList().size());
+    }
+
+    @Test
+    public void execute_studentWithLessonsNotConfirmed_offersTheConfirmingCommand() throws Exception {
+        Person student = model.getFilteredPersonList().get(INDEX_SECOND_PERSON.getZeroBased());
+        model.addLesson(new LessonBuilder().withStudent(student).withDate(LocalDate.now().plusDays(3)).build());
+
+        CommandResult preview = new DeleteCommand(INDEX_SECOND_PERSON).execute(model);
+
+        assertEquals(Optional.of("delete 2 confirm"), preview.getConfirmationCommand());
+    }
+
+    @Test
+    public void execute_studentWithoutRecords_offersNoConfirmation() throws Exception {
+        CommandResult result = new DeleteCommand(INDEX_FIRST_PERSON).execute(model);
+
+        assertTrue(result.getConfirmationCommand().isEmpty());
     }
 
     @Test

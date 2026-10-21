@@ -44,7 +44,8 @@ public class ClearCommand extends Command {
     public CommandResult execute(Model model) {
         requireNonNull(model);
         if (!isConfirmed) {
-            return new CommandResult(MESSAGE_CONFIRMATION);
+            return new CommandResult(MESSAGE_CONFIRMATION)
+                    .withConfirmationCommand(COMMAND_WORD + " " + CONFIRM_KEYWORD);
         }
         model.setAddressBook(new AddressBook());
         return new CommandResult(MESSAGE_SUCCESS);

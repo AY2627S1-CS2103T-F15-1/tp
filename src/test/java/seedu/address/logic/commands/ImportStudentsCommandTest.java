@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -52,6 +53,14 @@ public class ImportStudentsCommandTest {
                 + "blank lines ignored: 0\n"
                 + "Type 'import students file/students.csv confirm' to add 3 students.", message);
         assertTrue(model.getAddressBook().getPersonList().isEmpty());
+    }
+
+    @Test
+    public void execute_previewOfAGoodFile_offersTheConfirmingCommand() throws Exception {
+        CommandResult preview = command(THREE, false).execute(model);
+
+        assertEquals(Optional.of("import students file/students.csv confirm"), preview.getConfirmationCommand());
+        assertTrue(command(THREE, true).execute(model).getConfirmationCommand().isEmpty());
     }
 
     @Test
@@ -112,7 +121,9 @@ public class ImportStudentsCommandTest {
         model.addPerson(ALICE);
         String content = HEADER + "Alice Pauline,94351253,S3,Math,50,,\n";
 
-        String message = command(content, false).execute(model).getFeedbackToUser();
+        CommandResult result = command(content, false).execute(model);
+        String message = result.getFeedbackToUser();
+        assertTrue(result.getConfirmationCommand().isEmpty());
 
         assertTrue(message.endsWith("\nThere are no new students to import."), message);
         assertTrue(command(content, true).execute(model).getFeedbackToUser().startsWith("Imported 0 students.\n"));

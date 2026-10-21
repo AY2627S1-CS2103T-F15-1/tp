@@ -87,10 +87,11 @@ public class ImportStudentsCommand extends Command {
 
         List<Person> students = report.students();
         if (!isConfirmed) {
+            String confirmation = COMMAND_WORD + " students file/" + PathArgument.format(pathText) + " confirm";
             text.append("\n").append(students.isEmpty() ? MESSAGE_NOTHING_NEW
-                    : String.format(MESSAGE_CONFIRM, COMMAND_WORD + " students file/" + PathArgument.format(pathText)
-                            + " confirm", count(students.size())));
-            return new CommandResult(text.toString());
+                    : String.format(MESSAGE_CONFIRM, confirmation, count(students.size())));
+            CommandResult preview = new CommandResult(text.toString());
+            return students.isEmpty() ? preview : preview.withConfirmationCommand(confirmation);
         }
         students.forEach(model::addPerson);
         logger.fine("Imported " + students.size() + " student(s)");

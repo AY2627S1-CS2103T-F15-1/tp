@@ -75,7 +75,8 @@ public class DemoCommand extends Command {
             throw new CommandException(MESSAGE_ALREADY_RUNNING);
         }
         if (action == Action.PREVIEW) {
-            return new CommandResult(String.format(MESSAGE_PREVIEW, SampleDataUtil.getSamplePersons().length));
+            return new CommandResult(String.format(MESSAGE_PREVIEW, SampleDataUtil.getSamplePersons().length))
+                    .withConfirmationCommand(COMMAND_WORD + " " + CONFIRM);
         }
         model.startDemo(SampleDataUtil.getSampleAddressBook());
         logger.fine("Started the demo");
