@@ -5,11 +5,11 @@ package seedu.address.model;
  */
 public enum DestructiveActionType {
     NONE(""),
-    CLEAR("clear data"),
-    DELETE_STUDENT("delete student"),
-    DELETE_HW("delete homework"),
-    DELETE_TASK("delete task"),
-    DELETE_LESSON("delete lesson");
+    CLEAR("clear"),
+    DELETE_STUDENT("student deletion"),
+    DELETE_HW("homework deletion"),
+    DELETE_TASK("task deletion"),
+    DELETE_LESSON("lesson deletion");
 
     public final String description;
 
