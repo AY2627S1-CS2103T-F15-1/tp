@@ -32,6 +32,7 @@ public class ModelManager implements Model {
 
     private DestructiveActionType lastDestructiveAction = DestructiveActionType.NONE;
     private ReadOnlyAddressBook lastState;
+    private ReadOnlyAddressBook newState;
 
     /**
      * Initializes a ModelManager with the given addressBook and userPrefs.
@@ -80,8 +81,11 @@ public class ModelManager implements Model {
 
     @Override
     public void clearAddressBook() {
-        this.saveState(DestructiveActionType.CLEAR);
-        this.addressBook.resetData(new AddressBook());
+        if (!this.addressBook.equals(new AddressBook())) {
+            this.saveState(DestructiveActionType.CLEAR);
+            this.addressBook.resetData(new AddressBook());
+            saveNewState();
+        }
     }
 
     @Override
@@ -99,6 +103,7 @@ public class ModelManager implements Model {
     public void deletePerson(Person target) {
         saveState(DestructiveActionType.DELETE_STUDENT);
         addressBook.removePerson(target);
+        saveNewState();
     }
 
     @Override
@@ -139,6 +144,7 @@ public class ModelManager implements Model {
     public void deleteHomework(Homework homework) {
         saveState(DestructiveActionType.DELETE_HW);
         addressBook.removeHomework(homework);
+        saveNewState();
     }
 
     @Override
@@ -170,6 +176,7 @@ public class ModelManager implements Model {
     public void deleteLesson(Lesson target) {
         saveState(DestructiveActionType.DELETE_LESSON);
         addressBook.removeLesson(target);
+        saveNewState();
     }
 
     @Override
@@ -223,9 +230,13 @@ public class ModelManager implements Model {
         this.lastDestructiveAction = actionType;
     }
 
+    private void saveNewState() {
+        this.newState = new AddressBook(this.addressBook);
+    }
+
     private void resetDestructiveAction() {
         // reset only if changed
-        if (!this.lastState.equals(this.addressBook)) {
+        if (!this.addressBook.equals(this.newState)) {
             lastDestructiveAction = DestructiveActionType.NONE;
         }
     }
