@@ -72,3 +72,46 @@
     -fx-background-color: #1d1d1d;
     -fx-text-fill: white;
 }
+
+/* The tabs, toolbars and icon buttons of the panels beside the detail pane */
+.panel-toolbar {
+    -fx-padding: 0 0 6 0;
+}
+
+.toolbar-button {
+    -fx-background-color: #3e7b91;
+    -fx-border-color: transparent;
+    -fx-text-fill: white;
+    -fx-font-size: 9pt;
+    -fx-padding: 3 10 3 10;
+}
+
+.toolbar-button:focused {
+    -fx-border-color: white;
+    -fx-border-width: 1;
+}
+
+.icon-button {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-border-width: 1;
+    -fx-padding: 4;
+    -fx-cursor: hand;
+}
+
+.icon-button:hover {
+    -fx-background-color: #515658;
+}
+
+.icon-button:focused {
+    -fx-border-color: white;
+    -fx-border-width: 1;
+}
+
+.icon-shape {
+    -fx-fill: #d6d6d6;
+}
+
+.icon-button:hover .icon-shape {
+    -fx-fill: white;
+}
