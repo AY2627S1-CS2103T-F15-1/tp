@@ -2,7 +2,6 @@ package seedu.address;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.logging.Logger;
 
@@ -22,6 +21,7 @@ import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.ReadOnlyUserPrefs;
 import seedu.address.model.UserPrefs;
 import seedu.address.storage.DataFileRecovery;
+import seedu.address.storage.DataFiles;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.Storage;
 import seedu.address.storage.StorageManager;
@@ -37,9 +37,9 @@ public class MainApp extends Application {
     public static final String VERSION = "V1.4 alpha";
 
     private static final Logger logger = LogsCenter.getLogger(MainApp.class);
-    private static final Path USER_PREFS_FILE_PATH = Paths.get("preferences.json");
-    private static final Path ADDRESS_BOOK_FILE_PATH = Paths.get("data", "tutorflow-v14.json");
-    private static final Path LEGACY_FILE_PATH = Paths.get("data", "addressbook.json");
+    private static final Path USER_PREFS_FILE_PATH = DataFiles.PREFERENCES_FILE;
+    private static final Path ADDRESS_BOOK_FILE_PATH = DataFiles.DATA_FILE;
+    private static final Path LEGACY_FILE_PATH = DataFiles.LEGACY_FILE;
 
     protected Ui ui;
     protected Logic logic;
