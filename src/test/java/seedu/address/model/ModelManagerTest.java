@@ -208,8 +208,8 @@ public class ModelManagerTest {
     public void undoDestructiveAction_addHomework_returnsDestructiveActionNone() {
         modelManager.addPerson(FIONA);
         Homework hw = Homework.assign(
-                GEORGE.getId(), "Homework Test",
-                LocalDate.of(2026, 11, 31));
+                FIONA.getId(), "Homework Test",
+                LocalDate.of(2026, 11, 30));
         modelManager.addHomework(hw);
         ModelManager before = copyOfModelManager();
 
