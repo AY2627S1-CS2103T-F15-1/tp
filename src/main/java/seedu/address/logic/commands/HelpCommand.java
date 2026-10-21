@@ -105,6 +105,7 @@ public class HelpCommand extends Command {
             new CommandHelp("task delete", "Deletes a task, after confirmation", TaskDeleteCommand.MESSAGE_USAGE),
             new CommandHelp("clear", "Deletes all data, after confirmation", ClearCommand.MESSAGE_USAGE),
             new CommandHelp("save", "Retries saving unsaved changes", SaveCommand.MESSAGE_USAGE, "Example: save"),
+            new CommandHelp("undo", "Restores after a deletion", UndoCommand.MESSAGE_USAGE),
             new CommandHelp("help", "Shows this list, or how to use one command", MESSAGE_USAGE),
             new CommandHelp("exit", "Exits TutorFlow", ExitCommand.MESSAGE_USAGE));
 
