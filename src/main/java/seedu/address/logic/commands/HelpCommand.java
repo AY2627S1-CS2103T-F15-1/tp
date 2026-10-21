@@ -47,6 +47,7 @@ public class HelpCommand extends Command {
                     "Parameters: INDEX of a student in the archived list, so type 'list archived/' first.\n"
                             + "Example: restore 1"),
             new CommandHelp("demo", "Looks around with sample students, safely", DemoCommand.MESSAGE_USAGE),
+            new CommandHelp("tour", "Starts the guided tour of the window", TourCommand.MESSAGE_USAGE),
             new CommandHelp("import students", "Adds students from a CSV file",
                     ImportStudentsCommand.MESSAGE_USAGE),
             new CommandHelp("find", "Finds students by name", FindCommand.MESSAGE_USAGE),

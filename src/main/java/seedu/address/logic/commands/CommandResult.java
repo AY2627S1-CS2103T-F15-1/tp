@@ -23,6 +23,7 @@ public class CommandResult {
     private final DetailView detailView;
     private final List<Person> addedStudents;
     private final String confirmationCommand;
+    private final boolean isTourRequested;
 
     /** Help information should be shown to the user. */
     private final boolean showHelp;
@@ -34,12 +35,13 @@ public class CommandResult {
      * Constructs a {@code CommandResult} with the specified fields.
      */
     public CommandResult(String feedbackToUser, boolean showHelp, boolean exit) {
-        this(feedbackToUser, showHelp, exit, null, null, null, null, null);
+        this(feedbackToUser, showHelp, exit, null, null, null, null, null, false);
     }
 
     private CommandResult(String feedbackToUser, boolean showHelp, boolean exit, List<Lesson> displayedLessons,
             List<Homework> displayedHomework, DetailView detailView, List<Person> addedStudents,
-            String confirmationCommand) {
+            String confirmationCommand, boolean isTourRequested) {
+        this.isTourRequested = isTourRequested;
         this.confirmationCommand = confirmationCommand;
         this.detailView = detailView;
         this.addedStudents = addedStudents == null ? null : List.copyOf(addedStudents);
@@ -69,7 +71,7 @@ public class CommandResult {
     /** Attaches the immutable numbered selection actually rendered in this result. */
     public CommandResult withDisplayedLessons(List<Lesson> lessons) {
         return new CommandResult(feedbackToUser, showHelp, exit, lessons, displayedHomework, detailView,
-                addedStudents, confirmationCommand);
+                addedStudents, confirmationCommand, isTourRequested);
     }
 
     public Optional<List<Homework>> getDisplayedHomework() {
@@ -79,7 +81,7 @@ public class CommandResult {
     /** Attaches immutable homework rows actually numbered in this result. */
     public CommandResult withDisplayedHomework(List<Homework> homework) {
         return new CommandResult(feedbackToUser, showHelp, exit, displayedLessons, homework, detailView,
-                addedStudents, confirmationCommand);
+                addedStudents, confirmationCommand, isTourRequested);
     }
 
     /** Returns what the detail pane shows for this result, if the command has something for it. */
@@ -90,7 +92,7 @@ public class CommandResult {
     /** Attaches the structured content that the detail pane shows instead of the text of this result. */
     public CommandResult withDetailView(DetailView view) {
         return new CommandResult(feedbackToUser, showHelp, exit, displayedLessons, displayedHomework,
-                requireNonNull(view), addedStudents, confirmationCommand);
+                requireNonNull(view), addedStudents, confirmationCommand, isTourRequested);
     }
 
     /** Returns the students that this command added, which the student list highlights. */
@@ -109,19 +111,30 @@ public class CommandResult {
     /** Marks this result as a preview that {@code command} would carry out. */
     public CommandResult withConfirmationCommand(String command) {
         return new CommandResult(feedbackToUser, showHelp, exit, displayedLessons, displayedHomework, detailView,
-                addedStudents, requireNonNull(command));
+                addedStudents, requireNonNull(command), isTourRequested);
+    }
+
+    /** Returns whether the command asks the window to start the guided tour. */
+    public boolean isTourRequested() {
+        return isTourRequested;
+    }
+
+    /** Marks this result as asking the window to start the guided tour. */
+    public CommandResult withTourRequested() {
+        return new CommandResult(feedbackToUser, showHelp, exit, displayedLessons, displayedHomework, detailView,
+                addedStudents, confirmationCommand, true);
     }
 
     /** Marks {@code students} as added by this command. */
     public CommandResult withAddedStudents(List<Person> students) {
         return new CommandResult(feedbackToUser, showHelp, exit, displayedLessons, displayedHomework, detailView,
-                requireNonNull(students), confirmationCommand);
+                requireNonNull(students), confirmationCommand, isTourRequested);
     }
 
     /** Replaces feedback while retaining presentation data and command flags. */
     public CommandResult withFeedback(String feedback) {
         return new CommandResult(feedback, showHelp, exit, displayedLessons, displayedHomework, detailView,
-                addedStudents, confirmationCommand);
+                addedStudents, confirmationCommand, isTourRequested);
     }
 
     /**
@@ -132,7 +145,7 @@ public class CommandResult {
         requireNonNull(text);
         DetailView noted = detailView == null || text.isBlank() ? detailView : detailView.withNote(text.strip());
         return new CommandResult(feedbackToUser + text, showHelp, exit, displayedLessons, displayedHomework, noted,
-                addedStudents, confirmationCommand);
+                addedStudents, confirmationCommand, isTourRequested);
     }
 
     public boolean isShowHelp() {

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -51,6 +52,24 @@ public class CommandResultTest {
         assertEquals(Optional.of("delete 1 confirm"), preview.withFeedback("other").getConfirmationCommand());
         assertEquals(Optional.of("delete 1 confirm"), preview.withAppendedText(" more").getConfirmationCommand());
         assertThrows(NullPointerException.class, () -> plain.withConfirmationCommand(null));
+    }
+
+    @Test
+    public void withTourRequested_marksTheResultAndKeepsTheRest() {
+        CommandResult plain = new CommandResult("feedback").withConfirmationCommand("delete 1 confirm");
+        assertFalse(plain.isTourRequested());
+
+        CommandResult tour = plain.withTourRequested();
+
+        assertTrue(tour.isTourRequested());
+        assertEquals("feedback", tour.getFeedbackToUser());
+        assertEquals(Optional.of("delete 1 confirm"), tour.getConfirmationCommand());
+        assertTrue(tour.withFeedback("other").isTourRequested());
+        assertTrue(tour.withAppendedText(" more").isTourRequested());
+        assertTrue(tour.withDisplayedLessons(List.of()).isTourRequested());
+        assertTrue(tour.withDisplayedHomework(List.of()).isTourRequested());
+        assertTrue(tour.withAddedStudents(List.of()).isTourRequested());
+        assertTrue(tour.withConfirmationCommand("x").isTourRequested());
     }
 
     @Test

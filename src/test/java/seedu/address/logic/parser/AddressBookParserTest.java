@@ -31,6 +31,7 @@ import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.RemarkCommand;
 import seedu.address.logic.commands.SortCommand;
 import seedu.address.logic.commands.TodayCommand;
+import seedu.address.logic.commands.TourCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
@@ -83,6 +84,13 @@ public class AddressBookParserTest {
     public void parseCommand_exit() throws Exception {
         assertTrue(parser.parseCommand(ExitCommand.COMMAND_WORD) instanceof ExitCommand);
         assertParseException(ExitCommand.COMMAND_WORD + " 3", ExitCommand.COMMAND_WORD);
+    }
+
+    @Test
+    public void parseCommand_tour() throws Exception {
+        assertTrue(parser.parseCommand(TourCommand.COMMAND_WORD) instanceof TourCommand);
+        assertTrue(parser.parseCommand("  " + TourCommand.COMMAND_WORD + "  ") instanceof TourCommand);
+        assertParseException(TourCommand.COMMAND_WORD + " now", TourCommand.COMMAND_WORD);
     }
 
     @Test
