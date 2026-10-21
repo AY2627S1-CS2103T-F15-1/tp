@@ -12,13 +12,24 @@ import seedu.address.model.person.Person;
 
 /** An immutable charge or payment. Amounts are captured when recorded, independently of later rate changes. */
 public record LedgerEntry(UUID id, UUID studentId, UUID lessonId, Kind kind,
-        BigDecimal amount, LocalDate date) {
+        BigDecimal amount, LocalDate date, String notes) {
+    public static final String MESSAGE_NOTES_CONSTRAINTS =
+            "Payment notes must contain 1-200 printable characters on one line.";
+
     /** The financial effect of a record. */
     public enum Kind { CHARGE, PAYMENT }
+
+    /** Restores records and callers that predate optional payment notes. */
+    public LedgerEntry(UUID id, UUID studentId, UUID lessonId, Kind kind, BigDecimal amount, LocalDate date) {
+        this(id, studentId, lessonId, kind, amount, date, null);
+    }
 
     /** Validates required fields and stores exact amounts at two decimal places. */
     public LedgerEntry {
         requireAllNonNull(id, studentId, kind, amount, date);
+        if (notes != null && !isValidNotes(notes)) {
+            throw new IllegalArgumentException(MESSAGE_NOTES_CONSTRAINTS);
+        }
         if ((kind == Kind.CHARGE) != (lessonId != null)) {
             throw new IllegalArgumentException("Only charges must refer to a lesson.");
         }
@@ -50,7 +61,19 @@ public record LedgerEntry(UUID id, UUID studentId, UUID lessonId, Kind kind,
 
     /** Creates a payment against a student account. */
     public static LedgerEntry payment(Person student, BigDecimal amount, LocalDate date) {
-        return new LedgerEntry(UUID.randomUUID(), student.getId(), null, Kind.PAYMENT, amount, date);
+        return payment(student, amount, date, null);
+    }
+
+    /** Creates a payment with optional one-line notes, such as a transfer reference. */
+    public static LedgerEntry payment(Person student, BigDecimal amount, LocalDate date, String notes) {
+        return new LedgerEntry(UUID.randomUUID(), student.getId(), null, Kind.PAYMENT, amount, date, notes);
+    }
+
+    /** Returns whether optional payment notes meet the specification's separate 200-character limit. */
+    public static boolean isValidNotes(String notes) {
+        return !notes.isBlank() && notes.length() <= 200 && notes.codePoints()
+                .noneMatch(character -> Character.isISOControl(character) || character == '\u2028'
+                        || character == '\u2029');
     }
 
     /** Returns whether this entry belongs to the given student's current identity. */

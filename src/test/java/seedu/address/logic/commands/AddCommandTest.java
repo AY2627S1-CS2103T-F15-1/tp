@@ -116,6 +116,12 @@ public class AddCommandTest {
      */
     private class ModelStub implements Model {
         @Override
+        public java.util.Optional<seedu.address.model.finance.LedgerEntry> chargeLesson(Lesson target,
+                Lesson completedLesson) {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
         public void addLedgerEntry(seedu.address.model.finance.LedgerEntry entry) {
             throw new AssertionError("This method should not be called.");
         }

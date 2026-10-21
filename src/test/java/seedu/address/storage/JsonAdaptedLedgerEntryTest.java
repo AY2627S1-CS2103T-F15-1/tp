@@ -36,7 +36,9 @@ public class JsonAdaptedLedgerEntryTest {
         for (int i = 0; i < valid.length; i++) {
             String[] missing = valid.clone();
             missing[i] = null;
-            assertThrows(IllegalValueException.class, () -> entry(missing).toModelType());
+            String field = new String[]{"id", "studentId", "lessonId", "kind", "amount", "date"}[i];
+            assertThrows(IllegalValueException.class, "Ledger entry field '" + field + "' is missing.", () ->
+                    entry(missing).toModelType());
         }
         String[] invalid = {"bad-id", "bad-student-id", "bad-lesson-id", "UNKNOWN", "-1.00", "2026-99-99"};
         for (int i = 0; i < valid.length; i++) {
@@ -71,12 +73,30 @@ public class JsonAdaptedLedgerEntryTest {
     }
 
     @Test
+    public void paymentNotes_roundTripAndLegacyAbsentNotes_areSupported() throws Exception {
+        LedgerEntry payment = LedgerEntry.payment(ALICE, BigDecimal.TEN, LocalDate.of(2026, 10, 18), "PayNow ref 4471");
+        AddressBook book = new AddressBook();
+        book.addPerson(ALICE);
+        book.addLedgerEntry(payment);
+        String json = JsonUtil.toJsonString(new JsonSerializableAddressBook(book));
+        AddressBook restored = JsonUtil.fromJsonString(json, JsonSerializableAddressBook.class).toModelType();
+        assertEquals(payment, restored.getLedgerEntries().getFirst());
+        assertEquals("PayNow ref 4471", restored.getLedgerEntries().getFirst().notes());
+        assertEquals(null, new JsonAdaptedLedgerEntry(payment.id().toString(), ALICE.getId().toString(),
+                null, "PAYMENT", "10.00", "2026-10-18").toModelType().notes());
+        for (String notes : List.of("", "a".repeat(201), "line\nbreak")) {
+            assertThrows(IllegalValueException.class, () -> new JsonAdaptedLedgerEntry(payment.id().toString(),
+                    ALICE.getId().toString(), null, "PAYMENT", "10.00", "2026-10-18", notes).toModelType());
+        }
+    }
+
+    @Test
     public void storedStudentRenamed_ledgerKeepsStableLinksAndAmounts() throws Exception {
         AddressBook book = new AddressBook();
         book.addPerson(ALICE);
         Lesson lesson = new LessonBuilder().withStudent(ALICE).build().withStudent(ALICE);
         book.addLesson(lesson);
-        book.setLesson(lesson, lesson.complete(null));
+        book.chargeLesson(lesson, lesson.complete(null));
         LedgerEntry charge = book.getLedgerEntries().getFirst();
         String json = JsonUtil.toJsonString(new JsonSerializableAddressBook(book));
         String renamed = json.replace("\"name\" : \"" + ALICE.getName() + "\"", "\"name\" : \"Alice Renamed\"")
@@ -109,7 +129,7 @@ public class JsonAdaptedLedgerEntryTest {
         book.addPerson(ALICE);
         Lesson lesson = new LessonBuilder().withStudent(ALICE).build();
         book.addLesson(lesson);
-        book.setLesson(lesson, lesson.complete(null));
+        book.chargeLesson(lesson, lesson.complete(null));
         String json = JsonUtil.toJsonString(new JsonSerializableAddressBook(book));
         String orphan = json.replace("\"lessonId\" : \"" + lesson.getId() + "\"",
                 "\"lessonId\" : \"" + UUID.randomUUID() + "\"");

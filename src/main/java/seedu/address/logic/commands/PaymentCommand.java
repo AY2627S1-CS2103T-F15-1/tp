@@ -4,8 +4,10 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.ToStringBuilder;
@@ -18,23 +20,39 @@ import seedu.address.model.person.Person;
 
 /** Records money received from a student and shows the updated amount owed or credit. */
 public class PaymentCommand extends Command {
-    public static final String COMMAND_WORD = "payment";
-    public static final String MESSAGE_USAGE = "payment: Records a payment from a student in the displayed list.\n"
-            + "Parameters: st/STUDENT_INDEX a/AMOUNT\nExample: payment st/1 a/50.00";
+    public static final String COMMAND_WORD = "pay";
+    public static final String LEGACY_COMMAND_WORD = "payment";
+    public static final String MESSAGE_USAGE = "pay: Records a payment from a student in the displayed list.\n"
+            + "Parameters: st/STUDENT_INDEX amt/AMOUNT [d/DATE] [n/NOTES]\nExample: pay st/1 amt/50.00";
     public static final String MESSAGE_AMOUNT_CONSTRAINTS =
-            "Payment amount must be greater than zero with at most two decimal places, e.g. 50 or 62.50.";
+            "Amount must be greater than 0 with at most 2 decimal places.";
+    public static final String MESSAGE_FUTURE_DATE = "Payment dates cannot be in the future.";
 
     private final Index studentIndex;
     private final BigDecimal amount;
+    private final LocalDate date;
+    private final String notes;
+    private final Clock clock;
 
     /** Creates a payment for the displayed student index, using an exact positive monetary amount. */
     public PaymentCommand(Index studentIndex, BigDecimal amount) {
-        requireAllNonNull(studentIndex, amount);
+        this(studentIndex, amount, null, null, Clock.systemDefaultZone());
+    }
+
+    /** Creates a payment with optional date/notes and an injectable clock for default dates and validation. */
+    public PaymentCommand(Index studentIndex, BigDecimal amount, LocalDate date, String notes, Clock clock) {
+        requireAllNonNull(studentIndex, amount, clock);
         if (amount.signum() <= 0 || amount.scale() > 2) {
             throw new IllegalArgumentException(MESSAGE_AMOUNT_CONSTRAINTS);
         }
         this.studentIndex = studentIndex;
         this.amount = amount.setScale(2);
+        if (notes != null && !LedgerEntry.isValidNotes(notes)) {
+            throw new IllegalArgumentException(LedgerEntry.MESSAGE_NOTES_CONSTRAINTS);
+        }
+        this.date = date;
+        this.notes = notes;
+        this.clock = clock;
     }
 
     @Override
@@ -45,24 +63,32 @@ public class PaymentCommand extends Command {
             throw new CommandException(Messages.invalidPersonIndex(studentIndex, students.size()));
         }
         Person student = students.get(studentIndex.getZeroBased());
+        LocalDate today = LocalDate.now(clock);
+        LocalDate paymentDate = date == null ? today : date;
+        if (paymentDate.isAfter(today)) {
+            throw new CommandException(MESSAGE_FUTURE_DATE);
+        }
         try {
-            model.addLedgerEntry(LedgerEntry.payment(student, amount, LocalDate.now()));
+            model.addLedgerEntry(LedgerEntry.payment(student, amount, paymentDate, notes));
         } catch (IllegalArgumentException e) {
             throw new CommandException(e.getMessage(), e);
         }
         BigDecimal balance = Ledger.balance(model.getAddressBook(), student);
-        return new CommandResult("Recorded payment of " + Ledger.format(amount) + " from " + student.getName()
-                + " (phone: " + student.getPhone() + ").\n" + Ledger.describeBalance(balance));
+        return new CommandResult("Payment of " + Ledger.format(amount) + " recorded for " + student.getName()
+                + " on " + paymentDate + ".\nBalance: " + Ledger.describeBalance(balance) + ".");
     }
 
     @Override
     public boolean equals(Object other) {
         return other == this || other instanceof PaymentCommand command
-                && studentIndex.equals(command.studentIndex) && amount.equals(command.amount);
+                && studentIndex.equals(command.studentIndex) && amount.equals(command.amount)
+                && Objects.equals(date, command.date) && Objects.equals(notes, command.notes)
+                && clock.equals(command.clock);
     }
 
     @Override
     public String toString() {
-        return new ToStringBuilder(this).add("studentIndex", studentIndex).add("amount", amount).toString();
+        return new ToStringBuilder(this).add("studentIndex", studentIndex).add("amount", amount)
+                .add("date", date).add("notes", notes).toString();
     }
 }

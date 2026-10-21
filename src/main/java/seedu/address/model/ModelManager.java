@@ -5,6 +5,7 @@ import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
 
@@ -142,6 +143,12 @@ public class ModelManager implements Model {
     public void addLedgerEntry(LedgerEntry entry) {
         requireNonNull(entry);
         addressBook.addLedgerEntry(entry);
+    }
+
+    @Override
+    public Optional<LedgerEntry> chargeLesson(Lesson target, Lesson completedLesson) {
+        requireAllNonNull(target, completedLesson);
+        return addressBook.chargeLesson(target, completedLesson);
     }
 
     @Override

@@ -5,6 +5,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_NOTES;
 
 import java.time.Clock;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.logging.Logger;
 
 import seedu.address.commons.core.LogsCenter;
@@ -33,9 +34,8 @@ public class LessonDoneCommand extends Command {
     public static final String MESSAGE_UPDATED_NOTES = "Updated notes for: %1$s.";
     public static final String MESSAGE_ALREADY_COMPLETED = "That lesson is already completed. Existing notes retained.";
     public static final String MESSAGE_CANCELLED_LESSON = "Cannot complete a cancelled lesson.";
-    public static final String MESSAGE_NO_CHARGE = "No automatic charge: This student's rate is $0.00. "
-            + "Specify an amount with amt/ when recording a charge.";
-    public static final String MESSAGE_ROUNDED_ZERO = "No automatic charge: The calculated fee rounds to $0.00.";
+    public static final String MESSAGE_NO_CHARGE =
+            "No automatic charge: The lesson fee is $0.00. No charge was recorded.";
     public static final String MESSAGE_FUTURE_LESSON =
             "That lesson is scheduled for %1$s. Mark it complete on or after that date.";
 
@@ -73,22 +73,23 @@ public class LessonDoneCommand extends Command {
             return new CommandResult(MESSAGE_ALREADY_COMPLETED);
         }
 
+        Optional<LedgerEntry> charge = Optional.empty();
         try {
-            model.setLesson(target, target.complete(notes));
+            if (target.getStatus() == LessonStatus.COMPLETED) {
+                model.setLesson(target, target.complete(notes));
+            } else {
+                charge = model.chargeLesson(target, target.complete(notes));
+            }
         } catch (IllegalArgumentException e) {
-            logger.warning("Could not complete lesson: " + e.getMessage());
+            logger.warning("Could not complete lesson due to a model validation failure");
             throw new CommandException(e.getMessage(), e);
         }
         logger.fine("Completed lesson");
         String message = target.getStatus() == LessonStatus.COMPLETED ? MESSAGE_UPDATED_NOTES : MESSAGE_SUCCESS;
         String feedback = String.format(message, Messages.format(target));
         if (target.getStatus() != LessonStatus.COMPLETED) {
-            String chargeMessage = model.getAddressBook().getLedgerEntries().stream()
-                    .filter(entry -> entry.kind() == LedgerEntry.Kind.CHARGE && target.getId().equals(entry.lessonId()))
-                    .findFirst().map(entry -> "Charge of " + Ledger.format(entry.amount()) + " recorded.")
-                    .orElseGet(() -> model.getAddressBook().getPersonList().stream().filter(target::isWith)
-                            .anyMatch(student -> student.getRate().value.signum() == 0)
-                            ? MESSAGE_NO_CHARGE : MESSAGE_ROUNDED_ZERO);
+            String chargeMessage = charge.map(entry -> "Charge of " + Ledger.format(entry.amount()) + " recorded.")
+                    .orElse(MESSAGE_NO_CHARGE);
             feedback += "\n" + chargeMessage;
         }
         return new CommandResult(feedback);

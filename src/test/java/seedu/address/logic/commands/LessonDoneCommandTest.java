@@ -181,7 +181,11 @@ public class LessonDoneCommandTest {
 
     private Model expectedModel(Lesson original, Lesson completed) {
         Model expected = new ModelManager(model.getAddressBook(), new UserPrefs());
-        expected.setLesson(original, completed);
+        if (original.getStatus() == LessonStatus.COMPLETED) {
+            expected.setLesson(original, completed);
+        } else {
+            expected.chargeLesson(original, completed);
+        }
         return expected;
     }
 }

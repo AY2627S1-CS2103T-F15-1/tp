@@ -38,6 +38,8 @@ public class DeleteCommand extends Command {
     public static final String MESSAGE_CONFIRMATION = "%1$s (phone: %2$s) has %3$d lesson(s). "
             + "These will all be deleted.\n%4$sType '" + COMMAND_WORD + " %5$d " + CONFIRM_KEYWORD + "' to proceed.";
     public static final String MESSAGE_UPCOMING_WARNING = "Warning: this student has %1$d upcoming lesson(s).\n";
+    public static final String MESSAGE_FINANCE_WARNING = "\nThis also deletes %1$d financial event(s).\n"
+            + "Balance: %2$s. Use 'archive INDEX' to retain these obligations and all history instead.";
 
     private final Index targetIndex;
     private final boolean isConfirmed;
@@ -77,8 +79,8 @@ public class DeleteCommand extends Command {
         long financialRecords = model.getAddressBook().getLedgerEntries().stream()
                 .filter(entry -> entry.isWith(personToDelete)).count();
         String financeWarning = financialRecords == 0 ? ""
-                : "Warning: this also deletes " + financialRecords + " charge/payment record(s). "
-                + Ledger.describeBalance(Ledger.balance(model.getAddressBook(), personToDelete)) + ".\n";
+                : String.format(MESSAGE_FINANCE_WARNING, financialRecords,
+                        Ledger.describeBalance(Ledger.balance(model.getAddressBook(), personToDelete)));
         List<Homework> homeworkToDelete = model.getAddressBook().getHomeworkList().stream()
                 .filter(item -> item.getStudentId().equals(personToDelete.getId())).toList();
         if (!homeworkToDelete.isEmpty()) {
@@ -91,7 +93,7 @@ public class DeleteCommand extends Command {
         }
 
         if (!isConfirmed) {
-            return new CommandResult(financeWarning + getConfirmationPrompt(personToDelete, lessonsToDelete));
+            return new CommandResult(getConfirmationPrompt(personToDelete, lessonsToDelete) + financeWarning);
         }
 
         model.deletePerson(personToDelete);
@@ -105,9 +107,9 @@ public class DeleteCommand extends Command {
         if (!isConfirmed) {
             long upcoming = homework.stream().filter(Homework::isOutstanding)
                     .filter(item -> !item.getDueDate().isBefore(LocalDate.now())).count();
-            return new CommandResult(financeWarning + getConfirmationPrompt(student, lessons)
+            return new CommandResult(getConfirmationPrompt(student, lessons)
                     + "\nThis also deletes " + homework.size() + " homework item(s), including " + upcoming
-                    + " upcoming homework item(s), and all recorded feedback.");
+                    + " upcoming homework item(s), and all recorded feedback." + financeWarning);
         }
         model.deletePerson(student);
         return new CommandResult("Deleted student: " + Messages.format(student) + ", along with "

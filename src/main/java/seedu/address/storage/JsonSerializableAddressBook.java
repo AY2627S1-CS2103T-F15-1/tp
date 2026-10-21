@@ -14,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonRootName;
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ReadOnlyAddressBook;
+import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
 
@@ -143,15 +144,17 @@ class JsonSerializableAddressBook {
                 throw new IllegalValueException(e.getMessage());
             }
         }
+        List<LedgerEntry> restoredEntries = new ArrayList<>();
         for (JsonAdaptedLedgerEntry entry : ledgerEntries) {
             if (entry == null) {
                 throw new IllegalValueException("Ledger contains a null entry.");
             }
-            try {
-                addressBook.addLedgerEntry(entry.toModelType());
-            } catch (IllegalArgumentException e) {
-                throw new IllegalValueException(e.getMessage());
-            }
+            restoredEntries.add(entry.toModelType());
+        }
+        try {
+            addressBook.setLedgerEntries(restoredEntries);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalValueException(e.getMessage());
         }
         return addressBook;
     }

@@ -9,11 +9,15 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 
 import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
@@ -23,19 +27,27 @@ import seedu.address.model.lesson.Lesson;
 import seedu.address.testutil.LessonBuilder;
 
 public class PaymentCommandTest {
+    private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-10-19T04:00:00Z"),
+            ZoneId.of("Asia/Singapore"));
+    private static final LocalDate TODAY = LocalDate.now(CLOCK);
+
+    private static PaymentCommand payment(Index student, BigDecimal amount) {
+        return new PaymentCommand(student, amount, null, null, CLOCK);
+    }
+
     @Test
     public void constructor_invalidArguments_rejected() {
-        assertThrows(NullPointerException.class, () -> new PaymentCommand(null, BigDecimal.TEN));
-        assertThrows(NullPointerException.class, () -> new PaymentCommand(INDEX_FIRST_PERSON, null));
+        assertThrows(NullPointerException.class, () -> payment(null, BigDecimal.TEN));
+        assertThrows(NullPointerException.class, () -> payment(INDEX_FIRST_PERSON, null));
         for (String amount : new String[]{"0", "-1", "1.001"}) {
-            assertThrows(IllegalArgumentException.class, () -> new PaymentCommand(INDEX_FIRST_PERSON,
+            assertThrows(IllegalArgumentException.class, () -> payment(INDEX_FIRST_PERSON,
                     new BigDecimal(amount)));
         }
     }
 
     @Test
     public void execute_nullModelOrInvalidIndex_doesNotRecordPayment() {
-        PaymentCommand command = new PaymentCommand(INDEX_FIRST_PERSON, BigDecimal.TEN);
+        PaymentCommand command = payment(INDEX_FIRST_PERSON, BigDecimal.TEN);
         assertThrows(NullPointerException.class, () -> command.execute(null));
         Model model = new ModelManager();
         assertThrows(CommandException.class, () -> command.execute(model));
@@ -49,12 +61,12 @@ public class PaymentCommandTest {
         Lesson lesson = new LessonBuilder().withStudent(ALICE).build();
         model.addLesson(lesson);
         model.addLedgerEntry(new LedgerEntry(UUID.randomUUID(), ALICE.getId(), lesson.getId(),
-                LedgerEntry.Kind.CHARGE, new BigDecimal("100.00"), LocalDate.now()));
+                LedgerEntry.Kind.CHARGE, new BigDecimal("100.00"), TODAY));
 
-        CommandResult result = new PaymentCommand(INDEX_FIRST_PERSON, new BigDecimal("25.50")).execute(model);
+        CommandResult result = payment(INDEX_FIRST_PERSON, new BigDecimal("25.50")).execute(model);
 
-        assertEquals("Recorded payment of $25.50 from " + ALICE.getName() + " (phone: " + ALICE.getPhone()
-                + ").\nOUTSTANDING $74.50", result.getFeedbackToUser());
+        assertEquals("Payment of $25.50 recorded for " + ALICE.getName() + " on " + TODAY
+                + ".\nBalance: OUTSTANDING $74.50.", result.getFeedbackToUser());
         assertEquals(new BigDecimal("74.50"), Ledger.balance(model.getAddressBook(), ALICE));
         assertEquals(LedgerEntry.Kind.PAYMENT, model.getAddressBook().getLedgerEntries().getLast().kind());
         assertEquals(2, model.getAddressBook().getLedgerEntries().size());
@@ -64,8 +76,8 @@ public class PaymentCommandTest {
     public void execute_advancePayment_showsCredit() throws Exception {
         Model model = new ModelManager();
         model.addPerson(ALICE);
-        CommandResult result = new PaymentCommand(INDEX_FIRST_PERSON, BigDecimal.TEN).execute(model);
-        assertTrue(result.getFeedbackToUser().endsWith("IN CREDIT $10.00"));
+        CommandResult result = payment(INDEX_FIRST_PERSON, BigDecimal.TEN).execute(model);
+        assertTrue(result.getFeedbackToUser().endsWith("IN CREDIT $10.00."));
         assertEquals(new BigDecimal("-10.00"), Ledger.balance(model.getAddressBook(), ALICE));
     }
 
@@ -79,18 +91,18 @@ public class PaymentCommandTest {
         };
         model.addPerson(ALICE);
         CommandException error = org.junit.jupiter.api.Assertions.assertThrows(
-                CommandException.class, () -> new PaymentCommand(INDEX_FIRST_PERSON, BigDecimal.TEN).execute(model));
+                CommandException.class, () -> payment(INDEX_FIRST_PERSON, BigDecimal.TEN).execute(model));
         assertEquals("Ledger student does not exist.", error.getMessage());
         assertTrue(model.getAddressBook().getLedgerEntries().isEmpty());
     }
 
     @Test
     public void equals() {
-        PaymentCommand command = new PaymentCommand(INDEX_FIRST_PERSON, BigDecimal.TEN);
+        PaymentCommand command = payment(INDEX_FIRST_PERSON, BigDecimal.TEN);
         assertTrue(command.equals(command));
-        assertTrue(command.equals(new PaymentCommand(INDEX_FIRST_PERSON, new BigDecimal("10.00"))));
-        assertFalse(command.equals(new PaymentCommand(INDEX_FIRST_PERSON, BigDecimal.ONE)));
-        assertFalse(command.equals(new PaymentCommand(INDEX_SECOND_PERSON, BigDecimal.TEN)));
+        assertTrue(command.equals(payment(INDEX_FIRST_PERSON, new BigDecimal("10.00"))));
+        assertFalse(command.equals(payment(INDEX_FIRST_PERSON, BigDecimal.ONE)));
+        assertFalse(command.equals(payment(INDEX_SECOND_PERSON, BigDecimal.TEN)));
         assertFalse(command.equals(null));
         assertFalse(command.equals(new BalanceCommand(INDEX_FIRST_PERSON)));
     }

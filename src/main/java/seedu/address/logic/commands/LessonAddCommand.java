@@ -8,6 +8,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TIME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_VENUE;
 
+import java.time.Clock;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Logger;
@@ -62,6 +63,7 @@ public class LessonAddCommand extends Command {
     private final LessonTime time;
     private final LessonDuration duration;
     private final Venue venue; // null if the student's venue is to be used
+    private final Clock clock;
 
     /**
      * Creates a {@code LessonAddCommand} to schedule a lesson for the student at {@code studentIndex}.
@@ -69,6 +71,12 @@ public class LessonAddCommand extends Command {
      */
     public LessonAddCommand(Index studentIndex, Subject subject, LessonDate date, LessonTime time,
             LessonDuration duration, Venue venue) {
+        this(studentIndex, subject, date, time, duration, venue, Clock.systemDefaultZone());
+    }
+
+    /** Creates a booking with an explicit date source for validation. */
+    public LessonAddCommand(Index studentIndex, Subject subject, LessonDate date, LessonTime time,
+            LessonDuration duration, Venue venue, Clock clock) {
         requireNonNull(studentIndex);
         requireNonNull(date);
         requireNonNull(time);
@@ -79,6 +87,7 @@ public class LessonAddCommand extends Command {
         this.time = time;
         this.duration = duration;
         this.venue = venue;
+        this.clock = requireNonNull(clock);
     }
 
     @Override
@@ -116,8 +125,8 @@ public class LessonAddCommand extends Command {
     }
 
     private Lesson createLesson(Person student) throws CommandException {
-        LessonCommandUtil.requireNotInPast(date, MESSAGE_DATE_IN_PAST);
-        LessonCommandUtil.requireNearFuture(date);
+        LessonCommandUtil.requireNotInPast(date, MESSAGE_DATE_IN_PAST, clock);
+        LessonCommandUtil.requireNearFuture(date, clock);
         LessonCommandUtil.requireEndsBeforeMidnight(time, duration);
 
         Venue lessonVenue = venue != null ? venue : student.getVenue().orElse(null);

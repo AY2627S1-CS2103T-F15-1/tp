@@ -344,7 +344,7 @@ Marks a lesson completed and optionally records what was taught.
 Format: `lesson done INDEX [n/NOTES]`
 
 * `INDEX` is the lesson number from the current `agenda` or `lesson list`, not the student number. It must be a positive integer.
-* The first completion adds the hourly lesson fee to the student’s balance and shows `Charge of $X.XX recorded.` Updating notes never charges again. A $0 rate completes the lesson without creating a charge and explains why.
+* The first completion adds the hourly lesson fee to the student’s balance and shows `Charge of $X.XX recorded.` Updating notes never charges again. A fee that is zero, including after cent rounding, completes the lesson without creating a charge and explains why. Manual charging is follow-up work.
 * Only lessons dated today or earlier can be completed, using your computer's local date. A cancelled lesson cannot be completed.
 * `NOTES` is optional free text of 1–1000 printable characters on one line. Leading/trailing whitespace is trimmed and repeated spaces are collapsed. An empty `n/`, line breaks and repeated `n/` parameters are rejected.
 * Completing a lesson retains its student, subject, date, time, duration and venue. The status and notes are saved automatically. Use `view STUDENT_INDEX` to see recent notes and the completed-lesson count.
@@ -373,27 +373,35 @@ Examples:
 * `agenda` followed by `lesson missed 1` marks today's 1st displayed lesson as missed.
 * `lesson list st/1 all/` followed by `lesson missed 2` marks the 2nd displayed lesson as missed, provided it is scheduled for today or earlier.
 
-### Recording a payment: `payment`
+### Recording a payment: `pay`
 
 Records money received from a student and shows the updated outstanding balance or credit.
 
-Format: `payment st/STUDENT_INDEX a/AMOUNT`
+Format: `pay st/STUDENT_INDEX amt/AMOUNT [d/DATE] [n/NOTES]`
 
-* `STUDENT_INDEX` is the positive student number in the displayed student list. After `find`, use that filtered list's numbers.
-* `AMOUNT` must be greater than zero with at most two decimal places, such as `50`, `50.00` or `0.50`. An optional leading `$` is accepted. Negative amounts, zero, commas and scientific notation are rejected.
-* Both prefixes are required exactly once and can appear in either order. No other parameters are accepted.
-* The payment is recorded with today's date, using your computer's local date, and saved automatically.
-* Partial payments reduce the amount owed. Payments exceeding the debt are accepted and shown as credit. You can record an advance payment even if the student currently owes nothing.
-* Every invocation records another payment. If saving fails after a payment is applied, fix the save problem and use `save` to retry; repeating `payment` would record a second payment.
-* The displayed student list and its indices are unchanged. Use `balance st/INDEX` to check the account or `dues` to see everyone who still owes money.
+* `STUDENT_INDEX` is the positive student number in the displayed student list. After `find`, use that filtered list's numbers. It is independent of lesson numbers, so payment can follow `lesson done` immediately without running `agenda` or `list` again.
+* `AMOUNT` must be greater than zero with at most two decimal places, such as `50`, `50.00` or `0.50`. Dollar signs, negative amounts, zero, commas and scientific notation are rejected.
+* `DATE` defaults to today using your computer's local date. Accepts `YYYY-MM-DD`, `DD/MM/YYYY`, `today` and `tmr`; future dates are rejected with `Payment dates cannot be in the future.`
+* `NOTES` is optional printable text of 1–200 characters on one line, such as a transfer reference. Extra spaces are collapsed and the notes are saved with the payment.
+* Each prefix can appear once, in any order. Both `st/` and `amt/` are required. Empty or repeated fields are rejected.
+* Payments are saved automatically. Partial payments reduce the amount owed; excess payments and advance payments are accepted as credit. Archived students can receive payments.
+* Every invocation records another payment. If saving fails after a payment is applied, fix the save problem and use `save` to retry; repeating `pay` would record a second payment.
+* The earlier `payment st/INDEX a/AMOUNT` syntax remains an alias. This legacy form also accepts an optional leading `$` in the amount, plus the same optional date and notes.
+* Payment listing, manual charging and reversals are follow-up features and are not available in this increment.
 
 Examples:
-* `payment st/1 a/20` records $20 received from the first displayed student.
-* `payment a/50.25 st/2` records $50.25 received from the second displayed student.
+* `pay st/1 amt/20` records $20 received from the first displayed student today.
+* `pay st/2 amt/50.25 d/2026-10-18 n/PayNow ref 4471` records an earlier payment with a reference.
+
+Example output:
+```text
+Payment of $20.00 recorded for Alice on 2026-10-19.
+Balance: OUTSTANDING $30.00.
+```
 
 ### Viewing a student's balance: `balance`
 
-Shows the current amount owed by a student, without displaying transaction history.
+Shows the current amount owed by a student, without displaying transaction history. This increment deliberately provides a balance summary; the full running account statement in the alpha specification is follow-up work.
 
 Format: `balance st/INDEX`
 
@@ -403,7 +411,7 @@ Format: `balance st/INDEX`
 * Scheduled, cancelled and missed lessons do not create charges. A missed lesson creates a charge only if subsequently completed.
 * Existing completed lessons in older data files are not charged retroactively. Accounts start with no financial records when the file has no ledger.
 * Charges and payments use permanent student identifiers, so editing the student’s name or phone retains their balance.
-* Charges and payments are saved with the rest of the data. Use `payment st/INDEX a/AMOUNT` to record money received.
+* Charges and payments are saved with the rest of the data. Use `pay st/INDEX amt/AMOUNT` to record money received.
 
 Example: `balance st/1` shows the balance of the first displayed student.
 
@@ -414,7 +422,7 @@ Lists every student with a positive balance, ordered by their oldest unpaid char
 Format: `dues`
 
 * Includes students hidden by `find`; the current student list and its indices are unchanged.
-* Shows `DUES`, the number of students and total owed, then each student’s amount and `oldest unpaid N days`. Archived students are included and marked `[archived]`.
+* Shows `DUES`, the number of students and total owed, then each student’s amount and `oldest unpaid N days` (`1 day` for a single day). Archived students are included and marked `(archived)`.
 * Payments cover the oldest charges first; a partly paid charge remains the oldest unpaid charge until fully covered. Students with the same oldest unpaid date are ordered by name and then phone number.
 * Zero balances and credit balances are omitted. One student's credit does not reduce another student's debt or the total outstanding.
 * Takes no parameters. If nobody owes money, shows `No outstanding balances. Everyone is up to date.`
@@ -504,7 +512,7 @@ Action     | Format, Examples
 **List**   | `list`
 **View**   | `view INDEX`<br> e.g., `view 1`
 **Balance** | `balance st/INDEX`<br> e.g., `balance st/1`
-**Payment** | `payment st/STUDENT_INDEX a/AMOUNT`<br> e.g., `payment st/1 a/50`
+**Payment** | `pay st/STUDENT_INDEX amt/AMOUNT [d/DATE] [n/NOTES]`<br> e.g., `pay st/1 amt/50`
 **Dues** | `dues`
 **Sort**   | `sort [asc\|desc]`<br> e.g., `sort desc`
 **Remark** | `remark INDEX r/REMARK`<br> e.g., `remark 1 r/Prefers morning lessons`

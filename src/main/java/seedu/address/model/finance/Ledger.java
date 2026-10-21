@@ -80,8 +80,9 @@ public final class Ledger {
         for (Due due : dues) {
             long days = Math.max(0, ChronoUnit.DAYS.between(due.oldestUnpaidDate(), today));
             result.append("\n  ").append(due.student().getName())
-                    .append(due.student().isArchived() ? " [archived]" : "")
-                    .append(" ").append(format(due.amount())).append(" oldest unpaid ").append(days).append(" days");
+                    .append(due.student().isArchived() ? " (archived)" : "")
+                    .append(" ").append(format(due.amount())).append(" oldest unpaid ").append(days)
+                    .append(days == 1 ? " day" : " days");
         }
         return result.toString();
     }

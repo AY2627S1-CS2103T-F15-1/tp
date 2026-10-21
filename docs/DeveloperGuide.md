@@ -306,13 +306,21 @@ positive exact `BigDecimal` amount and date. Charges require a lesson UUID; paym
 and at most one charge per lesson. Profile edits never rewrite financial records. Copy/reset,
 equality, student deletion, clear, and the real JSON snapshot include both finance and homework.
 
-When a scheduled or missed lesson first becomes `COMPLETED`, the model captures the current hourly
-rate × duration in minutes ÷ 60, rounding once to cents with `RoundingMode.HALF_UP`. The charge uses
-the permanent lesson UUID as its ID. Validation precedes either mutation, so failures leave both
-lesson and ledger unchanged. Updating completed notes does not charge again. Zero-rate lessons
-complete without a charge; scheduled, cancelled and missed lessons have no automatic charges.
-The completion command confirms the captured amount or explains the zero rate and converts model
-validation errors to `CommandException`.
+`LessonDoneCommand` explicitly calls `Model.chargeLesson(target, completedLesson)` on first completion.
+This operation validates the charge, replaces the lesson and records the charge atomically, returning
+`Optional<LedgerEntry>` for the command's success text. A zero rounded fee returns no charge. The general
+`setLesson` operation only updates lesson data; it never bills implicitly. Existing completed notes
+use `setLesson`, so note corrections do not bill again. Fees use the current hourly rate × duration
+in minutes ÷ 60, rounded once with `RoundingMode.HALF_UP`, and retain the permanent lesson UUID.
+The command translates model validation failures to `CommandException` and gives an accurate zero-fee
+message without directing users to a manual charge command that is not implemented yet.
+
+Ledger copy/reset and JSON restoration validate records in one pass using student/lesson maps and
+sets of entry IDs and charged lesson IDs. The ledger validation cost is O(students + lessons + entries),
+rather than scanning the growing list once per entry. Other domains keep their existing uniqueness checks.
+`getLedgerEntries` returns one cached immutable live wrapper. Individual insertions remain validated.
+`removeLesson` refuses to delete a billed lesson, including detached equal-value lookup, so a saved
+charge cannot point at a deleted lesson. Student deletion still cascades all of that student's history.
 
 `Ledger.balance(book, student)` adds charges and subtracts payments, returning a negative value for credit.
 `Ledger.describeBalance(amount)` shares the `OUTSTANDING $X.XX` / `IN CREDIT $X.XX` labels.
@@ -323,15 +331,25 @@ excludes transactions. `Ledger.formatDues(book, today)` shares the DUES header, 
 and days-unpaid wording with future `view` and `today` integrations. Credit from one account never reduces
 another student's debt. Queries include archived/filtered students and never mutate data.
 
-`BalanceCommand` parses `balance st/INDEX` and resolves its index against the displayed student list; `DuesCommand` reports all debtors and the
-total owed. Both are read-only commands. `PaymentCommandParser` parses `payment st/STUDENT_INDEX a/AMOUNT`,
-requiring each prefix exactly once and a positive decimal amount with at most two fractional digits. An optional
-leading dollar sign is accepted. `PaymentCommand` resolves the displayed student index and adds a payment through
-`Model#addLedgerEntry` using the local current date. It reports the resulting debt or credit without changing filters.
-The existing logic snapshot/save flow persists the change; after a failed save, `save` retries without recording a
-second payment. Repeating the `payment` command intentionally creates another entry. Transaction history is not displayed.
+`BalanceCommand` parses `balance st/INDEX` and reports the displayed student's current summary;
+running account statements from alpha §4.29 are deliberately deferred. `DuesCommand` reports all debtors
+with shared wording, including `(archived)` and the singular `1 day`.
 
-Student edits update financial references without changing amounts. Confirmed student deletion removes their
+`PaymentCommandParser` parses `pay st/INDEX amt/AMOUNT [d/DATE] [n/NOTES]`, requiring a positive decimal
+amount with at most two fractional digits and no currency symbol. The legacy `payment ... a/AMOUNT`
+alias preserves the earlier optional dollar sign. Dates accept ISO, DD/MM/YYYY and today/tmr; the command
+rejects future dates. Notes are optional 1–200 printable one-line characters and persist in the JSON
+adapter; absent notes in existing finance files default to null. Missing JSON fields are named in errors.
+The response confirms the amount, student, date and updated balance. Payment list/reverse, manual charge,
+and running account statements are follow-up increments; no success message points to unavailable commands.
+
+`LogicManager(Model, Storage, Clock)` passes a shared date source to the finance and relevant lesson
+parsers/commands. Interactive constructors default to the system clock. Finance workflow tests use a
+fixed Singapore clock, including scheduling/completion and payment, and cover a UTC/local-date boundary.
+The snapshot/save flow persists every recorded payment. After a failed save, `save` retries without
+recording another payment. Repeating `pay` intentionally adds another entry. Student filters do not change.
+
+Student edits retain permanent financial references without changing amounts. Confirmed student deletion removes their
 records and prompts even when they only have payment records and no lessons. Clearing data removes the ledger too.
 `JsonAdaptedLedgerEntry` and the optional `ledgerEntries` collection in `JsonSerializableAddressBook` persist every
 record. Loading validates IDs, amounts and student references. Older files load an empty ledger: completed lessons

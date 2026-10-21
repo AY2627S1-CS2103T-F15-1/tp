@@ -85,7 +85,12 @@ final class LessonCommandUtil {
      * @throws CommandException if the date is in the past.
      */
     static void requireNotInPast(LessonDate date, String message) throws CommandException {
-        if (date.value.isBefore(LocalDate.now())) {
+        requireNotInPast(date, message, Clock.systemDefaultZone());
+    }
+
+    /** Checks the lower date bound using an explicit date source. */
+    static void requireNotInPast(LessonDate date, String message, Clock clock) throws CommandException {
+        if (date.value.isBefore(LocalDate.now(clock))) {
             throw new CommandException(message);
         }
     }
@@ -96,7 +101,12 @@ final class LessonCommandUtil {
      * @throws CommandException if the date is more than 2 years from today.
      */
     static void requireNearFuture(LessonDate date) throws CommandException {
-        if (date.value.isAfter(LocalDate.now().plusYears(MAX_YEARS_AHEAD))) {
+        requireNearFuture(date, Clock.systemDefaultZone());
+    }
+
+    /** Checks the upper date bound using an explicit date source. */
+    static void requireNearFuture(LessonDate date, Clock clock) throws CommandException {
+        if (date.value.isAfter(LocalDate.now(clock).plusYears(MAX_YEARS_AHEAD))) {
             throw new CommandException(MESSAGE_DATE_TOO_FAR);
         }
     }
