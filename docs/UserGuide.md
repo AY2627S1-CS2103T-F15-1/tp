@@ -344,6 +344,7 @@ Marks a lesson completed and optionally records what was taught.
 Format: `lesson done INDEX [n/NOTES]`
 
 * `INDEX` is the lesson number from the current `agenda` or `lesson list`, not the student number. It must be a positive integer.
+* The first completion adds the hourly lesson fee to the student’s balance and shows `Charge of $X.XX recorded.` Updating notes never charges again. A $0 rate completes the lesson without creating a charge and explains why.
 * Only lessons dated today or earlier can be completed, using your computer's local date. A cancelled lesson cannot be completed.
 * `NOTES` is optional free text of 1–1000 printable characters on one line. Leading/trailing whitespace is trimmed and repeated spaces are collapsed. An empty `n/`, line breaks and repeated `n/` parameters are rejected.
 * Completing a lesson retains its student, subject, date, time, duration and venue. The status and notes are saved automatically. Use `view STUDENT_INDEX` to see recent notes and the completed-lesson count.
@@ -372,9 +373,55 @@ Examples:
 * `agenda` followed by `lesson missed 1` marks today's 1st displayed lesson as missed.
 * `lesson list st/1 all/` followed by `lesson missed 2` marks the 2nd displayed lesson as missed, provided it is scheduled for today or earlier.
 
+### Recording a payment: `payment`
+
+Records money received from a student and shows the updated outstanding balance or credit.
+
+Format: `payment st/STUDENT_INDEX a/AMOUNT`
+
+* `STUDENT_INDEX` is the positive student number in the displayed student list. After `find`, use that filtered list's numbers.
+* `AMOUNT` must be greater than zero with at most two decimal places, such as `50`, `50.00` or `0.50`. An optional leading `$` is accepted. Negative amounts, zero, commas and scientific notation are rejected.
+* Both prefixes are required exactly once and can appear in either order. No other parameters are accepted.
+* The payment is recorded with today's date, using your computer's local date, and saved automatically.
+* Partial payments reduce the amount owed. Payments exceeding the debt are accepted and shown as credit. You can record an advance payment even if the student currently owes nothing.
+* Every invocation records another payment. If saving fails after a payment is applied, fix the save problem and use `save` to retry; repeating `payment` would record a second payment.
+* The displayed student list and its indices are unchanged. Use `balance st/INDEX` to check the account or `dues` to see everyone who still owes money.
+
+Examples:
+* `payment st/1 a/20` records $20 received from the first displayed student.
+* `payment a/50.25 st/2` records $50.25 received from the second displayed student.
+
+### Viewing a student's balance: `balance`
+
+Shows the current amount owed by a student, without displaying transaction history.
+
+Format: `balance st/INDEX`
+
+* `INDEX` is the positive student number in the displayed student list. After `find`, it refers to that filtered list.
+* Charges increase the balance and payments reduce it. Debt is shown as `OUTSTANDING $X.XX`; an overpayment is shown as `IN CREDIT $X.XX`.
+* The first time a lesson is completed with `lesson done`, TutorFlow records the student's current hourly rate × the lesson duration in minutes ÷ 60, rounded to cents using HALF_UP, as one charge. For example, $60/hour for 90 minutes costs $90.00. Updating the notes later does not charge again. Changing the student's rate does not change earlier charges.
+* Scheduled, cancelled and missed lessons do not create charges. A missed lesson creates a charge only if subsequently completed.
+* Existing completed lessons in older data files are not charged retroactively. Accounts start with no financial records when the file has no ledger.
+* Charges and payments use permanent student identifiers, so editing the student’s name or phone retains their balance.
+* Charges and payments are saved with the rest of the data. Use `payment st/INDEX a/AMOUNT` to record money received.
+
+Example: `balance st/1` shows the balance of the first displayed student.
+
+### Viewing all outstanding balances: `dues`
+
+Lists every student with a positive balance, ordered by their oldest unpaid charge first, with a total amount owed.
+
+Format: `dues`
+
+* Includes students hidden by `find`; the current student list and its indices are unchanged.
+* Shows `DUES`, the number of students and total owed, then each student’s amount and `oldest unpaid N days`. Archived students are included and marked `[archived]`.
+* Payments cover the oldest charges first; a partly paid charge remains the oldest unpaid charge until fully covered. Students with the same oldest unpaid date are ordered by name and then phone number.
+* Zero balances and credit balances are omitted. One student's credit does not reduce another student's debt or the total outstanding.
+* Takes no parameters. If nobody owes money, shows `No outstanding balances. Everyone is up to date.`
+
 ### Clearing all entries: `clear`
 
-Deletes **all** students, lessons, and homework from TutorFlow.
+Deletes **all** students, lessons, homework and charge/payment records from TutorFlow.
 
 Format: `clear confirm`
 
@@ -384,7 +431,7 @@ Format: `clear confirm`
 * Clearing data that is already empty works and does nothing.
 
 Examples:
-* `clear` shows `This deletes ALL students, lessons, and homework. Type 'clear confirm' to proceed.`
+* `clear` shows `This deletes ALL students, lessons, homework and charge/payment records. Type 'clear confirm' to proceed.`
 * `clear confirm` deletes everything.
 
 ### Exiting the program: `exit`
@@ -456,6 +503,9 @@ Action     | Format, Examples
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **List**   | `list`
 **View**   | `view INDEX`<br> e.g., `view 1`
+**Balance** | `balance st/INDEX`<br> e.g., `balance st/1`
+**Payment** | `payment st/STUDENT_INDEX a/AMOUNT`<br> e.g., `payment st/1 a/50`
+**Dues** | `dues`
 **Sort**   | `sort [asc\|desc]`<br> e.g., `sort desc`
 **Remark** | `remark INDEX r/REMARK`<br> e.g., `remark 1 r/Prefers morning lessons`
 **Help**   | `help [COMMAND]`<br> e.g., `help`, `help lesson add`
@@ -552,9 +602,9 @@ v1.4 writes `data/tutorflow-v14.json`. If this file is absent, it reads legacy
 `data/addressbook.json`, assigns stable internal student and lesson identifiers, and saves
 an initial v1.4 copy. The legacy file remains untouched so an older application cannot erase
 v1.4 fields. If both files exist, the v1.4 file takes precedence. Keep both in your backup.
-This homework alpha writes schema 15 and accepts unversioned legacy files plus schema 14 and 15.
-Older files without homework start with an empty homework domain. The foundation alpha cannot open
-schema 15, which protects homework from being dropped by an older build.
+This finance alpha writes schema 16 and accepts unversioned legacy files plus schemas 14 through 16.
+Older files without homework or a ledger start with empty records for those features. Older builds
+refuse schema 16, protecting charges and payments from being dropped when saving.
 An unsupported schema version stops startup and leaves the original file in place. Open that data
 with a compatible TutorFlow build, or restore a backup made by your installed build. An older alpha
 cannot open data saved by a newer alpha that added data fields. Invalid files use the recovery flow

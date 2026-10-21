@@ -12,15 +12,18 @@ import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.AgendaCommand;
 import seedu.address.logic.commands.ArchiveCommand;
+import seedu.address.logic.commands.BalanceCommand;
 import seedu.address.logic.commands.ClearCommand;
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.DemoCommand;
+import seedu.address.logic.commands.DuesCommand;
 import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
+import seedu.address.logic.commands.PaymentCommand;
 import seedu.address.logic.commands.RemarkCommand;
 import seedu.address.logic.commands.SaveCommand;
 import seedu.address.logic.commands.SortCommand;
@@ -64,6 +67,12 @@ public class AddressBookParser {
         logger.fine("Parsing command");
 
         return switch (commandWord) {
+            case BalanceCommand.COMMAND_WORD -> new BalanceCommandParser().parse(arguments);
+            case PaymentCommand.COMMAND_WORD -> new PaymentCommandParser().parse(arguments);
+            case DuesCommand.COMMAND_WORD -> {
+                requireNoArguments(commandWord, arguments);
+                yield new DuesCommand();
+            }
             case SaveCommand.COMMAND_WORD -> {
                 requireNoArguments(commandWord, arguments);
                 yield new SaveCommand();

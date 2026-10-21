@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Messages;
+import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
@@ -52,7 +53,7 @@ public class LessonDoneCommandTest {
     public void execute_todayWithNotes_completesAndRetainsBookingDetails() {
         model.addLesson(lesson);
         assertCommandSuccess(command(NOTES), model, String.format(LessonDoneCommand.MESSAGE_SUCCESS,
-                Messages.format(lesson)), expectedModel(lesson, lesson.complete(NOTES)));
+                Messages.format(lesson)) + chargeFeedback(), expectedModel(lesson, lesson.complete(NOTES)));
     }
 
     @Test
@@ -60,7 +61,7 @@ public class LessonDoneCommandTest {
         Lesson past = new LessonBuilder(lesson).withDate(TODAY.minusDays(1)).build();
         model.addLesson(past);
         assertCommandSuccess(command(null), model, String.format(LessonDoneCommand.MESSAGE_SUCCESS,
-                Messages.format(past)), expectedModel(past, past.complete(null)));
+                Messages.format(past)) + chargeFeedback(), expectedModel(past, past.complete(null)));
     }
 
     @Test
@@ -76,7 +77,7 @@ public class LessonDoneCommandTest {
         Clock singaporeClock = Clock.fixed(Instant.parse("2026-10-07T17:00:00Z"), ZoneId.of("Asia/Singapore"));
         model.addLesson(lesson);
         assertCommandSuccess(new LessonDoneCommand(INDEX_FIRST_PERSON, null, singaporeClock), model,
-                String.format(LessonDoneCommand.MESSAGE_SUCCESS, Messages.format(lesson)),
+                String.format(LessonDoneCommand.MESSAGE_SUCCESS, Messages.format(lesson)) + chargeFeedback(),
                 expectedModel(lesson, lesson.complete(null)));
     }
 
@@ -107,7 +108,7 @@ public class LessonDoneCommandTest {
         Lesson missed = new LessonBuilder(lesson).withStatus(LessonStatus.MISSED).build();
         model.addLesson(missed);
         assertCommandSuccess(command(NOTES), model, String.format(LessonDoneCommand.MESSAGE_SUCCESS,
-                Messages.format(missed)), expectedModel(missed, missed.complete(NOTES)));
+                Messages.format(missed)) + chargeFeedback(), expectedModel(missed, missed.complete(NOTES)));
     }
 
     @Test
@@ -142,6 +143,17 @@ public class LessonDoneCommandTest {
     }
 
     @Test
+    public void execute_orphanLesson_reportsCommandErrorWithoutChangingLesson() {
+        Model orphanModel = new ModelManager();
+        orphanModel.addLesson(lesson);
+        CommandException error = org.junit.jupiter.api.Assertions.assertThrows(
+                CommandException.class, () -> command(null).execute(orphanModel));
+        assertEquals("Lesson student does not exist.", error.getMessage());
+        assertEquals(lesson, orphanModel.getAddressBook().getLessonList().getFirst());
+        assertTrue(orphanModel.getAddressBook().getLedgerEntries().isEmpty());
+    }
+
+    @Test
     public void equals() {
         LessonDoneCommand command = command(NOTES);
         assertTrue(command.equals(command));
@@ -157,6 +169,10 @@ public class LessonDoneCommandTest {
     public void toStringMethod() {
         assertEquals(LessonDoneCommand.class.getCanonicalName() + "{lessonIndex=" + INDEX_FIRST_PERSON
                 + ", notes=" + NOTES + "}", command(NOTES).toString());
+    }
+
+    private String chargeFeedback() {
+        return "\nCharge of $75.00 recorded.";
     }
 
     private LessonDoneCommand command(String notes) {

@@ -116,6 +116,11 @@ public class AddCommandTest {
      */
     private class ModelStub implements Model {
         @Override
+        public void addLedgerEntry(seedu.address.model.finance.LedgerEntry entry) {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
         public void addHomework(Homework homework) {
             throw new AssertionError("Unexpected homework operation");
         }

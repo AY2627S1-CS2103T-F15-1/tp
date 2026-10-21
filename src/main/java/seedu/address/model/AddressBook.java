@@ -12,8 +12,11 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.util.ToStringBuilder;
+import seedu.address.model.finance.Ledger;
+import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
+import seedu.address.model.lesson.LessonStatus;
 import seedu.address.model.lesson.UniqueLessonList;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.UniquePersonList;
@@ -29,6 +32,7 @@ public class AddressBook implements ReadOnlyAddressBook {
 
     private final UniquePersonList persons = new UniquePersonList();
     private final UniqueLessonList lessons = new UniqueLessonList();
+    private final ObservableList<LedgerEntry> ledgerEntries = FXCollections.observableArrayList();
     private final ObservableList<Homework> homework = FXCollections.observableArrayList();
 
     public AddressBook() {}
@@ -67,6 +71,9 @@ public class AddressBook implements ReadOnlyAddressBook {
 
         setPersons(newData.getPersonList());
         setLessons(newData.getLessonList());
+        List<LedgerEntry> replacementEntries = List.copyOf(newData.getLedgerEntries());
+        ledgerEntries.clear();
+        replacementEntries.forEach(this::addLedgerEntry);
         homework.setAll(newData.getHomeworkList());
     }
 
@@ -107,6 +114,7 @@ public class AddressBook implements ReadOnlyAddressBook {
      */
     public void removePerson(Person key) {
         persons.remove(key);
+        ledgerEntries.removeIf(entry -> entry.isWith(key));
         homework.removeIf(item -> item.getStudentId().equals(key.getId()));
         boolean hasRemovedLessons = lessons.removeIf(lesson -> lesson.isWith(key));
         if (hasRemovedLessons) {
@@ -155,8 +163,23 @@ public class AddressBook implements ReadOnlyAddressBook {
      */
     public void setLesson(Lesson target, Lesson editedLesson) {
         requireNonNull(editedLesson);
+        editedLesson = editedLesson.withId(target.getId());
 
+        LedgerEntry charge = null;
+        if ((target.isScheduled() || target.getStatus() == LessonStatus.MISSED)
+                && editedLesson.getStatus() == LessonStatus.COMPLETED) {
+            Person student = persons.asUnmodifiableObservableList().stream().filter(editedLesson::isWith)
+                    .findFirst().orElseThrow(() -> new IllegalArgumentException("Lesson student does not exist."));
+            if (LedgerEntry.lessonFee(student, editedLesson).signum() > 0) {
+                charge = LedgerEntry.charge(student, editedLesson);
+                validateLedgerEntry(charge);
+            }
+        }
         lessons.setLesson(target, editedLesson);
+        if (charge != null) {
+            ledgerEntries.add(charge);
+            logger.fine("Recorded automatic lesson charge");
+        }
     }
 
     /**
@@ -172,6 +195,33 @@ public class AddressBook implements ReadOnlyAddressBook {
      */
     public List<Lesson> getConflictingLessons(Lesson lesson) {
         return lessons.getOverlapping(lesson);
+    }
+
+    /** Adds a charge or payment for an existing student. Duplicate entry IDs are rejected. */
+    public void addLedgerEntry(LedgerEntry entry) {
+        validateLedgerEntry(entry);
+        ledgerEntries.add(entry);
+        logger.fine("Recorded ledger entry");
+    }
+
+    private void validateLedgerEntry(LedgerEntry entry) {
+        requireNonNull(entry);
+        Person student = persons.asUnmodifiableObservableList().stream().filter(entry::isWith).findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Ledger student does not exist."));
+        if (entry.kind() == LedgerEntry.Kind.CHARGE) {
+            if (lessons.asUnmodifiableObservableList().stream().noneMatch(lesson ->
+                    lesson.getId().equals(entry.lessonId()) && lesson.isWith(student))) {
+                throw new IllegalArgumentException("Ledger lesson does not exist or belongs to another student.");
+            }
+            ledgerEntries.stream().filter(existing -> entry.lessonId().equals(existing.lessonId()))
+                    .findFirst().ifPresent(existing -> {
+                        throw new IllegalArgumentException("That lesson already has a charge of "
+                                + Ledger.format(existing.amount()) + ".");
+                    });
+        }
+        if (ledgerEntries.stream().anyMatch(existing -> existing.id().equals(entry.id()))) {
+            throw new IllegalArgumentException("Duplicate ledger entry ID.");
+        }
     }
 
     /**
@@ -230,6 +280,7 @@ public class AddressBook implements ReadOnlyAddressBook {
         return new ToStringBuilder(this)
                 .add("persons", persons)
                 .add("lessons", lessons)
+                .add("ledgerEntries", ledgerEntries)
                 .toString();
     }
 
@@ -241,6 +292,11 @@ public class AddressBook implements ReadOnlyAddressBook {
     @Override
     public ObservableList<Lesson> getLessonList() {
         return lessons.asUnmodifiableObservableList();
+    }
+
+    @Override
+    public ObservableList<LedgerEntry> getLedgerEntries() {
+        return FXCollections.unmodifiableObservableList(ledgerEntries);
     }
 
     @Override
@@ -256,11 +312,12 @@ public class AddressBook implements ReadOnlyAddressBook {
 
         return persons.equals(otherAddressBook.persons)
                 && lessons.equals(otherAddressBook.lessons)
-                && homework.equals(otherAddressBook.homework);
+                && homework.equals(otherAddressBook.homework)
+                && ledgerEntries.equals(otherAddressBook.ledgerEntries);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(persons, lessons, homework);
+        return Objects.hash(persons, lessons, homework, ledgerEntries);
     }
 }

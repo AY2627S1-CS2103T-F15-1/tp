@@ -14,6 +14,8 @@ import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.LessonCommandParser;
 import seedu.address.model.Model;
+import seedu.address.model.finance.Ledger;
+import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonStatus;
 
@@ -31,6 +33,9 @@ public class LessonDoneCommand extends Command {
     public static final String MESSAGE_UPDATED_NOTES = "Updated notes for: %1$s.";
     public static final String MESSAGE_ALREADY_COMPLETED = "That lesson is already completed. Existing notes retained.";
     public static final String MESSAGE_CANCELLED_LESSON = "Cannot complete a cancelled lesson.";
+    public static final String MESSAGE_NO_CHARGE = "No automatic charge: This student's rate is $0.00. "
+            + "Specify an amount with amt/ when recording a charge.";
+    public static final String MESSAGE_ROUNDED_ZERO = "No automatic charge: The calculated fee rounds to $0.00.";
     public static final String MESSAGE_FUTURE_LESSON =
             "That lesson is scheduled for %1$s. Mark it complete on or after that date.";
 
@@ -68,10 +73,25 @@ public class LessonDoneCommand extends Command {
             return new CommandResult(MESSAGE_ALREADY_COMPLETED);
         }
 
-        model.setLesson(target, target.complete(notes));
+        try {
+            model.setLesson(target, target.complete(notes));
+        } catch (IllegalArgumentException e) {
+            logger.warning("Could not complete lesson: " + e.getMessage());
+            throw new CommandException(e.getMessage(), e);
+        }
         logger.fine("Completed lesson");
         String message = target.getStatus() == LessonStatus.COMPLETED ? MESSAGE_UPDATED_NOTES : MESSAGE_SUCCESS;
-        return new CommandResult(String.format(message, Messages.format(target)));
+        String feedback = String.format(message, Messages.format(target));
+        if (target.getStatus() != LessonStatus.COMPLETED) {
+            String chargeMessage = model.getAddressBook().getLedgerEntries().stream()
+                    .filter(entry -> entry.kind() == LedgerEntry.Kind.CHARGE && target.getId().equals(entry.lessonId()))
+                    .findFirst().map(entry -> "Charge of " + Ledger.format(entry.amount()) + " recorded.")
+                    .orElseGet(() -> model.getAddressBook().getPersonList().stream().filter(target::isWith)
+                            .anyMatch(student -> student.getRate().value.signum() == 0)
+                            ? MESSAGE_NO_CHARGE : MESSAGE_ROUNDED_ZERO);
+            feedback += "\n" + chargeMessage;
+        }
+        return new CommandResult(feedback);
     }
 
     @Override

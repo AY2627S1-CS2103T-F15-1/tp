@@ -13,6 +13,7 @@ import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
+import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
@@ -136,6 +137,12 @@ public class ModelManager implements Model {
     }
 
     //=========== Lessons ====================================================================================
+
+    @Override
+    public void addLedgerEntry(LedgerEntry entry) {
+        requireNonNull(entry);
+        addressBook.addLedgerEntry(entry);
+    }
 
     @Override
     public boolean hasLesson(Lesson lesson) {

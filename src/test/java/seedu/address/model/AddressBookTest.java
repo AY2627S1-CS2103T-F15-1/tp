@@ -232,7 +232,8 @@ public class AddressBookTest {
     @Test
     public void toStringMethod() {
         String expected = AddressBook.class.getCanonicalName() + "{persons=" + addressBook.getPersonList()
-                + ", lessons=" + addressBook.getLessonList() + "}";
+                + ", lessons=" + addressBook.getLessonList()
+                + ", ledgerEntries=" + addressBook.getLedgerEntries() + "}";
         assertEquals(expected, addressBook.toString());
     }
 
@@ -260,6 +261,11 @@ public class AddressBookTest {
         @Override
         public ObservableList<Lesson> getLessonList() {
             return lessons;
+        }
+
+        @Override
+        public ObservableList<seedu.address.model.finance.LedgerEntry> getLedgerEntries() {
+            return FXCollections.emptyObservableList();
         }
     }
 

@@ -137,6 +137,12 @@ public class Lesson {
         return id;
     }
 
+    /** Retains a stored lesson's permanent identity when replacing a detached value. */
+    public Lesson withId(UUID permanentId) {
+        return new Lesson(permanentId, studentId, academicLevel, preparation, studentName, studentPhone,
+                subject, date, time, duration, venue, status, notes, cancelReason);
+    }
+
     public Optional<UUID> getStudentId() {
         return Optional.ofNullable(studentId);
     }

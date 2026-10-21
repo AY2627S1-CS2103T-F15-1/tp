@@ -298,6 +298,45 @@ The following activity diagram summarizes what happens when a user executes a ne
 
 ## **Documentation, logging, testing, dev-ops**
 
+### Student balances and dues
+
+`LedgerEntry` is immutable and records its UUID, permanent student UUID, optional lesson UUID, kind,
+positive exact `BigDecimal` amount and date. Charges require a lesson UUID; payments have none.
+`AddressBook` owns the unmodifiable list and validates student/lesson references, unique entry IDs,
+and at most one charge per lesson. Profile edits never rewrite financial records. Copy/reset,
+equality, student deletion, clear, and the real JSON snapshot include both finance and homework.
+
+When a scheduled or missed lesson first becomes `COMPLETED`, the model captures the current hourly
+rate × duration in minutes ÷ 60, rounding once to cents with `RoundingMode.HALF_UP`. The charge uses
+the permanent lesson UUID as its ID. Validation precedes either mutation, so failures leave both
+lesson and ledger unchanged. Updating completed notes does not charge again. Zero-rate lessons
+complete without a charge; scheduled, cancelled and missed lessons have no automatic charges.
+The completion command confirms the captured amount or explains the zero rate and converts model
+validation errors to `CommandException`.
+
+`Ledger.balance(book, student)` adds charges and subtracts payments, returning a negative value for credit.
+`Ledger.describeBalance(amount)` shares the `OUTSTANDING $X.XX` / `IN CREDIT $X.XX` labels.
+`Ledger.dues(book, today)` returns immutable `Due(student, amount, oldestUnpaidDate)` rows, oldest first,
+breaking ties by name then phone. Payments cover charges FIFO by charge date, including partial payments
+and advance credit. The supplied date is the reference for displaying unpaid ages, not a cutoff that
+excludes transactions. `Ledger.formatDues(book, today)` shares the DUES header, total, archived marker,
+and days-unpaid wording with future `view` and `today` integrations. Credit from one account never reduces
+another student's debt. Queries include archived/filtered students and never mutate data.
+
+`BalanceCommand` parses `balance st/INDEX` and resolves its index against the displayed student list; `DuesCommand` reports all debtors and the
+total owed. Both are read-only commands. `PaymentCommandParser` parses `payment st/STUDENT_INDEX a/AMOUNT`,
+requiring each prefix exactly once and a positive decimal amount with at most two fractional digits. An optional
+leading dollar sign is accepted. `PaymentCommand` resolves the displayed student index and adds a payment through
+`Model#addLedgerEntry` using the local current date. It reports the resulting debt or credit without changing filters.
+The existing logic snapshot/save flow persists the change; after a failed save, `save` retries without recording a
+second payment. Repeating the `payment` command intentionally creates another entry. Transaction history is not displayed.
+
+Student edits update financial references without changing amounts. Confirmed student deletion removes their
+records and prompts even when they only have payment records and no lessons. Clearing data removes the ledger too.
+`JsonAdaptedLedgerEntry` and the optional `ledgerEntries` collection in `JsonSerializableAddressBook` persist every
+record. Loading validates IDs, amounts and student references. Older files load an empty ledger: completed lessons
+are not billed retroactively, because their historical rate and payment state are unknown.
+
 * [Documentation guide](Documentation.md)
 * [Testing guide](Testing.md)
 * [Logging guide](Logging.md)
@@ -886,7 +925,7 @@ Equal cancelled lessons remain separate records and exact-ID lookup chooses the 
 All domain extensions must update `ReadOnlyAddressBook`, `AddressBook.resetData` and its copy
 constructor/equality, the real JSON root/adapters, and focused round-trip tests together.
 `Storage.snapshotAddressBook` uses that exact persisted representation for dirty detection,
-so UI-only equality must never decide whether a write is required. Schema 15 is written to
+so UI-only equality must never decide whether a write is required. Schema 16 is written to
 `tutorflow-v14.json`; `VersionedAddressBookStorage` reads legacy data only when the current
 path is positively absent. The logic constructor's initial-save flag explicitly persists
 migrated IDs even before a command mutates the model. Failed initial writes remain dirty.
@@ -895,9 +934,9 @@ precreates the current destination, so an interrupted first save leaves legacy f
 on restart. The storage writeSnapshot seam passes the actual serialized bytes to this writer.
 Unreadable source protection is retained until positive absence or successful preservation.
 
-`StorageSchema.MINIMUM_VERSION` and `CURRENT_VERSION` centralize the supported range (14 through 15 now).
+`StorageSchema.MINIMUM_VERSION` and `CURRENT_VERSION` centralize the supported range (14 through 16 now).
 The shared `tutorflow-v14.json` path stays fixed as later domains are added. Homework uses
-schema 15; finance must advance it to 16, and workflows to 17. Each build accepts unversioned legacy
+schema 15; finance uses schema 16, and workflows must advance it to 17. Each build accepts unversioned legacy
 data and versions 14 through its current version, with explicit defaults for missing older fields.
 Add prior-version loading and future-version refusal tests alongside each schema increment.
 

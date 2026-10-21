@@ -10,6 +10,7 @@ import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
+import seedu.address.model.finance.Ledger;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
@@ -73,19 +74,24 @@ public class DeleteCommand extends Command {
                 .filter(lesson -> lesson.isWith(personToDelete))
                 .toList();
 
+        long financialRecords = model.getAddressBook().getLedgerEntries().stream()
+                .filter(entry -> entry.isWith(personToDelete)).count();
+        String financeWarning = financialRecords == 0 ? ""
+                : "Warning: this also deletes " + financialRecords + " charge/payment record(s). "
+                + Ledger.describeBalance(Ledger.balance(model.getAddressBook(), personToDelete)) + ".\n";
         List<Homework> homeworkToDelete = model.getAddressBook().getHomeworkList().stream()
                 .filter(item -> item.getStudentId().equals(personToDelete.getId())).toList();
         if (!homeworkToDelete.isEmpty()) {
-            return deleteWithHomework(model, personToDelete, lessonsToDelete, homeworkToDelete);
+            return deleteWithHomework(model, personToDelete, lessonsToDelete, homeworkToDelete, financeWarning);
         }
 
-        if (lessonsToDelete.isEmpty()) {
+        if (lessonsToDelete.isEmpty() && financialRecords == 0) {
             model.deletePerson(personToDelete);
             return new CommandResult(String.format(MESSAGE_DELETE_PERSON_SUCCESS, Messages.format(personToDelete)));
         }
 
         if (!isConfirmed) {
-            return new CommandResult(getConfirmationPrompt(personToDelete, lessonsToDelete));
+            return new CommandResult(financeWarning + getConfirmationPrompt(personToDelete, lessonsToDelete));
         }
 
         model.deletePerson(personToDelete);
@@ -95,11 +101,11 @@ public class DeleteCommand extends Command {
 
     /** Shows all linked records and upcoming commitments before cascading a student deletion. */
     private CommandResult deleteWithHomework(Model model, Person student, List<Lesson> lessons,
-            List<Homework> homework) {
+            List<Homework> homework, String financeWarning) {
         if (!isConfirmed) {
             long upcoming = homework.stream().filter(Homework::isOutstanding)
                     .filter(item -> !item.getDueDate().isBefore(LocalDate.now())).count();
-            return new CommandResult(getConfirmationPrompt(student, lessons)
+            return new CommandResult(financeWarning + getConfirmationPrompt(student, lessons)
                     + "\nThis also deletes " + homework.size() + " homework item(s), including " + upcoming
                     + " upcoming homework item(s), and all recorded feedback.");
         }
