@@ -10,7 +10,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -194,12 +193,7 @@ public class HelpWindowTest {
 
     @BeforeAll
     public static void startJavaFx() throws Exception {
-        CountDownLatch started = new CountDownLatch(1);
-        Platform.startup(() -> {
-            Platform.setImplicitExit(false);
-            started.countDown();
-        });
-        assertTrue(started.await(10, TimeUnit.SECONDS), "JavaFX did not start");
+        FxTestSupport.start();
     }
 
     @AfterEach

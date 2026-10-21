@@ -1,13 +1,16 @@
 package seedu.address.ui;
 
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.logging.Logger;
 
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.SplitPane;
 import javafx.scene.control.TextInputControl;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.StackPane;
@@ -19,6 +22,7 @@ import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.logic.view.DetailView;
 
 /**
  * The Main Window. Provides the basic application layout containing
@@ -36,8 +40,12 @@ public class MainWindow extends UiPart<Stage> {
 
     // Independent Ui parts residing in this Ui container
     private PersonListPanel personListPanel;
+    private DetailPane detailPane;
     private ResultDisplay resultDisplay;
     private HelpWindow helpWindow;
+
+    /** Whether the detail pane shows the dashboard, which is redrawn after every command. */
+    private boolean isDashboardShown;
 
     @FXML
     private StackPane commandBoxPlaceholder;
@@ -47,6 +55,12 @@ public class MainWindow extends UiPart<Stage> {
 
     @FXML
     private StackPane personListPanelPlaceholder;
+
+    @FXML
+    private StackPane detailPanePlaceholder;
+
+    @FXML
+    private SplitPane splitPane;
 
     @FXML
     private StackPane resultDisplayPlaceholder;
@@ -70,6 +84,7 @@ public class MainWindow extends UiPart<Stage> {
         setWindowDefaultSize(logic.getGuiSettings());
 
         setAccelerators();
+        setPaneScrollKeys();
 
         helpWindow = new HelpWindow();
     }
@@ -113,15 +128,49 @@ public class MainWindow extends UiPart<Stage> {
     }
 
     /**
+     * Lets Page Up and Page Down scroll the detail pane by most of a screen, and Ctrl+Up and Ctrl+Down by a few
+     * lines, while the cursor stays in the command box.
+     */
+    private void setPaneScrollKeys() {
+        getRoot().addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+            if (detailPane != null && event.getTarget() instanceof TextInputControl && scrollDetailPane(event)) {
+                event.consume();
+            }
+        });
+    }
+
+    /** Scrolls the detail pane if {@code event} is one of its scroll keys, and returns whether it was. */
+    private boolean scrollDetailPane(KeyEvent event) {
+        KeyCode code = event.getCode();
+        if (code == KeyCode.PAGE_UP || code == KeyCode.PAGE_DOWN) {
+            detailPane.scrollPage(code == KeyCode.PAGE_DOWN);
+            return true;
+        }
+        if (event.isControlDown() && (code == KeyCode.UP || code == KeyCode.DOWN)) {
+            detailPane.scrollLines(code == KeyCode.DOWN);
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Fills up all the placeholders of this window.
      */
     void fillInnerParts() {
         personListPanel = new PersonListPanel(logic.getFilteredPersonList());
         personListPanelPlaceholder.getChildren().add(personListPanel.getRoot());
 
+        detailPane = new DetailPane();
+        detailPanePlaceholder.getChildren().add(detailPane.getRoot());
+        DetailView dashboard = logic.getDashboardView();
+        detailPane.show(dashboard);
+        isDashboardShown = true;
+
         resultDisplay = new ResultDisplay();
         resultDisplayPlaceholder.getChildren().add(resultDisplay.getRoot());
-        resultDisplay.setFeedbackToUser(logic.getStartupMessage());
+        String warning = logic.getStartupWarning();
+        resultDisplay.setFeedbackToUser(warning.isEmpty() ? dashboard.resultBoxText()
+                : warning + "\n\n" + dashboard.resultBoxText());
 
         StatusBarFooter statusBarFooter = new StatusBarFooter(dataFilePath);
         statusbarPlaceholder.getChildren().add(statusBarFooter.getRoot());
@@ -188,6 +237,35 @@ public class MainWindow extends UiPart<Stage> {
         return personListPanel;
     }
 
+    public DetailPane getDetailPane() {
+        return detailPane;
+    }
+
+    public SplitPane getSplitPane() {
+        return splitPane;
+    }
+
+    /** Shows what {@code commandResult} has for the detail pane, or keeps the dashboard in step with the data. */
+    private void showResult(CommandResult commandResult) {
+        Optional<DetailView> view = commandResult.getDetailView();
+        if (view.isPresent()) {
+            detailPane.show(view.get());
+            isDashboardShown = view.get().isLive();
+            resultDisplay.setFeedbackToUser(view.get().resultBoxText());
+        } else {
+            resultDisplay.setFeedbackToUser(commandResult.getFeedbackToUser());
+            refreshDashboard();
+        }
+        personListPanel.highlight(commandResult.getAddedStudents());
+    }
+
+    /** Redraws the dashboard after a command, as long as the detail pane shows it, so that it never goes stale. */
+    private void refreshDashboard() {
+        if (isDashboardShown) {
+            detailPane.refresh(logic.getDashboardView());
+        }
+    }
+
     /**
      * Executes the command and returns the result.
      *
@@ -197,7 +275,7 @@ public class MainWindow extends UiPart<Stage> {
         try {
             CommandResult commandResult = logic.execute(commandText);
             logger.fine("Command succeeded");
-            resultDisplay.setFeedbackToUser(commandResult.getFeedbackToUser());
+            showResult(commandResult);
 
             if (commandResult.isShowHelp()) {
                 handleHelp();
@@ -211,6 +289,7 @@ public class MainWindow extends UiPart<Stage> {
         } catch (CommandException | ParseException e) {
             logger.fine("Command rejected: " + e.getClass().getSimpleName());
             resultDisplay.setErrorToUser(e.getMessage());
+            refreshDashboard();
             throw e;
         }
     }

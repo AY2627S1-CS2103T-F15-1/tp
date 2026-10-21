@@ -18,3 +18,41 @@
 .tooltip-text {
     -fx-text-fill: white;
 }
+
+/* The detail pane beside the student list */
+.detail-pane {
+    -fx-background: derive(#1d1d1d, 20%);
+    -fx-background-color: derive(#1d1d1d, 20%);
+}
+
+.detail-content {
+    -fx-background-color: derive(#1d1d1d, 20%);
+}
+
+.detail-title {
+    -fx-font-size: 15pt;
+    -fx-text-fill: white;
+    -fx-opacity: 1;
+    -fx-padding: 0 0 6 0;
+}
+
+.detail-heading {
+    -fx-font-size: 10pt;
+    -fx-text-fill: #7fc2d6;
+    -fx-opacity: 1;
+    -fx-padding: 10 0 2 0;
+}
+
+.detail-line {
+    -fx-font-family: "Monospaced";
+    -fx-font-size: 10pt;
+    -fx-fill: white;
+}
+
+.detail-line.detail-warning {
+    -fx-fill: #f2b84b;
+}
+
+.detail-line.detail-struck {
+    -fx-fill: #8a8a8a;
+}
