@@ -68,7 +68,8 @@
         "deleting-a-person": "Deleting a person",
         "lessons": "Lessons",
         "saving-data": "Saving data",
-        "v1-4-continuity-and-domain-extension-contract": "v1.4 continuity and domain extension contract"
+        "v1-4-continuity-and-domain-extension-contract": "v1.4 continuity and domain extension contract",
+        "homework-domain-and-integration-seams": "Homework domain and integration seams"
       },
       "headingKeywords": {}
     },
@@ -140,6 +141,7 @@
         "known-issues": "Known issues",
         "command-summary": "Command summary",
         "student-continuity-in-v1-4-alpha": "Student continuity in v1.4 alpha",
+        "homework-assignments-and-history": "Homework assignments and history",
         "migrating-older-data": "Migrating older data"
       },
       "headingKeywords": {}
