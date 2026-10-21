@@ -9,6 +9,7 @@ import static seedu.address.testutil.TypicalPersons.BENSON;
 import static seedu.address.testutil.TypicalPersons.CARL;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -17,6 +18,8 @@ import org.junit.jupiter.api.Test;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.finance.LedgerEntry;
+import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonStatus;
 import seedu.address.testutil.LessonBuilder;
@@ -48,13 +51,44 @@ public class TodayCommandTest {
     }
 
     @Test
-    public void execute_noLessons_showsBothEmptyStates() {
+    public void execute_nothingToShow_showsEveryEmptyState() {
         String message = new TodayCommand(TODAY).execute(model).getFeedbackToUser();
 
         assertEquals("Thursday, 10 January 2030\n\n"
                 + "TODAY'S LESSONS (0, 0m)\n" + TodayCommand.MESSAGE_NO_LESSONS_TODAY + "\n\n"
                 + "LESSONS AWAITING NOTES (0)\n" + TodayCommand.MESSAGE_ALL_RECORDED
-                + "\n\nOVERDUE HOMEWORK (0)\n  No overdue homework.", message);
+                + "\n\nOVERDUE HOMEWORK (0)\n  No overdue homework."
+                + "\n\nDUES\nNo outstanding balances. Everyone is up to date.", message);
+    }
+
+    @Test
+    public void execute_somethingInEverySection_showsEverySection() {
+        Lesson aliceCharged = new LessonBuilder().withStudent(ALICE).withDate(TODAY.minusDays(2)).withTime("10:00")
+                .withDuration(30).withStatus(LessonStatus.COMPLETED).build();
+        Lesson carlCharged = new LessonBuilder().withStudent(CARL).withSubject("English")
+                .withDate(TODAY.minusDays(5)).withTime("10:00").withDuration(60)
+                .withStatus(LessonStatus.COMPLETED).build();
+        addLessons(todayMath, todayPhysics, yesterdayScheduled, aliceCharged, carlCharged);
+        // half an hour at $50.00/hour, and an hour at $35.00/hour
+        model.addLedgerEntry(LedgerEntry.charge(ALICE, aliceCharged));
+        model.addLedgerEntry(LedgerEntry.charge(CARL, carlCharged));
+        // a student in credit owes nothing
+        model.addLedgerEntry(LedgerEntry.payment(BENSON, BigDecimal.TEN, TODAY));
+        model.addHomework(Homework.assign(CARL.getId(), "Comprehension worksheet", TODAY.minusDays(3)));
+
+        assertEquals("Thursday, 10 January 2030\n\n"
+                + "TODAY'S LESSONS (2, 2h 30m)\n"
+                + "  16:30-18:00  Alice Pauline      Math       Blk 512 Bishan St 13  \u26a0 overlaps\n"
+                + "  17:00-18:00  Benson Meier       Physics    \u2014  \u26a0 overlaps\n\n"
+                + "LESSONS AWAITING NOTES (1)\n"
+                + "  Wed 9 Jan   Alice Pauline      Math       not yet marked completed\n\n"
+                + "OVERDUE HOMEWORK (1)\n"
+                + "  Carl Kurz  Comprehension worksheet  due 2030-01-07  OVERDUE\n\n"
+                + "DUES\n"
+                + "2 student(s) with outstanding balances \u2014 $60.00 total\n"
+                + "  Carl Kurz $35.00 oldest unpaid 5 days\n"
+                + "  Alice Pauline $25.00 oldest unpaid 2 days",
+                new TodayCommand(TODAY).execute(model).getFeedbackToUser());
     }
 
     @Test
@@ -94,7 +128,7 @@ public class TodayCommandTest {
         assertTrue(lines[6].startsWith("  Wed 9 Jan   Alice Pauline"));
         assertTrue(lines[6].endsWith(TodayCommand.MESSAGE_NOT_COMPLETED));
         assertTrue(lines[7].startsWith("  Thu 3 Jan   Carl Kurz"));
-        assertEquals(11, lines.length);
+        assertEquals(14, lines.length);
     }
 
     @Test
@@ -105,6 +139,19 @@ public class TodayCommandTest {
         new TodayCommand(TODAY).execute(model);
 
         assertEquals(displayedLessons, model.getFilteredLessonList());
+    }
+
+    @Test
+    public void execute_studentsWhoOweMoney_leavesTheModelUnchanged() {
+        Lesson charged = new LessonBuilder(yesterdayScheduled).withStatus(LessonStatus.COMPLETED).build();
+        addLessons(charged);
+        model.addLedgerEntry(LedgerEntry.charge(ALICE, charged));
+        model.addLedgerEntry(LedgerEntry.payment(ALICE, BigDecimal.TEN, TODAY));
+        Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
+
+        new TodayCommand(TODAY).execute(model);
+
+        assertEquals(expectedModel, model);
     }
 
     @Test
