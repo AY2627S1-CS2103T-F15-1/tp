@@ -2,6 +2,7 @@ package seedu.address.testutil;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Level;
@@ -36,6 +37,7 @@ public class PersonBuilder {
     private Rate rate;
     private Venue venue;
     private Remark remark;
+    private boolean isArchived;
 
     /**
      * Creates a {@code PersonBuilder} with the default details.
@@ -64,6 +66,7 @@ public class PersonBuilder {
         rate = personToCopy.getRate();
         venue = personToCopy.getVenue().orElse(null);
         remark = personToCopy.getRemark();
+        isArchived = personToCopy.isArchived();
     }
 
     /**
@@ -153,8 +156,16 @@ public class PersonBuilder {
         return this;
     }
 
+    /**
+     * Sets whether the {@code Person} that we are building is archived.
+     */
+    public PersonBuilder withArchived(boolean isArchived) {
+        this.isArchived = isArchived;
+        return this;
+    }
+
     public Person build() {
-        return new Person(name, phone, email, level, subjects, rate, venue, remark);
+        return new Person(UUID.randomUUID(), isArchived, name, phone, email, level, subjects, rate, venue, remark);
     }
 
 }

@@ -32,8 +32,8 @@ public class AddCommandParser implements Parser<AddCommand> {
      * @throws ParseException if the user input does not conform to the expected format
      */
     public AddCommand parse(String args) throws ParseException {
-        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL,
-                PREFIX_LEVEL, PREFIX_SUBJECT, PREFIX_RATE, PREFIX_VENUE);
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(ParserUtil.maskSonOf(args), PREFIX_NAME,
+                PREFIX_PHONE, PREFIX_EMAIL, PREFIX_LEVEL, PREFIX_SUBJECT, PREFIX_RATE, PREFIX_VENUE);
 
         ParserUtil.requirePrefixesPresent(argMultimap, AddCommand.MESSAGE_USAGE, PREFIX_NAME, PREFIX_PHONE,
                 PREFIX_LEVEL, PREFIX_SUBJECT, PREFIX_RATE);
@@ -42,7 +42,7 @@ public class AddCommandParser implements Parser<AddCommand> {
                 PREFIX_RATE, PREFIX_VENUE);
         argMultimap.verifyNoEmptyValuesFor(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_LEVEL,
                 PREFIX_RATE, PREFIX_VENUE, PREFIX_SUBJECT);
-        Name name = ParserUtil.parseName(argMultimap.getValue(PREFIX_NAME).get());
+        Name name = ParserUtil.parseName(ParserUtil.unmaskSonOf(argMultimap.getValue(PREFIX_NAME).get()));
         Phone phone = ParserUtil.parsePhone(argMultimap.getValue(PREFIX_PHONE).get());
         Level level = ParserUtil.parseLevel(argMultimap.getValue(PREFIX_LEVEL).get());
         Set<Subject> subjects = ParserUtil.parseSubjects(argMultimap.getAllValues(PREFIX_SUBJECT));
@@ -55,7 +55,7 @@ public class AddCommandParser implements Parser<AddCommand> {
         }
         Venue venue = null;
         if (argMultimap.getValue(PREFIX_VENUE).isPresent()) {
-            venue = ParserUtil.parseVenue(argMultimap.getValue(PREFIX_VENUE).get());
+            venue = ParserUtil.parseVenue(ParserUtil.unmaskSonOf(argMultimap.getValue(PREFIX_VENUE).get()));
         }
 
         Person person = new Person(name, phone, email, level, subjects, rate, venue);

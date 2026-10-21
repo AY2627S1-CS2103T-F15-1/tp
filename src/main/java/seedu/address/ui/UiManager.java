@@ -54,6 +54,16 @@ public class UiManager implements Ui {
         }
     }
 
+    /**
+     * Tells the user why TutorFlow cannot start. There is no main window yet, so the message gets one of its own.
+     * This method only returns after the user has closed it.
+     */
+    public static void showStartupRefusal(String message) {
+        logger.severe(message);
+        showAlertDialogAndWait(null, AlertType.ERROR, "TutorFlow cannot start",
+                "TutorFlow did not open your data file", message);
+    }
+
     private Image getImage(String imagePath) {
         return new Image(MainApp.class.getResourceAsStream(imagePath));
     }

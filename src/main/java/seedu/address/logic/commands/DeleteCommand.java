@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.ToStringBuilder;
@@ -16,8 +17,8 @@ import seedu.address.model.person.Person;
 
 /**
  * Deletes a student identified using the index shown in the displayed student list.
- * A student who has lessons or homework is only deleted when the command is confirmed, because deleting a student
- * also deletes all of their lessons and this cannot be undone.
+ * A student with lessons or homework requires confirmation, because deleting a student also deletes all of those
+ * records and this cannot be undone.
  */
 public class DeleteCommand extends Command {
 
@@ -69,43 +70,76 @@ public class DeleteCommand extends Command {
         }
 
         Person personToDelete = lastShownList.get(targetIndex.getZeroBased());
-        List<Lesson> lessonsToDelete = model.getAddressBook().getLessonList().stream()
-                .filter(lesson -> lesson.isWith(personToDelete))
-                .toList();
+        LinkedRecords records = LinkedRecords.of(model, personToDelete);
 
-        List<Homework> homeworkToDelete = model.getAddressBook().getHomeworkList().stream()
-                .filter(item -> item.getStudentId().equals(personToDelete.getId())).toList();
-        if (!homeworkToDelete.isEmpty()) {
-            return deleteWithHomework(model, personToDelete, lessonsToDelete, homeworkToDelete);
-        }
-
-        if (lessonsToDelete.isEmpty()) {
+        if (records.isEmpty()) {
             model.deletePerson(personToDelete);
             return new CommandResult(String.format(MESSAGE_DELETE_PERSON_SUCCESS, Messages.format(personToDelete)));
         }
 
         if (!isConfirmed) {
-            return new CommandResult(getConfirmationPrompt(personToDelete, lessonsToDelete));
+            return new CommandResult(getConfirmationPreview(personToDelete, records));
         }
 
         model.deletePerson(personToDelete);
-        return new CommandResult(String.format(MESSAGE_DELETE_PERSON_WITH_LESSONS_SUCCESS,
-                Messages.format(personToDelete), lessonsToDelete.size()));
+        return new CommandResult(getSuccessMessage(personToDelete, records));
     }
 
-    /** Shows all linked records and upcoming commitments before cascading a student deletion. */
-    private CommandResult deleteWithHomework(Model model, Person student, List<Lesson> lessons,
-            List<Homework> homework) {
-        if (!isConfirmed) {
-            long upcoming = homework.stream().filter(Homework::isOutstanding)
-                    .filter(item -> !item.getDueDate().isBefore(LocalDate.now())).count();
-            return new CommandResult(getConfirmationPrompt(student, lessons)
-                    + "\nThis also deletes " + homework.size() + " homework item(s), including " + upcoming
-                    + " upcoming homework item(s), and all recorded feedback.");
+    /**
+     * Returns what deleting {@code student} would delete along with them, and how to confirm. A student with
+     * homework also gets its count and the advice to archive instead.
+     */
+    private String getConfirmationPreview(Person student, LinkedRecords records) {
+        String preview = getConfirmationPrompt(student, records.lessons());
+        if (!records.hasHomework()) {
+            return preview;
         }
-        model.deletePerson(student);
-        return new CommandResult("Deleted student: " + Messages.format(student) + ", along with "
-                + lessons.size() + " lesson(s) and " + homework.size() + " homework item(s).");
+        return preview + "\n" + describeHistory(records)
+                + "\nUse 'archive INDEX' to retain these obligations and all history instead.";
+    }
+
+    /**
+     * Returns the line that counts the homework that would be deleted. Feedback is mentioned only when there is
+     * some, because it is the part of the history that took thought to write.
+     */
+    private static String describeHistory(LinkedRecords records) {
+        long upcoming = records.homework().stream().filter(Homework::isOutstanding)
+                .filter(item -> !item.getDueDate().isBefore(LocalDate.now())).count();
+        String line = "This also deletes " + records.homework().size() + " homework item(s), including " + upcoming
+                + " upcoming homework item(s).";
+        long withFeedback = records.homework().stream().filter(item -> item.getFeedback().isPresent()).count();
+        return withFeedback == 0
+                ? line
+                : line + " Recorded feedback on " + withFeedback + " homework item(s) will be deleted.";
+    }
+
+    /** Returns what was deleted along with {@code student}, listing every kind of record that was present. */
+    private static String getSuccessMessage(Person student, LinkedRecords records) {
+        if (!records.hasHomework()) {
+            return String.format(MESSAGE_DELETE_PERSON_WITH_LESSONS_SUCCESS, Messages.format(student),
+                    records.lessons().size());
+        }
+        return "Deleted student: " + Messages.format(student) + ", along with " + records.lessons().size()
+                + " lesson(s) and " + records.homework().size() + " homework item(s).";
+    }
+
+    /** The records that are deleted together with a student. */
+    private record LinkedRecords(List<Lesson> lessons, List<Homework> homework) {
+        static LinkedRecords of(Model model, Person student) {
+            List<Lesson> lessons = model.getAddressBook().getLessonList().stream()
+                    .filter(lesson -> lesson.isWith(student)).toList();
+            List<Homework> homework = model.getAddressBook().getHomeworkList().stream()
+                    .filter(item -> item.getStudentId().equals(student.getId())).toList();
+            return new LinkedRecords(lessons, homework);
+        }
+
+        boolean hasHomework() {
+            return !homework.isEmpty();
+        }
+
+        boolean isEmpty() {
+            return lessons.isEmpty() && homework.isEmpty();
+        }
     }
 
     /**
@@ -136,6 +170,11 @@ public class DeleteCommand extends Command {
 
         return targetIndex.equals(otherDeleteCommand.targetIndex)
                 && isConfirmed == otherDeleteCommand.isConfirmed;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(targetIndex, isConfirmed);
     }
 
     @Override

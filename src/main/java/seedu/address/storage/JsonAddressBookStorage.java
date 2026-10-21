@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import seedu.address.commons.core.LogsCenter;
@@ -30,6 +31,7 @@ public class JsonAddressBookStorage {
     private Path filePath;
     private final Set<Path> unreadableFiles = new HashSet<>();
     private final Set<Path> unsupportedFiles = new HashSet<>();
+    private final Set<Path> inaccessibleFiles = new HashSet<>();
 
     /** Separates positively absent files from sources whose metadata cannot be read. */
     protected enum SourcePresence { PRESENT, ABSENT, UNKNOWN }
@@ -78,11 +80,22 @@ public class JsonAddressBookStorage {
             Path normalizedPath = filePath.toAbsolutePath().normalize();
             if (e.getCause() instanceof UnsupportedSchemaException) {
                 unsupportedFiles.add(normalizedPath);
+            } else if (isAccessFailure(e)) {
+                inaccessibleFiles.add(normalizedPath);
             } else {
                 unreadableFiles.add(normalizedPath);
             }
             throw e;
         }
+    }
+
+    /**
+     * Returns whether {@code e} says that the file could not be opened or read, as when another program holds it or
+     * its permissions forbid it, and not that its content is invalid. A file that cannot be opened may be valid, so
+     * it must never be treated as corrupt, which would set it aside.
+     */
+    public static boolean isAccessFailure(DataLoadingException e) {
+        return e.getCause() instanceof IOException && !(e.getCause() instanceof JsonProcessingException);
     }
 
     /** Reads and validates data without changing the protected-source state. */
@@ -127,6 +140,7 @@ public class JsonAddressBookStorage {
         requireNonNull(filePath);
 
         requireSupportedSource(filePath);
+        requireOpenedSource(filePath);
         Path normalizedPath = filePath.toAbsolutePath().normalize();
         if (unreadableFiles.contains(normalizedPath)) {
             switch (sourcePresence(filePath)) {
@@ -147,6 +161,13 @@ public class JsonAddressBookStorage {
         if (unsupportedFiles.contains(source.toAbsolutePath().normalize())) {
             throw new IOException("Unsupported data schema. Open with a compatible TutorFlow build "
                     + "or restore a matching backup and restart before saving.");
+        }
+    }
+
+    /** A file that could not be opened at start-up must not be replaced, because it may hold valid records. */
+    protected void requireOpenedSource(Path source) throws IOException {
+        if (inaccessibleFiles.contains(source.toAbsolutePath().normalize())) {
+            throw new IOException(String.format(DataFileRecovery.MESSAGE_NOT_OPENED_SAVE, source));
         }
     }
 

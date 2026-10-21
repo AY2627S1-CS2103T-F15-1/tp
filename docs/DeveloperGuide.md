@@ -865,6 +865,16 @@ testers are expected to do more *exploratory* testing.
    1. Test case: Close TutorFlow, delete `data/tutorflow-v14.json` and launch TutorFlow.<br>
       Expected: With no legacy addressbook.json either, TutorFlow starts empty. Use demo confirm to load sample students.
 
+1. Dealing with a data file that cannot be opened
+
+   1. Prerequisites: Close TutorFlow. As a user who is not an administrator, remove the read permission of `data/tutorflow-v14.json` (for example `chmod 000`). To test the migration, do this to `data/addressbook.json` instead, with no `data/tutorflow-v14.json`.
+
+   1. Test case: Launch TutorFlow.<br>
+      Expected: A dialog says that TutorFlow could not open the file and why, and that nothing has been changed. TutorFlow does not start, the file is not renamed, and no `.corrupt` file or new data file appears.
+
+   1. Test case: Restore the permission and launch TutorFlow.<br>
+      Expected: The students are loaded, or, for the older file, migrated into a new `data/tutorflow-v14.json`.
+
 1. Dealing with a data file that cannot be written
 
    1. Prerequisites: Make `data/tutorflow-v14.json` read-only, as a user who is not an administrator.
@@ -906,6 +916,15 @@ version produces `UnsupportedSchemaException` as the cause of `DataLoadingExcept
 propagates it before constructing a model, logic, or UI. The original stays at its original path,
 and storage refuses subsequent saves. Never route this exception through corruption recovery or
 silently ignore newer domain fields. Users need a compatible binary or a matching backup.
+
+A file that cannot be opened is not corrupt. `JsonAddressBookStorage#isAccessFailure` tells a failure
+to open or read a file, which is an `IOException` that is not a `JsonProcessingException`, from
+invalid content. Only invalid content is set aside. A file that another program holds, or that the
+permissions forbid reading, can well be valid, so setting it aside would hide the records of a tutor,
+and for the legacy file it would stop them from ever being migrated. `MainApp` therefore refuses to
+start in the same way as for an unsupported schema, with a message that names the file and the
+reason, and `JsonAddressBookStorage#requireOpenedSource` makes every save refuse to replace the file.
+The next start that can open the file loads or migrates it.
 
 The command-result seam for later detail-pane integration is
 `CommandResult.getDisplayedLessons()`: when present, it is an immutable typed snapshot in the
