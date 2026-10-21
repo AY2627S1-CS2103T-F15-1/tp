@@ -11,9 +11,11 @@ import java.util.regex.Pattern;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.AgendaCommand;
+import seedu.address.logic.commands.ArchiveCommand;
 import seedu.address.logic.commands.ClearCommand;
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.DeleteCommand;
+import seedu.address.logic.commands.DemoCommand;
 import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.FindCommand;
@@ -66,12 +68,21 @@ public class AddressBookParser {
                 requireNoArguments(commandWord, arguments);
                 yield new SaveCommand();
             }
+            case "demo" -> {
+                if (!arguments.isBlank() && !arguments.strip().equals("confirm")) {
+                    throw new ParseException("Usage: demo [confirm]");
+                }
+                yield new DemoCommand(arguments.strip().equals("confirm"));
+            }
+            case "student" -> new StudentCommandParser().parse(arguments);
+            case "archive" -> new ArchiveCommand(ParserUtil.parseIndex(arguments), true);
+            case "restore" -> new ArchiveCommand(ParserUtil.parseIndex(arguments), false);
             case AddCommand.COMMAND_WORD -> new AddCommandParser().parse(arguments);
             case EditCommand.COMMAND_WORD -> new EditCommandParser().parse(arguments);
             case DeleteCommand.COMMAND_WORD -> new DeleteCommandParser().parse(arguments);
             case ClearCommand.COMMAND_WORD -> new ClearCommandParser().parse(arguments);
             case FindCommand.COMMAND_WORD -> new FindCommandParser().parse(arguments);
-            case ListCommand.COMMAND_WORD -> new ListCommand();
+            case ListCommand.COMMAND_WORD -> new ListCommandParser().parse(arguments);
             case RemarkCommand.COMMAND_WORD -> new RemarkCommandParser().parse(arguments);
             case SortCommand.COMMAND_WORD -> new SortCommandParser().parse(arguments);
             case AgendaCommand.COMMAND_WORD -> new AgendaCommandParser().parse(arguments);

@@ -90,7 +90,7 @@ public class ViewCommand extends Command {
 
         StringBuilder text = new StringBuilder(String.format(MESSAGE_VIEWING, student.getName()));
         text.append("\nLevel ").append(student.getLevel()).append(SEPARATOR).append(subjects)
-                .append(SEPARATOR).append(student.getRate().toDisplayString()).append("/lesson");
+                .append(SEPARATOR).append(student.getRate().toDisplayString()).append("/hour");
         text.append("\n").append(contact);
         if (!student.getRemark().value.isEmpty()) {
             text.append("\nRemark: ").append(student.getRemark());
@@ -103,7 +103,8 @@ public class ViewCommand extends Command {
         Optional<Lesson> nextLesson = lessons.stream().filter(lesson -> lesson.isUpcoming(today)).findFirst();
         String body = nextLesson
                 .map(lesson -> String.format("  %s, %s%s%s%s%s", lesson.getDate(), lesson.getTimeRange(), SEPARATOR,
-                        lesson.getSubject(), SEPARATOR, Messages.formatVenue(lesson)))
+                        lesson.getSubject(), SEPARATOR, Messages.formatVenue(lesson))
+                        + lesson.getPreparation().map(notes -> "\n  Preparation: " + notes).orElse(""))
                 .orElse(MESSAGE_NO_UPCOMING_LESSON);
         return HEADING_NEXT_LESSON + "\n" + body;
     }

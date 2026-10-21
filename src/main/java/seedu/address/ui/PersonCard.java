@@ -57,7 +57,7 @@ public class PersonCard extends UiPart<Region> {
         name.setText(person.getName().fullName);
         phone.setText(person.getPhone().value);
         level.setText(person.getLevel().value);
-        rate.setText(person.getRate().toDisplayString() + "/lesson");
+        rate.setText(person.getRate().toDisplayString() + "/hour");
         showIfPresent(email, person.getEmail().map(value -> value.value).orElse(null));
         showIfPresent(venue, person.getVenue().map(value -> value.value).orElse(null));
         remark.setText(person.getRemark().value);
