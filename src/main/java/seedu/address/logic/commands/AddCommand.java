@@ -9,6 +9,8 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_RATE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_VENUE;
 
+import java.util.List;
+
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
@@ -72,7 +74,7 @@ public class AddCommand extends Command {
         if (hasSameName) {
             message += String.format(MESSAGE_SAME_NAME_WARNING, toAdd.getName());
         }
-        return new CommandResult(message);
+        return new CommandResult(message).withAddedStudents(List.of(toAdd));
     }
 
     @Override

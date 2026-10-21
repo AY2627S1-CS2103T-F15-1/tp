@@ -5,6 +5,7 @@ import seedu.address.commons.core.GuiSettings;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.logic.view.DetailView;
 import seedu.address.model.person.Person;
 
 /**
@@ -30,6 +31,12 @@ public interface Logic {
      * The data is only read, so nothing is saved.
      */
     String getDashboard();
+
+    /** Returns the dashboard as the detail pane draws it. The data is only read, so nothing is saved. */
+    DetailView getDashboardView();
+
+    /** Returns the warning about the data file that is shown when TutorFlow starts, or an empty text if none. */
+    String getStartupWarning();
 
     /**
      * Returns what is shown when TutorFlow starts: a warning about the data file, if there is one, followed by the

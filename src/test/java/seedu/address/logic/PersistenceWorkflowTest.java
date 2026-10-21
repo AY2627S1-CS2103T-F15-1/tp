@@ -19,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.ModelManager;
@@ -150,5 +151,26 @@ public class PersistenceWorkflowTest {
         assertTrue(logic.execute("help").getFeedbackToUser()
                 .endsWith("\nUnsaved changes: type 'save' to retry before closing TutorFlow."));
         assertThrows(CommandException.class, () -> logic.execute("exit"));
+    }
+
+    @Test
+    public void execute_viewResultAfterAFailedWrite_carriesTheWarningInTheResultBox() throws Exception {
+        failure = new IOException("Disk full");
+        rejection(ADD_AMY);
+
+        CommandResult result = logic.execute("today");
+
+        assertTrue(result.getDetailView().orElseThrow().resultBoxText()
+                .endsWith("\nUnsaved changes: type 'save' to retry before closing TutorFlow."));
+        assertTrue(result.getFeedbackToUser()
+                .endsWith("\nUnsaved changes: type 'save' to retry before closing TutorFlow."));
+    }
+
+    @Test
+    public void getStartupWarning_isEmptyUnlessThereIsAWarning() {
+        assertEquals("", logic.getStartupWarning());
+        assertEquals("Careful", new LogicManager(new ModelManager(), new StorageManager(
+                new JsonAddressBookStorage(dataFile), new JsonUserPrefsStorage(
+                        temporaryFolder.resolve("other.json"))), "Careful").getStartupWarning());
     }
 }

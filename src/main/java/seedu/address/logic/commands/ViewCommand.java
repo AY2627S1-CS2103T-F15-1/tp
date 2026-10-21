@@ -3,6 +3,7 @@ package seedu.address.logic.commands;
 import static java.util.Objects.requireNonNull;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -12,6 +13,7 @@ import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
+import seedu.address.logic.view.DetailView;
 import seedu.address.model.Model;
 import seedu.address.model.homework.HomeworkQueries;
 import seedu.address.model.lesson.Lesson;
@@ -75,14 +77,40 @@ public class ViewCommand extends Command {
                 .sorted(Lesson.CHRONOLOGICAL)
                 .collect(Collectors.toList());
 
-        return new CommandResult(formatStudent(student)
-                + "\n\n" + formatNextLesson(lessons)
-                + "\n\n" + formatRecentNotes(lessons)
-                + "\n\n" + formatHistory(lessons)
-                + "\n\n" + HomeworkQueries.summary(model.getAddressBook(), student.getId(), false, today));
+        List<String> recentNotes = recentNotes(lessons);
+        String history = String.format(MESSAGE_HISTORY, count(lessons, LessonStatus.COMPLETED),
+                count(lessons, LessonStatus.CANCELLED), count(lessons, LessonStatus.MISSED));
+        HomeworkQueries.Summary homework = HomeworkQueries.summaryOf(model.getAddressBook(), student.getId(), false,
+                today);
+
+        String text = formatStudent(student)
+                + "\n\n" + block(HEADING_NEXT_LESSON, nextLesson(lessons))
+                + "\n\n" + block(HEADING_RECENT_NOTES, recentNotes)
+                + "\n\n" + HEADING_LESSON_HISTORY + "\n" + history
+                + "\n\n" + homework.toText();
+
+        String title = String.format(MESSAGE_VIEWING, student.getName());
+        List<DetailView.Section> sections = List.of(
+                new DetailView.Section("", plain(studentLines(student))),
+                new DetailView.Section(HEADING_NEXT_LESSON, plain(nextLesson(lessons))),
+                new DetailView.Section(HEADING_RECENT_NOTES, plain(recentNotes)),
+                new DetailView.Section(HEADING_LESSON_HISTORY, plain(List.of(history.strip()))),
+                new DetailView.Section(homework.heading(), plain(homework.lines())));
+        return new CommandResult(text).withDetailView(new DetailView(title, title, false, sections));
     }
 
-    private static String formatStudent(Person student) {
+    private static List<DetailView.Line> plain(List<String> lines) {
+        return lines.stream().map(DetailView.Line::plain).toList();
+    }
+
+    /** Returns {@code heading} with each of {@code lines} indented below it. */
+    private static String block(String heading, List<String> lines) {
+        StringBuilder text = new StringBuilder(heading);
+        lines.forEach(line -> text.append("\n  ").append(line));
+        return text.toString();
+    }
+
+    private static List<String> studentLines(Person student) {
         String subjects = student.getSubjects().stream()
                 .map(Subject::toString)
                 .sorted(String.CASE_INSENSITIVE_ORDER)
@@ -91,44 +119,48 @@ public class ViewCommand extends Command {
         student.getEmail().ifPresent(email -> contact.append(SEPARATOR).append("Email: ").append(email));
         student.getVenue().ifPresent(venue -> contact.append(SEPARATOR).append("Venue: ").append(venue));
 
-        StringBuilder text = new StringBuilder(String.format(MESSAGE_VIEWING, student.getName()));
-        text.append("\nLevel ").append(student.getLevel()).append(SEPARATOR).append(subjects)
-                .append(SEPARATOR).append(student.getRate().toDisplayString()).append("/hour");
-        text.append("\n").append(contact);
+        List<String> lines = new ArrayList<>();
+        lines.add("Level " + student.getLevel() + SEPARATOR + subjects + SEPARATOR
+                + student.getRate().toDisplayString() + "/hour");
+        lines.add(contact.toString());
         if (!student.getRemark().value.isEmpty()) {
-            text.append("\nRemark: ").append(student.getRemark());
+            lines.add("Remark: " + student.getRemark());
         }
-        return text.toString();
+        return lines;
     }
 
-    private String formatNextLesson(List<Lesson> lessons) {
+    private static String formatStudent(Person student) {
+        return String.format(MESSAGE_VIEWING, student.getName()) + "\n" + String.join("\n", studentLines(student));
+    }
+
+    /** Returns the lines about the next lesson: when and where it is, and how to prepare, or that none is booked. */
+    private List<String> nextLesson(List<Lesson> lessons) {
         // The lessons are in chronological order, so the first upcoming one is the next lesson
         Optional<Lesson> nextLesson = lessons.stream().filter(lesson -> lesson.isUpcoming(today)).findFirst();
-        String body = nextLesson
-                .map(lesson -> String.format("  %s, %s%s%s%s%s", lesson.getDate(), lesson.getTimeRange(), SEPARATOR,
-                        lesson.getSubject(), SEPARATOR, Messages.formatVenue(lesson))
-                        + lesson.getPreparation().map(notes -> "\n  Preparation: " + notes).orElse(""))
-                .orElse(MESSAGE_NO_UPCOMING_LESSON);
-        return HEADING_NEXT_LESSON + "\n" + body;
+        if (nextLesson.isEmpty()) {
+            return List.of(MESSAGE_NO_UPCOMING_LESSON.strip());
+        }
+        Lesson lesson = nextLesson.get();
+        List<String> lines = new ArrayList<>();
+        lines.add(String.format("%s, %s%s%s%s%s", lesson.getDate(), lesson.getTimeRange(), SEPARATOR,
+                lesson.getSubject(), SEPARATOR, Messages.formatVenue(lesson)));
+        lesson.getPreparation().ifPresent(notes -> lines.add("Preparation: " + notes));
+        return lines;
     }
 
-    private static String formatRecentNotes(List<Lesson> lessons) {
+    /** Returns the notes of the most recent completed lessons, newest first, or that there are none. */
+    private static List<String> recentNotes(List<Lesson> lessons) {
         // The lessons are in chronological order, so the most recent ones are at the end
         List<Lesson> withNotes = lessons.stream()
                 .filter(lesson -> lesson.getStatus() == LessonStatus.COMPLETED && lesson.getNotes().isPresent())
                 .collect(Collectors.toList());
         List<Lesson> recent = withNotes.subList(Math.max(0, withNotes.size() - MAX_RECENT_NOTES), withNotes.size());
         if (recent.isEmpty()) {
-            return HEADING_RECENT_NOTES + "\n" + MESSAGE_NO_NOTES;
+            return List.of(MESSAGE_NO_NOTES.strip());
         }
-        return HEADING_RECENT_NOTES + recent.reversed().stream()
-                .map(lesson -> "\n  " + lesson.getDate() + "  " + lesson.getNotes().get())
-                .collect(Collectors.joining());
-    }
-
-    private static String formatHistory(List<Lesson> lessons) {
-        return HEADING_LESSON_HISTORY + "\n" + String.format(MESSAGE_HISTORY, count(lessons, LessonStatus.COMPLETED),
-                count(lessons, LessonStatus.CANCELLED), count(lessons, LessonStatus.MISSED));
+        return recent.reversed().stream()
+                .map(lesson -> lesson.getDate() + "  " + lesson.getNotes().get())
+                .toList();
     }
 
     private static long count(List<Lesson> lessons, LessonStatus status) {

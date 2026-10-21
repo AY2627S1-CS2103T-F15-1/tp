@@ -7,8 +7,10 @@ import java.util.Objects;
 import java.util.Optional;
 
 import seedu.address.commons.util.ToStringBuilder;
+import seedu.address.logic.view.DetailView;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
+import seedu.address.model.person.Person;
 
 /**
  * Represents the result of a command execution.
@@ -18,6 +20,8 @@ public class CommandResult {
     private final String feedbackToUser;
     private final List<Lesson> displayedLessons;
     private final List<Homework> displayedHomework;
+    private final DetailView detailView;
+    private final List<Person> addedStudents;
 
     /** Help information should be shown to the user. */
     private final boolean showHelp;
@@ -29,11 +33,13 @@ public class CommandResult {
      * Constructs a {@code CommandResult} with the specified fields.
      */
     public CommandResult(String feedbackToUser, boolean showHelp, boolean exit) {
-        this(feedbackToUser, showHelp, exit, null, null);
+        this(feedbackToUser, showHelp, exit, null, null, null, null);
     }
 
     private CommandResult(String feedbackToUser, boolean showHelp, boolean exit, List<Lesson> displayedLessons,
-            List<Homework> displayedHomework) {
+            List<Homework> displayedHomework, DetailView detailView, List<Person> addedStudents) {
+        this.detailView = detailView;
+        this.addedStudents = addedStudents == null ? null : List.copyOf(addedStudents);
         this.displayedHomework = displayedHomework == null ? null : List.copyOf(displayedHomework);
         this.displayedLessons = displayedLessons == null ? null : List.copyOf(displayedLessons);
         this.feedbackToUser = requireNonNull(feedbackToUser);
@@ -59,7 +65,8 @@ public class CommandResult {
 
     /** Attaches the immutable numbered selection actually rendered in this result. */
     public CommandResult withDisplayedLessons(List<Lesson> lessons) {
-        return new CommandResult(feedbackToUser, showHelp, exit, lessons, displayedHomework);
+        return new CommandResult(feedbackToUser, showHelp, exit, lessons, displayedHomework, detailView,
+                addedStudents);
     }
 
     public Optional<List<Homework>> getDisplayedHomework() {
@@ -68,12 +75,47 @@ public class CommandResult {
 
     /** Attaches immutable homework rows actually numbered in this result. */
     public CommandResult withDisplayedHomework(List<Homework> homework) {
-        return new CommandResult(feedbackToUser, showHelp, exit, displayedLessons, homework);
+        return new CommandResult(feedbackToUser, showHelp, exit, displayedLessons, homework, detailView,
+                addedStudents);
+    }
+
+    /** Returns what the detail pane shows for this result, if the command has something for it. */
+    public Optional<DetailView> getDetailView() {
+        return Optional.ofNullable(detailView);
+    }
+
+    /** Attaches the structured content that the detail pane shows instead of the text of this result. */
+    public CommandResult withDetailView(DetailView view) {
+        return new CommandResult(feedbackToUser, showHelp, exit, displayedLessons, displayedHomework,
+                requireNonNull(view), addedStudents);
+    }
+
+    /** Returns the students that this command added, which the student list highlights. */
+    public List<Person> getAddedStudents() {
+        return addedStudents == null ? List.of() : addedStudents;
+    }
+
+    /** Marks {@code students} as added by this command. */
+    public CommandResult withAddedStudents(List<Person> students) {
+        return new CommandResult(feedbackToUser, showHelp, exit, displayedLessons, displayedHomework, detailView,
+                requireNonNull(students));
     }
 
     /** Replaces feedback while retaining presentation data and command flags. */
     public CommandResult withFeedback(String feedback) {
-        return new CommandResult(feedback, showHelp, exit, displayedLessons, displayedHomework);
+        return new CommandResult(feedback, showHelp, exit, displayedLessons, displayedHomework, detailView,
+                addedStudents);
+    }
+
+    /**
+     * Adds {@code text} to the end of the feedback and, if the command has a detail view, also to what the result
+     * box says next to it, so that a warning such as unsaved changes is not lost.
+     */
+    public CommandResult withAppendedText(String text) {
+        requireNonNull(text);
+        DetailView noted = detailView == null || text.isBlank() ? detailView : detailView.withNote(text.strip());
+        return new CommandResult(feedbackToUser + text, showHelp, exit, displayedLessons, displayedHomework, noted,
+                addedStudents);
     }
 
     public boolean isShowHelp() {

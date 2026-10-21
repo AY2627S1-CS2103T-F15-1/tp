@@ -16,6 +16,7 @@ import seedu.address.logic.commands.TodayCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.logic.view.DetailView;
 import seedu.address.model.Model;
 import seedu.address.model.person.Person;
 import seedu.address.storage.Storage;
@@ -98,7 +99,7 @@ public class LogicManager implements Logic {
         if (changed && !preservesShownRows) {
             numbering = Messages.formatLessonList(model.getFilteredLessonList());
             if (commandResult.getDisplayedLessons().isEmpty()) {
-                commandResult = commandResult.withFeedback(commandResult.getFeedbackToUser() + numbering)
+                commandResult = commandResult.withAppendedText(numbering)
                         .withDisplayedLessons(model.getFilteredLessonList());
             }
         }
@@ -111,7 +112,7 @@ public class LogicManager implements Logic {
             }
         }
         if (dirty) {
-            return commandResult.withFeedback(commandResult.getFeedbackToUser() + "\n" + UNSAVED_WARNING);
+            return commandResult.withAppendedText("\n" + UNSAVED_WARNING);
         }
         return commandResult;
     }
@@ -156,6 +157,16 @@ public class LogicManager implements Logic {
     @Override
     public String getDashboard() {
         return new TodayCommand(LocalDate.now()).execute(model).getFeedbackToUser();
+    }
+
+    @Override
+    public DetailView getDashboardView() {
+        return new TodayCommand(LocalDate.now()).execute(model).getDetailView().orElseThrow();
+    }
+
+    @Override
+    public String getStartupWarning() {
+        return startupWarning;
     }
 
     @Override

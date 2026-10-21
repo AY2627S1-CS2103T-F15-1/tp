@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.logging.Logger;
@@ -12,6 +13,7 @@ import java.util.stream.Collectors;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
+import seedu.address.logic.view.DetailView;
 import seedu.address.model.Model;
 import seedu.address.model.homework.HomeworkQueries;
 import seedu.address.model.lesson.Lesson;
@@ -73,12 +75,50 @@ public class TodayCommand extends Command {
         return new CommandResult(DATE_FORMAT.format(today)
                 + "\n\n" + formatLessonsToday(model, lessonsToday)
                 + "\n\n" + formatLessonsAwaitingNotes(lessonsAwaitingNotes)
-                + "\n\n" + HomeworkQueries.summary(model.getAddressBook(), null, true, today));
+                + "\n\n" + HomeworkQueries.summary(model.getAddressBook(), null, true, today))
+                .withDetailView(toDetailView(model, lessonsToday, lessonsAwaitingNotes));
+    }
+
+    /** Returns the dashboard as the detail pane draws it: the same sections as the text, in the same order. */
+    private DetailView toDetailView(Model model, List<Lesson> lessonsToday, List<Lesson> lessonsAwaitingNotes) {
+        List<DetailView.Section> sections = new ArrayList<>();
+        List<DetailView.Line> todayLines = new ArrayList<>();
+        if (lessonsToday.isEmpty()) {
+            todayLines.add(DetailView.Line.plain(MESSAGE_NO_LESSONS_TODAY.strip()));
+        }
+        for (Lesson lesson : lessonsToday) {
+            boolean isOverlapping = !model.getConflictingLessons(lesson).isEmpty();
+            todayLines.add(new DetailView.Line(formatLessonToday(lesson, isOverlapping).strip(), false,
+                    isOverlapping));
+        }
+        sections.add(new DetailView.Section(todayHeader(lessonsToday), todayLines));
+
+        List<DetailView.Line> awaitingLines = lessonsAwaitingNotes.isEmpty()
+                ? List.of(DetailView.Line.plain(MESSAGE_ALL_RECORDED.strip()))
+                : lessonsAwaitingNotes.stream()
+                        .map(lesson -> DetailView.Line.plain(formatAwaitingNotes(lesson).strip())).toList();
+        sections.add(new DetailView.Section(awaitingHeader(lessonsAwaitingNotes), awaitingLines));
+
+        HomeworkQueries.Summary homework = HomeworkQueries.summaryOf(model.getAddressBook(), null, true, today);
+        sections.add(new DetailView.Section(homework.heading(), homework.lines().stream()
+                .map(line -> homework.hasItems() ? DetailView.Line.warning(line) : DetailView.Line.plain(line))
+                .toList()));
+
+        String date = DATE_FORMAT.format(today);
+        return new DetailView(date, date, true, sections);
+    }
+
+    private static String todayHeader(List<Lesson> lessons) {
+        int minutes = lessons.stream().mapToInt(lesson -> lesson.getDuration().value).sum();
+        return String.format(MESSAGE_TODAY_HEADER, lessons.size(), LessonDuration.format(minutes));
+    }
+
+    private static String awaitingHeader(List<Lesson> lessons) {
+        return String.format(MESSAGE_AWAITING_NOTES_HEADER, lessons.size());
     }
 
     private static String formatLessonsToday(Model model, List<Lesson> lessons) {
-        int minutes = lessons.stream().mapToInt(lesson -> lesson.getDuration().value).sum();
-        String header = String.format(MESSAGE_TODAY_HEADER, lessons.size(), LessonDuration.format(minutes));
+        String header = todayHeader(lessons);
         if (lessons.isEmpty()) {
             return header + "\n" + MESSAGE_NO_LESSONS_TODAY;
         }
@@ -97,15 +137,17 @@ public class TodayCommand extends Command {
     }
 
     private static String formatLessonsAwaitingNotes(List<Lesson> lessons) {
-        String header = String.format(MESSAGE_AWAITING_NOTES_HEADER, lessons.size());
+        String header = awaitingHeader(lessons);
         if (lessons.isEmpty()) {
             return header + "\n" + MESSAGE_ALL_RECORDED;
         }
-        return header + lessons.stream()
-                .map(lesson -> String.format("\n  %-10s  %-18s %-10s %s",
-                        PAST_DAY_FORMAT.format(lesson.getDate().value), lesson.getStudentName(),
-                        lesson.getSubject(), MESSAGE_NOT_COMPLETED))
+        return header + lessons.stream().map(lesson -> "\n" + formatAwaitingNotes(lesson))
                 .collect(Collectors.joining());
+    }
+
+    private static String formatAwaitingNotes(Lesson lesson) {
+        return String.format("  %-10s  %-18s %-10s %s", PAST_DAY_FORMAT.format(lesson.getDate().value),
+                lesson.getStudentName(), lesson.getSubject(), MESSAGE_NOT_COMPLETED);
     }
 
     @Override

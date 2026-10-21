@@ -8,6 +8,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.logging.Logger;
@@ -17,6 +18,7 @@ import java.util.stream.IntStream;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
+import seedu.address.logic.view.DetailView;
 import seedu.address.model.Model;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonDuration;
@@ -69,13 +71,51 @@ public class AgendaCommand extends Command {
 
         List<Lesson> lessons = model.getFilteredLessonList();
         if (isWeek) {
-            return new CommandResult(formatWeek(model, first, last, lessons));
+            return new CommandResult(formatWeek(model, first, last, lessons))
+                    .withDetailView(weekView(model, first, last, lessons));
         }
         if (lessons.isEmpty()) {
-            return new CommandResult(String.format(MESSAGE_NO_LESSONS_ON_DAY, DAY_FORMAT.format(date)));
+            String message = String.format(MESSAGE_NO_LESSONS_ON_DAY, DAY_FORMAT.format(date));
+            return new CommandResult(message).withDetailView(new DetailView(message, message, false, List.of()));
         }
-        return new CommandResult(String.format(MESSAGE_DAY_HEADER, DAY_FORMAT.format(date), summarise(lessons))
-                + formatLessons(model, lessons, date));
+        String header = String.format(MESSAGE_DAY_HEADER, DAY_FORMAT.format(date), summarise(lessons));
+        return new CommandResult(header + formatLessons(model, lessons, date)).withDetailView(new DetailView(header,
+                header, false, List.of(new DetailView.Section("", lessonLines(model, lessons, date)))));
+    }
+
+    /** Returns the week as the detail pane draws it: a section for each day. */
+    private static DetailView weekView(Model model, LocalDate first, LocalDate last, List<Lesson> lessons) {
+        String header = String.format(MESSAGE_WEEK_HEADER, DAY_FORMAT.format(first), DAY_FORMAT.format(last),
+                summarise(lessons));
+        List<DetailView.Section> sections = new ArrayList<>();
+        for (LocalDate day = first; !day.isAfter(last); day = day.plusDays(1)) {
+            LocalDate currentDay = day;
+            List<Lesson> lessonsOfDay = lessons.stream()
+                    .filter(lesson -> lesson.getDate().value.equals(currentDay)).collect(Collectors.toList());
+            List<DetailView.Line> lines = lessonsOfDay.isEmpty()
+                    ? List.of(DetailView.Line.plain(MESSAGE_EMPTY_DAY.strip()))
+                    : lessonLines(model, lessons, day);
+            sections.add(new DetailView.Section(DAY_FORMAT.format(day) + " (" + summarise(lessonsOfDay) + ")",
+                    lines));
+        }
+        return new DetailView(header, header, false, sections);
+    }
+
+    /**
+     * Returns one line for each lesson on {@code day}, numbered by its position in {@code shownLessons}. A cancelled
+     * lesson is struck through and a lesson that overlaps another is marked as a warning.
+     */
+    private static List<DetailView.Line> lessonLines(Model model, List<Lesson> shownLessons, LocalDate day) {
+        List<DetailView.Line> lines = new ArrayList<>();
+        for (int i = 0; i < shownLessons.size(); i++) {
+            Lesson lesson = shownLessons.get(i);
+            if (lesson.getDate().value.equals(day)) {
+                boolean isOverlapping = !model.getConflictingLessons(lesson).isEmpty();
+                lines.add(new DetailView.Line(formatLine(i + 1, lesson, isOverlapping),
+                        lesson.getStatus() == LessonStatus.CANCELLED, isOverlapping));
+            }
+        }
+        return lines;
     }
 
     private static String formatWeek(Model model, LocalDate first, LocalDate last, List<Lesson> lessons) {
