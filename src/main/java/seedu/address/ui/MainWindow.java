@@ -19,6 +19,7 @@ import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.Logic;
 import seedu.address.logic.commands.CommandResult;
+import seedu.address.logic.commands.DemoCommand;
 import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -41,6 +42,7 @@ public class MainWindow extends UiPart<Stage> {
     // Independent Ui parts residing in this Ui container
     private PersonListPanel personListPanel;
     private DetailPane detailPane;
+    private DemoBanner demoBanner;
     private ResultDisplay resultDisplay;
     private HelpWindow helpWindow;
 
@@ -58,6 +60,9 @@ public class MainWindow extends UiPart<Stage> {
 
     @FXML
     private StackPane detailPanePlaceholder;
+
+    @FXML
+    private StackPane demoBannerPlaceholder;
 
     @FXML
     private SplitPane splitPane;
@@ -177,6 +182,19 @@ public class MainWindow extends UiPart<Stage> {
 
         CommandBox commandBox = new CommandBox(this::executeCommand);
         commandBoxPlaceholder.getChildren().add(commandBox.getRoot());
+
+        demoBanner = new DemoBanner(this::exitDemo);
+        demoBannerPlaceholder.getChildren().add(demoBanner.getRoot());
+        demoBanner.setDemoMode(logic.isDemoMode());
+    }
+
+    /** Runs {@code demo exit} for the banner's button, whose result or error the result box shows. */
+    private void exitDemo() {
+        try {
+            executeCommand(DemoCommand.COMMAND_WORD + " " + DemoCommand.EXIT);
+        } catch (CommandException | ParseException e) {
+            logger.info("Leaving the demo was refused"); // the result box shows why
+        }
     }
 
     /**
@@ -241,6 +259,10 @@ public class MainWindow extends UiPart<Stage> {
         return detailPane;
     }
 
+    public DemoBanner getDemoBanner() {
+        return demoBanner;
+    }
+
     public SplitPane getSplitPane() {
         return splitPane;
     }
@@ -257,6 +279,7 @@ public class MainWindow extends UiPart<Stage> {
             refreshDashboard();
         }
         personListPanel.highlight(commandResult.getAddedStudents());
+        demoBanner.setDemoMode(logic.isDemoMode());
     }
 
     /** Redraws the dashboard after a command, as long as the detail pane shows it, so that it never goes stale. */

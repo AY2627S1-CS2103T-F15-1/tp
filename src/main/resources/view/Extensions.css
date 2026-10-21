@@ -56,3 +56,19 @@
 .detail-line.detail-struck {
     -fx-fill: #8a8a8a;
 }
+
+/* The strip that says the data on screen is from the demo */
+.demo-banner {
+    -fx-background-color: #f2b84b;
+}
+
+.demo-banner-text {
+    -fx-text-fill: #1d1d1d;
+    -fx-font-size: 10pt;
+    -fx-font-weight: bold;
+}
+
+.demo-banner-button {
+    -fx-background-color: #1d1d1d;
+    -fx-text-fill: white;
+}
