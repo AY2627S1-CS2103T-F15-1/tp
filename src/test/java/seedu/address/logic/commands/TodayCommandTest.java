@@ -12,6 +12,7 @@ import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 
@@ -92,6 +93,35 @@ public class TodayCommandTest {
     }
 
     @Test
+    public void execute_chargeFromYesterday_isOneDayOld() {
+        Lesson charged = new LessonBuilder(yesterdayScheduled).withStatus(LessonStatus.COMPLETED).build();
+        addLessons(charged);
+        // an hour and a half at $50.00/hour
+        model.addLedgerEntry(LedgerEntry.charge(ALICE, charged));
+
+        assertEquals("DUES\n"
+                + "1 student(s) with outstanding balances \u2014 $75.00 total\n"
+                + "  Alice Pauline $75.00 oldest unpaid 1 day", section("DUES"));
+    }
+
+    @Test
+    public void execute_archivedStudentOwesMoney_marksThemArchivedLikeTheirHomework() {
+        Lesson charged = new LessonBuilder(lastWeekScheduled).withStatus(LessonStatus.COMPLETED).build();
+        addLessons(charged);
+        // an hour and a half at $35.00/hour
+        model.addLedgerEntry(LedgerEntry.charge(CARL, charged));
+        model.addHomework(Homework.assign(CARL.getId(), "Comprehension worksheet", TODAY.minusDays(3)));
+        model.setPerson(CARL, CARL.withArchived(true));
+
+        assertEquals("OVERDUE HOMEWORK (1)\n"
+                + "  Carl Kurz (archived)  Comprehension worksheet  due 2030-01-07  OVERDUE",
+                section("OVERDUE HOMEWORK"));
+        assertEquals("DUES\n"
+                + "1 student(s) with outstanding balances \u2014 $52.50 total\n"
+                + "  Carl Kurz (archived) $52.50 oldest unpaid 7 days", section("DUES"));
+    }
+
+    @Test
     public void execute_lessonsToday_showsThemInOrderWithOverlapMarked() {
         addLessons(todayPhysics, tomorrowScheduled, todayMath, todayCancelled);
 
@@ -169,6 +199,13 @@ public class TodayCommandTest {
     public void toStringMethod() {
         String expected = TodayCommand.class.getCanonicalName() + "{today=" + TODAY + "}";
         assertEquals(expected, new TodayCommand(TODAY).toString());
+    }
+
+    /** Returns the section of the dashboard of {@code TODAY} that starts with {@code heading}. */
+    private String section(String heading) {
+        return Stream.of(new TodayCommand(TODAY).execute(model).getFeedbackToUser().split("\n\n"))
+                .filter(block -> block.startsWith(heading))
+                .findFirst().orElseThrow();
     }
 
     private void addLessons(Lesson... lessons) {
