@@ -1,5 +1,8 @@
 package seedu.address.model;
 
+/**
+ * The kind of destructive action performed on the model.
+ */
 public enum DestructiveActionType {
     NONE(""),
     CLEAR("clear"),
