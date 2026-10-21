@@ -11,6 +11,7 @@ import java.util.logging.Logger;
 import javafx.animation.PauseTransition;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.SelectionMode;
@@ -26,6 +27,8 @@ import seedu.address.model.person.Person;
 public class PersonListPanel extends UiPart<Region> {
     public static final String HIGHLIGHT_STYLE_CLASS = "highlighted-cell";
     public static final Duration HIGHLIGHT_DURATION = Duration.millis(2500);
+    public static final String MESSAGE_EMPTY = "No students are listed. Add one with 'add n/NAME p/PHONE l/LEVEL "
+            + "s/SUBJECT r/RATE', or press Archived or All to look further.";
 
     private static final String FXML = "PersonListPanel.fxml";
     private final Logger logger = LogsCenter.getLogger(PersonListPanel.class);
@@ -50,6 +53,10 @@ public class PersonListPanel extends UiPart<Region> {
         toolbarPlaceholder.getChildren().add(QuickCommand.toolbarOf(actions, new QuickCommand("Active", "list"),
                 new QuickCommand("Archived", "list archived/"), new QuickCommand("All", "list all/")));
         personListView.setItems(personList);
+        Label empty = new Label(MESSAGE_EMPTY);
+        empty.getStyleClass().add("panel-empty");
+        empty.setWrapText(true);
+        personListView.setPlaceholder(empty);
         personListView.setCellFactory(listView -> new PersonListViewCell());
         personListView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         highlightTimer.setOnFinished(event -> clearHighlight());
