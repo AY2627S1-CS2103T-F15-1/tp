@@ -120,6 +120,7 @@ public class ModelManager implements Model {
         requireNonNull(comparator);
 
         addressBook.sortPersons(comparator);
+        resetDestructiveAction();
     }
 
     @Override
