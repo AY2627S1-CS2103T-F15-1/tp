@@ -73,16 +73,27 @@ The **API** of this component is specified in [`Ui.java`](https://github.com/AY2
 
 <puml src="diagrams/UiClassDiagram.puml" alt="Structure of the UI Component"/>
 
-The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `PersonListPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
+The UI consists of a `MainWindow` and its parts. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts. The window holds:
+
+* the **tabs** (`PanelTabs`), which hold a `PersonListPanel`, a `LessonListPanel` and a `HomeworkListPanel`. Each list draws its rows as cards (`PersonCard`, `LessonCard` and `HomeworkCard`). A card shows the number that the commands use for its row, and has `IconButton`s for the actions that fit the row. Each list also has a toolbar of `QuickCommand` buttons that run the commands that fill it.
+* the **detail pane** (`DetailPane`), which draws a `DetailView` from the Logic component.
+* the `ResultDisplay`, the `CommandBox` and the `StatusBarFooter`, as in AddressBook-Level3.
+* the `DemoBanner`, which is visible only while the demo runs, the `ConfirmBar`, which is visible only while a command waits for confirmation, and the `TourOverlay`, which is added to the window while the guided tour runs.
 
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-F15-1/tp/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-F15-1/tp/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
 
 The `UI` component,
 
 * executes user commands using the `Logic` component.
-* listens for changes to `Model` data so that the UI can be updated with the modified data.
+* listens for changes to `Model` data so that the UI can be updated with the modified data. The student and lesson lists are `ObservableList`s that the list panels observe. The homework rows and the dashboard are not observable, so the window asks `Logic` for them again after every command.
 * keeps a reference to the `Logic` component, because the `UI` relies on the `Logic` to execute commands.
-* depends on some classes in the `Model` component because it displays `Person` objects from the model.
+* depends on some classes in the `Model` component because it displays `Person` and `Lesson` objects from the model, and on `HomeworkRow` and `DetailView` of the `Logic` component, which describe what the homework list and the detail pane draw.
+* **never changes data itself.** A button asks the window to do something through the `PanelActions` interface, which has three operations: `run(command)` runs a command as if it had been typed, `prefill(text)` puts the start of a command in the command box, and `ask(question, command)` shows the `ConfirmBar` and runs the command only if the user confirms. Everything that a button does is therefore also something that the user can type, and the command keeps the only copy of the rules.
+* **never reads the text of a result** to decide what to draw. A `CommandResult` says in typed fields which tab to show, what the detail pane draws, which students to highlight, and which command confirms a preview. This keeps a change of wording from breaking the window.
+
+The sequence diagram below shows what happens when the user presses the bin button of a student who has lessons, and then confirms.
+
+<puml src="diagrams/ConfirmSequenceDiagram.puml" alt="Interactions Between the UI Parts and Logic for a Deletion That Needs Confirmation" />
 
 ### Logic component
 
@@ -108,7 +119,9 @@ How the `Logic` component works:
 1. This results in a `Command` object (more precisely, an object of one of its subclasses e.g., `DeleteCommand`) which is executed by the `LogicManager`.
 1. The command can communicate with the `Model` when it is executed (e.g. to delete a person).<br>
    Note that although this is shown as a single step in the diagram above for simplicity, the code can require several interactions between the command object and the `Model` to complete the operation.
-1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
+1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`. Besides the message, it carries what the window needs in typed fields: the `DetailView` for the detail pane, the lessons or homework that the command numbered, the students that it added, the command that confirms a preview such as `delete 3 confirm`, and whether to open the help window or the guided tour. `LogicManager` adds the warnings of a failed save and the refreshed lesson numbers to the result with `withAppendedText`, which also adds them to the result box of a detail view, so that they are not lost.
+
+`LogicManager` also decides whether a command has to be saved, which is described in [Saving, recovery and migration](#saving-recovery-and-migration).
 
 Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a user command:
 
@@ -126,10 +139,12 @@ How the parsing works:
 
 The `Model` component,
 
-* stores the address book data i.e., all `Person` objects, each of which represents a student with a name, phone number, level, subjects and rate, and optionally an email, a venue and a remark (the `Person` objects are contained in a `UniquePersonList` object). Two `Person` objects are the same student if they have the same phone number and the same name, ignoring case.
-* stores the `Lesson` objects, each of which is a lesson with a student, a subject, a date, a start time, a duration, a status and optionally a venue (the `Lesson` objects are contained in a `UniqueLessonList` object). A `Lesson` refers to its student by the student's name and phone number, which together identify a `Person`. Deleting a student deletes their lessons, and editing the name or phone number of a student keeps their lessons attached.
-* stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
-* stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
+* stores the address book data i.e., all `Person` objects, each of which represents a student with a name, phone number, level, subjects and rate, and optionally an email, a venue and a remark (the `Person` objects are contained in a `UniquePersonList` object). Every `Person` has a permanent `UUID` that is saved with it and never shown. Two `Person` objects are the same student if they have the same phone number and the same name, ignoring case. A student can be **archived**, which keeps all records but leaves the active list.
+* stores the `Lesson` objects, each of which is a lesson with a student, a subject, a date, a start time, a duration, a status and optionally a venue, notes and a preparation text (the `Lesson` objects are contained in a `UniqueLessonList` object). A `Lesson` refers to its student by the student's `UUID`, so editing the name or the phone number of a student keeps the lessons attached, and it keeps the academic level that the student had at booking. Deleting a student deletes their lessons.
+* stores the `Homework` objects, each of which is an assignment with a student, a description, a due date, a status and optional feedback. A `Homework` also refers to its student by `UUID`, and deleting a student deletes their homework.
+* stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list, and the `Lesson` objects that the lesson commands count from in another. It exposes these as unmodifiable `ObservableList`s that the UI can observe and bind to, so the UI updates when a list changes. The homework that the last `hw list` showed is kept as an immutable snapshot, which `getDisplayedHomework()` returns.
+* can run a **demo**: `startDemo` puts the sample data in place of the data and keeps the data aside, and `endDemo` puts it back. `isDemoMode()` says whether one is running.
+* stores a `UserPrefs` object that represents the user’s preferences, which are the GUI settings and whether the guided tour has been seen. This is exposed to the outside as a `ReadOnlyUserPrefs` object.
 * does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
 
 ### Storage component
@@ -141,7 +156,8 @@ The `Model` component,
 The `Storage` component,
 * can save both address book data and user preference data in JSON format, and read them back into corresponding objects.
 * is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonAddressBookStorage` and `JsonUserPrefsStorage` (one class per data file).
-* saves the students and the lessons in the same data file. A data file written before lessons existed has no lesson list, and still loads with no lessons.
+* saves the students, the lessons and the homework in the same data file. A data file written before lessons or homework existed has no such list, and still loads with none.
+* writes a **schema number** in the data file, and refuses to read a file whose number it does not support. `VersionedAddressBookStorage` reads the current file, and reads the legacy file only when the current one is absent, to migrate it. The details are in [Saving, recovery and migration](#saving-recovery-and-migration).
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
 
 ### Common classes
@@ -164,7 +180,7 @@ The sequence diagram below shows `execute("lesson move 1 d/2026-12-24")`.
 
 How the pieces fit together:
 
-* **Lesson indices.** `Model#getFilteredLessonList()` returns the lessons that `agenda` or `lesson list` last chose, sorted by date, then start time, then student name. `agenda` and `lesson list` number the lessons they show in that order, and `lesson move` and `lesson cancel` take the same number, so the number a tutor sees is always the one that the next command acts on. `lesson add` resets the filter so that every lesson is shown.
+* **Lesson indices.** `Model#getFilteredLessonList()` returns the lessons that `agenda` or `lesson list` last chose, sorted by date, then start time, then student name. `agenda` and `lesson list` number the lessons they show in that order, and `lesson move` and `lesson cancel` take the same number, so the number a tutor sees is always the one that the next command acts on. `lesson add` keeps the current filter. If the new lesson shifts the numbers of the lessons that are shown, `LogicManager` appends the complete current list with its fresh numbers to the result and attaches it as the displayed lessons, so that the next lesson command is not given a number that has moved.
 * **Overlaps.** `Lesson#overlaps(Lesson)` is true when both lessons are scheduled, are on the same date, and each starts before the other ends. It compares minutes since the start of the day, so back-to-back lessons are not an overlap and a lesson that ends at midnight can still be compared. `Model#getConflictingLessons(Lesson)` returns the other lessons that overlap a lesson, and `lesson add` and `lesson move` append the result to their message as a warning. `agenda` marks every lesson that has at least one overlap.
 * **Cancelling.** `Lesson#cancel(String)` returns a copy with the status `CANCELLED` and the reason. The lesson is kept, so it stays in the agenda for billing, but it is no longer scheduled and so it never overlaps.
 * **Immutability.** `Lesson` is immutable. `lesson move` and `lesson cancel` build a changed copy and ask the model to replace the old lesson with it, in the same way that `edit` replaces a `Person`.
@@ -174,12 +190,15 @@ How the pieces fit together:
 
 **Aspect: how a lesson refers to its student**
 
-* **Alternative 1 (current choice):** store the student's name and phone number in the lesson.
-    * Pros: The saved file stays flat and a lesson can be validated without loading students. A name and phone number already identify a student in TutorFlow.
-    * Cons: `AddressBook` must update the lessons when it edits or deletes a student. This is done in `setPerson` and `removePerson`, so no command has to remember it.
-* **Alternative 2:** store a reference to the `Person` object.
+* **Alternative 1 (current choice):** store the `UUID` of the student in the lesson, with the name and phone number of the student as display details.
+    * Pros: Editing the name or the phone number of a student cannot detach the lessons, and a change of the level cannot rewrite the level that a lesson was booked at, because the lesson keeps its own snapshot of it. The `UUID` also links the homework in the same way.
+    * Cons: A file from before the `UUID` existed has to be migrated, and a lesson that cannot be linked to exactly one student makes the file invalid. `VersionedAddressBookStorage` links legacy lessons by name and phone while loading.
+* **Alternative 2:** store the name and phone number of the student in the lesson, as the first version did.
+    * Pros: The saved file is flat, and a lesson can be validated without loading students.
+    * Cons: `AddressBook` has to update the lessons whenever it edits or deletes a student, and two students whose names and phone numbers change in turn can be confused.
+* **Alternative 3:** store a reference to the `Person` object.
     * Pros: No update is needed when a student is edited.
-    * Cons: `Person` is immutable and is replaced on every edit, so the reference would have to be replaced as well, and the saved file would need ids that students do not have.
+    * Cons: `Person` is immutable and is replaced on every edit, so the reference would have to be replaced as well, and the saved file would need identifiers anyway.
 
 **Aspect: what to do when lessons overlap**
 
@@ -205,6 +224,135 @@ When notes are supplied again on a completed lesson, they replace the existing n
 The command replaces a scheduled lesson with the immutable copy returned by `Lesson#miss`, which retains all booking details, notes and identity fields. Repeating it on an already-missed lesson returns an informative message without replacing the record. Existing lesson filters, overlap checks, `view` history counts and JSON storage already support `LessonStatus.MISSED`; no new storage format is needed. A missed lesson can disappear from an upcoming-only filter, but remains accessible with `lesson list st/INDEX all/`. The existing `lesson done` command can correct a missed status to completed. `lesson move` rejects a missed lesson, because the moved copy would keep `MISSED` on its new date and the record of the missed slot would be lost. A make-up lesson is scheduled with `lesson add` instead.
 
 `LessonMissedIntegrationTest` exercises command parsing, status changes, student history and JSON reload together. It also verifies that invalid arguments, invalid indices and rejected status/date changes leave the saved file unchanged.
+
+### Students, filters and archiving
+
+**Identity.** `Person#getId()` is a `UUID` that is saved with the student, apart from the visible index and from value equality. Two students are equal when their fields are equal, and the `UUID` is not one of them, so a duplicate check never depends on it. A `Lesson` or a `Homework` refers to its student by that `UUID`, which keeps the link when the student is edited or renamed.
+
+**Archiving.** A `Person` has an `isArchived` flag that takes part in equality. `ArchiveCommand` replaces the student with `Person#withArchived`, and then the filtered list refreshes. The active list is the default predicate (`Model#PREDICATE_SHOW_ACTIVE_PERSONS`), so an archived student leaves it without any record being touched. A lesson command or `hw add` that needs an active student rejects an archived one with a message that says to restore the student first, and status changes and feedback on existing homework are still accepted.
+
+**Filters.** `ListCommand` builds one predicate from the level, the subject and the archive scope (`archived/` or `all/`, which exclude each other) and sets it on the filtered list. `ListCommandParser` rejects a flag with a value and the two flags together, as the other flags of TutorFlow do through `ParserUtil#parseFlag`. The `student` namespace (`StudentCommandParser`) forwards the rest of its input to `AddressBookParser`, so a student command has one parser however it is typed.
+
+**Deleting.** `DeleteCommand` collects the records that deletion would remove into a `LinkedRecords` record (the lessons and the homework of the student). A student without any is deleted at once. For a student with records and no `confirm`, the command returns a preview and deletes nothing: the counts of lessons and homework, how many are upcoming, how many homework items have feedback, and, if there is homework, the advice to archive instead. The preview carries the confirming command (`delete 3 confirm`) in the `CommandResult`, which the window offers as a button.
+
+### Homework
+
+`Homework` is immutable and has a `UUID`, the `UUID` of its student, a normalized description, a due date, a `HomeworkStatus` and optional feedback. `HomeworkStatus` has only the persisted values `ASSIGNED`, `SUBMITTED` and `REVIEWED`. Overdue is worked out from `ASSIGNED` and the caller's date by `Homework#isOverdue(LocalDate)` and is never stored, so it cannot get out of step with the date.
+
+`AddressBook` owns the homework list. It rejects a duplicate assignment (the same student, normalized description and due date, ignoring case), a repeated identity and a student that does not exist, and `setHomework` rejects a change of the student. Deleting a student, `clear` and `resetData` include the homework, so no homework is left without its student.
+
+`HomeworkQueries` holds the rules that the list, the student overview and the dashboard share: which items match the filters, their order (overdue first, then due date, then the order of assignment), and how an item is written on one line or with its feedback. The dashboard and `view` use `HomeworkQueries#summaryOf`, which never changes the numbered selection.
+
+`HomeworkCommandParser` takes a `Clock`, so that `today`, `tmr` and the bounds of a due date (today to one calendar year ahead) are deterministic in tests. `HomeworkCommandSupport` has the rules that the six commands share: resolving a number to the homework, resolving a student, and validating a due date.
+
+**Numbers.** `hw list` selects the homework and stores it with `Model#showHomework(List<Homework>)`. This is an immutable snapshot of the rows that were numbered, and it is not the current data. `HomeworkCommandSupport#target` takes the row at the given number and looks the **same `UUID`** up in `AddressBook#getHomeworkList()`. If the homework is gone, the command fails with `That homework was deleted. Run 'hw list' to refresh.`, and no other row takes its number. Editing, changing the status, adding homework, archiving and renaming a student, and a failed save leave the snapshot as it is, so the numbers that the tutor sees stay true until the next `hw list`. `Logic#getHomeworkRows()` turns the snapshot into `HomeworkRow`s for the window by reading each item as it is now, and marks the rows that are gone as deleted.
+
+**Using the numbers in another command.** A command that takes the number of a homework item, such as one that links a task to homework, must not read `Model#getDisplayedHomework()` as if it were the data. It calls `HomeworkCommandSupport#target(model, index)`, which returns the item as it is now, or fails with `That homework was deleted. Run 'hw list' to refresh.` if it is gone and with the invalid-index message if the number is outside the last list. A task should store the `UUID` of the item, never the number, and `Homework#getId()` is the key that `AddressBook#getHomeworkList()` and the saved file use.
+
+#### Design considerations
+
+**Aspect: what a number in a homework command refers to**
+
+* **Alternative 1 (current choice):** the number refers to the row of the last `hw list`, and the row is resolved by its `UUID` when the command runs.
+    * Pros: A number never selects another item, even when homework is added, edited or deleted after the list was shown. The window can show the same rows.
+    * Cons: The model keeps a second list that must be refreshed, and the UI must draw deleted rows as deleted.
+* **Alternative 2:** the number refers to a position in the current list of all homework.
+    * Pros: There is no snapshot.
+    * Cons: A number that was right when the tutor read it can select another item after any change. A tutor who deletes the third item and then types the same number again deletes the next one.
+
+**Aspect: where overdue is kept**
+
+* **Alternative 1 (current choice):** it is worked out from the status and the date when needed.
+    * Pros: It cannot be wrong after midnight, and a file never says that something is overdue that is not.
+    * Cons: Every place that shows homework must ask `isOverdue`, which `HomeworkQueries` and `HomeworkRow` do for all of them.
+* **Alternative 2:** store `OVERDUE` as a status and update it when the application starts.
+    * Pros: The status is one field.
+    * Cons: It is wrong while the application runs across midnight, and `hw status` would have to refuse or accept it.
+
+### Saving, recovery and migration
+
+<puml src="diagrams/SaveActivityDiagram.puml" alt="What LogicManager Does for a Command That May Change Data" />
+
+`LogicManager#execute` saves before it reports success, so that no change is lost when TutorFlow stops after a command. It does not ask the command whether it changed anything, because a command could forget to say so. It takes a **snapshot** of the data before and after the command with `Storage#snapshotAddressBook`, which is the exact text that would be written, and saves only if the two differ or an earlier save failed. A change that the file would not show, such as a different filter, therefore causes no write, and a change to a field that no equality check looks at, such as the feedback of a homework item, still does.
+
+* **A failed save** does not undo the command. The change stays in the running application, the data stays marked as unsaved, and the result says `Your change was applied in this session but could not be saved: ...` with the reason, and `Unsaved changes: type 'save' to retry before closing TutorFlow.` `save` and `exit` try again, and `exit` is refused while the save still fails. `LogicManager#hasUnsavedChanges` is what `exit` and the window's close request check. Read-only commands after a failure show the same reminder.
+* **The write** is atomic. `FileUtil#writeToFile` writes the serialized text to a temporary file next to the data file and then moves it over the data file in one step, and it reports an error if the file system cannot do that. It never creates the destination first, so a write that is interrupted during the first save leaves the legacy file available.
+* **An invalid file** is not deleted. `DataFileRecovery#setAside` renames it to `tutorflow-v14.json.corrupt` (or `.corrupt.1` and so on), the application starts with no data and the result box says where the file went. If it cannot be renamed, saving is blocked until it can be preserved, so the original bytes are never overwritten.
+* **The schema number.** `StorageSchema.MINIMUM_VERSION` and `StorageSchema.CURRENT_VERSION` give the range of schemas that a build reads (14 to 15 now), and a build writes `CURRENT_VERSION`. Before any field is bound, `JsonAddressBookStorage` reads the number from the raw JSON. A number outside the range raises `UnsupportedSchemaException`, which is the cause of the `DataLoadingException`. `MainApp#init` passes it on before it creates a model, logic or UI, `MainApp#start` tells the user, and the file stays where it is. It must never go through corruption recovery, and later domain fields must never be ignored silently, because that would lose the data of a newer build.
+* **Migration.** `VersionedAddressBookStorage` reads `tutorflow-v14.json`. Only if that path is positively absent does it read the legacy `addressbook.json`, which gives every student and lesson a `UUID`, links each legacy lesson to its student by name and phone, and leaves the academic level of the lesson empty, because it cannot be known. `LogicManager` is told that an initial save is required, so the migrated identifiers are written at once and not at the first change, and a failed initial save leaves the application unsaved. The legacy file is never changed.
+* **Adding to the data.** A new kind of record must be added to `ReadOnlyAddressBook`, `AddressBook` (copy constructor, `resetData`, `equals` and `hashCode`), the JSON root and adapters, and be covered by a round-trip test together, and `StorageSchema.CURRENT_VERSION` must go up with prior-version loading and future-version refusal tests. Homework is schema 15. A build reads every schema from 14 to its own, with defaults for what an older file does not have.
+* **Names.** `DataFiles` holds the paths of the data, legacy and preferences files, and `DataFiles#isUsedByTutorFlow` tells the CSV import that a path is one of them, or a copy or a temporary file of one, so that an import can never read the data file as a CSV file.
+* **Logs.** TutorFlow does not write a student's name, phone number or fees to a log file. `LogPrivacyTest` runs the commands and checks the log.
+
+#### Design considerations
+
+**Aspect: how to decide whether to save**
+
+* **Alternative 1 (current choice):** compare snapshots of the data before and after the command.
+    * Pros: A command cannot forget to ask for a save, and a command that changes nothing never writes. The comparison uses the representation that is written, so UI-only equality never decides.
+    * Cons: Two serializations for each command, which is acceptable for the data sizes of NFR 3.
+* **Alternative 2:** each command says whether it changed the data.
+    * Pros: No serialization to compare.
+    * Cons: A new command that forgets loses the change at exit, which is the worst failure of a data application.
+
+### Demo mode
+
+<puml src="diagrams/DemoStateDiagram.puml" alt="The States of the Demo" />
+
+The demo lets a tutor try TutorFlow with sample data without risking real records. `ModelManager` keeps a copy of the data in `dataBeforeDemo` while a demo runs, and `isDemoMode()` is true exactly while that copy exists. `DemoCommand` has three actions: `PREVIEW` says what would be loaded, `START` calls `Model#startDemo`, which keeps the data aside, puts the sample data in its place and resets what the numbers refer to, and `EXIT` calls `Model#endDemo`, which puts the data back and resets the numbers again.
+
+The demo is **in memory only**. `LogicManager` does not save while a demo runs, and it does not report unsaved changes for the sample data. It also refuses to start a demo while there are unsaved changes (`MESSAGE_SAVE_BEFORE_DEMO`), because the data that `endDemo` brings back is what the file holds. `save` says that nothing is saved in the demo. `MainWindow` shows the `DemoBanner` while `Logic#isDemoMode()` is true, and its button runs `demo exit`.
+
+#### Design considerations
+
+**Aspect: where the sample data lives**
+
+* **Alternative 1 (current choice):** in memory, in place of the data, with the data kept aside.
+    * Pros: The data file is never written during a demo, so the tutor's records are safe even if TutorFlow is closed in it, and every command works on the samples as it does on real data.
+    * Cons: The demo is lost on exit, which is the purpose of it.
+* **Alternative 2:** load the samples into the data file, as the first version did when the data was empty.
+    * Pros: Simple.
+    * Cons: The samples have to be deleted by hand, and a tutor who already has records cannot look around at all.
+* **Alternative 3:** open a second data file for the demo.
+    * Pros: Isolated.
+    * Cons: A second path to protect, to clean up and to explain.
+
+### The window: detail pane, tabs and buttons
+
+**Structured views.** `TodayCommand`, `AgendaCommand` and `ViewCommand` return a `DetailView` with their `CommandResult`: a title, a summary, a flag that says whether the view is live, and sections of `Line`s that say in typed flags whether they are struck through (a cancelled lesson) or a warning (an overlap). `DetailPane` draws the lines in a monospaced font, so that the columns line up, and it never reads the text of a line to decide how to draw it. The result box says `summary` and `Shown in the detail pane.`, and `withAppendedText` adds a warning of `LogicManager` to it.
+
+A live view, the dashboard, is drawn again after every command by `MainWindow#refreshDashboard`, so that it never shows old data. The other views show the data as it was when they were asked for. `PageUp`, `PageDown`, `Ctrl+Up` and `Ctrl+Down` scroll the pane from the command box, through a key filter on the window.
+
+**Tabs and rows.** `PanelTabs` holds the three lists. `LessonListPanel` binds to `Logic#getFilteredLessonList()`, which is the list that the lesson commands count from, and `HomeworkListPanel#show` is given the `HomeworkRow`s after every command. A command that numbers lessons or homework brings its tab to the front (`MainWindow#showPanelFor` reads `CommandResult#getDisplayedLessons()` and `getDisplayedHomework()`, which `AgendaCommand`, `LessonListCommand` and `HomeworkListCommand` fill), and so does a command that adds a student.
+
+**Buttons and confirmation.** The rules of the window are in the `UI component`: a button runs, prefills or asks, and never edits data. A delete button asks first with `ask`. A command that needs confirmation returns a preview with `CommandResult#withConfirmationCommand`, and `MainWindow` shows the `ConfirmBar` for it, so the window never has to read `Type 'delete 1 confirm' to proceed.` to know the command. `DeleteCommand`, `HomeworkDeleteCommand`, `ClearCommand`, `ImportStudentsCommand` and the preview of `DemoCommand` do this. Any other command, an error, `Cancel` and `Esc` take the bar away.
+
+`Icon` draws each picture as an `SVGPath` on a 16 by 16 grid in the colour of the text, so there are no image files. `IconButton` gives the button a tooltip and the same text for screen readers, and `QuickCommand` names its command in its tooltip.
+
+#### Design considerations
+
+**Aspect: how the window learns what to draw**
+
+* **Alternative 1 (current choice):** typed fields on the `CommandResult`.
+    * Pros: A change to a message cannot break the window, and a test can check what a command asks the window to draw without a window.
+    * Cons: Every new kind of view needs a field and a place that handles it.
+* **Alternative 2:** the window reads the text of the result.
+    * Pros: Nothing to add to `CommandResult`.
+    * Cons: The window and the wording become one thing, and a correction to the wording changes how the window works.
+
+### Guided tour
+
+`TourCommand` returns a result with `withShowTour()`. `MainWindow#handleTour` then adds a `TourOverlay` over the window. The overlay lies over the window without blocking it: its empty areas let mouse events through, so the tutor can still type in the command box. A step is a `TourStep` (a title, a text, the selector of the part to point at, and an optional example), and `GuidedTour#steps(LocalDate)` lists them. The overlay finds the part of the window with a selector, frames it and puts the card on the side where it fits, in the middle of the window if the step points at nothing or the part cannot be found, and again when the window is resized.
+
+The tour is offered on the first run: `UserPrefs#isTourSeen` is false, `MainWindow` starts the tour when it has been built, and finishing or leaving the tour calls `Logic#markTourSeen()`, which the preferences keep. The example of a step is only put in the command box by `CommandBox#prefill`. `GuidedTourTest` checks that every example parses and every target exists in the window.
+
+### Importing students from a CSV file
+
+`ImportCommandParser` reads `import students file/PATH [confirm]`, with `PathArgument` working out the path (which runs to the end of the command, except a final `confirm`, or is in double quotes). `ImportStudentsCommand` checks the file path first (a folder, a missing file, and `DataFiles#isUsedByTutorFlow`) and then hands the file to `StudentCsvImport#read`, which reads at most 5 MB as strict UTF-8, parses it with `CsvUtil`, and validates every field with the same `ParserUtil` methods that `add` uses, so that an imported student obeys the rules of `add`. The result is a `Report` of the students that are ready, the rows that are duplicates, the warnings and the errors, with line numbers. Nothing is added unless the command is confirmed and the report has no error, and then the students are added together, and the result lists them as `addedStudents` for the window to select.
+
+### Documentation and the discoverability of commands
+
+`DiscoverabilityTest` fails when a command is in the list of `help` but not known to the parser, not described in the User Guide or not in its command summary, or the other way round.
 
 ### \[Proposed\] Undo/redo feature
 
@@ -696,6 +844,148 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
       Use case resumes at step 3.
 
+**Use case: UC9 - Archive and restore a student**
+
+**MSS**
+
+1.  Tutor requests to archive a student who has stopped taking lessons
+2.  TutorFlow archives the student, keeps their lessons, homework and history, and removes them from the active list
+3.  Later, the tutor requests the archived students, and then to restore one
+4.  TutorFlow restores the student to the active list with all records intact
+
+    Use case ends.
+
+**Extensions**
+
+* 1a. The index is not in the displayed list.
+
+    * 1a1. TutorFlow shows an error message that names the number of students in the list.
+
+      Use case resumes at step 1.
+
+* 1b. The student is archived already.
+
+    * 1b1. TutorFlow tells the tutor that the student is archived already and changes nothing.
+
+      Use case ends.
+
+* 3a. The tutor tries to schedule a lesson or assign homework for the archived student.
+
+    * 3a1. TutorFlow tells the tutor to restore the student first and changes nothing.
+
+      Use case ends.
+
+**Use case: UC10 - Find students by level and subject**
+
+**MSS**
+
+1.  Tutor requests the students of a level and a subject, such as `list l/S3 s/Math`
+2.  TutorFlow lists the active students that match both, numbered afresh, and says how many there are
+
+    Use case ends.
+
+**Extensions**
+
+* 1a. The tutor asks for the archived students (`archived/`) or for all students (`all/`).
+
+    * 1a1. TutorFlow lists the archived students, or both, in the same way.
+
+      Use case ends.
+
+* 1b. The tutor gives both `archived/` and `all/`, or gives a value to one of them.
+
+    * 1b1. TutorFlow shows an error message with the usage of `list`.
+
+      Use case resumes at step 1.
+
+* 2a. No student matches.
+
+    * 2a1. TutorFlow shows an empty list and says that 0 students match.
+
+      Use case ends.
+
+**Use case: UC11 - Look around with sample data**
+
+**MSS**
+
+1.  Tutor requests the demo
+2.  TutorFlow says how many sample students it would load and that the tutor's data is kept safe
+3.  Tutor confirms
+4.  TutorFlow keeps the tutor's data aside, loads the sample students and shows a strip that says nothing in the demo is saved
+5.  Tutor tries commands on the samples and requests to leave the demo
+6.  TutorFlow puts the tutor's own data back, exactly as it was
+
+    Use case ends.
+
+**Extensions**
+
+* 3a. The tutor has changes that could not be saved.
+
+    * 3a1. TutorFlow refuses to start the demo and asks the tutor to run `save` first.
+
+      Use case ends.
+
+* 5a. The tutor closes TutorFlow without leaving the demo.
+
+    * 5a1. TutorFlow does not save the sample data, and the data file is as the tutor left it.
+
+      Use case ends.
+
+**Use case: UC12 - Import students from a file**
+
+**MSS**
+
+1.  Tutor requests to import the students of a CSV file
+2.  TutorFlow reads and checks the file and reports how many students are ready, how many rows are duplicates, and any warnings
+3.  Tutor confirms
+4.  TutorFlow adds the students, selects them in the list and confirms the number that were added
+
+    Use case ends.
+
+**Extensions**
+
+* 1a. The file does not exist, is a folder, is not UTF-8 text or is too large.
+
+    * 1a1. TutorFlow tells the tutor why the file cannot be imported and changes nothing.
+
+      Use case ends.
+
+* 2a. A row has an invalid value, or the first line misses a required column.
+
+    * 2a1. TutorFlow lists each line and field to fix, and imports nothing, even if the tutor confirms.
+
+      Use case ends.
+
+**Use case: UC13 - Open the data of an older version**
+
+**MSS**
+
+1.  Tutor starts TutorFlow with data that an older version saved
+2.  TutorFlow reads the old file, gives every student and lesson a permanent identifier and saves the result as the current data file, leaving the old file untouched
+3.  TutorFlow shows the data
+
+    Use case ends.
+
+**Extensions**
+
+* 1a. The data file was saved by a newer version of TutorFlow.
+
+    * 1a1. TutorFlow tells the tutor that the version is not supported, leaves the file where it is and stops.
+
+      Use case ends.
+
+* 1b. The data file is damaged.
+
+    * 1b1. TutorFlow renames it so that it is kept, starts with no data and tells the tutor where the file went.
+
+      Use case ends.
+
+* 2a. The first save of the migration fails.
+
+    * 2a1. TutorFlow says that there are unsaved changes, and does not close until the tutor fixes the problem and runs `save`.
+
+      Use case ends.
+
 ### Non-Functional Requirements
 
 1.  Should work on any _mainstream OS_ as long as it has Java `25` or above installed.
@@ -712,6 +1002,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 12. Should be able to load any data file saved by an earlier version of the same major version.
 13. Should be usable on screens with a resolution of 1280x720 and higher.
 14. Is for a single user only, and does not need to support several users editing the same data file.
+15. Should show its command box and result box, and keep every list scrollable, when the window is as small as 640 by 480 pixels.
 
 ### Glossary
 
@@ -735,6 +1026,12 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 * **Index**: The position of an item in the list currently shown on screen, used by commands to refer to that item
 * **Prefix**: A short label ending in `/`, such as `n/` or `d/`, that marks the start of a command parameter
 * **Data file**: The local file in which TutorFlow saves all of its data
+* **Archived student**: A student who is hidden from the active list and cannot be given new lessons or homework, while all of their records are kept. The tutor can restore them
+* **Numbered list**: A list on screen whose rows carry the indices that commands use, such as the students, the lessons of the last `agenda` or `lesson list`, and the homework of the last `hw list`
+* **Detail pane**: The part of the window that shows the dashboard, an agenda or a student overview
+* **Demo**: A mode in which sample students replace the tutor's data on screen, without saving them, until the tutor leaves it and the data comes back
+* **Guided tour**: The introduction to the window that opens at the first run and that `tour` starts again
+* **Schema version**: The number that a data file records for the form of its data, which decides whether a build can read it
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -755,7 +1052,7 @@ testers are expected to do more *exploratory* testing.
    1. Download the JAR file and copy it into an empty folder.
 
    1. Double-click the JAR file.<br>
-      Expected: The GUI opens empty with welcome and demo instructions. The window size may not be optimal.
+      Expected: The GUI opens with no students, the result box says `Welcome to TutorFlow. Add a student or type demo to preview sample data.`, and the guided tour opens over the window at its first step. The window size may not be optimal.
 
 1. Saving window preferences
 
@@ -765,21 +1062,61 @@ testers are expected to do more *exploratory* testing.
        Expected: The most recent window size and location are retained.
 
 
-### Deleting a person
+### Deleting a student
 
-1. Deleting a person while all persons are being shown
+1. Deleting a student while all active students are being shown
 
-   1. Prerequisites: List all persons using the `list` command, with multiple persons in the list.
+   1. Prerequisites: List the students using the `list` command, with multiple students in the list and none with lessons or homework.
 
    1. Test case: `delete 1`<br>
-      Expected: The first contact is deleted from the list. The status message shows the deleted contact's details.
+      Expected: The first student is deleted from the list. The result shows `Deleted student:` and the student's details.
 
    1. Test case: `delete 0`<br>
-      Expected: No person is deleted. The status message shows error details.
+      Expected: No student is deleted. The result shows error details.
 
-   1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
+   1. Other incorrect delete commands to try: `delete`, `delete x`, `delete 99` (where 99 is larger than the list size)<br>
       Expected: Similar to previous.
 
+### Students
+
+1. Filtering the list
+
+   1. Prerequisites: Add three students, for example `add n/Alex Tan p/91234567 l/S3 s/Math r/50`, `add n/Bella Lim p/92345678 l/P6 s/Science r/45` and `add n/Chen Wei p/93456789 l/S3 s/Physics r/60`.
+
+   1. Test case: `list l/S3`<br>
+      Expected: Alex Tan and Chen Wei are listed, numbered 1 and 2, and the result says `Listed 2 matching student(s).`
+
+   1. Test case: `list l/S3 s/Math`<br>
+      Expected: Only Alex Tan is listed.
+
+   1. Test case: `list archived/ all/`<br>
+      Expected: An error with the usage of `list`, and the list is unchanged.
+
+1. Archiving and restoring
+
+   1. Prerequisites: The three students above, listed with `list`.
+
+   1. Test case: `archive 1`<br>
+      Expected: `Archived: Alex Tan. Lessons and history are retained. The student list has refreshed.` and Alex Tan has left the list.
+
+   1. Test case: `list archived/`, then `hw add st/1 desc/Algebra due/tmr` and `lesson add st/1 d/<next week> t/16:30`<br>
+      Expected: Both are rejected, because the student is archived and must be restored first.
+
+   1. Test case: `list archived/`, then `restore 1`<br>
+      Expected: `Restored: Alex Tan. ...`. `list` shows Alex Tan again with the same details.
+
+   1. Test case: `restore 1` while the active list is shown<br>
+      Expected: An error that the student is active already.
+
+1. Deleting a student who has records
+
+   1. Prerequisites: A student with a lesson and a homework item that has feedback.
+
+   1. Test case: `delete 1`<br>
+      Expected: Nothing is deleted. The result shows the name and phone number, the number of lessons, the number of homework items and how many are upcoming, how many items have feedback, and the advice to use `archive`. It ends with how to confirm, and in the window the confirm bar offers `Confirm`.
+
+   1. Test case: `delete 1 confirm`<br>
+      Expected: The student, the lessons and the homework are deleted. The result says what was deleted with the student.
 
 ### Lessons
 
@@ -850,6 +1187,128 @@ testers are expected to do more *exploratory* testing.
    1. Other incorrect commands to try: completion of a future or cancelled lesson, `lesson done 0`, `lesson done INDEX n/`, or `lesson done INDEX n/First n/Second`<br>
       Expected: Rejected without changing the lesson or notes.
 
+### Homework
+
+1. Assigning and listing
+
+   1. Prerequisites: At least one active student, listed with `list`.
+
+   1. Test case: `hw add st/1 desc/Algebra Q1-10 due/tmr`<br>
+      Expected: `Homework assigned to ...: Algebra Q1-10, due <tomorrow>`, and a reminder to run `hw list`.
+
+   1. Test case: the same command again, then the same command with `desc/ALGEBRA q1-10`<br>
+      Expected: Both are rejected as duplicates.
+
+   1. Test case: `hw add st/1 desc/Late due/2020-01-01`, `hw add st/1 desc/Far due/<two years ahead>` and `hw add st/1 desc/Algebra`<br>
+      Expected: The first two are rejected because of the due date bounds, and the third because `due/` is missing.
+
+   1. Test case: `hw list`<br>
+      Expected: `1 homework item(s).` followed by the numbered items, and the `Homework` tab shows them with the same numbers.
+
+1. Status, feedback and the numbers
+
+   1. Prerequisites: Two homework items listed by `hw list`.
+
+   1. Test case: `hw feedback 1 f/Good work`<br>
+      Expected: Rejected, because the homework has not been submitted.
+
+   1. Test case: `hw status 1 s/submitted`, then `hw feedback 1 f/Sign errors in Q8-12`, then `hw status 1 s/assigned`<br>
+      Expected: The status changes, the feedback is recorded, and the move back shows `Note: moved back from submitted to assigned. Feedback already recorded is kept.`
+
+   1. Test case: `hw status 1 s/assigned` again<br>
+      Expected: `That homework is already marked assigned.`
+
+   1. Test case: `hw delete 1`, then `hw edit 1 desc/x`<br>
+      Expected: The first asks for `hw delete 1 confirm` because feedback is recorded, and deletes nothing. After `hw delete 1 confirm`, `hw edit 1 desc/x` says that the homework was deleted, and number 2 still refers to the second item.
+
+   1. Test case: `hw list overdue/ outstanding/`<br>
+      Expected: An error that says to choose one of them.
+
+### Importing students
+
+1. Importing a file
+
+   1. Prerequisites: A file `students.csv` in the folder of the JAR file with the first line `name,phone,level,subjects,rate` and the line `Dana Koh,94567890,S2,Math;English,40`.
+
+   1. Test case: `import students file/students.csv`<br>
+      Expected: A report with `ready to add: 1`, and `Type 'import students file/students.csv confirm' to add 1 student.` No student is added.
+
+   1. Test case: `import students file/students.csv confirm`<br>
+      Expected: `Imported 1 student.` Dana Koh is added, selected and highlighted for a moment in the list.
+
+   1. Test case: the same command again<br>
+      Expected: `There are no new students to import.`, because the row is a duplicate.
+
+   1. Test case: change the level in the file to `S9` and run the command with `confirm`<br>
+      Expected: Nothing is imported, and the result names the line and the field to fix.
+
+   1. Test case: `import students file/data`, `import students file/missing.csv`<br>
+      Expected: Errors that the path is a folder and that no file is found.
+
+### Demo
+
+1. Looking around and coming back
+
+   1. Prerequisites: At least one student of your own.
+
+   1. Test case: `demo`<br>
+      Expected: The number of sample students and how to load them. Nothing changes.
+
+   1. Test case: `demo confirm`<br>
+      Expected: The sample students replace the list, and an orange strip says that nothing is saved. `save` says `Nothing is saved in the demo. ...`
+
+   1. Test case: `delete 1`, then close TutorFlow, and open it again<br>
+      Expected: Your own students are listed exactly as before, and the data file has not changed.
+
+   1. Test case: `demo confirm` again, then press `Exit demo` on the strip<br>
+      Expected: `Demo ended. Your own data is back.`, and the strip is gone.
+
+   1. Test case: make a change that cannot be saved (see Saving data), then `demo confirm`<br>
+      Expected: Refused, with the advice to run `save` first.
+
+### The window and the guided tour
+
+1. Tabs and buttons
+
+   1. Prerequisites: Two students, a lesson today for the first, and homework for the second.
+
+   1. Test case: `agenda`, then `hw list`, then press `Ctrl+1`<br>
+      Expected: After `agenda` the `Lessons` tab is in front with the lesson numbered 1, after `hw list` the `Homework` tab is, and `Ctrl+1` shows the students.
+
+   1. Test case: press the pencil button of the first student<br>
+      Expected: `edit 1 ` is in the command box with the cursor at the end, and nothing has changed.
+
+   1. Test case: press the bin button of a student with a lesson, then `Confirm`<br>
+      Expected: The confirm bar asks `Delete student ...?`. After `Confirm`, the result box shows what would be deleted and the bar asks again for `delete N confirm`. `Cancel` or `Esc` leaves the data as it is.
+
+   1. Test case: press the box button of a student, then use `Archived` and the arrow button<br>
+      Expected: The student leaves the list, shows with an `ARCHIVED` badge under `Archived`, and returns with the arrow.
+
+   1. Test case: hover over a button of a toolbar<br>
+      Expected: The tooltip says `Same as typing:` and the command.
+
+1. Detail pane
+
+   1. Test case: `today`, then `view 1`, then press `Page Down` in the command box<br>
+      Expected: The pane shows the dashboard, then the overview, and scrolls without the cursor leaving the command box. The result box says `Shown in the detail pane.`
+
+   1. Test case: make the window as small as it goes<br>
+      Expected: It stops at 640 by 480 pixels, and the command box and the result box are visible.
+
+1. Guided tour
+
+   1. Test case: delete `preferences.json` and start TutorFlow<br>
+      Expected: The tour opens at step 1 of 10, over a window that is still usable.
+
+   1. Test case: press `Next` twice, then the example button<br>
+      Expected: The example `add n/Alex Tan ...` is in the command box and nothing has been added.
+
+   1. Test case: press `Esc`, close TutorFlow and start it again<br>
+      Expected: The tour does not open again.
+
+   1. Test case: `tour`, or `Help` > `Guided tour`<br>
+      Expected: The tour opens at step 1 again.
+
 ### Saving data
 
 1. Dealing with missing/corrupted data files
@@ -872,81 +1331,18 @@ testers are expected to do more *exploratory* testing.
    1. Test case: Run any command, such as `list`.<br>
       Expected: The result box says that the change was applied in this session but could not be saved, and why. `exit` does not close TutorFlow until the file can be written again.
 
+### Migrating data
 
-### v1.4 continuity and domain extension contract
+1. Opening data from an older version
 
-`Person.getId()` and `Lesson.getId()` are persisted UUIDs, distinct from visible indices and
-from value equality. `Lesson.getStudentId()` links records across profile edits. Legacy lessons
-are linked during loading; their missing academic level remains `Optional.empty()`. Newly
-scheduled lessons use `snapshotStudent` exactly at creation. Reschedule, status changes,
-preparation, profile edits, aggregate copying, and JSON round trips retain the historical level.
-Archive and preparation participate in value equality, as does academic level; UUIDs do not.
-Equal cancelled lessons remain separate records and exact-ID lookup chooses the edited record.
+   1. Prerequisites: Close TutorFlow. Delete `data/tutorflow-v14.json` and put a data file from an older version at `data/addressbook.json`.
 
-All domain extensions must update `ReadOnlyAddressBook`, `AddressBook.resetData` and its copy
-constructor/equality, the real JSON root/adapters, and focused round-trip tests together.
-`Storage.snapshotAddressBook` uses that exact persisted representation for dirty detection,
-so UI-only equality must never decide whether a write is required. Schema 15 is written to
-`tutorflow-v14.json`; `VersionedAddressBookStorage` reads legacy data only when the current
-path is positively absent. The logic constructor's initial-save flag explicitly persists
-migrated IDs even before a command mutates the model. Failed initial writes remain dirty.
-The atomic writer creates only parent directories before its sibling temporary file. It never
-precreates the current destination, so an interrupted first save leaves legacy fallback available
-on restart. The storage writeSnapshot seam passes the actual serialized bytes to this writer.
-Unreadable source protection is retained until positive absence or successful preservation.
+   1. Test case: Launch TutorFlow.<br>
+      Expected: The students and lessons of the old file are listed. `data/tutorflow-v14.json` now exists, and `data/addressbook.json` is unchanged.
 
-`StorageSchema.MINIMUM_VERSION` and `CURRENT_VERSION` centralize the supported range (14 through 15 now).
-The shared `tutorflow-v14.json` path stays fixed as later domains are added. Homework uses
-schema 15; finance must advance it to 16, and workflows to 17. Each build accepts unversioned legacy
-data and versions 14 through its current version, with explicit defaults for missing older fields.
-Add prior-version loading and future-version refusal tests alongside each schema increment.
+1. A data file from a newer version
 
-Storage checks the raw JSON schema before binding current student/lesson fields. An unsupported
-version produces `UnsupportedSchemaException` as the cause of `DataLoadingException`; `MainApp.init`
-propagates it before constructing a model, logic, or UI. The original stays at its original path,
-and storage refuses subsequent saves. Never route this exception through corruption recovery or
-silently ignore newer domain fields. Users need a compatible binary or a matching backup.
+   1. Prerequisites: Close TutorFlow, and change `schemaVersion` in `data/tutorflow-v14.json` to `99`.
 
-The command-result seam for later detail-pane integration is
-`CommandResult.getDisplayedLessons()`: when present, it is an immutable typed snapshot in the
-same order as rendered lesson numbers. `withDisplayedLessons` and `withFeedback` retain it
-across numbering refreshes and unsaved warnings. The logic layer uses this data to avoid
-rendering duplicate refreshes; it does not parse command feedback. Task 7 can render these
-rows directly and add typed student/dashboard views. No unused UI components are introduced.
-Later homework/payment/task lists must likewise snapshot shown stable IDs or visibly refresh
-the numbered list when a mutation changes the mapping, including when persistence fails.
-
-
-### Homework domain and integration seams
-
-`Homework` is immutable and persists its UUID, student UUID, normalized description, due date,
-`HomeworkStatus`, and optional feedback. Its full equality includes identity and all persisted
-fields. Overdue is computed from `ASSIGNED` and the caller's local date, never stored as a fourth
-status. `HomeworkQueries` centralizes selection, ordering, current student labels, and summaries.
-`HomeworkCommandParser(Clock)` makes date bounds and `today`/`tmr` deterministic. New assignments
-and changed due dates use today through one calendar year; unchanged historical dates are retained.
-
-`AddressBook` owns the homework list and validates duplicate assignments/IDs and student links.
-Copy/reset/equality/hash, student cascade deletion, clear, and the real JSON adapter include the
-domain. Missing homework in older files defaults explicitly to empty. Schema validation still
-precedes field binding. `Storage.snapshotAddressBook` includes every homework field, so feedback,
-status, and description-only changes participate in dirty detection and retry.
-
-`Model.showHomework(List<Homework>)` stores an immutable snapshot only when `hw list` renders a
-new numbered list. `getDisplayedHomework()` retains those rows even after mutations or deletion;
-it must never be treated as the current database. Indexed commands take the shown row's UUID and
-resolve it against `getAddressBook().getHomeworkList()`. A deleted ID produces an error without
-renumbering remaining rows. Changes, archive, student rename, reset, and failed writes leave the
-selection untouched. A restored snapshot with the same identity can be selected again after undo.
-A future linked task must resolve homework indices by this same shown-ID rule, then persist UUIDs.
-
-`CommandResult.getDisplayedHomework()` exposes optional immutable typed rows for the numbered
-list. `withFeedback` retains them across unsaved warnings. Task 7 can render those rows directly;
-non-indexed overview/dashboard summaries deliberately do not replace the selection. No unused UI
-component or feedback-string parsing is required. Finance can extend summaries independently.
-Future undo snapshots must copy the complete `AddressBook`, including homework; future task-parent
-guards must wrap homework/student deletion before removing any record to avoid orphaned tasks.
-
-Focused regression tests cover historical feedback, schema progression and refusal, duplicate/orphan
-rejection, due-date boundaries, lifecycle correction, guarded deletion, filtered numbering, archive,
-rename, actual JSON restart, failed saves, protected original bytes, and retry before exit.
+   1. Test case: Launch TutorFlow.<br>
+      Expected: A dialog says that TutorFlow cannot start and names the supported versions. The data file is unchanged and no `.corrupt` file is made.

@@ -10,6 +10,8 @@ package "Parser Classes" as ParserClasses{
 }
 Class XYZCommand
 Class CommandResult
+Class DetailView
+Class HomeworkRow
 Class "{abstract}\nCommand" as Command
 
 
@@ -42,6 +44,8 @@ Command .right.> Model
 note right of XYZCommand: XYZCommand = AddCommand, \nFindCommand, etc
 
 Logic ..> CommandResult
+Logic ..> HomeworkRow
 LogicManager .down.> CommandResult
 Command .up.> CommandResult : <<create>>
+CommandResult --> "0..1" DetailView
 @enduml

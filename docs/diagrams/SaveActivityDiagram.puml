@@ -1,0 +1,34 @@
+@startuml
+skin rose
+skinparam ActivityFontSize 15
+skinparam ArrowFontSize 12
+start
+:LogicManager parses the command;
+
+if () then ([starts a demo and\nthere are unsaved changes])
+    :Refuse, and ask the user\nto run save first;
+    stop
+else ([else])
+endif
+
+:Take the snapshot of the data before;
+:Execute the command;
+:Take the snapshot of the data after;
+
+if () then ([the data changed,\nor an earlier save failed])
+    if () then ([a demo is running])
+        :Do not save, because\nsample data is never saved;
+    else ([else])
+        :Write the data file\nthrough the atomic writer;
+        if () then ([the write failed])
+            :Keep the change in memory,\nstay unsaved and report\nthe reason with a reminder to run save;
+        else ([else])
+            :Mark the data as saved;
+        endif
+    endif
+else ([else])
+endif
+
+:Return the result of the command;
+stop
+@enduml

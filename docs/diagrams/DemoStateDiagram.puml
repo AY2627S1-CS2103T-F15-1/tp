@@ -1,0 +1,14 @@
+@startuml
+skin rose
+skinparam ArrowFontSize 12
+skinparam StateFontSize 15
+
+[*] --> YourData
+state "Your data" as YourData
+state "Demo" as Demo
+
+YourData --> Demo : demo confirm\n[no unsaved changes]\nkeep your data aside,\nload the samples
+Demo --> YourData : demo exit\nput your data back
+YourData --> YourData : any other command\nsaved after a change
+Demo --> Demo : any other command\nnothing is saved
+@enduml

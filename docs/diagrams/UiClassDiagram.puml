@@ -15,6 +15,17 @@ Class PersonListPanel
 Class PersonCard
 Class StatusBarFooter
 Class CommandBox
+Class PanelTabs
+Class LessonListPanel
+Class LessonCard
+Class HomeworkListPanel
+Class HomeworkCard
+Class DetailPane
+Class DemoBanner
+Class ConfirmBar
+Class TourOverlay
+Class IconButton
+Class "<<interface>>\nPanelActions" as PanelActions
 }
 
 package Model <<Rectangle>> {
@@ -32,11 +43,30 @@ UiManager .left.|> Ui
 UiManager -down-> "1" MainWindow
 MainWindow *-down->  "1" CommandBox
 MainWindow *-down-> "1" ResultDisplay
-MainWindow *-down-> "1" PersonListPanel
+MainWindow *-down-> "1" PanelTabs
+MainWindow *-down-> "1" DetailPane
+MainWindow *-down-> "1" DemoBanner
+MainWindow *-down-> "1" ConfirmBar
 MainWindow *-down-> "1" StatusBarFooter
 MainWindow --> "0..1" HelpWindow
+MainWindow --> "0..1" TourOverlay
+
+PanelTabs *-down-> "1" PersonListPanel
+PanelTabs *-down-> "1" LessonListPanel
+PanelTabs *-down-> "1" HomeworkListPanel
 
 PersonListPanel -down-> "*" PersonCard
+LessonListPanel -down-> "*" LessonCard
+HomeworkListPanel -down-> "*" HomeworkCard
+PersonCard *-down-> "*" IconButton
+LessonCard *-down-> "*" IconButton
+HomeworkCard *-down-> "*" IconButton
+
+MainWindow .down.|> PanelActions : <<inner class>>
+PersonCard ..> PanelActions
+LessonCard ..> PanelActions
+HomeworkCard ..> PanelActions
+ConfirmBar ..> PanelActions
 
 MainWindow -left-|> UiPart
 
@@ -44,6 +74,15 @@ ResultDisplay --|> UiPart
 CommandBox --|> UiPart
 PersonListPanel --|> UiPart
 PersonCard --|> UiPart
+PanelTabs --|> UiPart
+LessonListPanel --|> UiPart
+LessonCard --|> UiPart
+HomeworkListPanel --|> UiPart
+HomeworkCard --|> UiPart
+DetailPane --|> UiPart
+DemoBanner --|> UiPart
+ConfirmBar --|> UiPart
+TourOverlay --|> UiPart
 StatusBarFooter --|> UiPart
 HelpWindow --|> UiPart
 

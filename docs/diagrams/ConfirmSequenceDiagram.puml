@@ -1,0 +1,48 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+
+box UI UI_COLOR_T1
+participant ":PersonCard" as PersonCard UI_COLOR
+participant ":WindowActions" as WindowActions UI_COLOR
+participant ":ConfirmBar" as ConfirmBar UI_COLOR
+participant ":MainWindow" as MainWindow UI_COLOR
+end box
+
+box Logic LOGIC_COLOR_T1
+participant ":Logic" as Logic LOGIC_COLOR
+participant "d:DeleteCommand" as DeleteCommand LOGIC_COLOR
+end box
+
+[-> PersonCard : the user presses\nthe bin button
+activate PersonCard
+
+PersonCard -> WindowActions : ask("Delete student 1, Alex Tan?", "delete 1")
+activate WindowActions
+WindowActions -> ConfirmBar : ask(question, "delete 1")
+WindowActions --> PersonCard
+deactivate WindowActions
+deactivate PersonCard
+
+[-> ConfirmBar : the user presses Confirm
+activate ConfirmBar
+ConfirmBar -> WindowActions : run("delete 1")
+activate WindowActions
+WindowActions -> MainWindow : executeCommand("delete 1")
+activate MainWindow
+MainWindow -> Logic : execute("delete 1")
+activate Logic
+Logic -> DeleteCommand : execute(model)
+activate DeleteCommand
+DeleteCommand --> Logic : result with the preview\nand confirmation command "delete 1 confirm"
+deactivate DeleteCommand
+Logic --> MainWindow : result
+deactivate Logic
+
+MainWindow -> ConfirmBar : ask("This needs your confirmation.", "delete 1 confirm")
+MainWindow --> WindowActions
+deactivate MainWindow
+WindowActions --> ConfirmBar
+deactivate WindowActions
+deactivate ConfirmBar
+@enduml
