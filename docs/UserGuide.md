@@ -299,8 +299,8 @@ Format: `today`
 * The first section, `TODAY'S LESSONS`, shows the number of lessons today and their total time, followed by the time, student, subject and venue of each lesson. Lessons that overlap another lesson are marked `⚠ overlaps`. Cancelled lessons are left out.
 * The second section, `LESSONS AWAITING NOTES`, shows the scheduled lessons from earlier days that were not marked completed, the most recent first.
 * The third section, `OVERDUE HOMEWORK`, shows assigned work due before today, or `No overdue homework.`. Run `hw list overdue/` to get selectable numbers.
-* The fourth section, `DUES`, is the list that [`dues`](#viewing-all-outstanding-balances-dues) shows: how many students owe money and the total, then each student's amount and `oldest unpaid N days`, the oldest first. If nobody owes money, it shows `No outstanding balances. Everyone is up to date.`
-* An empty section is not an error: it shows `No lessons today.` or `All past lessons are recorded.`
+* The fourth section, `DUES`, is the list that [`dues`](#viewing-all-outstanding-balances-dues) shows: how many students owe money and the total, then each student's amount and the age of their oldest unpaid charge, such as `oldest unpaid 2 days` or `oldest unpaid 1 day`, the oldest first. If nobody owes money, it shows `No outstanding balances. Everyone is up to date.`
+* All four sections are always shown. An empty section is not an error: it shows `No lessons today.`, `All past lessons are recorded.`, `No overdue homework.` or `No outstanding balances. Everyone is up to date.`
 * Today is the date on your computer, so a wrong system clock shows the wrong day.
 
 Examples:
@@ -314,6 +314,13 @@ Examples:
 
   LESSONS AWAITING NOTES (1)
     Tue 15 Sep  Lim Jia Hui        Science    not yet marked completed
+
+  OVERDUE HOMEWORK (1)
+    Priya s/o Kumar  Trigonometry worksheet  due 2026-09-15  OVERDUE
+
+  DUES
+  1 student(s) with outstanding balances — $25.00 total
+    Tan Wei Ming $25.00 oldest unpaid 2 days
   ```
 
 ### Listing the lessons of a student: `lesson list`
