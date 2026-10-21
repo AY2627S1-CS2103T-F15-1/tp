@@ -199,8 +199,8 @@ Format: `delete INDEX [confirm]`
 * Deletes the student at the specified `INDEX`.
 * The index refers to the index number shown in the displayed student list.
 * The index **must be a positive integer** 1, 2, 3, ...
-* A student with no lessons is deleted immediately.
-* Deleting a student also deletes **all of their lessons**, and this cannot be undone. If the student has any lessons, TutorFlow does not delete anything yet. It shows the student's name, phone number, number of lessons and, if there are any, a warning about upcoming lessons, and asks you to repeat the command with `confirm`.
+* A student with no lessons and no [follow-up tasks](#adding-a-follow-up-task-task-add) is deleted immediately.
+* Deleting a student also deletes **all of their lessons and follow-up tasks**, and this cannot be undone. If the student has any lessons or tasks, TutorFlow does not delete anything yet. It shows the student's name, phone number, number of lessons and tasks and, if there are any, a warning about upcoming lessons, and asks you to repeat the command with `confirm`.
 * The keyword `confirm` is in lower case.
 
 Examples:
@@ -370,6 +370,75 @@ Examples:
 * `agenda` followed by `lesson missed 1` marks today's 1st displayed lesson as missed.
 * `lesson list st/1 all/` followed by `lesson missed 2` marks the 2nd displayed lesson as missed, provided it is scheduled for today or earlier.
 
+### Adding a follow-up task: `task add`
+
+Keeps a to-do attached to the student or the lesson that it is about, so that you do not forget it.
+
+Format: `task add st/INDEX|lesson/INDEX|hw/INDEX|pay/INDEX desc/TEXT [due/DATE]`
+
+* Give **exactly one** link. `st/INDEX` takes a number from the displayed student list. `lesson/INDEX` takes a lesson number from the last `agenda` or `lesson list`.
+* `hw/INDEX` and `pay/INDEX` are for homework and payments. Until those features are available they answer `Invalid homework index. Run 'hw list' to display homework first.` or `Invalid payment index. Run 'pay list' first.`
+* `TEXT` is 1 to 200 characters on one line.
+* `DATE` is written as for [`lesson add`](#scheduling-a-lesson-lesson-add). It is optional, and a task without one is shown as `(no due date)`.
+* Two tasks may have the same text. That is not a duplicate.
+* A task about a lesson follows that lesson when it is moved, and a task about a student follows the student when their name or phone number is edited. When a student or a lesson is deleted, the tasks about it are deleted with it.
+
+Examples:
+* `task add st/1 desc/Call parent due/2026-12-01` adds a task to the 1st student, due on 1 December 2026.
+* `task add lesson/1 desc/Prepare mock paper` adds a task to the 1st lesson in the current agenda.
+
+### Listing tasks: `task list`
+
+Shows the tasks that still have to be done.
+
+Format: `task list [all/] [st/INDEX]`
+
+* By default, only open tasks are shown, with the earliest due date first and the tasks without a due date last. With `all/`, completed tasks are shown as well.
+* `st/INDEX` limits the list to the tasks of one student, including the tasks about that student's lessons.
+* Each row shows the status, the text, the due date, the student, and what the task is about (the student, or the lesson as it now reads, with its current status).
+* The task numbers stay **fixed until the next `task list`**: completing or deleting a task does not renumber the others.
+
+Examples:
+* `task list` shows the open tasks.
+* `task list all/ st/2` shows every task, open or done, of the 2nd student.
+
+### Editing a task: `task edit`
+
+Changes the text, and optionally the due date, of a task.
+
+Format: `task edit INDEX desc/TEXT [due/DATE|due/-]`
+
+* `INDEX` is the task number from the last `task list`.
+* `desc/` is always needed. Leave out `due/` to keep the due date, give a date to change it, or write `due/-` to remove it.
+* Whether a task is done, and what it is about, do not change.
+
+Examples:
+* `task edit 1 desc/Call parent again due/-` changes the text of task 1 and removes its due date.
+
+### Completing a task: `task done`
+
+Marks a task as done. It stays in the history, which `task list all/` shows.
+
+Format: `task done INDEX`
+
+* `INDEX` is the task number from the last `task list`. A task that is already done answers `That task is already done.`
+
+Examples:
+* `task done 1`
+
+### Deleting a task: `task delete`
+
+Deletes a task for good.
+
+Format: `task delete INDEX [confirm]`
+
+* `INDEX` is the task number from the last `task list`.
+* Without `confirm`, TutorFlow only asks you to repeat the command with `confirm` and deletes nothing.
+* If the task was already deleted, TutorFlow says `That task was deleted. Run 'task list' to refresh.`
+
+Examples:
+* `task delete 1` asks for confirmation, and `task delete 1 confirm` then deletes task 1.
+
 ### Clearing all entries: `clear`
 
 Deletes **all** students and lessons from TutorFlow.
@@ -465,3 +534,8 @@ Action     | Format, Examples
 **Lesson cancel** | `lesson cancel INDEX [r/REASON]`<br> e.g., `lesson cancel 1 r/Student unwell`
 **Lesson done** | `lesson done INDEX [n/NOTES]`<br> e.g., `lesson done 1 n/Covered quadratic roots`
 **Lesson missed** | `lesson missed INDEX`<br> e.g., `lesson missed 1`
+**Task add** | `task add st/INDEX\|lesson/INDEX\|hw/INDEX\|pay/INDEX desc/TEXT [due/DATE]`<br> e.g., `task add st/1 desc/Call parent due/2026-12-01`, `task add lesson/1 desc/Prepare mock paper`
+**Task list** | `task list [all/] [st/INDEX]`<br> e.g., `task list`, `task list all/ st/1`
+**Task edit** | `task edit INDEX desc/TEXT [due/DATE\|due/-]`<br> e.g., `task edit 1 desc/Call parent again due/-`
+**Task done** | `task done INDEX`<br> e.g., `task done 1`
+**Task delete** | `task delete INDEX [confirm]`<br> e.g., `task delete 1`, `task delete 1 confirm`

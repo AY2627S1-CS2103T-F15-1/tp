@@ -15,8 +15,8 @@ import seedu.address.model.person.Person;
 
 /**
  * Deletes a student identified using the index shown in the displayed student list.
- * A student who has lessons is only deleted when the command is confirmed, because deleting a student
- * also deletes all of their lessons and this cannot be undone.
+ * A student who has lessons or tasks is only deleted when the command is confirmed, because deleting a student
+ * also deletes all of their lessons and tasks and this cannot be undone.
  */
 public class DeleteCommand extends Command {
 
@@ -27,7 +27,7 @@ public class DeleteCommand extends Command {
             + ": Deletes the student identified by the index number used in the displayed student list.\n"
             + "Parameters: INDEX (must be a positive integer) [" + CONFIRM_KEYWORD + "]\n"
             + "Example: " + COMMAND_WORD + " 1\n"
-            + "A student who has lessons is only deleted if you add '" + CONFIRM_KEYWORD + "', "
+            + "A student who has lessons or tasks is only deleted if you add '" + CONFIRM_KEYWORD + "', "
             + "e.g. " + COMMAND_WORD + " 1 " + CONFIRM_KEYWORD;
 
     public static final String MESSAGE_DELETE_PERSON_SUCCESS = "Deleted student: %1$s";
@@ -35,6 +35,11 @@ public class DeleteCommand extends Command {
             "Deleted student: %1$s, along with %2$d lesson(s).";
     public static final String MESSAGE_CONFIRMATION = "%1$s (phone: %2$s) has %3$d lesson(s). "
             + "These will all be deleted.\n%4$sType '" + COMMAND_WORD + " %5$d " + CONFIRM_KEYWORD + "' to proceed.";
+    public static final String MESSAGE_DELETE_PERSON_WITH_TASKS_SUCCESS =
+            "Deleted student: %1$s, along with %2$d lesson(s) and %3$d task(s).";
+    public static final String MESSAGE_CONFIRMATION_WITH_TASKS = "%1$s (phone: %2$s) has %3$d lesson(s) and "
+            + "%6$d task(s). These will all be deleted.\n%4$sType '" + COMMAND_WORD + " %5$d " + CONFIRM_KEYWORD
+            + "' to proceed.";
     public static final String MESSAGE_UPCOMING_WARNING = "Warning: this student has %1$d upcoming lesson(s).\n";
 
     private final Index targetIndex;
@@ -72,31 +77,44 @@ public class DeleteCommand extends Command {
                 .filter(lesson -> lesson.isWith(personToDelete))
                 .toList();
 
-        if (lessonsToDelete.isEmpty()) {
+        long taskCount = model.getAddressBook().getTaskList().stream()
+                .filter(task -> task.isAbout(personToDelete))
+                .count();
+
+        if (lessonsToDelete.isEmpty() && taskCount == 0) {
             model.deletePerson(personToDelete);
             return new CommandResult(String.format(MESSAGE_DELETE_PERSON_SUCCESS, Messages.format(personToDelete)));
         }
 
         if (!isConfirmed) {
-            return new CommandResult(getConfirmationPrompt(personToDelete, lessonsToDelete));
+            return new CommandResult(getConfirmationPrompt(personToDelete, lessonsToDelete, taskCount));
         }
 
         model.deletePerson(personToDelete);
+        if (taskCount > 0) {
+            return new CommandResult(String.format(MESSAGE_DELETE_PERSON_WITH_TASKS_SUCCESS,
+                    Messages.format(personToDelete), lessonsToDelete.size(), taskCount));
+        }
         return new CommandResult(String.format(MESSAGE_DELETE_PERSON_WITH_LESSONS_SUCCESS,
                 Messages.format(personToDelete), lessonsToDelete.size()));
     }
 
     /**
-     * Returns the message that asks the user to confirm deleting {@code student} and their {@code lessons}.
+     * Returns the message that asks the user to confirm deleting {@code student}, their {@code lessons} and the
+     * {@code taskCount} tasks about them.
      * The message shows the name and phone number of the student, so that the user can check that the right
      * student is about to be deleted.
      */
-    private String getConfirmationPrompt(Person student, List<Lesson> lessons) {
+    private String getConfirmationPrompt(Person student, List<Lesson> lessons, long taskCount) {
         LocalDate today = LocalDate.now();
         long upcomingCount = lessons.stream().filter(lesson -> lesson.isUpcoming(today)).count();
         String upcomingWarning = upcomingCount == 0
                 ? ""
                 : String.format(MESSAGE_UPCOMING_WARNING, upcomingCount);
+        if (taskCount > 0) {
+            return String.format(MESSAGE_CONFIRMATION_WITH_TASKS, student.getName(), student.getPhone(),
+                    lessons.size(), upcomingWarning, targetIndex.getOneBased(), taskCount);
+        }
         return String.format(MESSAGE_CONFIRMATION, student.getName(), student.getPhone(), lessons.size(),
                 upcomingWarning, targetIndex.getOneBased());
     }

@@ -13,6 +13,7 @@ import seedu.address.model.AddressBook;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
+import seedu.address.model.task.Task;
 
 /**
  * An Immutable AddressBook that is serializable to JSON format.
@@ -22,22 +23,38 @@ class JsonSerializableAddressBook {
 
     public static final String MESSAGE_DUPLICATE_PERSON = "Persons list contains duplicate person(s).";
     public static final String MESSAGE_DUPLICATE_LESSON = "Lessons list contains duplicate lesson(s).";
+    public static final String MESSAGE_DUPLICATE_TASK = "Tasks list contains tasks with the same id.";
+    public static final String MESSAGE_TASK_WITHOUT_TARGET =
+            "Tasks list contains a task whose student or lesson is not in the data.";
     public static final String MESSAGE_LESSON_WITHOUT_STUDENT =
             "Lessons list contains a lesson whose student is not in the persons list.";
 
     private final List<JsonAdaptedPerson> persons = new ArrayList<>();
     private final List<JsonAdaptedLesson> lessons = new ArrayList<>();
+    private final List<JsonAdaptedTask> tasks = new ArrayList<>();
+
+    /**
+     * Constructs a {@code JsonSerializableAddressBook} with the given persons and lessons, and no tasks.
+     */
+    public JsonSerializableAddressBook(List<JsonAdaptedPerson> persons, List<JsonAdaptedLesson> lessons) {
+        this(persons, lessons, null);
+    }
 
     /**
      * Constructs a {@code JsonSerializableAddressBook} with the given persons and lessons.
-     * The {@code lessons} may be null, so that a file saved before lessons existed can still be loaded.
+     * The {@code lessons} and {@code tasks} may be null, so that a file saved before they existed can still be
+     * loaded.
      */
     @JsonCreator
     public JsonSerializableAddressBook(@JsonProperty("persons") List<JsonAdaptedPerson> persons,
-            @JsonProperty("lessons") List<JsonAdaptedLesson> lessons) {
+            @JsonProperty("lessons") List<JsonAdaptedLesson> lessons,
+            @JsonProperty("tasks") List<JsonAdaptedTask> tasks) {
         this.persons.addAll(persons);
         if (lessons != null) {
             this.lessons.addAll(lessons);
+        }
+        if (tasks != null) {
+            this.tasks.addAll(tasks);
         }
     }
 
@@ -49,6 +66,7 @@ class JsonSerializableAddressBook {
     public JsonSerializableAddressBook(ReadOnlyAddressBook source) {
         persons.addAll(source.getPersonList().stream().map(JsonAdaptedPerson::new).collect(Collectors.toList()));
         lessons.addAll(source.getLessonList().stream().map(JsonAdaptedLesson::new).collect(Collectors.toList()));
+        tasks.addAll(source.getTaskList().stream().map(JsonAdaptedTask::new).collect(Collectors.toList()));
     }
 
     /**
@@ -85,7 +103,33 @@ class JsonSerializableAddressBook {
         if (hasLessonWithoutStudent) {
             throw new IllegalValueException(MESSAGE_LESSON_WITHOUT_STUDENT);
         }
+        addTasksTo(addressBook);
         return addressBook;
+    }
+
+    /**
+     * Adds the tasks to {@code addressBook}, whose students and lessons must already be added.
+     *
+     * @throws IllegalValueException if a task is invalid, shares an id, or is about a student or lesson that is
+     *     not in {@code addressBook}.
+     */
+    private void addTasksTo(AddressBook addressBook) throws IllegalValueException {
+        for (JsonAdaptedTask jsonAdaptedTask : tasks) {
+            if (jsonAdaptedTask == null) {
+                throw new IllegalValueException("Tasks list contains a null task.");
+            }
+            Task task = jsonAdaptedTask.toModelType();
+            if (addressBook.findTask(task.getId()).isPresent()) {
+                throw new IllegalValueException(MESSAGE_DUPLICATE_TASK);
+            }
+            boolean hasStudent = addressBook.getPersonList().stream().anyMatch(task::isAbout);
+            boolean hasLesson = task.getLessonLink().isEmpty()
+                    || addressBook.getLessonList().stream().anyMatch(task::isAbout);
+            if (!hasStudent || !hasLesson) {
+                throw new IllegalValueException(MESSAGE_TASK_WITHOUT_TARGET);
+            }
+            addressBook.addTask(task);
+        }
     }
 
 }

@@ -2,12 +2,14 @@ package seedu.address.model;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
+import seedu.address.model.task.Task;
 
 /**
  * The API of the Model component.
@@ -118,4 +120,37 @@ public interface Model {
      * @throws NullPointerException if {@code predicate} is null.
      */
     void updateFilteredLessonList(Predicate<Lesson> predicate);
+
+    /**
+     * Adds the given task. No task with the same id may exist.
+     */
+    void addTask(Task task);
+
+    /**
+     * Returns the task with the given {@code id}, or empty if it does not exist (any more).
+     */
+    Optional<Task> findTask(String id);
+
+    /**
+     * Replaces the given task {@code target} with {@code editedTask}, which keeps the id of {@code target}.
+     * {@code target} must exist in the address book.
+     */
+    void setTask(Task target, Task editedTask);
+
+    /**
+     * Deletes the given task.
+     * The task must exist in the address book.
+     */
+    void deleteTask(Task target);
+
+    /**
+     * Returns the tasks as the last {@code task list} showed them. The task commands take their indices from this
+     * list, which stays unchanged until the next {@code task list}, so that earlier numbers keep their meaning.
+     */
+    List<Task> getShownTasks();
+
+    /**
+     * Replaces the tasks that the task commands take their indices from with a copy of {@code tasks}.
+     */
+    void setShownTasks(List<Task> tasks);
 }
