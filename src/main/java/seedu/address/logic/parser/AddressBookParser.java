@@ -25,6 +25,7 @@ import seedu.address.logic.commands.RemarkCommand;
 import seedu.address.logic.commands.SaveCommand;
 import seedu.address.logic.commands.SortCommand;
 import seedu.address.logic.commands.TodayCommand;
+import seedu.address.logic.commands.UndoCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 
@@ -92,6 +93,7 @@ public class AddressBookParser {
                 yield new TodayCommand(LocalDate.now());
             }
             case LessonCommandParser.COMMAND_WORD -> new LessonCommandParser().parse(arguments);
+            case UndoCommand.COMMAND_WORD -> new UndoCommand();
             case ExitCommand.COMMAND_WORD -> {
                 requireNoArguments(commandWord, arguments);
                 yield new ExitCommand();
