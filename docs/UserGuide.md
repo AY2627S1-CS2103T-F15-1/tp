@@ -17,8 +17,8 @@ For power-users, TutorFlow can help you manage your students and lessons faster 
 
 1. Copy the file to the folder you want to use as the _home folder_ for TutorFlow.
 
-1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -ea -jar tutorflow.jar`.<br>
-   A GUI similar to the one below should appear in a few seconds. A new dataset starts empty, and the screenshot below shows a list that already contains students. Type `demo` to preview optional sample records, then `demo confirm` to load them.<br>
+1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar tutorflow.jar`.<br>
+   A GUI similar to the one below should appear in a few seconds. A new data set starts empty, so your own list will have no students until you add some. The screenshot below shows a list that already contains students.<br>
    ![Ui](images/Ui.png)
 
 1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to see the list of commands.<br>
