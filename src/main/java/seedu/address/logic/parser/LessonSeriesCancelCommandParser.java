@@ -1,5 +1,7 @@
 package seedu.address.logic.parser;
 
+import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
+
 import seedu.address.logic.commands.LessonSeriesCancelCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 
@@ -14,7 +16,8 @@ public class LessonSeriesCancelCommandParser implements Parser<LessonSeriesCance
         try {
             return new LessonSeriesCancelCommand(ParserUtil.parseIndex(words[1]));
         } catch (ParseException e) {
-            throw new ParseException(LessonSeriesCancelCommand.MESSAGE_USAGE, e);
+            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT,
+                    LessonSeriesCancelCommand.MESSAGE_USAGE), e);
         }
     }
 }

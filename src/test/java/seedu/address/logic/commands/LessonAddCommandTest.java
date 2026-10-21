@@ -221,7 +221,8 @@ public class LessonAddCommandTest {
 
     private Model getExpectedModel(Lesson lesson) {
         Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
-        expectedModel.addLesson(lesson);
+        expectedModel.addLesson(lesson.snapshotStudent(model.getAddressBook().getPersonList().stream()
+                .filter(lesson::isWith).findFirst().orElseThrow()));
         return expectedModel;
     }
 }

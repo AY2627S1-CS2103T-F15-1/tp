@@ -1,7 +1,6 @@
 package seedu.address.logic.parser;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_BUFFER;
 
 import seedu.address.logic.commands.TravelCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -9,16 +8,18 @@ import seedu.address.model.lesson.TravelGap;
 
 /** Parses exactly one non-negative whole-number travel buffer. */
 public class TravelCommandParser implements Parser<TravelCommand> {
-    private static final Pattern FORMAT = Pattern.compile("buffer/\\s*([0-9]+)");
-
     @Override
     public TravelCommand parse(String args) throws ParseException {
-        Matcher matcher = FORMAT.matcher(args.strip());
-        if (!matcher.matches()) {
+        ArgumentMultimap arguments = ArgumentTokenizer.tokenize(" " + args.strip(), PREFIX_BUFFER);
+        ParserUtil.requirePrefixesPresent(arguments, TravelCommand.MESSAGE_USAGE, PREFIX_BUFFER);
+        arguments.verifyNoDuplicatePrefixesFor(PREFIX_BUFFER);
+        arguments.verifyNoEmptyValuesFor(PREFIX_BUFFER);
+        String value = arguments.getValue(PREFIX_BUFFER).orElseThrow();
+        if (!value.matches("[0-9]+")) {
             throw new ParseException(TravelCommand.MESSAGE_USAGE);
         }
         try {
-            int minutes = Integer.parseInt(matcher.group(1));
+            int minutes = Integer.parseInt(value);
             if (TravelGap.isValidBuffer(minutes)) {
                 return new TravelCommand(minutes);
             }

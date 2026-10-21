@@ -3,9 +3,7 @@ package seedu.address.logic.commands;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_REASON;
 
-import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.logging.Logger;
 
 import seedu.address.commons.core.LogsCenter;
@@ -62,13 +60,11 @@ public class LessonCancelCommand extends Command {
             throw new CommandException(MESSAGE_COMPLETED_LESSON);
         }
 
-        List<UUID> previousNumbers = LessonCommandUtil.displayedLessonIds(model);
         model.setLesson(target, target.cancel(reason));
         logger.fine("Cancelled lesson");
 
         String message = String.format(MESSAGE_SUCCESS, Messages.format(target));
-        return new CommandResult((reason == null ? message : message + String.format(MESSAGE_REASON, reason))
-                + LessonCommandUtil.getChangedLessonNumbers(model, previousNumbers));
+        return new CommandResult(reason == null ? message : message + String.format(MESSAGE_REASON, reason));
     }
 
     @Override

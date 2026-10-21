@@ -54,18 +54,20 @@ public class LessonTravelWorkflowTest {
         logic.execute("lesson add st/1 s/Math d/" + today + " t/10:00 dur/60 v/Bishan");
         String booked = logic.execute("lesson add st/1 s/Math d/" + today
                 + " t/11:15 dur/60 v/Toa Payoh").getFeedbackToUser();
-        assertTrue(booked.contains("only 15 minutes to travel"));
-        assertTrue(booked.contains("buffer: 30 minutes"));
+        String warning = "Travel warning: Alice Pauline at Bishan -> Alice Pauline at Toa Payoh ("
+                + model.getFilteredLessonList().get(1).getDate() + " 11:15): 15 min available; 30 min required.";
+        assertTrue(booked.contains("\n" + warning));
         assertEquals(2, model.getAddressBook().getLessonList().size());
-        assertTrue(logic.execute("agenda d/" + today).getFeedbackToUser().contains("only 15 minutes to travel"));
+        assertTrue(logic.execute("agenda d/" + today).getFeedbackToUser().contains(warning));
         assertTrue(logic.execute("agenda d/" + today + " week/").getFeedbackToUser()
-                .contains("only 15 minutes to travel"));
-        assertTrue(logic.execute("today").getFeedbackToUser().contains("only 15 minutes to travel"));
-        assertFalse(logic.execute("travel buffer/10").getFeedbackToUser().contains("Warning:"));
-        assertTrue(logic.execute("travel buffer/30").getFeedbackToUser().contains("only 15 minutes to travel"));
+                .contains(warning));
+        assertTrue(logic.execute("today").getFeedbackToUser().contains("\n  " + warning));
+        assertFalse(logic.execute("travel buffer/10").getFeedbackToUser().contains("Travel warning:"));
+        assertEquals("Travel buffer set to 30 minutes.\n" + warning,
+                logic.execute("travel buffer/30").getFeedbackToUser());
         logic.execute("agenda d/" + today);
-        assertFalse(logic.execute("lesson move 2 v/Online").getFeedbackToUser().contains("minutes to travel"));
-        assertTrue(logic.execute("lesson move 2 v/Cafe").getFeedbackToUser().contains("minutes to travel"));
+        assertFalse(logic.execute("lesson move 2 v/Online").getFeedbackToUser().contains("Travel warning:"));
+        assertTrue(logic.execute("lesson move 2 v/Cafe").getFeedbackToUser().contains("Travel warning:"));
     }
 
     @Test
@@ -112,7 +114,7 @@ public class LessonTravelWorkflowTest {
         model.addLesson(second);
         logic.execute("agenda d/" + today);
         String result = logic.execute("lesson move 1 t/14:00").getFeedbackToUser();
-        assertTrue(result.contains("Lesson numbers have changed."));
+        assertNumberingOnce(result);
         assertTrue(result.contains("1. " + Messages.format(second)));
         assertTrue(result.contains("2. " + Messages.format(first.reschedule(first.getDate(),
                 new LessonTime("14:00"), first.getDuration(), null))));
@@ -135,7 +137,7 @@ public class LessonTravelWorkflowTest {
             LogicManager freshLogic = logic(fresh, storage);
             freshLogic.execute("lesson list st/1");
             String result = freshLogic.execute(command).getFeedbackToUser();
-            assertTrue(result.contains("Lesson numbers have changed."), command);
+            assertNumberingOnce(result);
             assertTrue(result.contains("1. " + Messages.format(second)), command);
             assertEquals(List.of(second), fresh.getFilteredLessonList());
         }
@@ -157,9 +159,11 @@ public class LessonTravelWorkflowTest {
         Lesson moved = loaded.getLessonList().get(1);
         assertEquals(future.getId(), moved.getId());
         assertEquals("series-1", moved.getSeriesId().orElseThrow());
+        assertEquals(future.getAcademicLevel(), moved.getAcademicLevel());
         assertEquals("Bring worksheets", loaded.getLessonList().getFirst().getPreparation().orElseThrow());
         String result = restored.execute("lesson series cancel 1 confirm").getFeedbackToUser();
         assertTrue(result.startsWith("Cancelled "));
+        assertNumberingOnce(result);
         assertTrue(storage.readAddressBook().orElseThrow().getLessonList().get(1).isCancelled());
         assertEquals(45, storage.readAddressBook().orElseThrow().getTravelBuffer());
     }
@@ -169,6 +173,7 @@ public class LessonTravelWorkflowTest {
         model.addLesson(lesson("10:00"));
         logic.execute("agenda d/" + today);
         String result = logic.execute("lesson move 1 d/" + today.plusDays(1)).getFeedbackToUser();
+        assertNumberingOnce(result);
         assertTrue(result.contains("No lessons in the current list."));
         assertTrue(model.getFilteredLessonList().isEmpty());
     }
@@ -183,11 +188,11 @@ public class LessonTravelWorkflowTest {
                     .withDuration(60).withVenue("Cafe").build());
         }
         String agenda = logic.execute("agenda d/" + today + " week/").getFeedbackToUser();
-        assertEquals(1, agenda.split("minutes to travel", -1).length - 1);
+        assertEquals(1, agenda.split("Travel warning:", -1).length - 1);
     }
 
     @Test
-    public void execute_moveToAnotherDate_reportsOnlyJourneysOnOldAndNewDates() throws Exception {
+    public void execute_moveUnrelatedLessonToAnotherDate_doesNotRepeatExistingWarnings() throws Exception {
         for (LocalDate date : List.of(today, today.plusDays(1), today.plusDays(2))) {
             model.addLesson(new LessonBuilder().withStudent(ALICE).withDate(date).withTime("10:00")
                     .withDuration(60).withVenue("Home").build());
@@ -198,8 +203,64 @@ public class LessonTravelWorkflowTest {
                 .withDuration(60).withVenue("Library").build());
         logic.execute("agenda d/" + today);
         String result = logic.execute("lesson move 3 d/" + today.plusDays(1)).getFeedbackToUser();
-        assertEquals(2, result.split("minutes to travel", -1).length - 1);
-        assertFalse(result.contains(today.plusDays(2) + " at"));
+        assertFalse(result.contains("Travel warning:"));
+    }
+
+    @Test
+    public void execute_addUnrelatedOnlineLesson_doesNotRepeatExistingWarning() throws Exception {
+        logic.execute("lesson add st/1 s/Math d/" + today + " t/10:00 dur/60 v/Home");
+        logic.execute("lesson add st/1 s/Math d/" + today + " t/11:15 dur/60 v/Cafe");
+        String result = logic.execute("lesson add st/1 s/Math d/" + today
+                + " t/15:00 dur/60 v/Online").getFeedbackToUser();
+        assertFalse(result.contains("Travel warning:"));
+        assertTrue(logic.execute("agenda d/" + today).getFeedbackToUser().contains("Travel warning:"));
+    }
+
+    @Test
+    public void execute_addBetweenLessons_reportsIncomingAndOutgoingJourneys() throws Exception {
+        model.addLesson(new LessonBuilder().withStudent(ALICE).withDate(today).withTime("10:00")
+                .withDuration(60).withVenue("Home").build());
+        model.addLesson(new LessonBuilder().withStudent(ALICE).withDate(today).withTime("12:15")
+                .withDuration(60).withVenue("School").build());
+        String result = logic.execute("lesson add st/1 s/Math d/" + today
+                + " t/11:10 dur/60 v/Cafe").getFeedbackToUser();
+        assertEquals(2, result.split("Travel warning:", -1).length - 1);
+        assertTrue(result.contains("at Home -> Alice Pauline at Cafe"));
+        assertTrue(result.contains("at Cafe -> Alice Pauline at School"));
+        assertNumberingOnce(result);
+    }
+
+    @Test
+    public void execute_moveBetweenLessons_reportsIncomingAndOutgoingJourneys() throws Exception {
+        model.addLesson(new LessonBuilder().withStudent(ALICE).withDate(today).withTime("10:00")
+                .withDuration(60).withVenue("Home").build());
+        model.addLesson(new LessonBuilder().withStudent(ALICE).withDate(today).withTime("12:15")
+                .withDuration(60).withVenue("School").build());
+        model.addLesson(new LessonBuilder().withStudent(ALICE).withDate(today).withTime("15:00")
+                .withDuration(60).withVenue("Cafe").build());
+        logic.execute("agenda d/" + today);
+        String result = logic.execute("lesson move 3 t/11:10").getFeedbackToUser();
+        assertEquals(2, result.split("Travel warning:", -1).length - 1);
+        assertTrue(result.contains("at Home -> Alice Pauline at Cafe"));
+        assertTrue(result.contains("at Cafe -> Alice Pauline at School"));
+        assertNumberingOnce(result);
+    }
+
+    @Test
+    public void execute_seriesCancelRemovesUpcomingOccurrences_refreshesNumbersExactlyOnce() throws Exception {
+        model.addLesson(new LessonBuilder().withStudent(ALICE).withDate(today.plusDays(1)).withTime("10:00")
+                .build().withSeriesId("series-1"));
+        model.addLesson(new LessonBuilder().withStudent(ALICE).withDate(today.plusDays(2)).withTime("10:00")
+                .build().withSeriesId("series-1"));
+        logic.execute("lesson list st/1");
+        String result = logic.execute("lesson series cancel 1 confirm").getFeedbackToUser();
+        assertNumberingOnce(result);
+        assertTrue(result.contains("No lessons in the current list."));
+        assertTrue(model.getFilteredLessonList().isEmpty());
+    }
+
+    private static void assertNumberingOnce(String result) {
+        assertEquals(1, result.split("Lesson numbers have changed. Current lesson list:", -1).length - 1, result);
     }
 
     private Lesson lesson(String time) {

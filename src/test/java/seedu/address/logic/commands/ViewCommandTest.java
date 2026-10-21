@@ -45,7 +45,7 @@ public class ViewCommandTest {
         String[] lines = view(INDEX_FIRST_PERSON).split("\n");
 
         assertEquals("Viewing: Alice Pauline", lines[0]);
-        assertEquals("Level S3 \u00b7 Math \u00b7 $50.00/lesson", lines[1]);
+        assertEquals("Level S3 \u00b7 Math \u00b7 $50.00/hour", lines[1]);
         assertEquals("Phone: 94351253 \u00b7 Email: alice@example.com \u00b7 Venue: 123, Jurong West Ave 6, #08-111",
                 lines[2]);
         assertEquals("", lines[3]);
@@ -63,7 +63,7 @@ public class ViewCommandTest {
         String[] lines = view(INDEX_SECOND_PERSON).split("\n");
 
         assertEquals("Viewing: Benson Meier", lines[0]);
-        assertEquals("Level J1 \u00b7 Math, Physics \u00b7 $62.50/lesson", lines[1]);
+        assertEquals("Level J1 \u00b7 Math, Physics \u00b7 $62.50/hour", lines[1]);
     }
 
     @Test

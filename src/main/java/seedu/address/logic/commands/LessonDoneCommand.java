@@ -4,9 +4,7 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NOTES;
 
 import java.time.Clock;
-import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.logging.Logger;
 
 import seedu.address.commons.core.LogsCenter;
@@ -70,12 +68,10 @@ public class LessonDoneCommand extends Command {
             return new CommandResult(MESSAGE_ALREADY_COMPLETED);
         }
 
-        List<UUID> previousNumbers = LessonCommandUtil.displayedLessonIds(model);
         model.setLesson(target, target.complete(notes));
         logger.fine("Completed lesson");
         String message = target.getStatus() == LessonStatus.COMPLETED ? MESSAGE_UPDATED_NOTES : MESSAGE_SUCCESS;
-        return new CommandResult(String.format(message, Messages.format(target))
-                + LessonCommandUtil.getChangedLessonNumbers(model, previousNumbers));
+        return new CommandResult(String.format(message, Messages.format(target)));
     }
 
     @Override

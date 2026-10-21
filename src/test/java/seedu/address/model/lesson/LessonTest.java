@@ -33,12 +33,17 @@ public class LessonTest {
                         original.getDuration(), null))) {
             assertEquals(original.getId(), changed.getId());
             assertEquals(original.getSeriesId(), changed.getSeriesId());
+            assertEquals(original.getAcademicLevel(), changed.getAcademicLevel());
         }
         assertThrows(IllegalArgumentException.class, () -> original.withSeriesId(" "));
         assertThrows(NullPointerException.class, () -> original.withSeriesId(null));
         assertThrows(IllegalArgumentException.class, () -> original.prepare(" "));
         assertFalse(original.equals(original.withSeriesId("another-series")));
         assertFalse(original.equals(original.prepare("Different preparation")));
+        Person promoted = new PersonBuilder(ALICE).withLevel("P2").build();
+        Lesson laterLevel = original.snapshotStudent(promoted);
+        assertFalse(original.equals(laterLevel));
+        assertEquals(original.getSeriesId(), laterLevel.getSeriesId());
     }
 
     @Test

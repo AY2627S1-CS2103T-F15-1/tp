@@ -24,8 +24,8 @@ import seedu.address.model.person.Venue;
  * Guarantees: details are present and not null, except for the optional venue, notes and cancel reason,
  * field values are validated, immutable.
  *
- * <p>A lesson refers to its student by the student's name and phone number, which together identify a
- * {@code Person}. {@code AddressBook} keeps this link up to date when a student is edited or deleted.
+ * <p>Persisted lessons refer to a student by stable ID. Name and phone remain display details and provide
+ * the legacy migration link. Academic level is a historical snapshot, absent when the past level is unknown.
  */
 public class Lesson {
 
@@ -387,13 +387,14 @@ public class Lesson {
                 && Objects.equals(notes, otherLesson.notes)
                 && Objects.equals(cancelReason, otherLesson.cancelReason)
                 && Objects.equals(preparation, otherLesson.preparation)
-                && Objects.equals(seriesId, otherLesson.seriesId);
+                && Objects.equals(seriesId, otherLesson.seriesId)
+                && Objects.equals(academicLevel, otherLesson.academicLevel);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(studentName, studentPhone, subject, date, time, duration, venue, status, notes,
-                cancelReason, preparation, seriesId);
+                cancelReason, preparation, seriesId, academicLevel);
     }
 
     @Override

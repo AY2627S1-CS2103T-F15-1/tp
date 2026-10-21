@@ -35,13 +35,19 @@ public class HelpCommand extends Command {
             new CommandHelp("add", "Adds a student", AddCommand.MESSAGE_USAGE),
             new CommandHelp("edit", "Edits a student's details", EditCommand.MESSAGE_USAGE),
             new CommandHelp("delete", "Deletes a student, and their lessons", DeleteCommand.MESSAGE_USAGE),
-            new CommandHelp("list", "Shows all students", ListCommand.MESSAGE_USAGE),
+            new CommandHelp("list", "Filters active, archived, or all students", ListCommand.MESSAGE_USAGE),
+            new CommandHelp("student", "Groups student commands",
+                    "student add|edit|delete|find|view|list|archive|restore (same arguments as top-level commands)"),
+            new CommandHelp("archive", "Archives a student while retaining history", "archive INDEX"),
+            new CommandHelp("restore", "Restores an archived student", "student list archived/ then restore INDEX"),
+            new CommandHelp("demo", "Previews sample data for an empty dataset", "demo [confirm]"),
             new CommandHelp("find", "Finds students by name", FindCommand.MESSAGE_USAGE),
             new CommandHelp("view", "Shows a student's overview", ViewCommand.MESSAGE_USAGE),
             new CommandHelp("sort", "Sorts students by name", SortCommand.MESSAGE_USAGE),
             new CommandHelp("remark", "Sets a student's remark", RemarkCommand.MESSAGE_USAGE),
             new CommandHelp("lesson add", "Schedules a lesson", LessonAddCommand.MESSAGE_USAGE),
             new CommandHelp("lesson list", "Lists a student's lessons", LessonListCommand.MESSAGE_USAGE),
+            new CommandHelp("lesson prep", "Records preparation notes", LessonPrepCommand.MESSAGE_USAGE),
             new CommandHelp("lesson move", "Reschedules a lesson", LessonMoveCommand.MESSAGE_USAGE),
             new CommandHelp("lesson cancel", "Cancels a lesson", LessonCancelCommand.MESSAGE_USAGE),
             new CommandHelp("lesson series cancel", "Cancels future occurrences of a series",
@@ -81,8 +87,9 @@ public class HelpCommand extends Command {
             return new CommandResult(MESSAGE_ALL_COMMANDS + format(COMMANDS));
         }
 
+        String lookup = commandName.startsWith("student ") ? commandName.substring("student ".length()) : commandName;
         Optional<CommandHelp> exactMatch = COMMANDS.stream()
-                .filter(command -> command.name.equals(commandName)).findFirst();
+                .filter(command -> command.name.equals(lookup)).findFirst();
         if (exactMatch.isPresent()) {
             return new CommandResult(exactMatch.get().usage + "\n" + MESSAGE_USER_GUIDE);
         }

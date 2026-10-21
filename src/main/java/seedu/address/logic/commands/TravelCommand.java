@@ -2,6 +2,7 @@ package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
 
+import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.model.Model;
 import seedu.address.model.lesson.TravelGap;
 
@@ -37,5 +38,10 @@ public class TravelCommand extends Command {
     @Override
     public int hashCode() {
         return Integer.hashCode(minutes);
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this).add("minutes", minutes).toString();
     }
 }

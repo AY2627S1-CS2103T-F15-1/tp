@@ -71,7 +71,7 @@ public class TodayCommand extends Command {
 
         return new CommandResult(DATE_FORMAT.format(today)
                 + "\n\n" + formatLessonsToday(model, lessonsToday)
-                + LessonCommandUtil.getTravelWarnings(model, lesson -> lesson.getDate().value.equals(today))
+                + LessonCommandUtil.getTravelWarnings(model, lesson -> lesson.getDate().value.equals(today), "  ")
                 + "\n\n" + formatLessonsAwaitingNotes(lessonsAwaitingNotes));
     }
 

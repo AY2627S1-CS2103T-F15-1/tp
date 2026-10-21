@@ -32,6 +32,7 @@ public class LessonCommandParser implements Parser<Command> {
 
         String arguments = matcher.group("arguments");
         return switch (matcher.group("subCommandWord")) {
+            case "prep" -> new LessonPrepCommandParser().parse(arguments);
             case "add" -> new LessonAddCommandParser().parse(arguments);
             case "list" -> new LessonListCommandParser().parse(arguments);
             case "move" -> new LessonMoveCommandParser().parse(arguments);

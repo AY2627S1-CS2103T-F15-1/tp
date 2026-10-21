@@ -66,6 +66,7 @@ public class FileUtil {
         if (Files.exists(target) && !Files.isWritable(target)) {
             throw new AccessDeniedException(target.toString());
         }
+        createParentDirsOfFile(target);
         Path temporaryFile = Files.createTempFile(target.getParent(), ".tutorflow-", ".tmp");
         try {
             Files.copy(content, temporaryFile, StandardCopyOption.REPLACE_EXISTING);

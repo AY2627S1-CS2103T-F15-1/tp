@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.core.index.Index;
@@ -86,6 +85,9 @@ public class LessonAddCommand extends Command {
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
         Person student = LessonCommandUtil.getStudent(model, studentIndex);
+        if (student.isArchived()) {
+            throw new CommandException("Restore this archived student before scheduling a new lesson.");
+        }
         Lesson lesson = createLesson(student);
 
         if (model.hasLesson(lesson)) {
@@ -95,10 +97,11 @@ public class LessonAddCommand extends Command {
         model.addLesson(lesson);
         logger.fine("Scheduled lesson");
 
-        return new CommandResult(String.format(MESSAGE_SUCCESS, Messages.format(lesson),
+        String numbering = formatChangedLessonNumbers(model.getFilteredLessonList(), lesson, previousLessonCount);
+        CommandResult result = new CommandResult(String.format(MESSAGE_SUCCESS, Messages.format(lesson),
                 Messages.formatVenue(lesson)) + LessonCommandUtil.getOverlapWarning(model, lesson)
-                + LessonCommandUtil.getTravelWarnings(model, next -> next.getDate().equals(lesson.getDate()))
-                + formatChangedLessonNumbers(model.getFilteredLessonList(), lesson, previousLessonCount));
+                + LessonCommandUtil.getTravelWarningsForLesson(model, lesson) + numbering);
+        return numbering.isEmpty() ? result : result.withDisplayedLessons(model.getFilteredLessonList());
     }
 
     /**
@@ -110,11 +113,7 @@ public class LessonAddCommand extends Command {
         if (addedIndex < 0 || addedIndex >= previousLessonCount) {
             return "";
         }
-        return "\n\nLesson numbers have changed. Current lesson list:"
-                + IntStream.range(0, lessons.size())
-                        .mapToObj(i -> "\n" + (i + 1) + ". " + Messages.format(lessons.get(i)) + ", "
-                                + Messages.formatVenue(lessons.get(i)) + "  (" + lessons.get(i).getStatus() + ")")
-                        .collect(Collectors.joining());
+        return Messages.formatLessonList(lessons);
     }
 
     private Lesson createLesson(Person student) throws CommandException {
@@ -124,7 +123,7 @@ public class LessonAddCommand extends Command {
 
         Venue lessonVenue = venue != null ? venue : student.getVenue().orElse(null);
         return new Lesson(student.getName(), student.getPhone(), chooseSubject(student), date, time, duration,
-                lessonVenue, LessonStatus.SCHEDULED, null, null);
+                lessonVenue, LessonStatus.SCHEDULED, null, null).snapshotStudent(student);
     }
 
     /**

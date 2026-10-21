@@ -3,6 +3,7 @@ package seedu.address.logic;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.logging.Logger;
 
 import javafx.collections.ObservableList;
@@ -78,6 +79,7 @@ public class LogicManager implements Logic {
         CommandResult commandResult;
         Command command = addressBookParser.parseCommand(commandText);
         String before = snapshot();
+        List<String> shownBefore = lessonSelection();
         boolean wasDirty = dirty;
         boolean changed;
         try {
@@ -89,15 +91,35 @@ public class LogicManager implements Logic {
             dirty = wasDirty || changed;
         }
 
+        String numbering = "";
+        List<String> shownAfter = lessonSelection();
+        boolean preservesShownRows = shownAfter.size() >= shownBefore.size()
+                && shownAfter.subList(0, shownBefore.size()).equals(shownBefore);
+        if (changed && !preservesShownRows) {
+            numbering = Messages.formatLessonList(model.getFilteredLessonList());
+            if (commandResult.getDisplayedLessons().isEmpty()) {
+                commandResult = commandResult.withFeedback(commandResult.getFeedbackToUser() + numbering)
+                        .withDisplayedLessons(model.getFilteredLessonList());
+            }
+        }
         if (dirty && (commandResult.isExit() || command instanceof SaveCommand
                 || changed)) {
-            saveChanges();
+            try {
+                saveChanges();
+            } catch (CommandException e) {
+                throw new CommandException(e.getMessage() + numbering, e);
+            }
         }
         if (dirty) {
-            return new CommandResult(commandResult.getFeedbackToUser() + "\n" + UNSAVED_WARNING,
-                    commandResult.isShowHelp(), commandResult.isExit());
+            return commandResult.withFeedback(commandResult.getFeedbackToUser() + "\n" + UNSAVED_WARNING);
         }
         return commandResult;
+    }
+
+    /** Captures visible row identity and labels before mutation can reorder a live sorted list. */
+    private List<String> lessonSelection() {
+        return model.getFilteredLessonList().stream()
+                .map(lesson -> lesson.getId() + " " + Messages.format(lesson) + " " + lesson.getStatus()).toList();
     }
 
     /** Captures serialized state without writing, keeping persistence comparison separate from domain equality. */

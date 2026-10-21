@@ -1,5 +1,7 @@
 package seedu.address.model.lesson;
 
+import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,6 +10,17 @@ public record TravelGap(Lesson previous, Lesson next, int minutes, int buffer) {
 
     public static final int DEFAULT_BUFFER = 30;
     public static final String MESSAGE_CONSTRAINTS = "Travel buffer must be a whole number from 0 to 180.";
+
+    /** Rejects missing lessons, negative gaps and unsupported buffers at the model boundary. */
+    public TravelGap {
+        requireAllNonNull(previous, next);
+        if (minutes < 0) {
+            throw new IllegalArgumentException("Travel gap must not be negative.");
+        }
+        if (!isValidBuffer(buffer)) {
+            throw new IllegalArgumentException(MESSAGE_CONSTRAINTS);
+        }
+    }
 
     /** Returns whether the travel buffer is within its supported inclusive range. */
     public static boolean isValidBuffer(int value) {

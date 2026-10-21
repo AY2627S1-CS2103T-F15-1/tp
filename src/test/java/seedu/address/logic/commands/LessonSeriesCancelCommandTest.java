@@ -44,6 +44,8 @@ public class LessonSeriesCancelCommandTest {
         assertFalse(command.equals(new LessonSeriesCancelCommand(Index.fromOneBased(2), CLOCK)));
         assertFalse(command.equals(new LessonSeriesCancelCommand(first, Clock.systemUTC())));
         assertEquals(command.hashCode(), new LessonSeriesCancelCommand(first, CLOCK).hashCode());
+        assertEquals(LessonSeriesCancelCommand.class.getCanonicalName() + "{index=" + first
+                + ", clock=" + CLOCK + "}", command.toString());
     }
 
     @Test
@@ -108,14 +110,13 @@ public class LessonSeriesCancelCommandTest {
     }
 
     @Test
-    public void execute_futureOnlyList_refreshesNumbersAndRetainsCancelledHistory() throws Exception {
+    public void execute_futureOnlyList_retainsCancelledHistoryWithoutFormattingNumbers() throws Exception {
         ModelManager model = model();
         model.addLesson(occurrence(1, "12:00"));
         model.addLesson(occurrence(8, "12:00"));
         model.updateFilteredLessonList(Lesson::isScheduled);
         String result = new LessonSeriesCancelCommand(Index.fromOneBased(1), CLOCK).execute(model).getFeedbackToUser();
-        assertTrue(result.contains("Lesson numbers have changed."));
-        assertTrue(result.contains("No lessons in the current list."));
+        assertEquals("Cancelled 2 series occurrences.", result);
         assertTrue(model.getFilteredLessonList().isEmpty());
         assertTrue(model.getAddressBook().getLessonList().stream()
                 .allMatch(lesson -> lesson.getStatus() == LessonStatus.CANCELLED));
@@ -129,6 +130,13 @@ public class LessonSeriesCancelCommandTest {
         for (String suffix : List.of("cancel 1", "cancel 1 Confirm", "cancel 0 confirm", "cancel -1 confirm",
                 "cancel 1 confirm now", "cancel confirm 1", "cancel abc confirm", "1 confirm", "", "end 1 confirm")) {
             assertThrows(ParseException.class, () -> parser.parseCommand("lesson series " + suffix));
+        }
+        assertEquals(LessonSeriesCancelCommand.MESSAGE_USAGE, assertThrows(ParseException.class, ()
+                -> parser.parseCommand("lesson series cancel 1")).getMessage());
+        for (String index : List.of("0", "-1", "abc", "1.5", "99999999999999999999")) {
+            assertEquals("Invalid command format!\n" + LessonSeriesCancelCommand.MESSAGE_USAGE,
+                    assertThrows(ParseException.class, ()
+                        -> parser.parseCommand("lesson series cancel " + index + " confirm")).getMessage());
         }
     }
 

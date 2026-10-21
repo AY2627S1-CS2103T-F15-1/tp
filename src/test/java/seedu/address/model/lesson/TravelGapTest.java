@@ -14,6 +14,19 @@ import seedu.address.testutil.LessonBuilder;
 /** Covers the latest-end rule, physical-venue exceptions and inclusive buffer boundaries. */
 public class TravelGapTest {
     @Test
+    public void constructor_missingLessonsNegativeGapOrInvalidBuffer_rejected() {
+        Lesson earlier = lesson("10:00", 60, "A");
+        Lesson next = lesson("11:15", 60, "B");
+        assertThrows(NullPointerException.class, () -> new TravelGap(null, next, 15, 30));
+        assertThrows(NullPointerException.class, () -> new TravelGap(earlier, null, 15, 30));
+        assertThrows(IllegalArgumentException.class, () -> new TravelGap(earlier, next, -1, 30));
+        assertThrows(IllegalArgumentException.class, () -> new TravelGap(earlier, next, 15, -1));
+        assertThrows(IllegalArgumentException.class, () -> new TravelGap(earlier, next, 15, 181));
+        assertEquals(0, new TravelGap(earlier, next, 0, 0).minutes());
+        assertEquals(180, new TravelGap(earlier, next, 15, 180).buffer());
+    }
+
+    @Test
     public void find_simultaneousPredecessors_areConsideredAsAGroup() {
         Lesson first = lesson("10:00", 60, "A");
         Lesson second = new LessonBuilder(first).withStudent("Benson", "91234567").withVenue("B").build();

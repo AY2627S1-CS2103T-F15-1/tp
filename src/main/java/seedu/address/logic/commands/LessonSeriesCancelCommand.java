@@ -6,9 +6,9 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 
 import seedu.address.commons.core.index.Index;
+import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
@@ -55,10 +55,8 @@ public class LessonSeriesCancelCommand extends Command {
         for (Lesson lesson : affected) {
             updated.setLesson(lesson, lesson.cancel("Series cancelled"));
         }
-        List<UUID> previousNumbers = LessonCommandUtil.displayedLessonIds(model);
         model.setAddressBook(updated);
-        return new CommandResult("Cancelled " + affected.size() + " series occurrences."
-                + LessonCommandUtil.getChangedLessonNumbers(model, previousNumbers));
+        return new CommandResult("Cancelled " + affected.size() + " series occurrences.");
     }
 
     @Override
@@ -70,5 +68,10 @@ public class LessonSeriesCancelCommand extends Command {
     @Override
     public int hashCode() {
         return Objects.hash(index, clock);
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this).add("index", index).add("clock", clock).toString();
     }
 }

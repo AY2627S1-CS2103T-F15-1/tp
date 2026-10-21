@@ -54,7 +54,7 @@ class JsonSerializableAddressBook {
      * @param source future changes to this will not affect the created {@code JsonSerializableAddressBook}.
      */
     public JsonSerializableAddressBook(ReadOnlyAddressBook source) {
-        schemaVersion = 14;
+        schemaVersion = StorageSchema.CURRENT_VERSION;
         travelBuffer = source.getTravelBuffer();
         persons.addAll(source.getPersonList().stream().map(JsonAdaptedPerson::new).collect(Collectors.toList()));
         lessons.addAll(source.getLessonList().stream().map(lesson -> {
@@ -70,9 +70,7 @@ class JsonSerializableAddressBook {
      * @throws IllegalValueException if there were any data constraints violated.
      */
     public AddressBook toModelType() throws IllegalValueException {
-        if (schemaVersion != null && schemaVersion != 14) {
-            throw new IllegalValueException("Unsupported data schema version: " + schemaVersion);
-        }
+        StorageSchema.requireSupported(schemaVersion);
         Set<UUID> studentIds = new HashSet<>();
         Set<UUID> lessonIds = new HashSet<>();
         AddressBook addressBook = new AddressBook();

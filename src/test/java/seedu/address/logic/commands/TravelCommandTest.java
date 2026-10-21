@@ -34,5 +34,6 @@ public class TravelCommandTest {
         assertFalse(command.equals(null));
         assertFalse(command.equals(new ClearCommand()));
         assertEquals(command.hashCode(), new TravelCommand(30).hashCode());
+        assertEquals(TravelCommand.class.getCanonicalName() + "{minutes=30}", command.toString());
     }
 }
