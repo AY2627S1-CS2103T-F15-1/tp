@@ -2,6 +2,7 @@ package seedu.address.storage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -12,6 +13,7 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.logic.LogicManager;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.AddressBook;
@@ -28,7 +30,18 @@ public class VersionedStorageTest {
     public void startup_legacyData_copiesToNewFileWithoutChangingOriginal() throws Exception {
         Path legacy = directory.resolve("addressbook.json");
         Path current = directory.resolve("tutorflow-v14.json");
-        new JsonAddressBookStorage(legacy).saveAddressBook(TypicalPersons.getTypicalAddressBook());
+        Files.writeString(legacy, """
+                {
+                  "persons": [{"name":"Alice Pauline","phone":"94351253","level":"S3",
+                    "subjects":["Math"],"rate":"50"}],
+                  "lessons": [
+                    {"studentName":"Alice Pauline","studentPhone":"94351253","subject":"Math",
+                     "date":"2026-10-12","time":"10:00","duration":60,"status":"cancelled"},
+                    {"studentName":"Alice Pauline","studentPhone":"94351253","subject":"Math",
+                     "date":"2026-10-12","time":"10:00","duration":60,"status":"cancelled"}
+                  ]
+                }
+                """);
         String original = Files.readString(legacy);
         VersionedAddressBookStorage data = new VersionedAddressBookStorage(current, legacy);
         ModelManager model = new ModelManager(data.readAddressBook().orElseThrow(), new UserPrefs());
@@ -38,7 +51,13 @@ public class VersionedStorageTest {
         assertFalse(logic.hasUnsavedChanges());
         assertTrue(Files.exists(current));
         assertEquals(original, Files.readString(legacy));
-        assertEquals(model.getAddressBook(), data.readAddressBook().orElseThrow());
+        ReadOnlyAddressBook restored = data.readAddressBook().orElseThrow();
+        assertEquals(model.getAddressBook(), restored);
+        assertEquals(2, restored.getLessonList().size());
+        assertNotEquals(restored.getLessonList().get(0).getId(), restored.getLessonList().get(1).getId());
+        assertTrue(restored.getLessonList().get(0).getAcademicLevel().isEmpty());
+        assertEquals(restored.getPersonList().getFirst().getId(),
+                restored.getLessonList().getFirst().getStudentId().orElseThrow());
     }
     @Test
     public void startup_failedMigration_retainsDirtyStateAndRetriesBeforeExit() throws Exception {
@@ -81,6 +100,64 @@ public class VersionedStorageTest {
         VersionedAddressBookStorage data = new VersionedAddressBookStorage(current, legacy);
         assertTrue(data.readAddressBook().orElseThrow().getPersonList().isEmpty());
         assertFalse(data.requiresInitialSave());
+    }
+
+    @Test
+    public void startup_unknownCurrentSource_remainsProtectedWhenMetadataRecovers() throws Exception {
+        Path current = directory.resolve("tutorflow-v14.json");
+        Files.writeString(current, "original inaccessible bytes");
+        class UnknownStorage extends VersionedAddressBookStorage {
+            private boolean unknown = true;
+
+            UnknownStorage() {
+                super(current, directory.resolve("addressbook.json"));
+            }
+
+            @Override
+            protected SourcePresence sourcePresence(Path path) {
+                return unknown && path.equals(current) ? SourcePresence.UNKNOWN : super.sourcePresence(path);
+            }
+
+            @Override
+            protected void preserveUnreadableFile(Path path) throws IOException {
+                throw new IOException("Recovery copy denied");
+            }
+        }
+        UnknownStorage data = new UnknownStorage();
+        assertThrows(DataLoadingException.class, data::readAddressBook);
+        data.unknown = false;
+        assertThrows(IOException.class, () -> data.saveAddressBook(new AddressBook()));
+        assertEquals("original inaccessible bytes", Files.readString(current));
+    }
+
+    @Test
+    public void startup_invalidLegacySource_blocksSaveUntilOriginalIsPreserved() throws Exception {
+        Path current = directory.resolve("tutorflow-v14.json");
+        Path legacy = directory.resolve("addressbook.json");
+        Files.writeString(legacy, "broken legacy bytes");
+        VersionedAddressBookStorage data = new VersionedAddressBookStorage(current, legacy) {
+            @Override
+            protected void preserveUnreadableFile(Path path) throws IOException {
+                throw new IOException("Recovery copy denied");
+            }
+        };
+        assertThrows(DataLoadingException.class, data::readAddressBook);
+        assertThrows(IOException.class, () -> data.saveAddressBook(new AddressBook()));
+        assertEquals(legacy, data.getReadSource());
+        assertFalse(Files.exists(current));
+        assertEquals("broken legacy bytes", Files.readString(legacy));
+    }
+
+    @Test
+    public void startup_invalidLegacySource_successfulPreservationAllowsNewDataset() throws Exception {
+        Path current = directory.resolve("tutorflow-v14.json");
+        Path legacy = directory.resolve("addressbook.json");
+        Files.writeString(legacy, "broken legacy bytes");
+        VersionedAddressBookStorage data = new VersionedAddressBookStorage(current, legacy);
+        assertThrows(DataLoadingException.class, data::readAddressBook);
+        data.saveAddressBook(new AddressBook());
+        assertEquals("broken legacy bytes", Files.readString(directory.resolve("addressbook.json.corrupt")));
+        assertTrue(new JsonAddressBookStorage(current).readAddressBook().orElseThrow().getPersonList().isEmpty());
     }
 
 }

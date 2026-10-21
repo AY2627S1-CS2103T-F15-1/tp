@@ -10,6 +10,7 @@ import javafx.application.Application;
 import javafx.stage.Stage;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.exceptions.DataLoadingException;
+import seedu.address.commons.exceptions.UnsupportedSchemaException;
 import seedu.address.commons.util.StringUtil;
 import seedu.address.logic.Logic;
 import seedu.address.logic.LogicManager;
@@ -52,23 +53,29 @@ public class MainApp extends Application {
 
         JsonUserPrefsStorage userPrefsStorage = new JsonUserPrefsStorage(USER_PREFS_FILE_PATH);
         UserPrefs userPrefs = initPrefs(userPrefsStorage);
-        VersionedAddressBookStorage addressBookStorage =
-                new VersionedAddressBookStorage(ADDRESS_BOOK_FILE_PATH, LEGACY_FILE_PATH);
+        VersionedAddressBookStorage addressBookStorage = createAddressBookStorage();
         storage = new StorageManager(addressBookStorage, userPrefsStorage);
 
-        model = initModelManager(storage, userPrefs);
+        model = initModelManager(storage, userPrefs, addressBookStorage);
 
         logic = new LogicManager(model, storage, startupWarning, addressBookStorage.requiresInitialSave());
 
         ui = new UiManager(logic, storage.getAddressBookFilePath());
     }
 
+    /** Creates the data storage used during startup. */
+    protected VersionedAddressBookStorage createAddressBookStorage() {
+        return new VersionedAddressBookStorage(ADDRESS_BOOK_FILE_PATH, LEGACY_FILE_PATH);
+    }
+
     /**
      * Returns a {@code ModelManager} with the data from {@code storage}'s address book and {@code userPrefs}. <br>
      * An empty address book will be used if {@code storage}'s address book is not found,
-     * or if errors occur when reading {@code storage}'s address book.
+     * or if recoverable errors occur when reading {@code storage}'s address book.
+     * Unsupported data versions stop startup without moving or replacing the source.
      */
-    private Model initModelManager(Storage storage, ReadOnlyUserPrefs userPrefs) {
+    private Model initModelManager(Storage storage, ReadOnlyUserPrefs userPrefs,
+            VersionedAddressBookStorage addressBookStorage) throws DataLoadingException {
         logger.info("Using data file : " + storage.getAddressBookFilePath());
 
         Optional<ReadOnlyAddressBook> addressBookOptional;
@@ -82,9 +89,13 @@ public class MainApp extends Application {
             }
             initialData = addressBookOptional.orElseGet(AddressBook::new);
         } catch (DataLoadingException e) {
+            if (e.getCause() instanceof UnsupportedSchemaException) {
+                logger.severe(e.getCause().getMessage());
+                throw e;
+            }
             logger.warning("Data file at " + storage.getAddressBookFilePath() + " could not be loaded."
                     + " Will be starting with no data.");
-            startupWarning = DataFileRecovery.setAside(storage.getAddressBookFilePath());
+            startupWarning = DataFileRecovery.setAside(addressBookStorage.getReadSource());
             initialData = new AddressBook();
         }
 

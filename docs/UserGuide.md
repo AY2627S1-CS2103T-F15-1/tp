@@ -26,7 +26,7 @@ For power-users, TutorFlow can help you manage your students and lessons faster 
 
    * `list` : Lists all students.
 
-   * `add n/John Doe p/98765432 l/S4 s/Math r/50` : Adds a student named `John Doe`, who is in Secondary 4, learns Math and pays $50 per lesson.
+   * `add n/John Doe p/98765432 l/S4 s/Math r/50` : Adds a student named `John Doe`, who is in Secondary 4, learns Math and pays $50 per hour.
 
    * `delete 3` : Deletes the 3rd student shown in the current list.
 
@@ -59,8 +59,8 @@ For power-users, TutorFlow can help you manage your students and lessons faster 
 * Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
 
-* Extraneous parameters for `list` are ignored.<br>
-  For example, `list 123` is interpreted as `list`.
+* `list` accepts academic filters and archive flags; invalid or extra arguments are rejected.<br>
+  For example, `student list l/S4 s/Math` shows active S4 Math students.
 
 * `today` and `exit` take no parameters. If you type anything after them, TutorFlow shows an error and does not run them.<br>
   For example, `exit now` is rejected, so a mistyped command cannot close the app.
@@ -98,7 +98,7 @@ Format: `add n/NAME p/PHONE_NUMBER l/LEVEL s/SUBJECT... r/RATE [e/EMAIL] [v/VENU
 * `LEVEL` is one of `P1` to `P6` (primary), `S1` to `S5` (secondary) or `J1` to `J2` (junior college). It is not case-sensitive, so `s3` is the same as `S3`.
 * `PHONE_NUMBER` has 8 to 15 digits and can start with `+`, for example `91234567` or `+6591234567`. Spaces and hyphens between the digits are allowed and are removed, so `9123 4567` is stored as `91234567`.
 * `SUBJECT` is free text of up to 30 letters in any language, digits, spaces, `&` and `-`, such as `Math`, `English & Literature` or `华文`. Subjects are not case-sensitive.
-* `RATE` is the amount charged per lesson in dollars, from `0` to `9999.99` with at most 2 decimal places. A leading `$` is accepted, so `50`, `50.00` and `$50` are the same rate.
+* `RATE` is the amount charged per hour in SGD, from `0` to `9999.99` with at most 2 decimal places. A leading `$` is accepted, so `50`, `50.00` and `$50` are the same rate.
 * `VENUE` is where the student is usually taught, up to 100 characters.
 * Extra spaces in a `NAME` are ignored, so `John  Tan` is stored as `John Tan`.
 * A student can have at most 10 different subjects, so a command with more than 10 `s/SUBJECT` values is rejected. The same limit applies when you [edit](#editing-a-student-edit) a student.
@@ -378,7 +378,7 @@ Format: `clear confirm`
 
 * Typing `clear` on its own deletes nothing. It only reminds you what would be deleted and how to confirm.
 * `confirm` must be written exactly in lower case. Anything else after `clear` is rejected, so a mistyped command can never wipe your data.
-* Clearing cannot be undone. TutorFlow saves the empty data straight away, so copy `data/addressbook.json` first if you may want your records back.
+* Clearing cannot be undone. TutorFlow saves the empty data straight away, so copy `data/tutorflow-v14.json` first if you may want your records back.
 * Clearing data that is already empty works and does nothing.
 
 Examples:
@@ -409,14 +409,14 @@ Previously accepted names, short phone numbers, email terminal labels and venues
 
 ### Editing the data file
 
-TutorFlow data is saved automatically as a JSON file `data/addressbook.json` relative to the folder from which TutorFlow is launched. Advanced users are welcome to update data directly by editing that data file.
+TutorFlow data is saved automatically as a JSON file `data/tutorflow-v14.json` relative to the folder from which TutorFlow is launched. Advanced users are welcome to update data directly by editing that data file.
 
 Every lesson in the file must be with a student in the same file, with the same name and phone number. A file with a lesson whose student is missing is treated as invalid, as described below.
 
 <box type="warning" seamless>
 
 **Caution:**
-If your changes make the data file invalid, TutorFlow does not delete it. At the next run it renames the file to `addressbook.json.corrupt` (or `addressbook.json.corrupt.1` and so on, if that name is taken), starts with no students and lessons, and tells you where the file went. Fix the file and rename it back to `addressbook.json` while TutorFlow is closed to get your records back. We still recommend backing up the file before editing it.<br>
+If your changes make the data file invalid, TutorFlow does not delete it. At the next run it renames the file to `tutorflow-v14.json.corrupt` (or `tutorflow-v14.json.corrupt.1` and so on, if that name is taken), starts with no students and lessons, and tells you where the file went. Fix the file and rename it back to `tutorflow-v14.json` while TutorFlow is closed to get your records back. We still recommend backing up the file before editing it.<br>
 If the original cannot be renamed (for example, while another program holds it open), saving is blocked and retries preservation before replacing it. The original bytes are retained in the `.corrupt` copy once the lock clears.
 
 Furthermore, certain edits can cause TutorFlow to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
@@ -465,3 +465,48 @@ Action     | Format, Examples
 **Lesson cancel** | `lesson cancel INDEX [r/REASON]`<br> e.g., `lesson cancel 1 r/Student unwell`
 **Lesson done** | `lesson done INDEX [n/NOTES]`<br> e.g., `lesson done 1 n/Covered quadratic roots`
 **Lesson missed** | `lesson missed INDEX`<br> e.g., `lesson missed 1`
+
+
+## Student continuity in v1.4 alpha
+
+The existing student commands remain available. You can also write `student add`, `student edit`,
+`student delete`, `student find`, `student view`, and `student list` with the same arguments.
+
+* `student list [l/LEVEL] [s/SUBJECT] [archived/|all/]` combines level and subject filters with AND.
+  The default is active students. `archived/` shows only archived students; `all/` includes both.
+  The two flags cannot be combined and take no values.
+* `archive INDEX` (or `student archive INDEX`) hides a student from active lists while retaining
+  lessons and upcoming agenda commitments. An archived student cannot receive new lessons.
+* `student list archived/` followed by `restore INDEX` restores a student. All student commands
+  use the currently visible student numbers; the student panel refreshes after changes.
+* `lesson prep INDEX n/NOTES` records 1-1000 printable characters of preparation. It neither
+  completes the lesson nor changes teaching notes. Preparation appears in `lesson list` and
+  in the next-lesson section of `view`.
+* New lessons snapshot the student's academic level at booking. Changing a student's level
+  preserves those historical details. `lesson list st/INDEX all/` displays the recorded level.
+  Older lessons show `unknown (not recorded)` because their past academic level cannot be
+  reconstructed from the current profile.
+* Rates are SGD per hour. For example, `r/50` is $50.00/hour.
+* `demo` previews the sample-data action; `demo confirm` loads the existing sample students
+  only if the dataset is empty. It never replaces existing records.
+
+Lesson numbers belong to the last displayed lesson selection. When a matching insertion,
+rename, reschedule, cancellation, or deletion shifts that selection, the result shows the
+current numbered list before another indexed command is accepted. This refresh also appears
+in a save-error message if the session changed but the write failed.
+
+### Migrating older data
+
+v1.4 writes `data/tutorflow-v14.json`. If this file is absent, it reads legacy
+`data/addressbook.json`, assigns stable internal student and lesson identifiers, and saves
+an initial v1.4 copy. The legacy file remains untouched so an older application cannot erase
+v1.4 fields. If both files exist, the v1.4 file takes precedence. Keep both in your backup.
+An unsupported schema version stops startup and leaves the original file in place. Open that data
+with a compatible TutorFlow build, or restore a backup made by your installed build. An older alpha
+cannot open data saved by a newer alpha that added data fields. Invalid files use the recovery flow
+described above; unsupported versions never enter that flow.
+The current file is created only after a complete atomic save. If the first write fails, a restart
+can still resume migration from the unchanged legacy source.
+If the initial migration save fails, the startup message reports unsaved changes: fix access
+and use `save`. TutorFlow retries before exit and will not close through its normal exit flow
+while that write continues to fail.

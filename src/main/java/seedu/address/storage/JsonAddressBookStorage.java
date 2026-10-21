@@ -10,9 +10,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.commons.exceptions.IllegalValueException;
+import seedu.address.commons.exceptions.UnsupportedSchemaException;
 import seedu.address.commons.util.FileUtil;
 import seedu.address.commons.util.JsonUtil;
 import seedu.address.model.ReadOnlyAddressBook;
@@ -26,6 +29,7 @@ public class JsonAddressBookStorage {
 
     private Path filePath;
     private final Set<Path> unreadableFiles = new HashSet<>();
+    private final Set<Path> unsupportedFiles = new HashSet<>();
 
     /** Separates positively absent files from sources whose metadata cannot be read. */
     protected enum SourcePresence { PRESENT, ABSENT, UNKNOWN }
@@ -71,22 +75,34 @@ public class JsonAddressBookStorage {
         try {
             return readModel(filePath);
         } catch (DataLoadingException e) {
-            unreadableFiles.add(filePath.toAbsolutePath().normalize());
+            Path normalizedPath = filePath.toAbsolutePath().normalize();
+            if (e.getCause() instanceof UnsupportedSchemaException) {
+                unsupportedFiles.add(normalizedPath);
+            } else {
+                unreadableFiles.add(normalizedPath);
+            }
             throw e;
         }
     }
 
     /** Reads and validates data without changing the protected-source state. */
     private Optional<ReadOnlyAddressBook> readModel(Path filePath) throws DataLoadingException {
-        Optional<JsonSerializableAddressBook> jsonAddressBook = JsonUtil.readJsonFile(
-                filePath, JsonSerializableAddressBook.class);
+        if (sourcePresence(filePath) == SourcePresence.UNKNOWN) {
+            throw new DataLoadingException(new IOException("Cannot determine whether the data file exists."));
+        }
+        Optional<JsonNode> jsonAddressBook = JsonUtil.readJsonFile(filePath, JsonNode.class);
         if (!jsonAddressBook.isPresent()) {
             return Optional.empty();
         }
 
         try {
-            return Optional.of(jsonAddressBook.get().toModelType());
-        } catch (IllegalValueException ive) {
+            if (!jsonAddressBook.get().isObject()) {
+                throw new IllegalValueException("JSON data must be an object.");
+            }
+            StorageSchema.requireSupportedDocument(jsonAddressBook.get());
+            return Optional.of(JsonUtil.fromJsonTree(jsonAddressBook.get(), JsonSerializableAddressBook.class)
+                    .toModelType());
+        } catch (IllegalValueException | IOException ive) {
             logger.warning("Data file rejected: invalid field values");
             throw new DataLoadingException(ive);
         }
@@ -110,6 +126,7 @@ public class JsonAddressBookStorage {
         requireNonNull(addressBook);
         requireNonNull(filePath);
 
+        requireSupportedSource(filePath);
         Path normalizedPath = filePath.toAbsolutePath().normalize();
         if (unreadableFiles.contains(normalizedPath)) {
             switch (sourcePresence(filePath)) {
@@ -122,8 +139,20 @@ public class JsonAddressBookStorage {
             }
             unreadableFiles.remove(normalizedPath);
         }
-        FileUtil.createIfMissing(filePath);
-        JsonUtil.saveJsonFile(new JsonSerializableAddressBook(addressBook), filePath);
+        writeSnapshot(filePath, snapshotAddressBook(addressBook));
+    }
+
+    /** A rejected schema must never enter the corruption recovery or overwrite paths. */
+    protected void requireSupportedSource(Path source) throws IOException {
+        if (unsupportedFiles.contains(source.toAbsolutePath().normalize())) {
+            throw new IOException("Unsupported data schema. Open with a compatible TutorFlow build "
+                    + "or restore a matching backup and restart before saving.");
+        }
+    }
+
+    /** Writes a serialized snapshot through the atomic file writer. */
+    protected void writeSnapshot(Path filePath, String snapshot) throws IOException {
+        FileUtil.writeToFile(filePath, snapshot);
     }
 
     /** Uses the same representation as saving, so future persisted fields also participate in change detection. */

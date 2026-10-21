@@ -755,7 +755,7 @@ testers are expected to do more *exploratory* testing.
    1. Download the JAR file and copy it into an empty folder.
 
    1. Double-click the JAR file.<br>
-      Expected: The GUI opens with a set of sample students. The window size may not be optimal.
+      Expected: The GUI opens empty with welcome and demo instructions. The window size may not be optimal.
 
 1. Saving window preferences
 
@@ -854,20 +854,64 @@ testers are expected to do more *exploratory* testing.
 
 1. Dealing with missing/corrupted data files
 
-   1. Prerequisites: Close TutorFlow, then open `data/addressbook.json` and damage it, for example by deleting its last `}`.
+   1. Prerequisites: Close TutorFlow, then open `data/tutorflow-v14.json` and damage it, for example by deleting its last `}`.
 
    1. Test case: Launch TutorFlow.<br>
-      Expected: TutorFlow starts with an empty list. The result box says that the data file could not be read and has been set aside as `data/addressbook.json.corrupt`, and the damaged file is in the `data` folder under that name.
+      Expected: TutorFlow starts with an empty list. The result box says that the data file could not be read and has been set aside as `data/tutorflow-v14.json.corrupt`, and the damaged file is in the `data` folder under that name.
 
    1. Test case: Add a student with `add n/Test p/91234567 l/S4 s/Math r/50`, close TutorFlow and launch it again.<br>
-      Expected: The student is still there, because it was saved to a new `addressbook.json`. The `.corrupt` file is unchanged.
+      Expected: The student is still there, because it was saved to a new `tutorflow-v14.json`. The `.corrupt` file is unchanged.
 
-   1. Test case: Close TutorFlow, delete `data/addressbook.json` and launch TutorFlow.<br>
-      Expected: TutorFlow starts with the sample students and creates the data file after the first command.
+   1. Test case: Close TutorFlow, delete `data/tutorflow-v14.json` and launch TutorFlow.<br>
+      Expected: With no legacy addressbook.json either, TutorFlow starts empty. Use demo confirm to load sample students.
 
 1. Dealing with a data file that cannot be written
 
-   1. Prerequisites: Make `data/addressbook.json` read-only, as a user who is not an administrator.
+   1. Prerequisites: Make `data/tutorflow-v14.json` read-only, as a user who is not an administrator.
 
    1. Test case: Run any command, such as `list`.<br>
       Expected: The result box says that the change was applied in this session but could not be saved, and why. `exit` does not close TutorFlow until the file can be written again.
+
+
+### v1.4 continuity and domain extension contract
+
+`Person.getId()` and `Lesson.getId()` are persisted UUIDs, distinct from visible indices and
+from value equality. `Lesson.getStudentId()` links records across profile edits. Legacy lessons
+are linked during loading; their missing academic level remains `Optional.empty()`. Newly
+scheduled lessons use `snapshotStudent` exactly at creation. Reschedule, status changes,
+preparation, profile edits, aggregate copying, and JSON round trips retain the historical level.
+Archive and preparation participate in value equality, as does academic level; UUIDs do not.
+Equal cancelled lessons remain separate records and exact-ID lookup chooses the edited record.
+
+All domain extensions must update `ReadOnlyAddressBook`, `AddressBook.resetData` and its copy
+constructor/equality, the real JSON root/adapters, and focused round-trip tests together.
+`Storage.snapshotAddressBook` uses that exact persisted representation for dirty detection,
+so UI-only equality must never decide whether a write is required. Schema 14 is written to
+`tutorflow-v14.json`; `VersionedAddressBookStorage` reads legacy data only when the current
+path is positively absent. The logic constructor's initial-save flag explicitly persists
+migrated IDs even before a command mutates the model. Failed initial writes remain dirty.
+The atomic writer creates only parent directories before its sibling temporary file. It never
+precreates the current destination, so an interrupted first save leaves legacy fallback available
+on restart. The storage writeSnapshot seam passes the actual serialized bytes to this writer.
+Unreadable source protection is retained until positive absence or successful preservation.
+
+`StorageSchema.MINIMUM_VERSION` and `CURRENT_VERSION` centralize the supported range (both 14 now).
+The shared `tutorflow-v14.json` path stays fixed as later domains are added. Homework must increment
+the current schema to 15, finance to 16, and workflows to 17. Each build accepts unversioned legacy
+data and versions 14 through its current version, with explicit defaults for missing older fields.
+Add prior-version loading and future-version refusal tests alongside each schema increment.
+
+Storage checks the raw JSON schema before binding current student/lesson fields. An unsupported
+version produces `UnsupportedSchemaException` as the cause of `DataLoadingException`; `MainApp.init`
+propagates it before constructing a model, logic, or UI. The original stays at its original path,
+and storage refuses subsequent saves. Never route this exception through corruption recovery or
+silently ignore newer domain fields. Users need a compatible binary or a matching backup.
+
+The command-result seam for later detail-pane integration is
+`CommandResult.getDisplayedLessons()`: when present, it is an immutable typed snapshot in the
+same order as rendered lesson numbers. `withDisplayedLessons` and `withFeedback` retain it
+across numbering refreshes and unsaved warnings. The logic layer uses this data to avoid
+rendering duplicate refreshes; it does not parse command feedback. Task 7 can render these
+rows directly and add typed student/dashboard views. No unused UI components are introduced.
+Later homework/payment/task lists must likewise snapshot shown stable IDs or visibly refresh
+the numbered list when a mutation changes the mapping, including when persistence fails.
