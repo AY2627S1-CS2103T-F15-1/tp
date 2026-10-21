@@ -9,6 +9,10 @@ import static seedu.address.testutil.Assert.assertThrows;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
 
@@ -56,6 +60,30 @@ public class UserGuideTest {
         assertTrue(contents.contains("href=\"#rescheduling-a-lesson-lesson-move\""));
         assertTrue(contents.contains("href=\"#completing-a-lesson-and-recording-notes-lesson-done\""));
         assertTrue(contents.contains("href=\"#recording-a-missed-lesson-lesson-missed\""));
+    }
+
+    @Test
+    public void loadHtml_currentGuide_everyLinkWithinTheGuideHasATarget() throws Exception {
+        String html = UserGuide.loadHtml();
+
+        Matcher links = Pattern.compile("href=\"#([^\"]+)\"").matcher(html);
+        int count = 0;
+        while (links.find()) {
+            count++;
+            assertTrue(html.contains("id=\"" + links.group(1) + "\""), "No section has the id " + links.group(1));
+        }
+        assertTrue(count > 20, "the links of the guide were not read");
+    }
+
+    @Test
+    public void loadHtml_currentGuide_noTwoSectionsShareAnId() throws Exception {
+        String html = UserGuide.loadHtml();
+
+        Matcher ids = Pattern.compile("<h[1-6] id=\"([^\"]+)\"").matcher(html);
+        Set<String> seen = new HashSet<>();
+        while (ids.find()) {
+            assertTrue(seen.add(ids.group(1)), "Two sections have the id " + ids.group(1));
+        }
     }
 
     @Test
