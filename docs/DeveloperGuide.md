@@ -249,7 +249,7 @@ The sequence diagram below shows `execute("today")`. For simplicity, it leaves o
 
 <puml src="diagrams/TodaySequenceDiagram.puml" alt="Interactions Inside the Logic, Model and Storage Components for the `today` Command" />
 
-**Read-only.** `today` calls only query methods, so it changes neither the data nor the displayed lists. `LogicManager` takes a snapshot of the data with `Storage#snapshotAddressBook` before and after every command. For `today` the two snapshots are equal, so nothing is saved. The dashboard shows the data as it was when the command ran. The next command replaces it in the result box, and the tutor runs `today` again to see it up to date.
+**Read-only.** `today` calls only query methods, so it changes neither the data nor the displayed lists. Before and after every command, `LogicManager` calls `Storage#snapshotAddressBook`, which turns the data into the JSON text that a save would write, without writing the file. For `today` the two snapshots are equal, so nothing is saved. The dashboard shows the data as it was when the command ran. The next command replaces it in the result box, and the tutor runs `today` again to see it up to date.
 
 **At start-up.** `MainWindow#fillInnerParts` puts `Logic#getStartupMessage()` in the result box. `LogicManager#getStartupMessage()` returns the start-up warning, if there is one (the first-run welcome, a data file that could not be read, or a migration that could not be saved), followed by `getDashboard()`, which executes a new `TodayCommand` directly on the model, without the parser or the snapshots.
 
