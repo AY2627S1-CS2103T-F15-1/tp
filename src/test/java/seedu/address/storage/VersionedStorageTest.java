@@ -149,6 +149,56 @@ public class VersionedStorageTest {
     }
 
     @Test
+    public void startup_legacySourceThatCannotBeOpened_isNeverSetAsideAndNothingIsSaved() throws Exception {
+        Path current = directory.resolve("tutorflow-v14.json");
+        Path legacy = directory.resolve("addressbook.json");
+        Files.createDirectory(legacy); // cannot be read as a file, as a valid file that another program holds
+        VersionedAddressBookStorage data = new VersionedAddressBookStorage(current, legacy);
+
+        DataLoadingException failure = assertThrows(DataLoadingException.class, data::readAddressBook);
+        IOException refused = assertThrows(IOException.class, () -> data.saveAddressBook(new AddressBook()));
+
+        assertTrue(JsonAddressBookStorage.isAccessFailure(failure));
+        assertEquals(String.format(DataFileRecovery.MESSAGE_NOT_OPENED_SAVE, legacy), refused.getMessage());
+        assertTrue(Files.isDirectory(legacy), "the source stays where it is");
+        assertFalse(Files.exists(directory.resolve("addressbook.json.corrupt")), "it is not set aside");
+        assertFalse(Files.exists(current), "no data file is written beside it");
+    }
+
+    @Test
+    public void startup_legacySourceThatCouldNotBeOpenedBefore_isMigratedOnTheNextStart() throws Exception {
+        Path current = directory.resolve("tutorflow-v14.json");
+        Path legacy = directory.resolve("addressbook.json");
+        Files.createDirectory(legacy);
+        assertThrows(DataLoadingException.class, () -> new VersionedAddressBookStorage(current, legacy)
+                .readAddressBook());
+        Files.delete(legacy);
+        Files.writeString(legacy, """
+                {"persons": [{"name":"Alice Pauline","phone":"94351253","level":"S3",
+                  "subjects":["Math"],"rate":"50"}], "lessons": []}
+                """);
+
+        VersionedAddressBookStorage next = new VersionedAddressBookStorage(current, legacy);
+
+        assertEquals(1, next.readAddressBook().orElseThrow().getPersonList().size());
+        assertTrue(next.requiresInitialSave());
+    }
+
+    @Test
+    public void startup_currentFileThatCannotBeOpened_isNeverSetAsideAndNothingIsSaved() throws Exception {
+        Path current = directory.resolve("tutorflow-v14.json");
+        Files.createDirectory(current);
+        VersionedAddressBookStorage data = new VersionedAddressBookStorage(current, directory.resolve("legacy.json"));
+
+        DataLoadingException failure = assertThrows(DataLoadingException.class, data::readAddressBook);
+
+        assertTrue(JsonAddressBookStorage.isAccessFailure(failure));
+        assertThrows(IOException.class, () -> data.saveAddressBook(new AddressBook()));
+        assertTrue(Files.isDirectory(current));
+        assertFalse(Files.exists(directory.resolve("tutorflow-v14.json.corrupt")));
+    }
+
+    @Test
     public void startup_invalidLegacySource_successfulPreservationAllowsNewDataset() throws Exception {
         Path current = directory.resolve("tutorflow-v14.json");
         Path legacy = directory.resolve("addressbook.json");

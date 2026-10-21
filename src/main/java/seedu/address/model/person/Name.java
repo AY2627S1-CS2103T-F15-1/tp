@@ -37,9 +37,9 @@ public class Name {
     }
 
     /** Constructs a checked new or grandfathered stored name. */
-    private Name(String name, boolean stored) {
+    private Name(String name, boolean isStored) {
         requireNonNull(name);
-        checkArgument(stored ? isValidStoredName(name) : isValidName(name), MESSAGE_CONSTRAINTS);
+        checkArgument(isStored ? isValidStoredName(name) : isValidName(name), MESSAGE_CONSTRAINTS);
         fullName = Normalizer.normalize(name.strip().replaceAll("\\s+", " "), Normalizer.Form.NFC);
     }
 

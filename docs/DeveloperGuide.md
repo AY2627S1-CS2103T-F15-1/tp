@@ -865,6 +865,16 @@ testers are expected to do more *exploratory* testing.
    1. Test case: Close TutorFlow, delete `data/tutorflow-v14.json` and launch TutorFlow.<br>
       Expected: With no legacy addressbook.json either, TutorFlow starts empty. Use demo confirm to load sample students.
 
+1. Dealing with a data file that cannot be opened
+
+   1. Prerequisites: Close TutorFlow. As a user who is not an administrator, remove the read permission of `data/tutorflow-v14.json` (for example `chmod 000`). To test the migration, do this to `data/addressbook.json` instead, with no `data/tutorflow-v14.json`.
+
+   1. Test case: Launch TutorFlow.<br>
+      Expected: A dialog says that TutorFlow could not open the file and why, and that nothing has been changed. TutorFlow does not start, the file is not renamed, and no `.corrupt` file or new data file appears.
+
+   1. Test case: Restore the permission and launch TutorFlow.<br>
+      Expected: The students are loaded, or, for the older file, migrated into a new `data/tutorflow-v14.json`.
+
 1. Dealing with a data file that cannot be written
 
    1. Prerequisites: Make `data/tutorflow-v14.json` read-only, as a user who is not an administrator.
@@ -886,7 +896,7 @@ Equal cancelled lessons remain separate records and exact-ID lookup chooses the 
 All domain extensions must update `ReadOnlyAddressBook`, `AddressBook.resetData` and its copy
 constructor/equality, the real JSON root/adapters, and focused round-trip tests together.
 `Storage.snapshotAddressBook` uses that exact persisted representation for dirty detection,
-so UI-only equality must never decide whether a write is required. Schema 14 is written to
+so UI-only equality must never decide whether a write is required. Schema 15 is written to
 `tutorflow-v14.json`; `VersionedAddressBookStorage` reads legacy data only when the current
 path is positively absent. The logic constructor's initial-save flag explicitly persists
 migrated IDs even before a command mutates the model. Failed initial writes remain dirty.
@@ -895,9 +905,9 @@ precreates the current destination, so an interrupted first save leaves legacy f
 on restart. The storage writeSnapshot seam passes the actual serialized bytes to this writer.
 Unreadable source protection is retained until positive absence or successful preservation.
 
-`StorageSchema.MINIMUM_VERSION` and `CURRENT_VERSION` centralize the supported range (both 14 now).
-The shared `tutorflow-v14.json` path stays fixed as later domains are added. Homework must increment
-the current schema to 15, finance to 16, and workflows to 17. Each build accepts unversioned legacy
+`StorageSchema.MINIMUM_VERSION` and `CURRENT_VERSION` centralize the supported range (14 through 15 now).
+The shared `tutorflow-v14.json` path stays fixed as later domains are added. Homework uses
+schema 15; finance must advance it to 16, and workflows to 17. Each build accepts unversioned legacy
 data and versions 14 through its current version, with explicit defaults for missing older fields.
 Add prior-version loading and future-version refusal tests alongside each schema increment.
 
@@ -907,6 +917,15 @@ propagates it before constructing a model, logic, or UI. The original stays at i
 and storage refuses subsequent saves. Never route this exception through corruption recovery or
 silently ignore newer domain fields. Users need a compatible binary or a matching backup.
 
+A file that cannot be opened is not corrupt. `JsonAddressBookStorage#isAccessFailure` tells a failure
+to open or read a file, which is an `IOException` that is not a `JsonProcessingException`, from
+invalid content. Only invalid content is set aside. A file that another program holds, or that the
+permissions forbid reading, can well be valid, so setting it aside would hide the records of a tutor,
+and for the legacy file it would stop them from ever being migrated. `MainApp` therefore refuses to
+start in the same way as for an unsupported schema, with a message that names the file and the
+reason, and `JsonAddressBookStorage#requireOpenedSource` makes every save refuse to replace the file.
+The next start that can open the file loads or migrates it.
+
 The command-result seam for later detail-pane integration is
 `CommandResult.getDisplayedLessons()`: when present, it is an immutable typed snapshot in the
 same order as rendered lesson numbers. `withDisplayedLessons` and `withFeedback` retain it
@@ -915,3 +934,38 @@ rendering duplicate refreshes; it does not parse command feedback. Task 7 can re
 rows directly and add typed student/dashboard views. No unused UI components are introduced.
 Later homework/payment/task lists must likewise snapshot shown stable IDs or visibly refresh
 the numbered list when a mutation changes the mapping, including when persistence fails.
+
+
+### Homework domain and integration seams
+
+`Homework` is immutable and persists its UUID, student UUID, normalized description, due date,
+`HomeworkStatus`, and optional feedback. Its full equality includes identity and all persisted
+fields. Overdue is computed from `ASSIGNED` and the caller's local date, never stored as a fourth
+status. `HomeworkQueries` centralizes selection, ordering, current student labels, and summaries.
+`HomeworkCommandParser(Clock)` makes date bounds and `today`/`tmr` deterministic. New assignments
+and changed due dates use today through one calendar year; unchanged historical dates are retained.
+
+`AddressBook` owns the homework list and validates duplicate assignments/IDs and student links.
+Copy/reset/equality/hash, student cascade deletion, clear, and the real JSON adapter include the
+domain. Missing homework in older files defaults explicitly to empty. Schema validation still
+precedes field binding. `Storage.snapshotAddressBook` includes every homework field, so feedback,
+status, and description-only changes participate in dirty detection and retry.
+
+`Model.showHomework(List<Homework>)` stores an immutable snapshot only when `hw list` renders a
+new numbered list. `getDisplayedHomework()` retains those rows even after mutations or deletion;
+it must never be treated as the current database. Indexed commands take the shown row's UUID and
+resolve it against `getAddressBook().getHomeworkList()`. A deleted ID produces an error without
+renumbering remaining rows. Changes, archive, student rename, reset, and failed writes leave the
+selection untouched. A restored snapshot with the same identity can be selected again after undo.
+A future linked task must resolve homework indices by this same shown-ID rule, then persist UUIDs.
+
+`CommandResult.getDisplayedHomework()` exposes optional immutable typed rows for the numbered
+list. `withFeedback` retains them across unsaved warnings. Task 7 can render those rows directly;
+non-indexed overview/dashboard summaries deliberately do not replace the selection. No unused UI
+component or feedback-string parsing is required. Finance can extend summaries independently.
+Future undo snapshots must copy the complete `AddressBook`, including homework; future task-parent
+guards must wrap homework/student deletion before removing any record to avoid orphaned tasks.
+
+Focused regression tests cover historical feedback, schema progression and refusal, duplicate/orphan
+rejection, due-date boundaries, lifecycle correction, guarded deletion, filtered numbering, archive,
+rename, actual JSON restart, failed saves, protected original bytes, and retry before exit.

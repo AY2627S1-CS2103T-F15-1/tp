@@ -13,6 +13,7 @@ import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
 import seedu.address.model.Model;
+import seedu.address.model.homework.HomeworkQueries;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonDuration;
 import seedu.address.model.lesson.LessonStatus;
@@ -25,8 +26,8 @@ public class TodayCommand extends Command {
 
     public static final String COMMAND_WORD = "today";
 
-    public static final String MESSAGE_USAGE = COMMAND_WORD + ": Shows today's lessons and the past lessons that are "
-            + "not yet marked completed.\n"
+    public static final String MESSAGE_USAGE = COMMAND_WORD + ": Shows what today requires: today's lessons, "
+            + "earlier lessons that are not yet marked completed, and overdue homework.\n"
             + "Example: " + COMMAND_WORD;
 
     public static final String MESSAGE_TODAY_HEADER = "TODAY'S LESSONS (%1$d, %2$s)";
@@ -71,7 +72,8 @@ public class TodayCommand extends Command {
 
         return new CommandResult(DATE_FORMAT.format(today)
                 + "\n\n" + formatLessonsToday(model, lessonsToday)
-                + "\n\n" + formatLessonsAwaitingNotes(lessonsAwaitingNotes));
+                + "\n\n" + formatLessonsAwaitingNotes(lessonsAwaitingNotes)
+                + "\n\n" + HomeworkQueries.summary(model.getAddressBook(), null, true, today));
     }
 
     private static String formatLessonsToday(Model model, List<Lesson> lessons) {

@@ -27,9 +27,9 @@ public class Phone {
     }
 
     /** Constructs a checked new or grandfathered stored phone. */
-    private Phone(String phone, boolean stored) {
+    private Phone(String phone, boolean isStored) {
         requireNonNull(phone);
-        checkArgument(stored ? isValidStoredPhone(phone) : isValidPhone(phone), MESSAGE_CONSTRAINTS);
+        checkArgument(isStored ? isValidStoredPhone(phone) : isValidPhone(phone), MESSAGE_CONSTRAINTS);
         value = normalize(phone);
     }
 

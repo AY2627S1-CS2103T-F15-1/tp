@@ -6,20 +6,21 @@ import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.model.Model;
 
 /**
- * Clears all students and lessons from TutorFlow, but only once the user has confirmed.
+ * Clears all students, lessons, and homework from TutorFlow, but only once the user has confirmed.
  */
 public class ClearCommand extends Command {
 
     public static final String COMMAND_WORD = "clear";
     public static final String CONFIRM_KEYWORD = "confirm";
 
-    public static final String MESSAGE_USAGE = COMMAND_WORD + ": Deletes ALL students and lessons from TutorFlow. "
+    public static final String MESSAGE_USAGE = COMMAND_WORD
+            + ": Deletes ALL students, lessons, and homework from TutorFlow. "
             + "Nothing is deleted unless '" + CONFIRM_KEYWORD + "' is added.\n"
             + "Parameters: [" + CONFIRM_KEYWORD + "]\n"
             + "Example: " + COMMAND_WORD + " " + CONFIRM_KEYWORD;
 
     public static final String MESSAGE_SUCCESS = "All data cleared.";
-    public static final String MESSAGE_CONFIRMATION = "This deletes ALL students and lessons. "
+    public static final String MESSAGE_CONFIRMATION = "This deletes ALL students, lessons, and homework. "
             + "Type '" + COMMAND_WORD + " " + CONFIRM_KEYWORD + "' to proceed.";
 
     private final boolean isConfirmed;

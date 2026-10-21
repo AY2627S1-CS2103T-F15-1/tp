@@ -5,12 +5,15 @@ import static java.util.Objects.requireNonNull;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.util.ToStringBuilder;
+import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.UniqueLessonList;
 import seedu.address.model.person.Person;
@@ -27,6 +30,7 @@ public class AddressBook implements ReadOnlyAddressBook {
 
     private final UniquePersonList persons = new UniquePersonList();
     private final UniqueLessonList lessons = new UniqueLessonList();
+    private final ObservableList<Homework> homework = FXCollections.observableArrayList();
 
     public AddressBook() {}
 
@@ -64,6 +68,7 @@ public class AddressBook implements ReadOnlyAddressBook {
 
         setPersons(newData.getPersonList());
         setLessons(newData.getLessonList());
+        homework.setAll(newData.getHomeworkList());
     }
 
     //// person-level operations
@@ -103,6 +108,7 @@ public class AddressBook implements ReadOnlyAddressBook {
      */
     public void removePerson(Person key) {
         persons.remove(key);
+        homework.removeIf(item -> item.getStudentId().equals(key.getId()));
         boolean hasRemovedLessons = lessons.removeIf(lesson -> lesson.isWith(key));
         if (hasRemovedLessons) {
             logger.fine("Removed linked lessons");
@@ -176,6 +182,53 @@ public class AddressBook implements ReadOnlyAddressBook {
         persons.sort(comparator);
     }
 
+    /** Adds a unique assignment belonging to a known student. */
+    public void addHomework(Homework item) {
+        validateHomework(item, null);
+        homework.add(item);
+    }
+
+    /** Replaces an assignment while preserving its identity. */
+    public void setHomework(Homework target, Homework replacement) {
+        if (!target.getId().equals(replacement.getId()) || !target.getStudentId().equals(replacement.getStudentId())
+                || !homework.contains(target)) {
+            throw new IllegalArgumentException("Homework identity must be preserved.");
+        }
+        validateHomework(replacement, target);
+        homework.set(homework.indexOf(target), replacement);
+    }
+
+    /** Removes an assignment. */
+    public void removeHomework(Homework target) {
+        if (!homework.remove(target)) {
+            throw new IllegalArgumentException("Homework no longer exists.");
+        }
+    }
+
+    /** Rejects duplicate identities, duplicate assignments, and dangling student links. */
+    private void validateHomework(Homework item, Homework target) {
+        requireNonNull(item);
+        if (persons.asUnmodifiableObservableList().stream()
+                .noneMatch(person -> person.getId().equals(item.getStudentId()))) {
+            throw new IllegalArgumentException("Homework student does not exist.");
+        }
+        List<Homework> others = homework.stream()
+                .filter(existing -> target == null || !existing.getId().equals(target.getId())).toList();
+        if (others.stream().anyMatch(existing -> existing.getId().equals(item.getId()))) {
+            throw new IllegalArgumentException("Homework identity already exists.");
+        }
+        Optional<Homework> duplicate = others.stream().filter(existing -> existing.isSameAssignment(item)).findFirst();
+        if (duplicate.isPresent()) {
+            throw new IllegalArgumentException(String.format(Homework.MESSAGE_DUPLICATE,
+                    duplicate.get().getDescription(), duplicate.get().getDueDate()));
+        }
+    }
+
+    @Override
+    public ObservableList<Homework> getHomeworkList() {
+        return FXCollections.unmodifiableObservableList(homework);
+    }
+
     //// util methods
 
     @Override
@@ -208,11 +261,12 @@ public class AddressBook implements ReadOnlyAddressBook {
         }
 
         return persons.equals(otherAddressBook.persons)
-                && lessons.equals(otherAddressBook.lessons);
+                && lessons.equals(otherAddressBook.lessons)
+                && homework.equals(otherAddressBook.homework);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(persons, lessons);
+        return Objects.hash(persons, lessons, homework);
     }
 }
