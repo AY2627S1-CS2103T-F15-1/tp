@@ -287,6 +287,16 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void markTourSeen_remembersItInTheModel() {
+        assertFalse(logic.isTourSeen());
+
+        logic.markTourSeen();
+
+        assertTrue(logic.isTourSeen());
+        assertTrue(model.isTourSeen());
+    }
+
+    @Test
     public void getFilteredLessonList_isTheListThatLessonCommandsCountFrom() throws Exception {
         model.addPerson(AMY);
         model.addLesson(new LessonBuilder().withStudent(AMY).withDate(LocalDate.now().plusDays(1)).build());

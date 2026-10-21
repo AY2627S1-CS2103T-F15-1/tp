@@ -209,6 +209,16 @@ public class LogicManager implements Logic {
     }
 
     @Override
+    public boolean isTourSeen() {
+        return model.isTourSeen();
+    }
+
+    @Override
+    public void markTourSeen() {
+        model.setTourSeen();
+    }
+
+    @Override
     public GuiSettings getGuiSettings() {
         return model.getGuiSettings();
     }

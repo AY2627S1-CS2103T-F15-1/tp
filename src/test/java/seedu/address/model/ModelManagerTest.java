@@ -165,6 +165,16 @@ public class ModelManagerTest {
     }
 
     @Test
+    public void setTourSeen_remembersThatTheTourWasSeenInThePreferences() {
+        assertFalse(modelManager.isTourSeen());
+
+        modelManager.setTourSeen();
+
+        assertTrue(modelManager.isTourSeen());
+        assertTrue(modelManager.getUserPrefs().isTourSeen());
+    }
+
+    @Test
     public void equals() {
         AddressBook addressBook = new AddressBookBuilder().withPerson(ALICE).withPerson(BENSON).build();
         AddressBook differentAddressBook = new AddressBook();

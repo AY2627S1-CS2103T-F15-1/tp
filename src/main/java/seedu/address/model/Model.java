@@ -36,6 +36,12 @@ public interface Model {
      */
     void setGuiSettings(GuiSettings guiSettings);
 
+    /** Returns whether the user has finished or left the guided tour. */
+    boolean isTourSeen();
+
+    /** Remembers that the user has finished or left the guided tour, so that it is not offered again. */
+    void setTourSeen();
+
     /**
      * Replaces address book data with the data in {@code addressBook}.
      */

@@ -64,6 +64,16 @@ public class ModelManager implements Model {
     }
 
     @Override
+    public boolean isTourSeen() {
+        return userPrefs.isTourSeen();
+    }
+
+    @Override
+    public void setTourSeen() {
+        userPrefs.setTourSeen(true);
+    }
+
+    @Override
     public void setGuiSettings(GuiSettings guiSettings) {
         requireNonNull(guiSettings);
         userPrefs.setGuiSettings(guiSettings);

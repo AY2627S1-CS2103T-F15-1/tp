@@ -12,6 +12,7 @@ import seedu.address.commons.core.GuiSettings;
 public class UserPrefs implements ReadOnlyUserPrefs {
 
     private GuiSettings guiSettings = new GuiSettings();
+    private boolean isTourSeen;
 
     /**
      * Creates a {@code UserPrefs} with default values.
@@ -24,6 +25,7 @@ public class UserPrefs implements ReadOnlyUserPrefs {
     public UserPrefs(ReadOnlyUserPrefs userPrefs) {
         requireNonNull(userPrefs);
         setGuiSettings(userPrefs.getGuiSettings());
+        setTourSeen(userPrefs.isTourSeen());
     }
 
     public GuiSettings getGuiSettings() {
@@ -33,6 +35,15 @@ public class UserPrefs implements ReadOnlyUserPrefs {
     public void setGuiSettings(GuiSettings guiSettings) {
         requireNonNull(guiSettings);
         this.guiSettings = guiSettings;
+    }
+
+    @Override
+    public boolean isTourSeen() {
+        return isTourSeen;
+    }
+
+    public void setTourSeen(boolean isTourSeen) {
+        this.isTourSeen = isTourSeen;
     }
 
     @Override
@@ -46,17 +57,18 @@ public class UserPrefs implements ReadOnlyUserPrefs {
             return false;
         }
 
-        return guiSettings.equals(otherUserPrefs.guiSettings);
+        return guiSettings.equals(otherUserPrefs.guiSettings)
+                && isTourSeen == otherUserPrefs.isTourSeen;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(guiSettings);
+        return Objects.hash(guiSettings, isTourSeen);
     }
 
     @Override
     public String toString() {
-        return "Gui Settings : " + guiSettings;
+        return "Gui Settings : " + guiSettings + "\nTour seen : " + isTourSeen;
     }
 
 }
