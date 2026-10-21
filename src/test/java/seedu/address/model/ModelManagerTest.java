@@ -253,7 +253,7 @@ public class ModelManagerTest {
     }
 
     @Test
-    public void undoDestructiveAction_clear_returnsDestructiveActionClearAndUndoes() {
+    public void undoDestructiveAction_clearMultiple_returnsDestructiveActionClearAndUndoes() {
         modelManager.addPerson(BENSON);
         modelManager.addLesson(BENSON_PHYSICS);
         modelManager.addPerson(CARL);
@@ -263,20 +263,28 @@ public class ModelManagerTest {
         ModelManager before = copyOfModelManager();
 
         modelManager.clearAddressBook();
+        modelManager.clearAddressBook();
+
 
         assertEquals(DestructiveActionType.CLEAR, modelManager.undoDestructiveAction());
+        System.out.println(modelManager.getAddressBook());
+        System.out.println(before.getAddressBook());
         assertEquals(before, modelManager);
     }
 
     @Test
     public void undoDestructiveAction_informationalMethods_doesNotResetUndo() {
         modelManager.addLesson(CARL_ENGLISH);
+        modelManager.addPerson(DANIEL);
         ModelManager before = copyOfModelManager();
         modelManager.deleteLesson(CARL_ENGLISH);
 
         modelManager.getFilteredLessonList();
         modelManager.hasLesson(ALICE_MATH);
         modelManager.hasPerson(DANIEL);
+        modelManager.setPerson(DANIEL, DANIEL);
+        System.out.println(before.getAddressBook());
+        System.out.println(modelManager.getAddressBook());
 
         assertEquals(DestructiveActionType.DELETE_LESSON, modelManager.undoDestructiveAction());
         assertEquals(before, modelManager);
