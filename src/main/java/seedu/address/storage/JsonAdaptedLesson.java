@@ -1,5 +1,6 @@
 package seedu.address.storage;
 
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -12,6 +13,7 @@ import seedu.address.model.lesson.LessonDate;
 import seedu.address.model.lesson.LessonDuration;
 import seedu.address.model.lesson.LessonStatus;
 import seedu.address.model.lesson.LessonTime;
+import seedu.address.model.person.Level;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.Subject;
@@ -24,6 +26,10 @@ class JsonAdaptedLesson {
 
     public static final String MISSING_FIELD_MESSAGE_FORMAT = "Lesson's %s field is missing!";
 
+    private String id;
+    private String studentId;
+    private String academicLevel;
+    private String preparation;
     private final String studentName;
     private final String studentPhone;
     private final String subject;
@@ -63,6 +69,10 @@ class JsonAdaptedLesson {
      * Converts a given {@code Lesson} into this class for Jackson use.
      */
     public JsonAdaptedLesson(Lesson source) {
+        id = source.getId().toString();
+        studentId = source.getStudentId().map(UUID::toString).orElse(null);
+        academicLevel = source.getAcademicLevel().map(level -> level.value).orElse(null);
+        preparation = source.getPreparation().orElse(null);
         studentName = source.getStudentName().fullName;
         studentPhone = source.getStudentPhone().value;
         subject = source.getSubject().value;
@@ -110,8 +120,15 @@ class JsonAdaptedLesson {
             throw new IllegalValueException(Lesson.MESSAGE_REASON_CONSTRAINTS);
         }
 
-        return new Lesson(modelStudentName, modelStudentPhone, modelSubject, modelDate, modelTime, modelDuration,
-                modelVenue, modelStatus, notes, cancelReason);
+        try {
+            return new Lesson(id == null ? UUID.randomUUID() : UUID.fromString(id),
+                    studentId == null ? null : UUID.fromString(studentId),
+                    academicLevel == null ? null : new Level(academicLevel), preparation,
+                    modelStudentName, modelStudentPhone, modelSubject, modelDate, modelTime, modelDuration,
+                    modelVenue, modelStatus, notes, cancelReason);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalValueException("Invalid lesson ID, historical level, or preparation notes.");
+        }
     }
 
     /**

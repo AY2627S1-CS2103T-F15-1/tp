@@ -51,9 +51,23 @@ public class LogicManager implements Logic {
      * when TutorFlow starts.
      */
     public LogicManager(Model model, Storage storage, String startupWarning) {
+        this(model, storage, startupWarning, false);
+    }
+
+    /** Creates logic with an optional pending migration save. */
+    public LogicManager(Model model, Storage storage, String startupWarning, boolean requiresInitialSave) {
         this.model = model;
         this.storage = storage;
-        this.startupWarning = startupWarning;
+        String warning = startupWarning;
+        if (requiresInitialSave) {
+            dirty = true;
+            try {
+                saveChanges();
+            } catch (CommandException e) {
+                warning += "\nMigration is pending. " + e.getMessage() + "\n" + UNSAVED_WARNING;
+            }
+        }
+        this.startupWarning = warning;
         addressBookParser = new AddressBookParser();
     }
 

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -27,6 +28,8 @@ class JsonAdaptedPerson {
 
     public static final String MISSING_FIELD_MESSAGE_FORMAT = "Student's %s field is missing!";
 
+    private String id;
+    private boolean archived;
     private final String name;
     private final String phone;
     private final String email;
@@ -61,6 +64,8 @@ class JsonAdaptedPerson {
      * Converts a given {@code Person} into this class for Jackson use.
      */
     public JsonAdaptedPerson(Person source) {
+        id = source.getId().toString();
+        archived = source.isArchived();
         name = source.getName().fullName;
         phone = source.getPhone().value;
         email = source.getEmail().map(value -> value.value).orElse(null);
@@ -142,8 +147,13 @@ class JsonAdaptedPerson {
 
         final Remark modelRemark = new Remark(remark);
 
-        return new Person(modelName, modelPhone, modelEmail, modelLevel, modelSubjects, modelRate, modelVenue,
-                modelRemark);
+        try {
+            UUID modelId = id == null ? UUID.randomUUID() : UUID.fromString(id);
+            return new Person(modelId, archived, modelName, modelPhone, modelEmail, modelLevel, modelSubjects,
+                    modelRate, modelVenue, modelRemark);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalValueException("Invalid student ID.");
+        }
     }
 
 }

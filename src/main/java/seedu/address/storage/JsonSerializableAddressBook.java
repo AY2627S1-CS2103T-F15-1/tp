@@ -1,7 +1,10 @@
 package seedu.address.storage;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -25,6 +28,8 @@ class JsonSerializableAddressBook {
     public static final String MESSAGE_LESSON_WITHOUT_STUDENT =
             "Lessons list contains a lesson whose student is not in the persons list.";
 
+    private Integer schemaVersion;
+
     private final List<JsonAdaptedPerson> persons = new ArrayList<>();
     private final List<JsonAdaptedLesson> lessons = new ArrayList<>();
 
@@ -47,8 +52,13 @@ class JsonSerializableAddressBook {
      * @param source future changes to this will not affect the created {@code JsonSerializableAddressBook}.
      */
     public JsonSerializableAddressBook(ReadOnlyAddressBook source) {
+        schemaVersion = 14;
         persons.addAll(source.getPersonList().stream().map(JsonAdaptedPerson::new).collect(Collectors.toList()));
-        lessons.addAll(source.getLessonList().stream().map(JsonAdaptedLesson::new).collect(Collectors.toList()));
+        lessons.addAll(source.getLessonList().stream().map(lesson -> {
+            Lesson linked = lesson.getStudentId().isPresent() ? lesson : source.getPersonList().stream()
+                    .filter(lesson::isWith).findFirst().map(lesson::withStudent).orElse(lesson);
+            return new JsonAdaptedLesson(linked);
+        }).collect(Collectors.toList()));
     }
 
     /**
@@ -57,6 +67,11 @@ class JsonSerializableAddressBook {
      * @throws IllegalValueException if there were any data constraints violated.
      */
     public AddressBook toModelType() throws IllegalValueException {
+        if (schemaVersion != null && schemaVersion != 14) {
+            throw new IllegalValueException("Unsupported data schema version: " + schemaVersion);
+        }
+        Set<UUID> studentIds = new HashSet<>();
+        Set<UUID> lessonIds = new HashSet<>();
         AddressBook addressBook = new AddressBook();
         for (JsonAdaptedPerson jsonAdaptedPerson : persons) {
             if (jsonAdaptedPerson == null) {
@@ -65,6 +80,9 @@ class JsonSerializableAddressBook {
             Person person = jsonAdaptedPerson.toModelType();
             if (addressBook.hasPerson(person)) {
                 throw new IllegalValueException(MESSAGE_DUPLICATE_PERSON);
+            }
+            if (!studentIds.add(person.getId())) {
+                throw new IllegalValueException("Duplicate student ID.");
             }
             addressBook.addPerson(person);
         }
@@ -75,6 +93,14 @@ class JsonSerializableAddressBook {
             Lesson lesson = jsonAdaptedLesson.toModelType();
             if (addressBook.hasLesson(lesson)) {
                 throw new IllegalValueException(MESSAGE_DUPLICATE_LESSON);
+            }
+            if (!lessonIds.add(lesson.getId())) {
+                throw new IllegalValueException("Duplicate lesson ID.");
+            }
+            if (lesson.getStudentId().isEmpty()) {
+                Lesson unlinked = lesson;
+                lesson = addressBook.getPersonList().stream().filter(unlinked::isWith).findFirst()
+                        .map(unlinked::withStudent).orElse(unlinked);
             }
             addressBook.addLesson(lesson);
         }
