@@ -17,12 +17,14 @@ import static seedu.address.testutil.TypicalPersons.ELLE;
 import static seedu.address.testutil.TypicalPersons.FIONA;
 import static seedu.address.testutil.TypicalPersons.GEORGE;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.GuiSettings;
+import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.testutil.AddressBookBuilder;
@@ -203,6 +205,19 @@ public class ModelManagerTest {
     }
 
     @Test
+    public void undoDestructiveAction_addHomework_returnsDestructiveActionNone() {
+        modelManager.addPerson(FIONA);
+        Homework hw = Homework.assign(
+                GEORGE.getId(), "Homework Test",
+                LocalDate.of(2026, 11, 31));
+        modelManager.addHomework(hw);
+        ModelManager before = copyOfModelManager();
+
+        assertEquals(DestructiveActionType.NONE, modelManager.undoDestructiveAction());
+        assertEquals(before, modelManager);
+    }
+
+    @Test
     public void undoDestructiveAction_removePerson_returnsDestructiveActionDeleteStudentAndUndoes() {
         modelManager.addPerson(DANIEL);
         ModelManager before = copyOfModelManager();
@@ -219,6 +234,21 @@ public class ModelManagerTest {
         modelManager.deleteLesson(BENSON_PHYSICS);
 
         assertEquals(DestructiveActionType.DELETE_LESSON, modelManager.undoDestructiveAction());
+        assertEquals(before, modelManager);
+    }
+
+    @Test
+    public void undoDestructiveAction_removeHomework_returnsDestructiveActionDeleteHWAndUndoes() {
+        modelManager.addPerson(GEORGE);
+        Homework hw = Homework.assign(
+                GEORGE.getId(), "Test Homework",
+                LocalDate.of(2026, 10, 31));
+        modelManager.addHomework(hw);
+
+        ModelManager before = copyOfModelManager();
+        modelManager.deleteHomework(hw);
+
+        assertEquals(DestructiveActionType.DELETE_HW, modelManager.undoDestructiveAction());
         assertEquals(before, modelManager);
     }
 
