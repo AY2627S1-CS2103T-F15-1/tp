@@ -267,8 +267,8 @@ More sections are planned: dues from the ledger on the dashboard, a balance in t
 
 **Aspect: where the text of the dashboard is built**
 
-* **Alternative 1 (current choice):** the command builds its own text, and takes a section that other commands also show from a shared query class in the model, such as `HomeworkQueries`.
-    * Pros: The wording of each section is in one class, next to the message constants that its tests check. `today`, `view` and `hw list` share the homework rules, so they cannot drift apart.
+* **Alternative 1 (current choice):** the command builds its own text, and takes the homework section from `HomeworkQueries`, a shared query class in the model whose selection and formatting rules `view` and `hw list` also use.
+    * Pros: The order of the sections is in one place: `TodayCommand#execute` joins them in the order they are shown. `today`, `view` and `hw list` share the homework rules, so they cannot drift apart.
     * Cons: The result is a single string. Another display, such as a panel beside the student list, would need the sections as data instead.
 * **Alternative 2:** a separate dashboard class that collects a section from each feature.
     * Pros: A new feature adds its section without editing `TodayCommand`.
