@@ -263,7 +263,7 @@ The sequence diagram below shows `execute("today")`. For simplicity, it leaves o
 
 Like the dashboard, the overview gives an empty state for a section with nothing to show. It does not change the displayed student list, so the numbers used by other commands stay the same.
 
-More sections are planned: dues from the ledger on the dashboard, a balance in the overview, and travel warnings beside today's lessons. None of them exists yet. Each is meant to plug in the same way, as another read-only query on the address book whose text the command adds in its place.
+More sections are planned: dues from the ledger after `OVERDUE HOMEWORK` on the dashboard, a balance between `LESSON HISTORY` and `OUTSTANDING HOMEWORK` in the overview, and travel warnings in `TODAY'S LESSONS`. None of them exists yet. Each is meant to plug in the same way, as another read-only query on the address book whose text the command adds at its position in the order.
 
 #### Design considerations
 
