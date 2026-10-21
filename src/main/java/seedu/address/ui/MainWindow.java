@@ -11,6 +11,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.StackPane;
@@ -32,6 +33,8 @@ import seedu.address.logic.view.DetailView;
 public class MainWindow extends UiPart<Stage> {
 
     private static final String FXML = "MainWindow.fxml";
+    private static final String MESSAGE_NEEDS_CONFIRMATION = "This needs your confirmation. "
+            + "Nothing has been changed yet.";
 
     private final Logger logger = LogsCenter.getLogger(getClass());
 
@@ -41,8 +44,13 @@ public class MainWindow extends UiPart<Stage> {
 
     // Independent Ui parts residing in this Ui container
     private PersonListPanel personListPanel;
+    private LessonListPanel lessonListPanel;
+    private HomeworkListPanel homeworkListPanel;
+    private PanelTabs panelTabs;
     private DetailPane detailPane;
     private DemoBanner demoBanner;
+    private ConfirmBar confirmBar;
+    private CommandBox commandBox;
     private ResultDisplay resultDisplay;
     private HelpWindow helpWindow;
 
@@ -53,10 +61,13 @@ public class MainWindow extends UiPart<Stage> {
     private StackPane commandBoxPlaceholder;
 
     @FXML
+    private StackPane confirmBarPlaceholder;
+
+    @FXML
     private MenuItem helpMenuItem;
 
     @FXML
-    private StackPane personListPanelPlaceholder;
+    private StackPane panelTabsPlaceholder;
 
     @FXML
     private StackPane detailPanePlaceholder;
@@ -162,8 +173,14 @@ public class MainWindow extends UiPart<Stage> {
      * Fills up all the placeholders of this window.
      */
     void fillInnerParts() {
-        personListPanel = new PersonListPanel(logic.getFilteredPersonList());
-        personListPanelPlaceholder.getChildren().add(personListPanel.getRoot());
+        PanelActions panelActions = new WindowActions();
+        personListPanel = new PersonListPanel(logic.getFilteredPersonList(), panelActions);
+        lessonListPanel = new LessonListPanel(logic.getFilteredLessonList(), panelActions);
+        homeworkListPanel = new HomeworkListPanel(panelActions);
+        homeworkListPanel.show(logic.getHomeworkRows());
+        panelTabs = new PanelTabs(personListPanel, lessonListPanel, homeworkListPanel);
+        panelTabsPlaceholder.getChildren().add(panelTabs.getRoot());
+        setTabShortcuts();
 
         detailPane = new DetailPane();
         detailPanePlaceholder.getChildren().add(detailPane.getRoot());
@@ -180,12 +197,32 @@ public class MainWindow extends UiPart<Stage> {
         StatusBarFooter statusBarFooter = new StatusBarFooter(dataFilePath);
         statusbarPlaceholder.getChildren().add(statusBarFooter.getRoot());
 
-        CommandBox commandBox = new CommandBox(this::executeCommand);
+        commandBox = new CommandBox(this::executeCommand);
         commandBoxPlaceholder.getChildren().add(commandBox.getRoot());
+
+        confirmBar = new ConfirmBar(panelActions, () -> resultDisplay.setFeedbackToUser(ConfirmBar.MESSAGE_CANCELLED));
+        confirmBarPlaceholder.getChildren().add(confirmBar.getRoot());
+        getRoot().getScene().addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+            if (event.getCode() == KeyCode.ESCAPE && confirmBar.isAsking()) {
+                confirmBar.cancel();
+                event.consume();
+            }
+        });
 
         demoBanner = new DemoBanner(this::exitDemo);
         demoBannerPlaceholder.getChildren().add(demoBanner.getRoot());
         demoBanner.setDemoMode(logic.isDemoMode());
+    }
+
+    /** Lets Ctrl+1, Ctrl+2 and Ctrl+3 show the students, the lessons and the homework. */
+    private void setTabShortcuts() {
+        PanelTabs.Panel[] panels = PanelTabs.Panel.values();
+        KeyCode[] keys = {KeyCode.DIGIT1, KeyCode.DIGIT2, KeyCode.DIGIT3};
+        for (int i = 0; i < panels.length; i++) {
+            PanelTabs.Panel panel = panels[i];
+            getRoot().getScene().getAccelerators().put(
+                    new KeyCodeCombination(keys[i], KeyCombination.SHORTCUT_DOWN), () -> panelTabs.select(panel));
+        }
     }
 
     /** Runs {@code demo exit} for the banner's button, whose result or error the result box shows. */
@@ -263,6 +300,22 @@ public class MainWindow extends UiPart<Stage> {
         return demoBanner;
     }
 
+    public PanelTabs getPanelTabs() {
+        return panelTabs;
+    }
+
+    public LessonListPanel getLessonListPanel() {
+        return lessonListPanel;
+    }
+
+    public HomeworkListPanel getHomeworkListPanel() {
+        return homeworkListPanel;
+    }
+
+    public ConfirmBar getConfirmBar() {
+        return confirmBar;
+    }
+
     public SplitPane getSplitPane() {
         return splitPane;
     }
@@ -280,6 +333,21 @@ public class MainWindow extends UiPart<Stage> {
         }
         personListPanel.highlight(commandResult.getAddedStudents());
         demoBanner.setDemoMode(logic.isDemoMode());
+        homeworkListPanel.show(logic.getHomeworkRows());
+        showPanelFor(commandResult);
+        commandResult.getConfirmationCommand().ifPresentOrElse(
+                command -> confirmBar.ask(MESSAGE_NEEDS_CONFIRMATION, command), confirmBar::clear);
+    }
+
+    /** Shows the list that {@code commandResult} filled with numbered rows, so that the user sees the numbers. */
+    private void showPanelFor(CommandResult commandResult) {
+        if (commandResult.getDisplayedHomework().isPresent()) {
+            panelTabs.select(PanelTabs.Panel.HOMEWORK);
+        } else if (commandResult.getDisplayedLessons().isPresent()) {
+            panelTabs.select(PanelTabs.Panel.LESSONS);
+        } else if (!commandResult.getAddedStudents().isEmpty()) {
+            panelTabs.select(PanelTabs.Panel.STUDENTS);
+        }
     }
 
     /** Redraws the dashboard after a command, as long as the detail pane shows it, so that it never goes stale. */
@@ -313,7 +381,32 @@ public class MainWindow extends UiPart<Stage> {
             logger.fine("Command rejected: " + e.getClass().getSimpleName());
             resultDisplay.setErrorToUser(e.getMessage());
             refreshDashboard();
+            homeworkListPanel.show(logic.getHomeworkRows());
+            confirmBar.clear();
             throw e;
+        }
+    }
+
+    /** What the buttons of the panels can ask of this window. */
+    private class WindowActions implements PanelActions {
+        @Override
+        public void run(String command) {
+            try {
+                executeCommand(command);
+            } catch (CommandException | ParseException e) {
+                logger.fine("Command from a button rejected"); // the result box shows why
+            }
+        }
+
+        @Override
+        public void prefill(String text) {
+            confirmBar.clear();
+            commandBox.prefill(text);
+        }
+
+        @Override
+        public void ask(String question, String command) {
+            confirmBar.ask(question, command);
         }
     }
 }

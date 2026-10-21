@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.Tooltip?>
+<?import javafx.scene.layout.StackPane?>
+
+<TabPane fx:id="tabPane" styleClass="panel-tabs" tabClosingPolicy="UNAVAILABLE"
+         xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+  <Tab fx:id="studentsTab" text="Students">
+    <tooltip>
+      <Tooltip text="Students (Ctrl+1)" />
+    </tooltip>
+    <StackPane fx:id="studentsPlaceholder" />
+  </Tab>
+  <Tab fx:id="lessonsTab" text="Lessons">
+    <tooltip>
+      <Tooltip text="Lessons (Ctrl+2)" />
+    </tooltip>
+    <StackPane fx:id="lessonsPlaceholder" />
+  </Tab>
+  <Tab fx:id="homeworkTab" text="Homework">
+    <tooltip>
+      <Tooltip text="Homework (Ctrl+3)" />
+    </tooltip>
+    <StackPane fx:id="homeworkPlaceholder" />
+  </Tab>
+</TabPane>

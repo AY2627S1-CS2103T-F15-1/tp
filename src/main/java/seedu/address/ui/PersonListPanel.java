@@ -15,6 +15,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.model.person.Person;
@@ -30,16 +31,24 @@ public class PersonListPanel extends UiPart<Region> {
     private final Logger logger = LogsCenter.getLogger(PersonListPanel.class);
 
     @FXML
+    private StackPane toolbarPlaceholder;
+    @FXML
     private ListView<Person> personListView;
 
     private final Set<UUID> highlightedIds = new HashSet<>();
     private final PauseTransition highlightTimer = new PauseTransition(HIGHLIGHT_DURATION);
 
+    private final PanelActions actions;
+
     /**
-     * Creates a {@code PersonListPanel} with the given {@code ObservableList}.
+     * Creates a {@code PersonListPanel} with the given {@code ObservableList}, whose buttons act through
+     * {@code actions}.
      */
-    public PersonListPanel(ObservableList<Person> personList) {
+    public PersonListPanel(ObservableList<Person> personList, PanelActions actions) {
         super(FXML);
+        this.actions = requireNonNull(actions);
+        toolbarPlaceholder.getChildren().add(QuickCommand.toolbarOf(actions, new QuickCommand("Active", "list"),
+                new QuickCommand("Archived", "list archived/"), new QuickCommand("All", "list all/")));
         personListView.setItems(personList);
         personListView.setCellFactory(listView -> new PersonListViewCell());
         personListView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
@@ -118,7 +127,7 @@ public class PersonListPanel extends UiPart<Region> {
                 setGraphic(null);
                 setText(null);
             } else {
-                setGraphic(new PersonCard(person, getIndex() + 1).getRoot());
+                setGraphic(new PersonCard(person, getIndex() + 1, actions).getRoot());
                 if (highlightedIds.contains(person.getId())) {
                     getStyleClass().add(HIGHLIGHT_STYLE_CLASS);
                 }

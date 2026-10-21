@@ -84,7 +84,7 @@ public class MainWindowDetailPaneTest {
 
         onFx(() -> {
             SplitPane split = window.getSplitPane();
-            assertEquals(List.of(window.getPersonListPanel().getRoot().getParent(),
+            assertEquals(List.of(window.getPanelTabs().getRoot().getParent(),
                     window.getDetailPane().getRoot().getParent()), split.getItems());
             Node list = split.getItems().get(0);
             Node pane = split.getItems().get(1);

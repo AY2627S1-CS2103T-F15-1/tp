@@ -41,7 +41,7 @@
 
         <center>
           <SplitPane fx:id="splitPane" dividerPositions="0.45" minHeight="0">
-            <StackPane fx:id="personListPanelPlaceholder" styleClass="pane-with-border" minWidth="260">
+            <StackPane fx:id="panelTabsPlaceholder" styleClass="pane-with-border" minWidth="260">
               <padding>
                 <Insets top="10" right="10" bottom="10" left="10" />
               </padding>
@@ -58,6 +58,7 @@
                 <Insets top="5" right="10" bottom="5" left="10" />
               </padding>
             </StackPane>
+            <StackPane fx:id="confirmBarPlaceholder" />
             <StackPane fx:id="commandBoxPlaceholder" styleClass="pane-with-border">
               <padding>
                 <Insets top="5" right="10" bottom="5" left="10" />

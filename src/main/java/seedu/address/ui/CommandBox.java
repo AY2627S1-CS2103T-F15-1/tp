@@ -49,6 +49,13 @@ public class CommandBox extends UiPart<Region> {
         }
     }
 
+    /** Replaces the text of the command box with {@code text}, focuses it and puts the cursor at the end. */
+    public void prefill(String text) {
+        commandTextField.setText(text);
+        commandTextField.requestFocus();
+        commandTextField.positionCaret(text.length());
+    }
+
     /**
      * Sets the command box style to use the default style.
      */

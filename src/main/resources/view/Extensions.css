@@ -179,3 +179,34 @@
     -fx-padding: 1 6 1 6;
     -fx-background-radius: 3;
 }
+
+.tab-pane.panel-tabs .tab-header-area {
+    -fx-min-height: 28;
+    -fx-max-height: 28;
+}
+
+.tab-pane.panel-tabs {
+    -fx-padding: 0;
+}
+
+.tab-pane.panel-tabs .tab-header-background {
+    -fx-background-color: #2b2b2b;
+}
+
+.tab-pane.panel-tabs .tab {
+    -fx-background-color: #3c3e3f;
+    -fx-background-insets: 0;
+    -fx-background-radius: 3 3 0 0;
+}
+
+.tab-pane.panel-tabs .tab:selected {
+    -fx-background-color: #3e7b91;
+}
+
+.tab-pane.panel-tabs .tab .tab-label {
+    -fx-text-fill: white;
+}
+
+.tab-pane.panel-tabs .tab:selected .tab-label {
+    -fx-font-weight: bold;
+}
