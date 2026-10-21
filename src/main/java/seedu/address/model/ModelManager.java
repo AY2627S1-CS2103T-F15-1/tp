@@ -124,16 +124,19 @@ public class ModelManager implements Model {
 
     @Override
     public void addHomework(Homework homework) {
+        resetDestructiveAction();
         addressBook.addHomework(homework);
     }
 
     @Override
     public void setHomework(Homework target, Homework replacement) {
+        resetDestructiveAction();
         addressBook.setHomework(target, replacement);
     }
 
     @Override
     public void deleteHomework(Homework homework) {
+        saveState(DestructiveActionType.DELETE_HW);
         addressBook.removeHomework(homework);
     }
 
@@ -197,8 +200,6 @@ public class ModelManager implements Model {
         requireNonNull(predicate);
         filteredPersons.setPredicate(predicate);
     }
-
-    //=========== Filtered Lesson List Accessors =============================================================
 
     /**
      * Returns an unmodifiable view of the list of {@code Lesson} backed by the internal list of
