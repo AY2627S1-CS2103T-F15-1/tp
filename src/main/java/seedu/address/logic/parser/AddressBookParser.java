@@ -108,7 +108,10 @@ public class AddressBookParser {
             case LessonCommandParser.COMMAND_WORD -> new LessonCommandParser(clock).parse(arguments);
             case TaskCommandParser.COMMAND_WORD -> new TaskCommandParser(clock).parse(arguments);
             case TravelCommand.COMMAND_WORD -> new TravelCommandParser().parse(arguments);
-            case UndoCommand.COMMAND_WORD -> new UndoCommand();
+            case UndoCommand.COMMAND_WORD -> {
+                requireNoArguments(commandWord, arguments);
+                yield new UndoCommand();
+            }
             case ExitCommand.COMMAND_WORD -> {
                 requireNoArguments(commandWord, arguments);
                 yield new ExitCommand();
