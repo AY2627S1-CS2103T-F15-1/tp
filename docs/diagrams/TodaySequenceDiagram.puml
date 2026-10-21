@@ -80,18 +80,6 @@ deactivate Model
 
 TodayCommand -> HomeworkQueries : summary(ab, null, true, today)
 activate HomeworkQueries
-
-HomeworkQueries -> HomeworkQueries : select(ab, null, true, false, today)
-activate HomeworkQueries
-
-HomeworkQueries -> ReadOnlyAddressBook : getHomeworkList()
-activate ReadOnlyAddressBook
-ReadOnlyAddressBook --> HomeworkQueries : homework
-deactivate ReadOnlyAddressBook
-
-HomeworkQueries --> HomeworkQueries : overdue homework
-deactivate HomeworkQueries
-
 HomeworkQueries --> TodayCommand : OVERDUE HOMEWORK section
 deactivate HomeworkQueries
 

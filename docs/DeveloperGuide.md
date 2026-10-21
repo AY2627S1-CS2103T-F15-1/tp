@@ -243,7 +243,9 @@ The command replaces a scheduled lesson with the immutable copy returned by `Les
 * `LESSONS AWAITING NOTES`: the scheduled lessons from earlier days, most recent first.
 * `OVERDUE HOMEWORK`: `HomeworkQueries#summary(book, null, true, today)` selects every student's assigned homework that was due before today. It writes each item as `hw list` does, but without numbers, so the homework numbers that `hw list` showed still apply.
 
-A section with nothing to show gives its own empty state, such as `No lessons today.`, instead of disappearing. The sequence diagram below shows `execute("today")`.
+A section with nothing to show gives its own empty state, such as `No lessons today.`, instead of disappearing.
+
+The sequence diagram below shows `execute("today")`. For simplicity, it leaves out the calls inside `HomeworkQueries#summary` and two checks that run for every command, on the input and on the displayed lesson numbers.
 
 <puml src="diagrams/TodaySequenceDiagram.puml" alt="Interactions Inside the Logic, Model and Storage Components for the `today` Command" />
 
