@@ -40,6 +40,11 @@ public interface Model {
      */
     void setAddressBook(ReadOnlyAddressBook addressBook);
 
+    /**
+     * Clears address book data.
+     */
+    void clearAddressBook();
+
     /** Returns the AddressBook */
     ReadOnlyAddressBook getAddressBook();
 
@@ -119,4 +124,9 @@ public interface Model {
      * @throws NullPointerException if {@code predicate} is null.
      */
     void updateFilteredLessonList(Predicate<Lesson> predicate);
+
+    /**
+     * Undoes the latest destructive action during this session, if any.
+     */
+    DestructiveActionType undoDestructiveAction();
 }

@@ -28,6 +28,9 @@ public class ModelManager implements Model {
     private final FilteredList<Lesson> filteredLessons;
     private final SortedList<Lesson> sortedLessons;
 
+    private DestructiveActionType lastDestructiveAction = DestructiveActionType.NONE;
+    private ReadOnlyAddressBook lastState;
+
     /**
      * Initializes a ModelManager with the given addressBook and userPrefs.
      */
@@ -69,7 +72,14 @@ public class ModelManager implements Model {
 
     @Override
     public void setAddressBook(ReadOnlyAddressBook addressBook) {
+        this.resetDestructiveAction();
         this.addressBook.resetData(addressBook);
+    }
+
+    @Override
+    public void clearAddressBook() {
+        this.saveState(DestructiveActionType.CLEAR);
+        this.addressBook.resetData(new AddressBook());
     }
 
     @Override
@@ -85,19 +95,21 @@ public class ModelManager implements Model {
 
     @Override
     public void deletePerson(Person target) {
+        saveState(DestructiveActionType.DELETE_STUDENT);
         addressBook.removePerson(target);
     }
 
     @Override
     public void addPerson(Person person) {
         addressBook.addPerson(person);
+        resetDestructiveAction();
         updateFilteredPersonList(PREDICATE_SHOW_ACTIVE_PERSONS);
     }
 
     @Override
     public void setPerson(Person target, Person editedPerson) {
         requireAllNonNull(target, editedPerson);
-
+        resetDestructiveAction();
         addressBook.setPerson(target, editedPerson);
     }
 
@@ -119,18 +131,20 @@ public class ModelManager implements Model {
     @Override
     public void addLesson(Lesson lesson) {
         addressBook.addLesson(lesson);
+        resetDestructiveAction();
         logger.fine("Added lesson");
     }
 
     @Override
     public void deleteLesson(Lesson target) {
+        saveState(DestructiveActionType.DELETE_LESSON);
         addressBook.removeLesson(target);
     }
 
     @Override
     public void setLesson(Lesson target, Lesson editedLesson) {
         requireAllNonNull(target, editedLesson);
-
+        resetDestructiveAction();
         addressBook.setLesson(target, editedLesson);
     }
 
@@ -172,6 +186,27 @@ public class ModelManager implements Model {
     public void updateFilteredLessonList(Predicate<Lesson> predicate) {
         requireNonNull(predicate);
         filteredLessons.setPredicate(predicate);
+    }
+
+    //=========== Undo =============================================================
+    private void saveState(DestructiveActionType actionType) {
+        this.lastState = new AddressBook(this.addressBook);
+        this.lastDestructiveAction = actionType;
+    }
+
+    private void resetDestructiveAction() {
+        lastDestructiveAction = DestructiveActionType.NONE;
+    }
+
+    @Override
+    public DestructiveActionType undoDestructiveAction() {
+        if (lastDestructiveAction == DestructiveActionType.NONE) {
+            return lastDestructiveAction;
+        }
+        this.addressBook.resetData(this.lastState);
+        DestructiveActionType type = lastDestructiveAction;
+        resetDestructiveAction();
+        return type;
     }
 
     @Override

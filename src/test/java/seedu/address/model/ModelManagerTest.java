@@ -11,9 +11,15 @@ import static seedu.address.testutil.TypicalLessons.BENSON_PHYSICS;
 import static seedu.address.testutil.TypicalLessons.CARL_ENGLISH;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BENSON;
+import static seedu.address.testutil.TypicalPersons.CARL;
+import static seedu.address.testutil.TypicalPersons.DANIEL;
+import static seedu.address.testutil.TypicalPersons.ELLE;
+import static seedu.address.testutil.TypicalPersons.FIONA;
+import static seedu.address.testutil.TypicalPersons.GEORGE;
 
 import java.util.List;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.GuiSettings;
@@ -24,7 +30,12 @@ import seedu.address.testutil.LessonBuilder;
 
 public class ModelManagerTest {
 
-    private ModelManager modelManager = new ModelManager();
+    private ModelManager modelManager;
+
+    @BeforeEach
+    public void resetModelManager() {
+        modelManager = new ModelManager();
+    }
 
     @Test
     public void constructor() {
@@ -162,6 +173,97 @@ public class ModelManagerTest {
 
         modelManager.updateFilteredLessonList(PREDICATE_SHOW_ALL_LESSONS);
         assertEquals(List.of(ALICE_MATH, CARL_ENGLISH), modelManager.getFilteredLessonList());
+    }
+
+    private ModelManager copyOfModelManager() {
+        return new ModelManager(modelManager.getAddressBook(), modelManager.getUserPrefs());
+    }
+
+    @Test
+    public void undoDestructiveAction_nothing_returnsDestructiveActionNone() {
+        assertEquals(DestructiveActionType.NONE, modelManager.undoDestructiveAction());
+    }
+
+    @Test
+    public void undoDestructiveAction_addPerson_returnsDestructiveActionNone() {
+        modelManager.addPerson(DANIEL);
+        ModelManager before = copyOfModelManager();
+
+        assertEquals(DestructiveActionType.NONE, modelManager.undoDestructiveAction());
+        assertEquals(before, modelManager);
+    }
+
+    @Test
+    public void undoDestructiveAction_addLesson_returnsDestructiveActionNone() {
+        modelManager.addLesson(BENSON_PHYSICS);
+        ModelManager before = copyOfModelManager();
+
+        assertEquals(DestructiveActionType.NONE, modelManager.undoDestructiveAction());
+        assertEquals(before, modelManager);
+    }
+
+    @Test
+    public void undoDestructiveAction_removePerson_returnsDestructiveActionDeleteStudentAndUndoes() {
+        modelManager.addPerson(DANIEL);
+        ModelManager before = copyOfModelManager();
+        modelManager.deletePerson(DANIEL);
+
+        assertEquals(DestructiveActionType.DELETE_STUDENT, modelManager.undoDestructiveAction());
+        assertEquals(before, modelManager);
+    }
+
+    @Test
+    public void undoDestructiveAction_removeLesson_returnsDestructiveActionDeleteLessonAndUndoes() {
+        modelManager.addLesson(BENSON_PHYSICS);
+        ModelManager before = copyOfModelManager();
+        modelManager.deleteLesson(BENSON_PHYSICS);
+
+        assertEquals(DestructiveActionType.DELETE_LESSON, modelManager.undoDestructiveAction());
+        assertEquals(before, modelManager);
+    }
+
+    @Test
+    public void undoDestructiveAction_clear_returnsDestructiveActionClearAndUndoes() {
+        modelManager.addPerson(BENSON);
+        modelManager.addLesson(BENSON_PHYSICS);
+        modelManager.addPerson(CARL);
+        modelManager.addLesson(CARL_ENGLISH);
+        modelManager.addPerson(GEORGE);
+
+        ModelManager before = copyOfModelManager();
+
+        modelManager.clearAddressBook();
+
+        assertEquals(DestructiveActionType.CLEAR, modelManager.undoDestructiveAction());
+        assertEquals(before, modelManager);
+    }
+
+    @Test
+    public void undoDestructiveAction_informationalMethods_doesNotResetUndo() {
+        modelManager.addLesson(CARL_ENGLISH);
+        ModelManager before = copyOfModelManager();
+        modelManager.deleteLesson(CARL_ENGLISH);
+
+        modelManager.getFilteredLessonList();
+        modelManager.hasLesson(ALICE_MATH);
+        modelManager.hasPerson(DANIEL);
+
+        assertEquals(DestructiveActionType.DELETE_LESSON, modelManager.undoDestructiveAction());
+        assertEquals(before, modelManager);
+    }
+
+    @Test
+    public void undoDestructiveAction_addingThings_resetsUndo() {
+        modelManager.addPerson(BENSON);
+        modelManager.addPerson(ELLE);
+        modelManager.addPerson(FIONA);
+        modelManager.deletePerson(ELLE);
+
+        modelManager.addLesson(BENSON_PHYSICS);
+        ModelManager before = copyOfModelManager();
+
+        assertEquals(DestructiveActionType.NONE, modelManager.undoDestructiveAction());
+        assertEquals(before, modelManager);
     }
 
     @Test
