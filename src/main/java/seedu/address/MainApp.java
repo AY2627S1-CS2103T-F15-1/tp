@@ -22,6 +22,7 @@ import seedu.address.model.ReadOnlyUserPrefs;
 import seedu.address.model.UserPrefs;
 import seedu.address.storage.DataFileRecovery;
 import seedu.address.storage.DataFiles;
+import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.Storage;
 import seedu.address.storage.StorageManager;
@@ -61,8 +62,11 @@ public class MainApp extends Application {
         try {
             model = initModelManager(storage, userPrefs, addressBookStorage);
         } catch (DataLoadingException e) {
-            // The data version is not supported, so nothing more is built: start() tells the user and stops
-            startupRefusal = e.getCause().getMessage();
+            // The data file cannot be used, so nothing more is built: start() tells the user and stops
+            startupRefusal = JsonAddressBookStorage.isAccessFailure(e)
+                    ? String.format(DataFileRecovery.MESSAGE_NOT_OPENED, addressBookStorage.getReadSource(),
+                            describe(e.getCause()))
+                    : e.getCause().getMessage();
             return;
         }
 
@@ -101,6 +105,11 @@ public class MainApp extends Application {
                 logger.severe(e.getCause().getMessage());
                 throw e;
             }
+            if (JsonAddressBookStorage.isAccessFailure(e)) {
+                // the file may be valid, so it is neither set aside nor replaced
+                logger.severe("Data file at " + addressBookStorage.getReadSource() + " could not be opened.");
+                throw e;
+            }
             logger.warning("Data file at " + storage.getAddressBookFilePath() + " could not be loaded."
                     + " Will be starting with no data.");
             startupWarning = DataFileRecovery.setAside(addressBookStorage.getReadSource());
@@ -111,6 +120,11 @@ public class MainApp extends Application {
         // No lesson numbers are on screen at startup, so lesson commands must not act on a hidden list.
         modelManager.updateFilteredLessonList(unused -> false);
         return modelManager;
+    }
+
+    /** Returns the reason that {@code cause} gives, or the kind of failure if it gives none. */
+    private static String describe(Throwable cause) {
+        return cause.getMessage() == null ? cause.getClass().getSimpleName() : cause.getMessage();
     }
 
     /**

@@ -676,6 +676,8 @@ Every lesson and homework assignment must link to a student in the same file thr
 If your changes make the data file invalid, TutorFlow does not delete it. At the next run it renames the file to `tutorflow-v14.json.corrupt` (or `tutorflow-v14.json.corrupt.1` and so on, if that name is taken), starts with no students and lessons, and tells you where the file went. Fix the file and rename it back to `tutorflow-v14.json` while TutorFlow is closed to get your records back. We still recommend backing up the file before editing it.<br>
 If the original cannot be renamed (for example, while another program holds it open), saving is blocked and retries preservation before replacing it. The original bytes are retained in the `.corrupt` copy once the lock clears.
 
+If TutorFlow cannot **open** the data file, for example because another program holds it open or you may not read it, the file can well be valid, so TutorFlow never renames it. It does not start: a window says why, nothing is changed, and nothing is saved over the file. Fix the problem and start TutorFlow again.
+
 Furthermore, certain edits can cause TutorFlow to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
 </box>
 
@@ -686,6 +688,7 @@ This version writes `data/tutorflow-v14.json`. If that file does not exist, Tuto
 * A data file records a schema number. This version writes schema 15, and it reads files without a schema number and files of schema 14 and 15. A file from before homework existed starts with no homework. An older build cannot open schema 15, which stops it from dropping your homework.
 * A file of a schema that this version does not know is never changed or set aside. TutorFlow stops when it starts, says why, and leaves the file where it is. Open the data with a version of TutorFlow that knows its schema, or restore a backup. An older version cannot open data that a newer version saved with extra fields.
 * A file that is damaged in another way is set aside as described in [Editing the data file](#editing-the-data-file).
+* If the older file cannot be opened, TutorFlow does not start and writes nothing, so that the migration can happen at the next start that can open it. The older file is never renamed because of this.
 * If the first save of a migration fails, the message at start says that changes are unsaved. Fix the access problem and use `save`. TutorFlow tries again before it exits and does not close through its normal exit flow while the save keeps failing. A restart can still resume the migration from the unchanged older file.
 
 ### Archiving data files `[coming in v2.0]`

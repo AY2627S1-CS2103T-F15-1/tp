@@ -319,6 +319,7 @@ Every command is a `Command` subclass in `seedu.address.logic.commands`, built b
 * **A failed save** does not undo the command. The change stays in the running application, the data stays marked as unsaved, and the result says `Your change was applied in this session but could not be saved: ...` with the reason, and `Unsaved changes: type 'save' to retry before closing TutorFlow.` `save` and `exit` try again, and `exit` is refused while the save still fails. `LogicManager#hasUnsavedChanges` is what `exit` and the window's close request check. Read-only commands after a failure show the same reminder.
 * **The write** is atomic. `FileUtil#writeToFile` writes the serialized text to a temporary file next to the data file and then moves it over the data file in one step, and it reports an error if the file system cannot do that. It never creates the destination first, so a write that is interrupted during the first save leaves the legacy file available.
 * **An invalid file** is not deleted. `DataFileRecovery#setAside` renames it to `tutorflow-v14.json.corrupt` (or `.corrupt.1` and so on), the application starts with no data and the result box says where the file went. If it cannot be renamed, saving is blocked until it can be preserved, so the original bytes are never overwritten.
+* **A file that cannot be opened.** `JsonAddressBookStorage#isAccessFailure` tells a failure to open or read a file, which is an `IOException` that is not a `JsonProcessingException`, from invalid content. Only invalid content is corruption. A file that cannot be opened, because another program holds it or its permissions forbid it, can well be valid, so setting it aside would hide the records of a tutor, and for the legacy file it would stop them from ever being migrated. `MainApp` therefore refuses to start, in the same way as for an unsupported schema, with a message that names the file and the reason, and `JsonAddressBookStorage#requireOpenedSource` makes every save refuse to replace the file. The next start that can open the file loads or migrates it.
 * **The schema number.** `StorageSchema.MINIMUM_VERSION` and `StorageSchema.CURRENT_VERSION` give the range of schemas that a build reads (14 to 15 now), and a build writes `CURRENT_VERSION`. Before any field is bound, `JsonAddressBookStorage` reads the number from the raw JSON. A number outside the range raises `UnsupportedSchemaException`, which is the cause of the `DataLoadingException`. `MainApp#init` passes it on before it creates a model, logic or UI, `MainApp#start` tells the user, and the file stays where it is. It must never go through corruption recovery, and later domain fields must never be ignored silently, because that would lose the data of a newer build.
 * **Migration.** `VersionedAddressBookStorage` reads `tutorflow-v14.json`. Only if that path is positively absent does it read the legacy `addressbook.json`, which gives every student and lesson a `UUID`, links each legacy lesson to its student by name and phone, and leaves the academic level of the lesson empty, because it cannot be known. `LogicManager` is told that an initial save is required, so the migrated identifiers are written at once and not at the first change, and a failed initial save leaves the application unsaved. The legacy file is never changed.
 * **Adding to the data.** A new kind of record must be added to `ReadOnlyAddressBook`, `AddressBook` (copy constructor, `resetData`, `equals` and `hashCode`), the JSON root and adapters, and be covered by a round-trip test together, and `StorageSchema.CURRENT_VERSION` must go up with prior-version loading and future-version refusal tests. Homework is schema 15. A build reads every schema from 14 to its own, with defaults for what an older file does not have.
@@ -1021,6 +1022,12 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
       Use case ends.
 
+* 1c. The data file, or the older file that is to be migrated, cannot be opened, for example because another program holds it.
+
+    * 1c1. TutorFlow tells the tutor why in a window, changes and renames nothing and does not start, so that the next start that can open the file migrates or loads it.
+
+      Use case ends.
+
 * 2a. The first save of the migration fails.
 
     * 2a1. TutorFlow says that there are unsaved changes, and does not close until the tutor fixes the problem and runs `save`.
@@ -1364,6 +1371,16 @@ testers are expected to do more *exploratory* testing.
 
    1. Test case: Close TutorFlow, delete `data/tutorflow-v14.json` and launch TutorFlow.<br>
       Expected: With no legacy addressbook.json either, TutorFlow starts empty. Use demo confirm to load sample students.
+
+1. Dealing with a data file that cannot be opened
+
+   1. Prerequisites: Close TutorFlow. As a user who is not an administrator, remove the read permission of `data/tutorflow-v14.json` (for example `chmod 000`). To test the migration, do this to `data/addressbook.json` instead, with no `data/tutorflow-v14.json`.
+
+   1. Test case: Launch TutorFlow.<br>
+      Expected: A dialog says that TutorFlow could not open the file and why, and that nothing has been changed. TutorFlow does not start, the file is not renamed, and no `.corrupt` file or new data file appears.
+
+   1. Test case: Restore the permission and launch TutorFlow.<br>
+      Expected: The students are loaded, or, for the older file, migrated into a new `data/tutorflow-v14.json`.
 
 1. Dealing with a data file that cannot be written
 

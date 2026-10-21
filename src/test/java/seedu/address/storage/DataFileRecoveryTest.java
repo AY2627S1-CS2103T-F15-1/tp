@@ -105,7 +105,7 @@ public class DataFileRecoveryTest {
     }
 
     @Test
-    public void save_unknownSourcePresence_retainsProtectionUntilAccessReturns() throws Exception {
+    public void save_unknownSourcePresence_neverRenamesAFileThatWasNotRead() throws Exception {
         Path dataFile = testFolder.resolve("unknown.json");
         Files.writeString(dataFile, UNREADABLE_CONTENT);
         boolean[] unknown = {true};
@@ -119,9 +119,16 @@ public class DataFileRecoveryTest {
         assertThrows(IOException.class, () -> storage.saveAddressBook(new AddressBook()));
         assertEquals(UNREADABLE_CONTENT, Files.readString(dataFile));
         unknown[0] = false;
-        storage.saveAddressBook(getTypicalAddressBook());
+        assertThrows(IOException.class, () -> storage.saveAddressBook(getTypicalAddressBook()));
+        assertEquals(UNREADABLE_CONTENT, Files.readString(dataFile), "a file that was not read may be valid");
+        assertFalse(Files.exists(testFolder.resolve("unknown.json.corrupt")));
+
+        // After a restart the file is read, and only now is its content known to be invalid
+        JsonAddressBookStorage restarted = new JsonAddressBookStorage(dataFile);
+        assertThrows(DataLoadingException.class, restarted::readAddressBook);
+        restarted.saveAddressBook(getTypicalAddressBook());
         assertEquals(UNREADABLE_CONTENT, Files.readString(testFolder.resolve("unknown.json.corrupt")));
-        assertEquals(getTypicalAddressBook(), new AddressBook(storage.readAddressBook().orElseThrow()));
+        assertEquals(getTypicalAddressBook(), new AddressBook(restarted.readAddressBook().orElseThrow()));
     }
 
     @Test
