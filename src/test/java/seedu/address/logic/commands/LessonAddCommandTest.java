@@ -12,7 +12,10 @@ import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BENSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 
 import org.junit.jupiter.api.Test;
 
@@ -238,6 +241,33 @@ public class LessonAddCommandTest {
 
         assertCommandSuccess(command, model, getSuccessMessage(lesson, ALICE.getVenue().get().value),
                 getExpectedModel(lesson));
+    }
+
+    @Test
+    public void execute_futureDateWithPastFlag_throwsCommandException() {
+        LessonAddCommand command = new LessonAddCommand(INDEX_FIRST_PERSON, MATH,
+                new LessonDate(LocalDate.now().plusDays(1).toString()), TIME, DURATION, null, true);
+
+        assertCommandFailure(command, model, LessonAddCommand.MESSAGE_PAST_FLAG_FUTURE_DATE);
+        assertTrue(model.getAddressBook().getLessonList().isEmpty());
+    }
+
+    @Test
+    public void execute_todayWithPastFlag_success() {
+        Clock clock = Clock.fixed(Instant.parse("2026-10-21T04:00:00Z"), ZoneOffset.UTC);
+        LessonAddCommand command = new LessonAddCommand(INDEX_FIRST_PERSON, MATH, new LessonDate("2026-10-21"),
+                TIME, DURATION, null, true, clock);
+
+        assertTrue(executeSuccessfully(command).startsWith("Scheduled:"));
+    }
+
+    @Test
+    public void execute_tomorrowOfClockWithPastFlag_throwsCommandException() {
+        Clock clock = Clock.fixed(Instant.parse("2026-10-21T04:00:00Z"), ZoneOffset.UTC);
+        LessonAddCommand command = new LessonAddCommand(INDEX_FIRST_PERSON, MATH, new LessonDate("2026-10-22"),
+                TIME, DURATION, null, true, clock);
+
+        assertCommandFailure(command, model, LessonAddCommand.MESSAGE_PAST_FLAG_FUTURE_DATE);
     }
 
     @Test

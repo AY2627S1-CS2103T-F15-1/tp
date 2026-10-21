@@ -4,6 +4,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_COUNT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_DATE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_DURATION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EVERY;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_PAST;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_STUDENT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TIME;
@@ -33,7 +34,11 @@ public class LessonRepeatCommandParser implements Parser<LessonRepeatCommand> {
      */
     public LessonRepeatCommand parse(String args) throws ParseException {
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_STUDENT, PREFIX_SUBJECT, PREFIX_DATE,
-                PREFIX_TIME, PREFIX_DURATION, PREFIX_VENUE, PREFIX_COUNT, PREFIX_EVERY);
+                PREFIX_TIME, PREFIX_DURATION, PREFIX_VENUE, PREFIX_COUNT, PREFIX_EVERY, PREFIX_PAST);
+        if (argMultimap.getValue(PREFIX_PAST).isPresent()) {
+            throw new ParseException(LessonRepeatCommand.MESSAGE_PAST_NOT_ACCEPTED + "\n"
+                    + LessonRepeatCommand.MESSAGE_USAGE);
+        }
         ParserUtil.requirePrefixesPresent(argMultimap, LessonRepeatCommand.MESSAGE_USAGE, PREFIX_STUDENT,
                 PREFIX_DATE, PREFIX_TIME, PREFIX_COUNT);
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_STUDENT, PREFIX_SUBJECT, PREFIX_DATE, PREFIX_TIME,
@@ -60,22 +65,16 @@ public class LessonRepeatCommandParser implements Parser<LessonRepeatCommand> {
     /**
      * Parses {@code value} as a whole number accepted by {@code isValid}.
      *
-     * @throws ParseException if it is not a whole number, is too large to be one, or is not accepted.
+     * @throws ParseException if it is not a whole number of at most 3 digits, or is not accepted.
      */
     private static int parseBounded(String value, IntPredicate isValid) throws ParseException {
         String trimmed = value.trim();
-        int number;
-        try {
-            number = Integer.parseInt(trimmed);
-        } catch (NumberFormatException e) {
+        // At most 3 digits, so that parsing cannot overflow; the largest accepted value is 52
+        if (!trimmed.matches("\\d{1,3}") || !isValid.test(Integer.parseInt(trimmed))) {
             throw new ParseException(LessonRepeatCommand.MESSAGE_COUNT_CONSTRAINTS + "\n"
                     + LessonRepeatCommand.MESSAGE_USAGE);
         }
-        if (!trimmed.matches("\\d+") || !isValid.test(number)) {
-            throw new ParseException(LessonRepeatCommand.MESSAGE_COUNT_CONSTRAINTS + "\n"
-                    + LessonRepeatCommand.MESSAGE_USAGE);
-        }
-        return number;
+        return Integer.parseInt(trimmed);
     }
 
 }

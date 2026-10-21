@@ -89,8 +89,19 @@ public class LessonRepeatCommandParserTest {
 
     @Test
     public void parse_pastFlagNotAccepted_failure() {
-        // past/ is not a prefix of lesson repeat, so it is read as part of the preceding value and rejected
-        assertParseFailure(parser, REQUIRED_FIELDS + " past/", RANGE_ERROR);
+        String expected = LessonRepeatCommand.MESSAGE_PAST_NOT_ACCEPTED + "\n" + USAGE;
+
+        assertParseFailure(parser, REQUIRED_FIELDS + " past/", expected);
+        assertParseFailure(parser, " past/" + REQUIRED_FIELDS, expected);
+    }
+
+    @Test
+    public void parse_countOrEveryNotAPlainNumber_failure() {
+        assertParseFailure(parser, " st/1 d/2026-12-22 t/16:30 count/4abc", RANGE_ERROR);
+        assertParseFailure(parser, " st/1 d/2026-12-22 t/16:30 count/-4", RANGE_ERROR);
+        assertParseFailure(parser, " st/1 d/2026-12-22 t/16:30 count/+4", RANGE_ERROR);
+        assertParseFailure(parser, " st/1 d/2026-12-22 t/16:30 count/99999999999", RANGE_ERROR);
+        assertParseFailure(parser, REQUIRED_FIELDS + " every/1.5", RANGE_ERROR);
     }
 
     @Test

@@ -9,6 +9,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TIME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_VENUE;
 
+import java.time.Clock;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Logger;
@@ -51,6 +52,8 @@ public class LessonAddCommand extends Command {
     public static final String MESSAGE_SUCCESS = "Scheduled: %1$s, %2$s";
     public static final String MESSAGE_DATE_IN_PAST = "That date is in the past. Add " + PREFIX_PAST
             + " to record a lesson that has already taken place.";
+    public static final String MESSAGE_PAST_FLAG_FUTURE_DATE = PREFIX_PAST + " is only for a lesson that has "
+            + "already taken place. Remove " + PREFIX_PAST + " to schedule an upcoming lesson.";
     public static final String MESSAGE_SUBJECT_NOT_TAKEN = LessonCommandUtil.MESSAGE_SUBJECT_NOT_TAKEN;
     public static final String MESSAGE_SUBJECT_REQUIRED = LessonCommandUtil.MESSAGE_SUBJECT_REQUIRED;
 
@@ -63,6 +66,7 @@ public class LessonAddCommand extends Command {
     private final LessonDuration duration;
     private final Venue venue; // null if the student's venue is to be used
     private final boolean isPast; // true if a lesson that has already taken place may be recorded
+    private final Clock clock;
 
     /**
      * Creates a {@code LessonAddCommand} to schedule a lesson for the student at {@code studentIndex}.
@@ -79,7 +83,17 @@ public class LessonAddCommand extends Command {
      */
     public LessonAddCommand(Index studentIndex, Subject subject, LessonDate date, LessonTime time,
             LessonDuration duration, Venue venue, boolean isPast) {
+        this(studentIndex, subject, date, time, duration, venue, isPast, Clock.systemDefaultZone());
+    }
+
+    /**
+     * Creates a {@code LessonAddCommand} as above that takes today's date from {@code clock}, so that the date
+     * rules can be tested at their boundaries.
+     */
+    public LessonAddCommand(Index studentIndex, Subject subject, LessonDate date, LessonTime time,
+            LessonDuration duration, Venue venue, boolean isPast, Clock clock) {
         requireNonNull(studentIndex);
+        requireNonNull(clock);
         requireNonNull(date);
         requireNonNull(time);
         requireNonNull(duration);
@@ -90,6 +104,7 @@ public class LessonAddCommand extends Command {
         this.duration = duration;
         this.venue = venue;
         this.isPast = isPast;
+        this.clock = clock;
     }
 
     @Override
@@ -128,11 +143,12 @@ public class LessonAddCommand extends Command {
 
     private Lesson createLesson(Person student) throws CommandException {
         if (isPast) {
-            LessonCommandUtil.requireNotTooFarPast(date);
+            LessonCommandUtil.requireNotAfterToday(date, MESSAGE_PAST_FLAG_FUTURE_DATE, clock);
+            LessonCommandUtil.requireNotTooFarPast(date, clock);
         } else {
-            LessonCommandUtil.requireNotInPast(date, MESSAGE_DATE_IN_PAST);
+            LessonCommandUtil.requireNotInPast(date, MESSAGE_DATE_IN_PAST, clock);
         }
-        LessonCommandUtil.requireNearFuture(date);
+        LessonCommandUtil.requireNearFuture(date, clock);
         LessonCommandUtil.requireEndsBeforeMidnight(time, duration);
 
         Venue lessonVenue = venue != null ? venue : student.getVenue().orElse(null);

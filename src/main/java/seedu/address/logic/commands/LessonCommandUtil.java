@@ -94,7 +94,29 @@ final class LessonCommandUtil {
      * @throws CommandException if the date is in the past.
      */
     static void requireNotInPast(LessonDate date, String message) throws CommandException {
-        if (date.value.isBefore(LocalDate.now())) {
+        requireNotInPast(date, message, Clock.systemDefaultZone());
+    }
+
+    /**
+     * Checks that {@code date} is not before today, by the date of {@code clock}.
+     *
+     * @param message the message to show if it is.
+     * @throws CommandException if the date is in the past.
+     */
+    static void requireNotInPast(LessonDate date, String message, Clock clock) throws CommandException {
+        if (date.value.isBefore(LocalDate.now(clock))) {
+            throw new CommandException(message);
+        }
+    }
+
+    /**
+     * Checks that {@code date} is today or earlier, by the date of {@code clock}.
+     *
+     * @param message the message to show if it is later.
+     * @throws CommandException if the date is after today.
+     */
+    static void requireNotAfterToday(LessonDate date, String message, Clock clock) throws CommandException {
+        if (date.value.isAfter(LocalDate.now(clock))) {
             throw new CommandException(message);
         }
     }
@@ -105,7 +127,17 @@ final class LessonCommandUtil {
      * @throws CommandException if the date is more than 2 years before today.
      */
     static void requireNotTooFarPast(LessonDate date) throws CommandException {
-        if (date.value.isBefore(LocalDate.now().minusYears(MAX_YEARS_AHEAD))) {
+        requireNotTooFarPast(date, Clock.systemDefaultZone());
+    }
+
+    /**
+     * Checks that {@code date} is not so far in the past that it is probably a mistyped year, by the date of
+     * {@code clock}.
+     *
+     * @throws CommandException if the date is more than 2 years before today.
+     */
+    static void requireNotTooFarPast(LessonDate date, Clock clock) throws CommandException {
+        if (date.value.isBefore(LocalDate.now(clock).minusYears(MAX_YEARS_AHEAD))) {
             throw new CommandException(MESSAGE_DATE_TOO_FAR_PAST);
         }
     }
@@ -137,7 +169,17 @@ final class LessonCommandUtil {
      * @throws CommandException if the date is more than 2 years from today.
      */
     static void requireNearFuture(LessonDate date) throws CommandException {
-        if (date.value.isAfter(LocalDate.now().plusYears(MAX_YEARS_AHEAD))) {
+        requireNearFuture(date, Clock.systemDefaultZone());
+    }
+
+    /**
+     * Checks that {@code date} is not so far ahead that it is probably a mistyped year, by the date of
+     * {@code clock}.
+     *
+     * @throws CommandException if the date is more than 2 years from today.
+     */
+    static void requireNearFuture(LessonDate date, Clock clock) throws CommandException {
+        if (date.value.isAfter(LocalDate.now(clock).plusYears(MAX_YEARS_AHEAD))) {
             throw new CommandException(MESSAGE_DATE_TOO_FAR);
         }
     }

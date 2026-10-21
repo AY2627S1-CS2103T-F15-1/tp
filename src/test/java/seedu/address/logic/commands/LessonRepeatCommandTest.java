@@ -11,7 +11,10 @@ import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BENSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -75,7 +78,7 @@ public class LessonRepeatCommandTest {
         String message = execute(new LessonRepeatCommand(INDEX_FIRST_PERSON, MATH, START_DATE, TIME, DURATION,
                 null, 4, 1));
 
-        assertEquals("Scheduled 4 weekly occurrences.\n\nThe new lessons are not in the displayed list. "
+        assertEquals("Scheduled 4 weekly occurrences.\nThe new lessons are not in the displayed list. "
                 + "Run 'agenda' or 'lesson list st/1' to number them.", message);
         List<Lesson> lessons = allLessons();
         assertEquals(4, lessons.size());
@@ -236,14 +239,62 @@ public class LessonRepeatCommandTest {
     }
 
     @Test
-    public void execute_displayedListGrows_warnsNumbersChanged() throws Exception {
+    public void execute_seriesInsertedAmongDisplayedLessons_warnsNumbersChanged() throws Exception {
+        model.addLesson(new LessonBuilder().withDate(START.plusWeeks(1).plusDays(1)).build());
         model.updateFilteredLessonList(Model.PREDICATE_SHOW_ALL_LESSONS);
 
         String message = execute(new LessonRepeatCommand(INDEX_FIRST_PERSON, MATH, START_DATE, TIME, DURATION,
                 null, 2, 1));
 
-        assertTrue(message.contains("Lesson numbers have changed."));
-        assertFalse(message.contains("not in the displayed list"));
+        assertEquals("Scheduled 2 weekly occurrences.\nLesson numbers have changed. "
+                + "Run 'agenda' or 'lesson list st/1' to refresh them.", message);
+    }
+
+    @Test
+    public void execute_seriesAfterEveryDisplayedLesson_leavesNumbersUnchanged() throws Exception {
+        model.addLesson(new LessonBuilder().withDate(START.minusDays(1)).build());
+        model.updateFilteredLessonList(Model.PREDICATE_SHOW_ALL_LESSONS);
+
+        String message = execute(new LessonRepeatCommand(INDEX_FIRST_PERSON, MATH, START_DATE, TIME, DURATION,
+                null, 2, 1));
+
+        assertEquals("Scheduled 2 weekly occurrences.\nThe new lessons are not in the displayed list. "
+                + "Run 'agenda' or 'lesson list st/1' to number them.", message);
+    }
+
+    @Test
+    public void execute_startDateAtTodayOfClock_success() throws Exception {
+        Clock clock = Clock.fixed(Instant.parse("2026-10-21T04:00:00Z"), ZoneOffset.UTC);
+
+        assertTrue(execute(new LessonRepeatCommand(INDEX_FIRST_PERSON, MATH, new LessonDate("2026-10-21"), TIME,
+                DURATION, null, 2, 1, clock)).startsWith("Scheduled 2 weekly occurrences."));
+    }
+
+    @Test
+    public void execute_startDateBeforeTodayOfClock_addsNothing() {
+        Clock clock = Clock.fixed(Instant.parse("2026-10-21T04:00:00Z"), ZoneOffset.UTC);
+
+        assertCommandFailure(new LessonRepeatCommand(INDEX_FIRST_PERSON, MATH, new LessonDate("2026-10-20"), TIME,
+                DURATION, null, 2, 1, clock), model, LessonRepeatCommand.MESSAGE_DATE_IN_PAST);
+        assertTrue(allLessons().isEmpty());
+    }
+
+    @Test
+    public void execute_lastOccurrenceOnTwoYearLimitOfClock_success() throws Exception {
+        Clock clock = Clock.fixed(Instant.parse("2026-10-21T04:00:00Z"), ZoneOffset.UTC);
+
+        // 2 occurrences, a week apart, the second exactly two years after today
+        assertTrue(execute(new LessonRepeatCommand(INDEX_FIRST_PERSON, MATH, new LessonDate("2028-10-14"), TIME,
+                DURATION, null, 2, 1, clock)).startsWith("Scheduled 2 weekly occurrences."));
+    }
+
+    @Test
+    public void execute_lastOccurrenceAfterTwoYearLimitOfClock_addsNothing() {
+        Clock clock = Clock.fixed(Instant.parse("2026-10-21T04:00:00Z"), ZoneOffset.UTC);
+
+        assertCommandFailure(new LessonRepeatCommand(INDEX_FIRST_PERSON, MATH, new LessonDate("2028-10-15"), TIME,
+                DURATION, null, 2, 1, clock), model, LessonCommandUtil.MESSAGE_DATE_TOO_FAR);
+        assertTrue(allLessons().isEmpty());
     }
 
     @Test

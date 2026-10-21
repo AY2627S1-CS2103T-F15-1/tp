@@ -229,12 +229,15 @@ public class JsonAdaptedLessonTest {
     }
 
     @Test
-    public void toModelType_invalidSeriesId_throwsIllegalValueException() throws Exception {
+    public void toModelType_invalidOrBlankSeriesId_throwsIllegalValueExceptionWithSeriesMessage() throws Exception {
         UUID series = UUID.randomUUID();
         Lesson lesson = new LessonBuilder(ALICE_MATH).withSeriesId(series).build();
-        String json = JsonUtil.toJsonString(new JsonAdaptedLesson(lesson)).replace(series.toString(), "series-1");
+        String json = JsonUtil.toJsonString(new JsonAdaptedLesson(lesson));
 
-        assertThrows(IllegalValueException.class, () ->
-                JsonUtil.fromJsonString(json, JsonAdaptedLesson.class).toModelType());
+        for (String invalid : new String[] {"series-1", "  ", "", " " + series}) {
+            String edited = json.replace("\"" + series + "\"", "\"" + invalid + "\"");
+            assertThrows(IllegalValueException.class, JsonAdaptedLesson.INVALID_SERIES_ID_MESSAGE, () ->
+                    JsonUtil.fromJsonString(edited, JsonAdaptedLesson.class).toModelType());
+        }
     }
 }

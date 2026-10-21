@@ -10,6 +10,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TIME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_VENUE;
 
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -61,6 +62,8 @@ public class LessonRepeatCommand extends Command {
             + "All occurrences must be within two years.";
     public static final String MESSAGE_SUCCESS_WEEKLY = "Scheduled %1$d weekly occurrences.";
     public static final String MESSAGE_SUCCESS_EVERY = "Scheduled %1$d occurrences, every %2$d weeks.";
+    public static final String MESSAGE_PAST_NOT_ACCEPTED = "past/ is not accepted here: a series starts today "
+            + "or later.";
     public static final String MESSAGE_NOT_DISPLAYED = "The new lessons are not in the displayed list. "
             + "Run 'agenda' or 'lesson list " + PREFIX_STUDENT + "%1$d' to number them.";
     public static final String MESSAGE_NUMBERS_CHANGED = "Lesson numbers have changed. "
@@ -89,6 +92,7 @@ public class LessonRepeatCommand extends Command {
     private final Venue venue; // null if the student's venue is to be used
     private final int count;
     private final int everyWeeks;
+    private final Clock clock;
 
     /**
      * Creates a {@code LessonRepeatCommand} for the student at {@code studentIndex}.
@@ -97,7 +101,18 @@ public class LessonRepeatCommand extends Command {
      */
     public LessonRepeatCommand(Index studentIndex, Subject subject, LessonDate startDate, LessonTime time,
             LessonDuration duration, Venue venue, int count, int everyWeeks) {
+        this(studentIndex, subject, startDate, time, duration, venue, count, everyWeeks,
+                Clock.systemDefaultZone());
+    }
+
+    /**
+     * Creates a {@code LessonRepeatCommand} as above that takes today's date from {@code clock}, so that the date
+     * rules can be tested at their boundaries.
+     */
+    public LessonRepeatCommand(Index studentIndex, Subject subject, LessonDate startDate, LessonTime time,
+            LessonDuration duration, Venue venue, int count, int everyWeeks, Clock clock) {
         requireNonNull(studentIndex);
+        requireNonNull(clock);
         requireNonNull(startDate);
         requireNonNull(time);
         requireNonNull(duration);
@@ -111,6 +126,7 @@ public class LessonRepeatCommand extends Command {
         this.venue = venue;
         this.count = count;
         this.everyWeeks = everyWeeks;
+        this.clock = clock;
     }
 
     /** Returns true if {@code count} is an allowed number of occurrences. */
@@ -140,20 +156,29 @@ public class LessonRepeatCommand extends Command {
         }
         String warnings = formatOverlapWarnings(model, series);
 
-        int previousLessonCount = model.getFilteredLessonList().size();
+        List<Lesson> shownBefore = new ArrayList<>(model.getFilteredLessonList());
         addAllOrNone(model, series);
         logger.fine("Scheduled a series of " + series.size() + " lessons");
 
         String summary = everyWeeks == DEFAULT_EVERY
                 ? String.format(MESSAGE_SUCCESS_WEEKLY, count)
                 : String.format(MESSAGE_SUCCESS_EVERY, count, everyWeeks);
-        String shown = model.getFilteredLessonList().size() == previousLessonCount
-                ? MESSAGE_NOT_DISPLAYED : MESSAGE_NUMBERS_CHANGED;
-        return new CommandResult(summary + "\n\n" + String.format(shown, studentIndex.getOneBased()) + warnings);
+        String shown = isRenumbered(shownBefore, model.getFilteredLessonList())
+                ? MESSAGE_NUMBERS_CHANGED : MESSAGE_NOT_DISPLAYED;
+        return new CommandResult(summary + "\n" + String.format(shown, studentIndex.getOneBased()) + warnings);
+    }
+
+    /**
+     * Returns true if a lesson that was displayed before the series was added is now displayed under a different
+     * number, so that the tutor must refresh the numbers before using them.
+     */
+    private static boolean isRenumbered(List<Lesson> shownBefore, List<Lesson> shownAfter) {
+        return shownAfter.size() < shownBefore.size()
+                || !shownAfter.subList(0, shownBefore.size()).equals(shownBefore);
     }
 
     private List<Lesson> buildSeries(Person student) throws CommandException {
-        LessonCommandUtil.requireNotInPast(startDate, MESSAGE_DATE_IN_PAST);
+        LessonCommandUtil.requireNotInPast(startDate, MESSAGE_DATE_IN_PAST, clock);
         LessonCommandUtil.requireEndsBeforeMidnight(time, duration);
         Subject chosenSubject = LessonCommandUtil.chooseSubject(student, subject);
         Venue lessonVenue = venue != null ? venue : student.getVenue().orElse(null);
@@ -162,7 +187,7 @@ public class LessonRepeatCommand extends Command {
         List<Lesson> series = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             LessonDate date = new LessonDate(startDate.value.plusWeeks((long) i * everyWeeks).toString());
-            LessonCommandUtil.requireNearFuture(date);
+            LessonCommandUtil.requireNearFuture(date, clock);
             series.add(new Lesson(student.getName(), student.getPhone(), chosenSubject, date, time, duration,
                     lessonVenue, LessonStatus.SCHEDULED, null, null)
                     .snapshotStudent(student).withSeries(seriesId));
