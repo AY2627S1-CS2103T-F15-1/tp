@@ -100,6 +100,52 @@ class MainAppTest {
     }
 
     @Test
+    void init_oldDataFileThatCannotBeOpened_refusesToStartAndNeverSetsItAside() throws Exception {
+        Path legacy = directory.resolve("addressbook.json");
+        Files.createDirectory(legacy); // cannot be read as a file, like a valid file that another program holds
+
+        MainApp app = start();
+
+        assertTrue(app.startupRefusal.startsWith("TutorFlow could not open your data file at " + legacy + " ("),
+                app.startupRefusal);
+        assertTrue(app.startupRefusal.endsWith("start TutorFlow again."), app.startupRefusal);
+        assertNull(app.model);
+        assertThrows(IOException.class, () -> app.storage.saveAddressBook(new AddressBook()));
+        assertTrue(Files.isDirectory(legacy), "the old file is not moved");
+        assertFalse(Files.exists(directory.resolve("addressbook.json.corrupt")));
+        assertFalse(Files.exists(current()), "no new data file is written over its students");
+    }
+
+    @Test
+    void init_oldDataFileThatCouldNotBeOpenedBefore_isMigratedOnTheNextStart() throws Exception {
+        Path legacy = directory.resolve("addressbook.json");
+        Files.createDirectory(legacy);
+        start();
+        Files.delete(legacy);
+        Files.writeString(legacy, "{\"persons\":[{\"name\":\"Alice Pauline\",\"phone\":\"94351253\","
+                + "\"level\":\"S3\",\"subjects\":[\"Math\"],\"rate\":\"50\"}],\"lessons\":[]}");
+
+        MainApp app = start();
+
+        assertNull(app.startupRefusal);
+        assertEquals(1, app.model.getAddressBook().getPersonList().size());
+        assertTrue(Files.exists(current()), "the students are saved as the new data file");
+        assertTrue(Files.exists(legacy), "the old file is left alone");
+    }
+
+    @Test
+    void init_dataFileThatCannotBeOpened_refusesToStartAndNeverSetsItAside() throws Exception {
+        Files.createDirectory(current());
+
+        MainApp app = start();
+
+        assertTrue(app.startupRefusal.startsWith("TutorFlow could not open your data file at " + current() + " ("),
+                app.startupRefusal);
+        assertTrue(Files.isDirectory(current()));
+        assertFalse(Files.exists(directory.resolve("tutorflow-v14.json.corrupt")));
+    }
+
+    @Test
     void init_malformedDataFile_setsItAsideAndStartsEmpty() throws Exception {
         Files.writeString(current(), "{ this is not json");
 
