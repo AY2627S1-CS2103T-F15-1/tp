@@ -107,6 +107,23 @@ public class ViewCommandTest {
     }
 
     @Test
+    public void execute_onlyAnotherStudentOwesMoney_showsEachStudentsOwnBalance() throws Exception {
+        Lesson charged = new LessonBuilder().withStudent(BENSON).withDate(TODAY.minusDays(2)).withDuration(60)
+                .withStatus(LessonStatus.COMPLETED).build();
+        addLessons(charged);
+        // an hour at $62.50/hour
+        model.addLedgerEntry(LedgerEntry.charge(BENSON, charged));
+
+        String[] aliceLines = view(INDEX_FIRST_PERSON).split("\n");
+        String[] bensonLines = view(INDEX_SECOND_PERSON).split("\n");
+
+        assertEquals(ViewCommand.HEADING_BALANCE, aliceLines[13]);
+        assertEquals("OUTSTANDING $0.00", aliceLines[14]);
+        assertEquals(ViewCommand.HEADING_BALANCE, bensonLines[13]);
+        assertEquals("OUTSTANDING $62.50", bensonLines[14]);
+    }
+
+    @Test
     public void execute_studentWithSeveralSubjects_listsSubjectsInAlphabeticalOrder() throws Exception {
         String[] lines = view(INDEX_SECOND_PERSON).split("\n");
 
