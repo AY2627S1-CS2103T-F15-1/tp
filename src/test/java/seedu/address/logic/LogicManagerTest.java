@@ -33,10 +33,13 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.homework.Homework;
 import seedu.address.model.person.Person;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
+import seedu.address.testutil.HomeworkBuilder;
+import seedu.address.testutil.LessonBuilder;
 import seedu.address.testutil.PersonBuilder;
 
 public class LogicManagerTest {
@@ -281,5 +284,33 @@ public class LogicManagerTest {
         ModelManager expectedModel = new ModelManager();
         expectedModel.addPerson(expectedPerson);
         assertCommandFailure(addCommand, CommandException.class, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void getFilteredLessonList_isTheListThatLessonCommandsCountFrom() throws Exception {
+        model.addPerson(AMY);
+        model.addLesson(new LessonBuilder().withStudent(AMY).withDate(LocalDate.now().plusDays(1)).build());
+        model.updateFilteredLessonList(Model.PREDICATE_SHOW_ALL_LESSONS);
+
+        assertEquals(model.getFilteredLessonList(), logic.getFilteredLessonList());
+        assertEquals(1, logic.getFilteredLessonList().size());
+    }
+
+    @Test
+    public void getHomeworkRows_followsTheLastHomeworkListAndTheCurrentData() throws Exception {
+        model.addPerson(AMY);
+        assertEquals(0, logic.getHomeworkRows().size());
+        Homework item = new HomeworkBuilder(AMY).withDueDate(LocalDate.now().plusDays(2)).build();
+        model.addHomework(item);
+
+        logic.execute("hw list");
+        assertEquals(1, logic.getHomeworkRows().size());
+        assertEquals("assigned", logic.getHomeworkRows().get(0).status());
+
+        logic.execute("hw status 1 s/submitted");
+        assertEquals("submitted", logic.getHomeworkRows().get(0).status());
+
+        logic.execute("hw delete 1");
+        assertTrue(logic.getHomeworkRows().get(0).isDeleted());
     }
 }

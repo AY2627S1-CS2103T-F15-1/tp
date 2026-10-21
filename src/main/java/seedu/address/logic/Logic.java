@@ -1,11 +1,15 @@
 package seedu.address.logic;
 
+import java.util.List;
+
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.logic.view.DetailView;
+import seedu.address.logic.view.HomeworkRow;
+import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
 
 /**
@@ -49,6 +53,12 @@ public interface Logic {
 
     /** Returns an unmodifiable view of the filtered list of persons */
     ObservableList<Person> getFilteredPersonList();
+
+    /** Returns an unmodifiable view of the lessons that the lesson commands count from. */
+    ObservableList<Lesson> getFilteredLessonList();
+
+    /** Returns the homework that the last {@code hw list} showed, as it is now and numbered as the commands do. */
+    List<HomeworkRow> getHomeworkRows();
 
     /**
      * Returns the user prefs' GUI settings.
