@@ -90,6 +90,16 @@ public class DiscoverabilityTest {
     }
 
     @Test
+    public void developerGuide_namesEveryCommandThatHelpLists() throws Exception {
+        String developerGuide = Files.readString(Path.of("docs", "DeveloperGuide.md"));
+
+        for (String name : helpNames) {
+            assertTrue(developerGuide.contains("| `" + name + "` |"),
+                    "the Developer Guide does not list `" + name + "` in its table of commands");
+        }
+    }
+
+    @Test
     public void userGuide_commandSummaryHasNoRowForACommandThatHelpDoesNotList() {
         String summary = summary();
         List<String> rowFormats = summary.lines().filter(line -> line.startsWith("**"))

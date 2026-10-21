@@ -225,6 +225,47 @@ The command replaces a scheduled lesson with the immutable copy returned by `Les
 
 `LessonMissedIntegrationTest` exercises command parsing, status changes, student history and JSON reload together. It also verifies that invalid arguments, invalid indices and rejected status/date changes leave the saved file unchanged.
 
+### Commands at a glance
+
+Every command is a `Command` subclass in `seedu.address.logic.commands`, built by a parser in `seedu.address.logic.parser`. A command that takes no parameters is built by `AddressBookParser` itself. `DiscoverabilityTest` fails when a command is missing from `help`, the parser, the User Guide or this guide.
+
+| Command | Command class | Parser |
+|---------|---------------|--------|
+| `add` | `AddCommand` | `AddCommandParser` |
+| `edit` | `EditCommand` | `EditCommandParser` |
+| `delete` | `DeleteCommand` | `DeleteCommandParser` |
+| `list` | `ListCommand` | `ListCommandParser` |
+| `student` | (forwards to the command that follows it) | `StudentCommandParser` |
+| `archive` | `ArchiveCommand` | `ArchiveCommandParser` |
+| `restore` | `ArchiveCommand` | `ArchiveCommandParser` |
+| `find` | `FindCommand` | `FindCommandParser` |
+| `view` | `ViewCommand` | `ViewCommandParser` |
+| `sort` | `SortCommand` | `SortCommandParser` |
+| `remark` | `RemarkCommand` | `RemarkCommandParser` |
+| `import students` | `ImportStudentsCommand` | `ImportCommandParser` |
+| `demo` | `DemoCommand` | `DemoCommandParser` |
+| `tour` | `TourCommand` | `AddressBookParser` |
+| `lesson add` | `LessonAddCommand` | `LessonAddCommandParser` |
+| `lesson list` | `LessonListCommand` | `LessonListCommandParser` |
+| `lesson prep` | `LessonPrepCommand` | `LessonPrepCommandParser` |
+| `lesson move` | `LessonMoveCommand` | `LessonMoveCommandParser` |
+| `lesson cancel` | `LessonCancelCommand` | `LessonCancelCommandParser` |
+| `lesson done` | `LessonDoneCommand` | `LessonDoneCommandParser` |
+| `lesson missed` | `LessonMissedCommand` | `LessonMissedCommandParser` |
+| `hw add` | `HomeworkAddCommand` | `HomeworkCommandParser` |
+| `hw list` | `HomeworkListCommand` | `HomeworkCommandParser` |
+| `hw edit` | `HomeworkEditCommand` | `HomeworkCommandParser` |
+| `hw status` | `HomeworkStatusCommand` | `HomeworkCommandParser` |
+| `hw feedback` | `HomeworkFeedbackCommand` | `HomeworkCommandParser` |
+| `hw delete` | `HomeworkDeleteCommand` | `HomeworkCommandParser` |
+| `agenda` | `AgendaCommand` | `AgendaCommandParser` |
+| `today` | `TodayCommand` | `AddressBookParser` |
+| `clear` | `ClearCommand` | `ClearCommandParser` |
+| `save` | `SaveCommand` | `AddressBookParser` |
+| `help` | `HelpCommand` | `HelpCommandParser` |
+| `exit` | `ExitCommand` | `AddressBookParser` |
+
+
 ### Students, filters and archiving
 
 **Identity.** `Person#getId()` is a `UUID` that is saved with the student, apart from the visible index and from value equality. Two students are equal when their fields are equal, and the `UUID` is not one of them, so a duplicate check never depends on it. A `Lesson` or a `Homework` refers to its student by that `UUID`, which keeps the link when the student is edited or renamed.
@@ -352,7 +393,7 @@ The tour is offered on the first run: `UserPrefs#isTourSeen` is false, `MainWind
 
 ### Documentation and the discoverability of commands
 
-`DiscoverabilityTest` fails when a command is in the list of `help` but not known to the parser, not described in the User Guide or not in its command summary, or the other way round.
+`DiscoverabilityTest` fails when a command is in the list of `help` but is not known to the parser, is not described in the User Guide or in its command summary, or is not in the table of [commands at a glance](#commands-at-a-glance). It also fails when the command summary lists a command that `help` does not.
 
 ### \[Proposed\] Undo/redo feature
 
