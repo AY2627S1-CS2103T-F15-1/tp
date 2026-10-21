@@ -115,3 +115,25 @@
 .icon-button:hover .icon-shape {
     -fx-fill: white;
 }
+
+/* The strip that asks the user to confirm a command */
+.confirm-bar {
+    -fx-background-color: #5a3d1e;
+    -fx-border-color: #f2b84b;
+    -fx-border-width: 1 0 0 0;
+}
+
+.confirm-bar-text {
+    -fx-text-fill: white;
+    -fx-font-size: 10pt;
+}
+
+.confirm-bar-confirm {
+    -fx-background-color: #d06651;
+    -fx-text-fill: white;
+}
+
+.confirm-bar-cancel {
+    -fx-background-color: #3e7b91;
+    -fx-text-fill: white;
+}
