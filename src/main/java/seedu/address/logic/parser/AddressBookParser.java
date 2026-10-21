@@ -20,6 +20,7 @@ import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
+import seedu.address.logic.commands.ImportStudentsCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.RemarkCommand;
 import seedu.address.logic.commands.SaveCommand;
@@ -75,6 +76,7 @@ public class AddressBookParser {
                 yield new DemoCommand(arguments.strip().equals("confirm"));
             }
             case "hw" -> new HomeworkCommandParser().parse(arguments);
+            case ImportStudentsCommand.COMMAND_WORD -> new ImportCommandParser().parse(arguments);
             case "student" -> new StudentCommandParser().parse(arguments);
             case ArchiveCommand.COMMAND_WORD_ARCHIVE -> new ArchiveCommandParser(true).parse(arguments);
             case ArchiveCommand.COMMAND_WORD_RESTORE -> new ArchiveCommandParser(false).parse(arguments);

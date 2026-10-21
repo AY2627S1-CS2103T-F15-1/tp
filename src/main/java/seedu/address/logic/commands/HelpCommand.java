@@ -49,6 +49,8 @@ public class HelpCommand extends Command {
             new CommandHelp("demo", "Previews sample data for an empty dataset", "demo [confirm]",
                     "Parameters: confirm loads the sample students; without it, demo only says what it would do. "
                             + "It works only on an empty dataset.\nExamples: demo, demo confirm"),
+            new CommandHelp("import students", "Adds students from a CSV file",
+                    ImportStudentsCommand.MESSAGE_USAGE),
             new CommandHelp("find", "Finds students by name", FindCommand.MESSAGE_USAGE),
             new CommandHelp("view", "Shows a student's overview", ViewCommand.MESSAGE_USAGE),
             new CommandHelp("sort", "Sorts students by name", SortCommand.MESSAGE_USAGE),
