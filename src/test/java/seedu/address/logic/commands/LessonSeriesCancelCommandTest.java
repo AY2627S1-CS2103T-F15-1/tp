@@ -1,6 +1,7 @@
 package seedu.address.logic.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.TypicalPersons.ALICE;
@@ -28,6 +29,22 @@ public class LessonSeriesCancelCommandTest {
     private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-10-21T04:00:00Z"),
             ZoneId.of("Asia/Singapore"));
     private static final LocalDate TODAY = LocalDate.now(CLOCK);
+
+    @Test
+    public void constructorAndEquals_validateInputsAndCompareIndexAndClock() {
+        Index first = Index.fromOneBased(1);
+        LessonSeriesCancelCommand command = new LessonSeriesCancelCommand(first, CLOCK);
+        assertThrows(NullPointerException.class, () -> new LessonSeriesCancelCommand(null, CLOCK));
+        assertThrows(NullPointerException.class, () -> new LessonSeriesCancelCommand(first, null));
+        assertThrows(NullPointerException.class, () -> command.execute(null));
+        assertTrue(command.equals(command));
+        assertTrue(command.equals(new LessonSeriesCancelCommand(first, CLOCK)));
+        assertFalse(command.equals(null));
+        assertFalse(command.equals(new ClearCommand()));
+        assertFalse(command.equals(new LessonSeriesCancelCommand(Index.fromOneBased(2), CLOCK)));
+        assertFalse(command.equals(new LessonSeriesCancelCommand(first, Clock.systemUTC())));
+        assertEquals(command.hashCode(), new LessonSeriesCancelCommand(first, CLOCK).hashCode());
+    }
 
     @Test
     public void execute_selectPastOccurrence_cancelsOnlyFutureScheduledOccurrencesIncludingMoved() throws Exception {
@@ -110,7 +127,7 @@ public class LessonSeriesCancelCommandTest {
         assertEquals(new LessonSeriesCancelCommand(Index.fromOneBased(2)),
                 parser.parseCommand("lesson series cancel 2 confirm"));
         for (String suffix : List.of("cancel 1", "cancel 1 Confirm", "cancel 0 confirm", "cancel -1 confirm",
-                "cancel 1 confirm now", "cancel confirm 1", "cancel abc confirm", "1 confirm", "")) {
+                "cancel 1 confirm now", "cancel confirm 1", "cancel abc confirm", "1 confirm", "", "end 1 confirm")) {
             assertThrows(ParseException.class, () -> parser.parseCommand("lesson series " + suffix));
         }
     }

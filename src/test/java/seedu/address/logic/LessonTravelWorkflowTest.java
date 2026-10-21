@@ -9,7 +9,9 @@ import static seedu.address.testutil.TypicalPersons.ALICE;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -169,6 +171,35 @@ public class LessonTravelWorkflowTest {
         String result = logic.execute("lesson move 1 d/" + today.plusDays(1)).getFeedbackToUser();
         assertTrue(result.contains("No lessons in the current list."));
         assertTrue(model.getFilteredLessonList().isEmpty());
+    }
+
+    @Test
+    public void execute_weeklyAgenda_excludesTravelWarningsBeforeAndAfterItsWeek() throws Exception {
+        LocalDate monday = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+        for (LocalDate date : List.of(monday.minusDays(1), today, monday.plusDays(7))) {
+            model.addLesson(new LessonBuilder().withStudent(ALICE).withDate(date).withTime("10:00")
+                    .withDuration(60).withVenue("Home").build());
+            model.addLesson(new LessonBuilder().withStudent(ALICE).withDate(date).withTime("11:15")
+                    .withDuration(60).withVenue("Cafe").build());
+        }
+        String agenda = logic.execute("agenda d/" + today + " week/").getFeedbackToUser();
+        assertEquals(1, agenda.split("minutes to travel", -1).length - 1);
+    }
+
+    @Test
+    public void execute_moveToAnotherDate_reportsOnlyJourneysOnOldAndNewDates() throws Exception {
+        for (LocalDate date : List.of(today, today.plusDays(1), today.plusDays(2))) {
+            model.addLesson(new LessonBuilder().withStudent(ALICE).withDate(date).withTime("10:00")
+                    .withDuration(60).withVenue("Home").build());
+            model.addLesson(new LessonBuilder().withStudent(ALICE).withDate(date).withTime("11:15")
+                    .withDuration(60).withVenue("Cafe").build());
+        }
+        model.addLesson(new LessonBuilder().withStudent(ALICE).withDate(today).withTime("15:00")
+                .withDuration(60).withVenue("Library").build());
+        logic.execute("agenda d/" + today);
+        String result = logic.execute("lesson move 3 d/" + today.plusDays(1)).getFeedbackToUser();
+        assertEquals(2, result.split("minutes to travel", -1).length - 1);
+        assertFalse(result.contains(today.plusDays(2) + " at"));
     }
 
     private Lesson lesson(String time) {

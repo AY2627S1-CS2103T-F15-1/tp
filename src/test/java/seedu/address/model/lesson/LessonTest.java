@@ -36,6 +36,9 @@ public class LessonTest {
         }
         assertThrows(IllegalArgumentException.class, () -> original.withSeriesId(" "));
         assertThrows(NullPointerException.class, () -> original.withSeriesId(null));
+        assertThrows(IllegalArgumentException.class, () -> original.prepare(" "));
+        assertFalse(original.equals(original.withSeriesId("another-series")));
+        assertFalse(original.equals(original.prepare("Different preparation")));
     }
 
     @Test

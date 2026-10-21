@@ -9,6 +9,7 @@ import static seedu.address.testutil.TypicalLessons.ALICE_MATH;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.exceptions.IllegalValueException;
+import seedu.address.commons.util.JsonUtil;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonDate;
 import seedu.address.model.lesson.LessonDuration;
@@ -38,6 +39,14 @@ public class JsonAdaptedLessonTest {
     private static final int VALID_DURATION = ALICE_MATH.getDuration().value;
     private static final String VALID_VENUE = ALICE_MATH.getVenue().get().toString();
     private static final String VALID_STATUS = ALICE_MATH.getStatus().toString();
+
+    @Test
+    public void toModelType_blankSeriesId_rejectsMalformedSavedData() throws Exception {
+        String raw = "{\"studentName\":\"Alice Pauline\",\"studentPhone\":\"94351253\",\"subject\":\"Math\","
+                + "\"date\":\"2026-10-21\",\"time\":\"10:00\",\"duration\":60,\"seriesId\":\" \"}";
+        JsonAdaptedLesson data = JsonUtil.fromJsonString(raw, JsonAdaptedLesson.class);
+        assertThrows(IllegalValueException.class, data::toModelType);
+    }
 
     @Test
     public void toModelType_invalidNotes_throwsIllegalValueException() {
