@@ -58,6 +58,19 @@ public class AgendaCommandTest {
     }
 
     @Test
+    public void execute_carriesTheLessonsItNumbersSoAWindowCanListThem() {
+        addLessons(tuesdayEnglish, mondayPhysics, mondayMath);
+
+        CommandResult day = new AgendaCommand(MONDAY, false).execute(model);
+        CommandResult week = new AgendaCommand(MONDAY, true).execute(model);
+        CommandResult empty = new AgendaCommand(MONDAY.plusDays(30), false).execute(model);
+
+        assertEquals(List.of(mondayMath, mondayPhysics), day.getDisplayedLessons().orElseThrow());
+        assertEquals(List.of(mondayMath, mondayPhysics, tuesdayEnglish), week.getDisplayedLessons().orElseThrow());
+        assertEquals(List.of(), empty.getDisplayedLessons().orElseThrow());
+    }
+
+    @Test
     public void execute_dayWithoutLessons_reportsNoLessons() {
         addLessons(mondayMath);
 

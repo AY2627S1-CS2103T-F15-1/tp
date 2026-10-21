@@ -72,15 +72,17 @@ public class AgendaCommand extends Command {
         List<Lesson> lessons = model.getFilteredLessonList();
         if (isWeek) {
             return new CommandResult(formatWeek(model, first, last, lessons))
-                    .withDetailView(weekView(model, first, last, lessons));
+                    .withDetailView(weekView(model, first, last, lessons)).withDisplayedLessons(lessons);
         }
         if (lessons.isEmpty()) {
             String message = String.format(MESSAGE_NO_LESSONS_ON_DAY, DAY_FORMAT.format(date));
-            return new CommandResult(message).withDetailView(new DetailView(message, message, false, List.of()));
+            return new CommandResult(message).withDetailView(new DetailView(message, message, false, List.of()))
+                    .withDisplayedLessons(lessons);
         }
         String header = String.format(MESSAGE_DAY_HEADER, DAY_FORMAT.format(date), summarise(lessons));
         return new CommandResult(header + formatLessons(model, lessons, date)).withDetailView(new DetailView(header,
-                header, false, List.of(new DetailView.Section("", lessonLines(model, lessons, date)))));
+                header, false, List.of(new DetailView.Section("", lessonLines(model, lessons, date)))))
+                .withDisplayedLessons(lessons);
     }
 
     /** Returns the week as the detail pane draws it: a section for each day. */
