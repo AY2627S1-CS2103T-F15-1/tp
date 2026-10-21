@@ -67,7 +67,8 @@
         "launch-and-shutdown": "Launch and shutdown",
         "deleting-a-person": "Deleting a person",
         "lessons": "Lessons",
-        "saving-data": "Saving data"
+        "saving-data": "Saving data",
+        "v1-4-continuity-and-domain-extension-contract": "v1.4 continuity and domain extension contract"
       },
       "headingKeywords": {}
     },
@@ -137,7 +138,9 @@
         "archiving-data-files-coming-in-v2-0": "Archiving data files [coming in v2.0]",
         "faq": "FAQ",
         "known-issues": "Known issues",
-        "command-summary": "Command summary"
+        "command-summary": "Command summary",
+        "student-continuity-in-v1-4-alpha": "Student continuity in v1.4 alpha",
+        "migrating-older-data": "Migrating older data"
       },
       "headingKeywords": {}
     },
