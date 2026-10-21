@@ -203,7 +203,8 @@ Format: `delete INDEX [confirm]`
 * The index refers to the index number shown in the displayed student list.
 * The index **must be a positive integer** 1, 2, 3, ...
 * A student with no lessons, no homework and no [follow-up tasks](#adding-a-follow-up-task-task-add) is deleted immediately.
-* Deleting a student also deletes **all of their lessons, homework (including feedback) and follow-up tasks**, and this cannot be undone. If the student has any linked records, TutorFlow does not delete anything yet. It shows the student's name, phone number, linked counts and, if there are any, a warning about upcoming lessons and commitments, and asks you to repeat the command with `confirm`.
+* Deleting a student also deletes **all of their lessons, homework (including feedback) and follow-up tasks**. If the student has any linked records, TutorFlow does not delete anything yet. It shows the student's name, phone number, linked counts and, if there are any, a warning about upcoming lessons and commitments, and asks you to repeat the command with `confirm`.
+* One deletion action can be reversed with the `undo` command.
 * The keyword `confirm` is in lower case.
 
 Examples:
@@ -573,12 +574,23 @@ Format: `clear confirm`
 
 * Typing `clear` on its own deletes nothing. It only reminds you what would be deleted and how to confirm.
 * `confirm` must be written exactly in lower case. Anything else after `clear` is rejected, so a mistyped command can never wipe your data.
-* Clearing cannot be undone. TutorFlow saves the empty data straight away, so copy `data/tutorflow-v14.json` first if you may want your records back.
+* TutorFlow saves the empty data straight away, so copy `data/tutorflow-v14.json` first if you may want your records back.
 * Clearing data that is already empty works and does nothing.
+* If the clear is done in the current session and the empty data was not modified, this reversed with the `undo` command. A backup is still recommended, since the data can still be easily lost.
 
 Examples:
 * `clear` shows `This deletes ALL students, lessons, homework, tasks, and financial history. Type 'clear confirm' to proceed.`
 * `clear confirm` deletes everything.
+
+### Undoing your latest deletion or clear: `undo`
+
+Reverses a deletion that was just performed. 
+
+Format: `undo`
+
+* Deletion commands include the commands with `delete` in them, and the `clear` command.
+* Changes can only be undone in the current session, and for one deletion command.
+* Reversals will fail if the data is changed in any way after the deletion, including sorting lessons or another deletion.
 
 ### Exiting the program: `exit`
 
@@ -682,6 +694,7 @@ Action     | Format, Examples
 **Task done** | `task done INDEX`<br> e.g., `task done 1`
 **Task delete** | `task delete INDEX [confirm]`<br> e.g., `task delete 1`, `task delete 1 confirm`
 **Demo** | `demo [confirm]`<br> e.g., `demo`, `demo confirm`
+**Undo** | `undo`
 **Save** | `save`
 **Exit** | `exit`
 
