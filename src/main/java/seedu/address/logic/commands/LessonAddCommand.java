@@ -3,6 +3,7 @@ package seedu.address.logic.commands;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_DATE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_DURATION;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_PAST;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_STUDENT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TIME;
@@ -11,7 +12,6 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_VENUE;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.core.index.Index;
@@ -42,17 +42,17 @@ public class LessonAddCommand extends Command {
             + LessonDuration.DEFAULT_MINUTES + " minutes, and the venue defaults to the student's venue.\n"
             + "Parameters: " + PREFIX_STUDENT + "STUDENT_INDEX [" + PREFIX_SUBJECT + "SUBJECT] "
             + PREFIX_DATE + "DATE " + PREFIX_TIME + "TIME [" + PREFIX_DURATION + "MINUTES] ["
-            + PREFIX_VENUE + "VENUE]\n"
+            + PREFIX_VENUE + "VENUE] [" + PREFIX_PAST + "]\n"
+            + "DATE may also be 'today' or 'tmr'. Add " + PREFIX_PAST + " to record a lesson that has already "
+            + "taken place (at most 2 years ago).\n"
             + "Example: " + COMMAND_WORD + " " + PREFIX_STUDENT + "1 " + PREFIX_SUBJECT + "Math "
             + PREFIX_DATE + "2026-12-22 " + PREFIX_TIME + "16:30 " + PREFIX_DURATION + "90";
 
     public static final String MESSAGE_SUCCESS = "Scheduled: %1$s, %2$s";
-    public static final String MESSAGE_DATE_IN_PAST = "That date is in the past. Use 'lesson add' only for "
-            + "upcoming lessons.";
-    public static final String MESSAGE_SUBJECT_NOT_TAKEN = "%1$s is not recorded as taking %2$s. "
-            + "Add the subject with 'edit' first.";
-    public static final String MESSAGE_SUBJECT_REQUIRED = "%1$s takes more than one subject (%2$s). "
-            + "Specify one with " + PREFIX_SUBJECT + "SUBJECT.";
+    public static final String MESSAGE_DATE_IN_PAST = "That date is in the past. Add " + PREFIX_PAST
+            + " to record a lesson that has already taken place.";
+    public static final String MESSAGE_SUBJECT_NOT_TAKEN = LessonCommandUtil.MESSAGE_SUBJECT_NOT_TAKEN;
+    public static final String MESSAGE_SUBJECT_REQUIRED = LessonCommandUtil.MESSAGE_SUBJECT_REQUIRED;
 
     private static final Logger logger = LogsCenter.getLogger(LessonAddCommand.class);
 
@@ -62,6 +62,7 @@ public class LessonAddCommand extends Command {
     private final LessonTime time;
     private final LessonDuration duration;
     private final Venue venue; // null if the student's venue is to be used
+    private final boolean isPast; // true if a lesson that has already taken place may be recorded
 
     /**
      * Creates a {@code LessonAddCommand} to schedule a lesson for the student at {@code studentIndex}.
@@ -69,6 +70,15 @@ public class LessonAddCommand extends Command {
      */
     public LessonAddCommand(Index studentIndex, Subject subject, LessonDate date, LessonTime time,
             LessonDuration duration, Venue venue) {
+        this(studentIndex, subject, date, time, duration, venue, false);
+    }
+
+    /**
+     * Creates a {@code LessonAddCommand} as above. If {@code isPast} is true, a date before today is accepted so
+     * that a lesson that has already taken place can be recorded (user story 8).
+     */
+    public LessonAddCommand(Index studentIndex, Subject subject, LessonDate date, LessonTime time,
+            LessonDuration duration, Venue venue, boolean isPast) {
         requireNonNull(studentIndex);
         requireNonNull(date);
         requireNonNull(time);
@@ -79,6 +89,7 @@ public class LessonAddCommand extends Command {
         this.time = time;
         this.duration = duration;
         this.venue = venue;
+        this.isPast = isPast;
     }
 
     @Override
@@ -116,35 +127,17 @@ public class LessonAddCommand extends Command {
     }
 
     private Lesson createLesson(Person student) throws CommandException {
-        LessonCommandUtil.requireNotInPast(date, MESSAGE_DATE_IN_PAST);
+        if (isPast) {
+            LessonCommandUtil.requireNotTooFarPast(date);
+        } else {
+            LessonCommandUtil.requireNotInPast(date, MESSAGE_DATE_IN_PAST);
+        }
         LessonCommandUtil.requireNearFuture(date);
         LessonCommandUtil.requireEndsBeforeMidnight(time, duration);
 
         Venue lessonVenue = venue != null ? venue : student.getVenue().orElse(null);
-        return new Lesson(student.getName(), student.getPhone(), chooseSubject(student), date, time, duration,
-                lessonVenue, LessonStatus.SCHEDULED, null, null).snapshotStudent(student);
-    }
-
-    /**
-     * Returns the subject of {@code student} that the user asked for, or the only subject of {@code student} if
-     * none was asked for. The lesson uses the student's own spelling, so {@code math} is shown as {@code Math}.
-     */
-    private Subject chooseSubject(Person student) throws CommandException {
-        if (subject == null && student.getSubjects().size() == 1) {
-            return student.getSubjects().iterator().next();
-        }
-        if (subject == null) {
-            throw new CommandException(String.format(MESSAGE_SUBJECT_REQUIRED, student.getName(),
-                    joinSubjects(student)));
-        }
-        return student.getSubjects().stream().filter(subject::equals).findFirst()
-                .orElseThrow(() -> new CommandException(
-                        String.format(MESSAGE_SUBJECT_NOT_TAKEN, student.getName(), subject)));
-    }
-
-    private static String joinSubjects(Person student) {
-        return student.getSubjects().stream().map(Subject::toString).sorted(String.CASE_INSENSITIVE_ORDER)
-                .collect(Collectors.joining(", "));
+        return new Lesson(student.getName(), student.getPhone(), LessonCommandUtil.chooseSubject(student, subject),
+                date, time, duration, lessonVenue, LessonStatus.SCHEDULED, null, null).snapshotStudent(student);
     }
 
     @Override
@@ -163,7 +156,8 @@ public class LessonAddCommand extends Command {
                 && date.equals(otherCommand.date)
                 && time.equals(otherCommand.time)
                 && duration.equals(otherCommand.duration)
-                && Objects.equals(venue, otherCommand.venue);
+                && Objects.equals(venue, otherCommand.venue)
+                && isPast == otherCommand.isPast;
     }
 
     @Override
@@ -175,6 +169,7 @@ public class LessonAddCommand extends Command {
                 .add("time", time)
                 .add("duration", duration)
                 .add("venue", venue)
+                .add("isPast", isPast)
                 .toString();
     }
 }

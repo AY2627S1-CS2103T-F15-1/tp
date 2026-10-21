@@ -1,8 +1,11 @@
 package seedu.address.logic.commands;
 
+import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
+
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Messages;
@@ -14,6 +17,7 @@ import seedu.address.model.lesson.LessonDuration;
 import seedu.address.model.lesson.LessonStatus;
 import seedu.address.model.lesson.LessonTime;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.Subject;
 
 /**
  * Contains checks and messages that the commands which schedule or move a lesson share.
@@ -21,6 +25,11 @@ import seedu.address.model.person.Person;
 final class LessonCommandUtil {
 
     static final String MESSAGE_DATE_TOO_FAR = "That date is more than 2 years away. Check the year.";
+    static final String MESSAGE_DATE_TOO_FAR_PAST = "That date is more than 2 years in the past. Check the year.";
+    static final String MESSAGE_SUBJECT_NOT_TAKEN = "%1$s is not recorded as taking %2$s. "
+            + "Add the subject with 'edit' first.";
+    static final String MESSAGE_SUBJECT_REQUIRED = "%1$s takes more than one subject (%2$s). "
+            + "Specify one with " + PREFIX_SUBJECT + "SUBJECT.";
     static final String MESSAGE_DUPLICATE_LESSON = "This exact lesson already exists.";
     static final String MESSAGE_OVERLAP_WARNING = "\nWarning: this overlaps with %1$s";
 
@@ -88,6 +97,38 @@ final class LessonCommandUtil {
         if (date.value.isBefore(LocalDate.now())) {
             throw new CommandException(message);
         }
+    }
+
+    /**
+     * Checks that {@code date} is not so far in the past that it is probably a mistyped year.
+     *
+     * @throws CommandException if the date is more than 2 years before today.
+     */
+    static void requireNotTooFarPast(LessonDate date) throws CommandException {
+        if (date.value.isBefore(LocalDate.now().minusYears(MAX_YEARS_AHEAD))) {
+            throw new CommandException(MESSAGE_DATE_TOO_FAR_PAST);
+        }
+    }
+
+    /**
+     * Returns the subject of {@code student} that the user asked for, or the only subject of {@code student} if
+     * none was asked for. The lesson uses the student's own spelling, so {@code math} is shown as {@code Math}.
+     *
+     * @param requested the subject given by the user, or null if none was given.
+     * @throws CommandException if no subject was given for a student with several, or the student does not take it.
+     */
+    static Subject chooseSubject(Person student, Subject requested) throws CommandException {
+        if (requested == null && student.getSubjects().size() == 1) {
+            return student.getSubjects().iterator().next();
+        }
+        if (requested == null) {
+            String subjects = student.getSubjects().stream().map(Subject::toString)
+                    .sorted(String.CASE_INSENSITIVE_ORDER).collect(Collectors.joining(", "));
+            throw new CommandException(String.format(MESSAGE_SUBJECT_REQUIRED, student.getName(), subjects));
+        }
+        return student.getSubjects().stream().filter(requested::equals).findFirst()
+                .orElseThrow(() -> new CommandException(
+                        String.format(MESSAGE_SUBJECT_NOT_TAKEN, student.getName(), requested)));
     }
 
     /**

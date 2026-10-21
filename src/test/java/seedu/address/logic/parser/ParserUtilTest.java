@@ -11,6 +11,7 @@ import static seedu.address.logic.parser.ParserUtil.MESSAGE_INVALID_INDEX;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 
@@ -381,5 +382,30 @@ public class ParserUtilTest {
 
         assertThrows(ParseException.class, LessonDate.MESSAGE_CONSTRAINTS, ()
                 -> ParserUtil.parseOptional(argMultimap, PREFIX_DATE, ParserUtil::parseDate));
+    }
+
+    @Test
+    public void parseDate_todayAndTmrKeywords_resolveAgainstGivenDay() throws Exception {
+        LocalDate day = LocalDate.of(2026, 12, 31);
+
+        assertEquals(new LessonDate("2026-12-31"), ParserUtil.parseDate("today", day));
+        assertEquals(new LessonDate("2027-01-01"), ParserUtil.parseDate("tmr", day)); // crosses the year
+        assertEquals(new LessonDate("2027-01-01"), ParserUtil.parseDate("  TmR  ", day)); // any case, trimmed
+        assertEquals(new LessonDate("2026-12-31"), ParserUtil.parseDate("Today", day));
+    }
+
+    @Test
+    public void parseDate_keywordUsesComputerDate() throws Exception {
+        assertEquals(new LessonDate(LocalDate.now().toString()), ParserUtil.parseDate("today"));
+    }
+
+    @Test
+    public void parseDate_otherWords_throwsParseException() {
+        LocalDate day = LocalDate.of(2026, 12, 31);
+        assertThrows(ParseException.class, LessonDate.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseDate("tomorrow", day));
+        assertThrows(ParseException.class, LessonDate.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseDate("to day", day));
+        assertThrows(ParseException.class, LessonDate.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseDate("", day));
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseDate(null, day));
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseDate("today", null));
     }
 }

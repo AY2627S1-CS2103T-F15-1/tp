@@ -6,9 +6,12 @@ import static seedu.address.storage.JsonAdaptedLesson.MISSING_FIELD_MESSAGE_FORM
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalLessons.ALICE_MATH;
 
+import java.util.UUID;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.exceptions.IllegalValueException;
+import seedu.address.commons.util.JsonUtil;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonDate;
 import seedu.address.model.lesson.LessonDuration;
@@ -204,4 +207,34 @@ public class JsonAdaptedLessonTest {
         assertThrows(IllegalValueException.class, LessonStatus.MESSAGE_CONSTRAINTS, lesson::toModelType);
     }
 
+    @Test
+    public void toModelType_levelAndSeries_roundTrip() throws Exception {
+        UUID series = UUID.randomUUID();
+        Lesson lesson = new LessonBuilder(ALICE_MATH).withAcademicLevel("S3").withSeriesId(series).build();
+
+        Lesson restored = JsonUtil.fromJsonString(JsonUtil.toJsonString(new JsonAdaptedLesson(lesson)),
+                JsonAdaptedLesson.class).toModelType();
+
+        assertEquals(lesson, restored);
+        assertEquals("S3", restored.getAcademicLevel().get().value);
+        assertEquals(series, restored.getSeriesId().get());
+    }
+
+    @Test
+    public void toModelType_lessonSavedBeforeSeries_hasNoSeries() throws Exception {
+        JsonAdaptedLesson lesson = new JsonAdaptedLesson(VALID_NAME, VALID_PHONE, VALID_SUBJECT, VALID_DATE,
+                VALID_TIME, VALID_DURATION, VALID_VENUE, VALID_STATUS, null, null);
+
+        assertTrue(lesson.toModelType().getSeriesId().isEmpty());
+    }
+
+    @Test
+    public void toModelType_invalidSeriesId_throwsIllegalValueException() throws Exception {
+        UUID series = UUID.randomUUID();
+        Lesson lesson = new LessonBuilder(ALICE_MATH).withSeriesId(series).build();
+        String json = JsonUtil.toJsonString(new JsonAdaptedLesson(lesson)).replace(series.toString(), "series-1");
+
+        assertThrows(IllegalValueException.class, () ->
+                JsonUtil.fromJsonString(json, JsonAdaptedLesson.class).toModelType());
+    }
 }
