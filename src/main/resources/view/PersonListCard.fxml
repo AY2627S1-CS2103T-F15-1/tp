@@ -27,6 +27,9 @@
         </Label>
         <Label fx:id="name" text="\$first" styleClass="cell_big_label" />
         <Label fx:id="level" styleClass="cell_small_label" text="\$level" />
+        <Label fx:id="archivedBadge" styleClass="archived-badge" text="ARCHIVED" />
+        <Region HBox.hgrow="ALWAYS" />
+        <HBox fx:id="actions" alignment="CENTER_RIGHT" spacing="2" />
       </HBox>
       <FlowPane fx:id="subjects" />
       <Label fx:id="phone" styleClass="cell_small_label" text="\$phone" />

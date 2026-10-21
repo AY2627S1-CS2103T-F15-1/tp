@@ -46,11 +46,23 @@ public class PersonCard extends UiPart<Region> {
     private Label remark;
     @FXML
     private FlowPane subjects;
+    @FXML
+    private Label archivedBadge;
+    @FXML
+    private HBox actions;
 
     /**
-     * Creates a {@code PersonCard} with the given {@code Person} and index to display.
+     * Creates a {@code PersonCard} with the given {@code Person} and index to display, without buttons.
      */
     public PersonCard(Person person, int displayedIndex) {
+        this(person, displayedIndex, null);
+    }
+
+    /**
+     * Creates a {@code PersonCard} with the given {@code Person} and index to display. If {@code panelActions} is
+     * not null, the card also has buttons to change, archive or restore, and delete the student.
+     */
+    public PersonCard(Person person, int displayedIndex, PanelActions panelActions) {
         super(FXML);
         this.person = person;
         id.setText(displayedIndex + ". ");
@@ -64,6 +76,27 @@ public class PersonCard extends UiPart<Region> {
         person.getSubjects().stream()
                 .sorted(Comparator.comparing(subject -> subject.value.toLowerCase()))
                 .forEach(subject -> subjects.getChildren().add(new Label(subject.value)));
+        archivedBadge.setManaged(person.isArchived());
+        archivedBadge.setVisible(person.isArchived());
+        if (panelActions != null) {
+            addButtons(person, displayedIndex, panelActions);
+        }
+    }
+
+    /** Adds the buttons that change, archive or restore, and delete the student numbered {@code displayedIndex}. */
+    private void addButtons(Person student, int displayedIndex, PanelActions panelActions) {
+        String label = "student " + displayedIndex + ", " + student.getName();
+        Runnable change = () -> panelActions.prefill("edit " + displayedIndex + " ");
+        Runnable delete = () -> panelActions.ask("Delete " + label + "?", "delete " + displayedIndex);
+        actions.getChildren().add(new IconButton(Icon.EDIT, "Change " + label, change));
+        if (student.isArchived()) {
+            Runnable restore = () -> panelActions.run("restore " + displayedIndex);
+            actions.getChildren().add(new IconButton(Icon.RESTORE, "Restore " + label, restore));
+        } else {
+            Runnable archive = () -> panelActions.run("archive " + displayedIndex);
+            actions.getChildren().add(new IconButton(Icon.ARCHIVE, "Archive " + label, archive));
+        }
+        actions.getChildren().add(new IconButton(Icon.DELETE, "Delete " + label, delete));
     }
 
     /**

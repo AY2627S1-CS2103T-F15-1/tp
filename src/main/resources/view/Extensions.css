@@ -137,3 +137,45 @@
     -fx-background-color: #3e7b91;
     -fx-text-fill: white;
 }
+
+.panel-empty {
+    -fx-text-fill: #b0b0b0;
+    -fx-font-size: 10pt;
+    -fx-wrap-text: true;
+    -fx-padding: 10;
+}
+
+.list-cell .label.row-number {
+    -fx-font-size: 14pt;
+}
+
+.list-cell .label.row-title {
+    -fx-font-size: 12pt;
+}
+
+.list-cell .label.row-detail {
+    -fx-font-size: 10pt;
+    -fx-text-fill: #d6d6d6;
+}
+
+.list-cell .label.row-warning {
+    -fx-text-fill: #f2b84b;
+}
+
+.list-cell .label.row-struck {
+    -fx-strikethrough: true;
+    -fx-text-fill: #8a8a8a;
+}
+
+.list-cell .label.row-feedback {
+    -fx-font-size: 10pt;
+    -fx-text-fill: #7fc2d6;
+}
+
+.archived-badge {
+    -fx-background-color: #6b6b6b;
+    -fx-text-fill: white;
+    -fx-font-size: 8pt;
+    -fx-padding: 1 6 1 6;
+    -fx-background-radius: 3;
+}
