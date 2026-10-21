@@ -397,9 +397,12 @@ charge cannot point at a deleted lesson. Student deletion still cascades all of 
 `Ledger.dues(book, today)` returns immutable `Due(student, amount, oldestUnpaidDate)` rows, oldest first,
 breaking ties by name then phone. Payments cover charges FIFO by charge date, including partial payments
 and advance credit. The supplied date is the reference for displaying unpaid ages, not a cutoff that
-excludes transactions. `Ledger.formatDues(book, today)` shares the DUES header, total, archived marker,
-and days-unpaid wording with future `view` and `today` integrations. Credit from one account never reduces
-another student's debt. Queries include archived/filtered students and never mutate data.
+excludes transactions. `Ledger.formatDues(book, today)` formats what `dues` prints: the DUES header, count and
+total, then each debtor, marked `(archived)` if archived, with the age of their oldest unpaid charge (`1 day`,
+`2 days`), or only the up-to-date message when nobody owes money. `today` shows this text as its DUES section
+and adds the header above the up-to-date message. `view` shows `describeBalance` of the student's balance under
+BALANCE. Credit from one account never reduces another student's debt. Queries include archived/filtered
+students and never mutate data.
 
 `BalanceCommand` parses `balance st/INDEX` and reports the displayed student's current summary;
 running account statements from alpha §4.29 are deliberately deferred. `DuesCommand` reports all debtors
