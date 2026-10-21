@@ -31,7 +31,8 @@ public class ViewCommand extends Command {
     public static final String COMMAND_WORD = "view";
 
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Shows the overview of the student identified by the "
-            + "index number used in the displayed student list.\n"
+            + "index number used in the displayed student list: their details, next lesson, recent lesson notes, "
+            + "lesson history, balance and outstanding homework.\n"
             + "Parameters: INDEX (must be a positive integer)\n"
             + "Example: " + COMMAND_WORD + " 1";
 

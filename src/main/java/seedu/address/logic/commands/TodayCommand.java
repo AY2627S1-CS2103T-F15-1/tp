@@ -29,7 +29,7 @@ public class TodayCommand extends Command {
     public static final String COMMAND_WORD = "today";
 
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Shows what today requires: today's lessons, "
-            + "earlier lessons that are not yet marked completed, and overdue homework.\n"
+            + "earlier lessons that are not yet marked completed, overdue homework and the students who owe money.\n"
             + "Example: " + COMMAND_WORD;
 
     public static final String MESSAGE_TODAY_HEADER = "TODAY'S LESSONS (%1$d, %2$s)";
