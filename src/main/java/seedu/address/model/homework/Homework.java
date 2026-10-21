@@ -15,6 +15,8 @@ public final class Homework {
     public static final String DESCRIPTION_CONSTRAINTS =
             "Description must contain 1-200 printable one-line characters.";
     public static final String MESSAGE_DUPLICATE = "This student already has homework '%1$s' due %2$s.";
+    public static final String MESSAGE_FEEDBACK_NOT_SUBMITTED =
+            "Cannot record feedback on homework that has not been submitted.";
 
     private final UUID id;
     private final UUID studentId;
@@ -95,8 +97,7 @@ public final class Homework {
 
     /** Records or replaces feedback only after submission. */
     public Homework withFeedback(String feedback) {
-        checkArgument(status != HomeworkStatus.ASSIGNED,
-                "Cannot record feedback on homework that has not been submitted.");
+        checkArgument(status != HomeworkStatus.ASSIGNED, MESSAGE_FEEDBACK_NOT_SUBMITTED);
         return new Homework(id, studentId, description, dueDate, status, requireNonNull(feedback));
     }
 
