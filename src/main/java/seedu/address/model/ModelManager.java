@@ -1,6 +1,7 @@
 package seedu.address.model;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.address.commons.util.AppUtil.checkState;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.util.Comparator;
@@ -29,6 +30,7 @@ public class ModelManager implements Model {
     private final FilteredList<Lesson> filteredLessons;
     private final SortedList<Lesson> sortedLessons;
     private List<Homework> displayedHomework = List.of();
+    private AddressBook dataBeforeDemo; // null unless a demo is running
 
     /**
      * Initializes a ModelManager with the given addressBook and userPrefs.
@@ -77,6 +79,38 @@ public class ModelManager implements Model {
     @Override
     public ReadOnlyAddressBook getAddressBook() {
         return addressBook;
+    }
+
+    @Override
+    public boolean isDemoMode() {
+        return dataBeforeDemo != null;
+    }
+
+    @Override
+    public void startDemo(ReadOnlyAddressBook sampleData) {
+        requireNonNull(sampleData);
+        checkState(!isDemoMode(), "A demo is already running.");
+        dataBeforeDemo = new AddressBook(addressBook);
+        setAddressBook(sampleData);
+        resetNumbering();
+        logger.fine("Started a demo");
+    }
+
+    @Override
+    public void endDemo() {
+        checkState(isDemoMode(), "No demo is running.");
+        setAddressBook(dataBeforeDemo);
+        dataBeforeDemo = null;
+        resetNumbering();
+        logger.fine("Ended a demo");
+    }
+
+    /** Forgets what an earlier set of data showed, so that no number points into the new data. */
+    private void resetNumbering() {
+        updateFilteredPersonList(PREDICATE_SHOW_ACTIVE_PERSONS);
+        // as at start-up, no lesson numbers are on screen, so lesson commands must not act on a hidden list
+        updateFilteredLessonList(unused -> false);
+        displayedHomework = List.of();
     }
 
     @Override

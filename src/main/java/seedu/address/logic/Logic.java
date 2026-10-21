@@ -26,6 +26,9 @@ public interface Logic {
         return false;
     }
 
+    /** Returns whether the data is sample data from a demo, which is never saved. */
+    boolean isDemoMode();
+
     /**
      * Returns the dashboard of what today requires, as shown by the {@code today} command.
      * The data is only read, so nothing is saved.

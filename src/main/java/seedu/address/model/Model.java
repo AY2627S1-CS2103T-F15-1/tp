@@ -45,6 +45,27 @@ public interface Model {
     ReadOnlyAddressBook getAddressBook();
 
     /**
+     * Returns whether the data is sample data from a demo. It stands in for the user's own data until the demo
+     * ends, and it is never saved.
+     */
+    boolean isDemoMode();
+
+    /**
+     * Starts a demo: the present data is kept safe and {@code sampleData} stands in for it, with no list
+     * numbering left over.
+     *
+     * @throws IllegalStateException if a demo is already running.
+     */
+    void startDemo(ReadOnlyAddressBook sampleData);
+
+    /**
+     * Ends the demo and brings back the data that was kept when it started, with no list numbering left over.
+     *
+     * @throws IllegalStateException if no demo is running.
+     */
+    void endDemo();
+
+    /**
      * Returns true if a person with the same identity as {@code person} exists in the address book.
      */
     boolean hasPerson(Person person);

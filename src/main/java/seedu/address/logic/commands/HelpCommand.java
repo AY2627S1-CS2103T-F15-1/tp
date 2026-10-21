@@ -46,9 +46,7 @@ public class HelpCommand extends Command {
             new CommandHelp("restore", "Restores an archived student", ArchiveCommand.MESSAGE_USAGE_RESTORE,
                     "Parameters: INDEX of a student in the archived list, so type 'list archived/' first.\n"
                             + "Example: restore 1"),
-            new CommandHelp("demo", "Previews sample data for an empty dataset", "demo [confirm]",
-                    "Parameters: confirm loads the sample students; without it, demo only says what it would do. "
-                            + "It works only on an empty dataset.\nExamples: demo, demo confirm"),
+            new CommandHelp("demo", "Looks around with sample students, safely", DemoCommand.MESSAGE_USAGE),
             new CommandHelp("import students", "Adds students from a CSV file",
                     ImportStudentsCommand.MESSAGE_USAGE),
             new CommandHelp("find", "Finds students by name", FindCommand.MESSAGE_USAGE),

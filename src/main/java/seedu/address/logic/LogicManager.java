@@ -11,6 +11,7 @@ import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.CommandResult;
+import seedu.address.logic.commands.DemoCommand;
 import seedu.address.logic.commands.SaveCommand;
 import seedu.address.logic.commands.TodayCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
@@ -32,6 +33,9 @@ public class LogicManager implements Logic {
             + "could not be saved: TutorFlow cannot write to %s. Fix this before closing TutorFlow.";
 
     public static final String UNSAVED_WARNING = "Unsaved changes: type 'save' to retry before closing TutorFlow.";
+
+    public static final String MESSAGE_SAVE_BEFORE_DEMO =
+            "You have unsaved changes. Type 'save' first, so that the demo cannot lose them.";
 
     private final Logger logger = LogsCenter.getLogger(LogicManager.class);
 
@@ -79,6 +83,10 @@ public class LogicManager implements Logic {
 
         CommandResult commandResult;
         Command command = addressBookParser.parseCommand(commandText);
+        if (dirty && command instanceof DemoCommand demoCommand && demoCommand.isStart()) {
+            throw new CommandException(MESSAGE_SAVE_BEFORE_DEMO);
+        }
+        boolean wasInDemo = model.isDemoMode();
         String before = snapshot();
         List<String> shownBefore = lessonSelection();
         boolean wasDirty = dirty;
@@ -90,6 +98,10 @@ public class LogicManager implements Logic {
             dirty = true;
             changed = !before.equals(snapshot());
             dirty = wasDirty || changed;
+            if (wasInDemo || model.isDemoMode()) {
+                // sample data is never saved, and the data that comes back after a demo is what the file holds
+                dirty = false;
+            }
         }
 
         String numbering = "";
@@ -152,6 +164,11 @@ public class LogicManager implements Logic {
     @Override
     public boolean hasUnsavedChanges() {
         return dirty;
+    }
+
+    @Override
+    public boolean isDemoMode() {
+        return model.isDemoMode();
     }
 
     @Override

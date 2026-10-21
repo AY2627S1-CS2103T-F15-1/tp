@@ -116,6 +116,21 @@ public class AddCommandTest {
      */
     private class ModelStub implements Model {
         @Override
+        public boolean isDemoMode() {
+            throw new AssertionError("Unexpected demo call.");
+        }
+
+        @Override
+        public void startDemo(ReadOnlyAddressBook sampleData) {
+            throw new AssertionError("Unexpected demo call.");
+        }
+
+        @Override
+        public void endDemo() {
+            throw new AssertionError("Unexpected demo call.");
+        }
+
+        @Override
         public void addHomework(Homework homework) {
             throw new AssertionError("Unexpected homework operation");
         }

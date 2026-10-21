@@ -69,12 +69,7 @@ public class AddressBookParser {
                 requireNoArguments(commandWord, arguments);
                 yield new SaveCommand();
             }
-            case "demo" -> {
-                if (!arguments.isBlank() && !arguments.strip().equals("confirm")) {
-                    throw new ParseException("Usage: demo [confirm]");
-                }
-                yield new DemoCommand(arguments.strip().equals("confirm"));
-            }
+            case DemoCommand.COMMAND_WORD -> new DemoCommandParser().parse(arguments);
             case "hw" -> new HomeworkCommandParser().parse(arguments);
             case ImportStudentsCommand.COMMAND_WORD -> new ImportCommandParser().parse(arguments);
             case "student" -> new StudentCommandParser().parse(arguments);
