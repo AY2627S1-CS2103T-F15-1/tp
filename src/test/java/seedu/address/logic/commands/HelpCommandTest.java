@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.testutil.Assert.assertThrows;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.model.Model;
@@ -62,6 +64,19 @@ public class HelpCommandTest {
         assertHelpUsage(ClearCommand.MESSAGE_USAGE, "clear");
         assertHelpUsage(HelpCommand.MESSAGE_USAGE, "help");
         assertHelpUsage(ExitCommand.MESSAGE_USAGE, "exit");
+    }
+
+    @Test
+    public void execute_everyListedCommand_showsAnExampleBeyondItsUsageLine() throws Exception {
+        List<String> names = helpFor("").lines().filter(line -> line.startsWith("  "))
+                .map(line -> line.substring(2).split("  ", 2)[0].trim()).toList();
+
+        assertTrue(names.size() > 25, "the command list was not read: " + names);
+        for (String name : names) {
+            String help = helpFor(name);
+            assertTrue(help.contains("Example"), "help " + name + " has no example:\n" + help);
+            assertTrue(help.lines().count() >= 3, "help " + name + " is only a usage line:\n" + help);
+        }
     }
 
     @Test

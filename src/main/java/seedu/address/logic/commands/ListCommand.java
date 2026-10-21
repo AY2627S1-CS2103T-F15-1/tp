@@ -13,9 +13,11 @@ public class ListCommand extends Command {
 
     public static final String COMMAND_WORD = "list";
 
-    public static final String MESSAGE_USAGE = COMMAND_WORD + ": Shows all students, and numbers them again so "
-            + "that the other commands can refer to them.\n"
-            + "Parameters: [l/LEVEL] [s/SUBJECT] [archived/|all/]";
+    public static final String MESSAGE_USAGE = COMMAND_WORD + ": Shows the active students, or only the archived "
+            + "ones with archived/, or both with all/, optionally limited to one level and subject, and numbers "
+            + "them again so that the other commands can refer to them.\n"
+            + "Parameters: [l/LEVEL] [s/SUBJECT] [archived/|all/]\n"
+            + "Examples: " + COMMAND_WORD + ", " + COMMAND_WORD + " l/S3 s/Math, " + COMMAND_WORD + " archived/";
 
     public static final String MESSAGE_SUCCESS = "Listed active students.";
 
