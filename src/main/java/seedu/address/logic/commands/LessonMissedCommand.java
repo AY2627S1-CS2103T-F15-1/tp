@@ -3,6 +3,8 @@ package seedu.address.logic.commands;
 import static java.util.Objects.requireNonNull;
 
 import java.time.Clock;
+import java.util.List;
+import java.util.UUID;
 import java.util.logging.Logger;
 
 import seedu.address.commons.core.LogsCenter;
@@ -66,9 +68,11 @@ public class LessonMissedCommand extends Command {
             return new CommandResult(MESSAGE_ALREADY_MISSED);
         }
 
+        List<UUID> previousNumbers = LessonCommandUtil.displayedLessonIds(model);
         model.setLesson(target, target.miss());
         logger.fine("Marked lesson missed");
-        return new CommandResult(String.format(MESSAGE_SUCCESS, Messages.format(target)));
+        return new CommandResult(String.format(MESSAGE_SUCCESS, Messages.format(target))
+                + LessonCommandUtil.getChangedLessonNumbers(model, previousNumbers));
     }
 
     @Override

@@ -12,6 +12,7 @@ import javafx.collections.ObservableList;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.model.lesson.Lesson;
+import seedu.address.model.lesson.TravelGap;
 import seedu.address.model.lesson.UniqueLessonList;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.UniquePersonList;
@@ -27,6 +28,7 @@ public class AddressBook implements ReadOnlyAddressBook {
 
     private final UniquePersonList persons = new UniquePersonList();
     private final UniqueLessonList lessons = new UniqueLessonList();
+    private int travelBuffer = TravelGap.DEFAULT_BUFFER;
 
     public AddressBook() {}
 
@@ -64,6 +66,20 @@ public class AddressBook implements ReadOnlyAddressBook {
 
         setPersons(newData.getPersonList());
         setLessons(newData.getLessonList());
+        setTravelBuffer(newData.getTravelBuffer());
+    }
+
+    @Override
+    public int getTravelBuffer() {
+        return travelBuffer;
+    }
+
+    /** Sets the minimum gap for journeys between physical venues. */
+    public void setTravelBuffer(int minutes) {
+        if (!TravelGap.isValidBuffer(minutes)) {
+            throw new IllegalArgumentException(TravelGap.MESSAGE_CONSTRAINTS);
+        }
+        travelBuffer = minutes;
     }
 
     //// person-level operations
@@ -208,11 +224,12 @@ public class AddressBook implements ReadOnlyAddressBook {
         }
 
         return persons.equals(otherAddressBook.persons)
-                && lessons.equals(otherAddressBook.lessons);
+                && lessons.equals(otherAddressBook.lessons)
+                && travelBuffer == otherAddressBook.travelBuffer;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(persons, lessons);
+        return Objects.hash(persons, lessons, travelBuffer);
     }
 }

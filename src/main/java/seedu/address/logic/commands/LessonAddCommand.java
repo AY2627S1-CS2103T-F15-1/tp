@@ -97,6 +97,7 @@ public class LessonAddCommand extends Command {
 
         return new CommandResult(String.format(MESSAGE_SUCCESS, Messages.format(lesson),
                 Messages.formatVenue(lesson)) + LessonCommandUtil.getOverlapWarning(model, lesson)
+                + LessonCommandUtil.getTravelWarnings(model, next -> next.getDate().equals(lesson.getDate()))
                 + formatChangedLessonNumbers(model.getFilteredLessonList(), lesson, previousLessonCount));
     }
 

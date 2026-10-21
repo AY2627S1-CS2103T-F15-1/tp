@@ -6,7 +6,9 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_DURATION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TIME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_VENUE;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.logging.Logger;
 
 import seedu.address.commons.core.LogsCenter;
@@ -79,12 +81,16 @@ public class LessonMoveCommand extends Command {
         if (!moved.isSameLesson(target) && model.hasLesson(moved)) {
             throw new CommandException(LessonCommandUtil.MESSAGE_DUPLICATE_LESSON);
         }
+        List<UUID> previousNumbers = LessonCommandUtil.displayedLessonIds(model);
         model.setLesson(target, moved);
         logger.fine("Rescheduled lesson");
 
         return new CommandResult(String.format(MESSAGE_SUCCESS, target.getStudentName(), target.getSubject(),
                 Messages.formatSlot(target), Messages.formatSlot(moved))
-                + LessonCommandUtil.getOverlapWarning(model, moved));
+                + LessonCommandUtil.getOverlapWarning(model, moved)
+                + LessonCommandUtil.getTravelWarnings(model, next -> next.getDate().equals(moved.getDate())
+                        || next.getDate().equals(target.getDate()))
+                + LessonCommandUtil.getChangedLessonNumbers(model, previousNumbers));
     }
 
     private static void requireMovable(Lesson lesson) throws CommandException {

@@ -1,0 +1,20 @@
+package seedu.address.logic.parser;
+
+import seedu.address.logic.commands.LessonSeriesCancelCommand;
+import seedu.address.logic.parser.exceptions.ParseException;
+
+/** Requires an explicit, standalone confirmation after the displayed occurrence index. */
+public class LessonSeriesCancelCommandParser implements Parser<LessonSeriesCancelCommand> {
+    @Override
+    public LessonSeriesCancelCommand parse(String args) throws ParseException {
+        String[] words = args.strip().split("\\s+");
+        if (words.length != 3 || !words[0].equals("cancel") || !words[2].equals("confirm")) {
+            throw new ParseException(LessonSeriesCancelCommand.MESSAGE_USAGE);
+        }
+        try {
+            return new LessonSeriesCancelCommand(ParserUtil.parseIndex(words[1]));
+        } catch (ParseException e) {
+            throw new ParseException(LessonSeriesCancelCommand.MESSAGE_USAGE, e);
+        }
+    }
+}

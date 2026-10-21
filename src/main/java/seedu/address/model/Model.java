@@ -39,6 +39,9 @@ public interface Model {
      */
     void setAddressBook(ReadOnlyAddressBook addressBook);
 
+    /** Sets the persistent minimum gap between lessons at different physical venues. */
+    void setTravelBuffer(int minutes);
+
     /** Returns the AddressBook */
     ReadOnlyAddressBook getAddressBook();
 

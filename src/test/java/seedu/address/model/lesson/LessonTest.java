@@ -25,6 +25,20 @@ import seedu.address.testutil.PersonBuilder;
 public class LessonTest {
 
     @Test
+    public void seriesIdentity_retainedAcrossEveryLessonUpdate() {
+        Lesson original = ALICE_MATH.snapshotStudent(ALICE).withSeriesId("weekly-series").prepare("Bring textbook");
+        for (Lesson changed : java.util.List.of(original.cancel("Unwell"), original.complete("Covered algebra"),
+                original.miss(), original.prepare("Bring worksheets"), original.withStudent(BENSON),
+                original.snapshotStudent(ALICE), original.reschedule(original.getDate(), new LessonTime("09:00"),
+                        original.getDuration(), null))) {
+            assertEquals(original.getId(), changed.getId());
+            assertEquals(original.getSeriesId(), changed.getSeriesId());
+        }
+        assertThrows(IllegalArgumentException.class, () -> original.withSeriesId(" "));
+        assertThrows(NullPointerException.class, () -> original.withSeriesId(null));
+    }
+
+    @Test
     public void isValidNotes() {
         assertTrue(Lesson.isValidNotes("Covered algebra; revise x² + 2x + 1."));
         assertTrue(Lesson.isValidNotes("a".repeat(Lesson.MAX_NOTES_LENGTH)));

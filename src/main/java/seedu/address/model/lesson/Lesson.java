@@ -49,6 +49,7 @@ public class Lesson {
     private final UUID studentId;
     private final Level academicLevel;
     private final String preparation;
+    private final String seriesId;
 
     // Identity fields
     private final Name studentName;
@@ -86,12 +87,22 @@ public class Lesson {
     public Lesson(UUID id, UUID studentId, Level academicLevel, String preparation, Name studentName,
             Phone studentPhone, Subject subject, LessonDate date, LessonTime time, LessonDuration duration,
             Venue venue, LessonStatus status, String notes, String cancelReason) {
+        this(id, studentId, academicLevel, preparation, studentName, studentPhone, subject, date, time,
+                duration, venue, status, notes, cancelReason, null);
+    }
+
+    /** Creates a lesson whose optional recurring-series identity survives edits and storage. */
+    public Lesson(UUID id, UUID studentId, Level academicLevel, String preparation, Name studentName,
+            Phone studentPhone, Subject subject, LessonDate date, LessonTime time, LessonDuration duration,
+            Venue venue, LessonStatus status, String notes, String cancelReason, String seriesId) {
         requireAllNonNull(id, studentName, studentPhone, subject, date, time, duration, status);
+        checkArgument(seriesId == null || !seriesId.isBlank(), "Series ID must not be blank.");
         checkArgument(preparation == null || isValidNotes(preparation), MESSAGE_NOTES_CONSTRAINTS);
         this.id = id;
         this.studentId = studentId;
         this.academicLevel = academicLevel;
         this.preparation = preparation;
+        this.seriesId = seriesId;
         checkArgument(isValidTimeRange(time, duration), MESSAGE_CONSTRAINTS);
         checkArgument(notes == null || isValidNotes(notes), MESSAGE_NOTES_CONSTRAINTS);
         checkArgument(cancelReason == null || isValidCancelReason(cancelReason), MESSAGE_REASON_CONSTRAINTS);
@@ -149,16 +160,28 @@ public class Lesson {
         return Optional.ofNullable(preparation);
     }
 
+    /** Returns the shared identity of a recurring series, independent of its occurrences' dates. */
+    public Optional<String> getSeriesId() {
+        return Optional.ofNullable(seriesId);
+    }
+
+    /** Links an occurrence to a recurring series without replacing its permanent lesson identity. */
+    public Lesson withSeriesId(String value) {
+        Objects.requireNonNull(value);
+        return new Lesson(id, studentId, academicLevel, preparation, studentName, studentPhone, subject,
+                date, time, duration, venue, status, notes, cancelReason, value);
+    }
+
     /** Captures the student's current level only when creating a new lesson. */
     public Lesson snapshotStudent(Person student) {
         return new Lesson(id, student.getId(), student.getLevel(), preparation, student.getName(),
-                student.getPhone(), subject, date, time, duration, venue, status, notes, cancelReason);
+                student.getPhone(), subject, date, time, duration, venue, status, notes, cancelReason, seriesId);
     }
 
     /** Records preparation independently of status and teaching notes. */
     public Lesson prepare(String value) {
         return new Lesson(id, studentId, academicLevel, value, studentName, studentPhone, subject, date, time,
-                duration, venue, status, notes, cancelReason);
+                duration, venue, status, notes, cancelReason, seriesId);
     }
 
     public Name getStudentName() {
@@ -247,7 +270,7 @@ public class Lesson {
     public Lesson reschedule(LessonDate newDate, LessonTime newTime, LessonDuration newDuration, Venue newVenue) {
         return new Lesson(id, studentId, academicLevel, preparation, studentName, studentPhone,
                 subject, newDate, newTime, newDuration, newVenue, status,
-                notes, cancelReason);
+                notes, cancelReason, seriesId);
     }
 
     /**
@@ -257,7 +280,7 @@ public class Lesson {
     public Lesson cancel(String reason) {
         return new Lesson(id, studentId, academicLevel, preparation, studentName, studentPhone,
                 subject, date, time, duration, venue, LessonStatus.CANCELLED,
-                notes, reason);
+                notes, reason, seriesId);
     }
 
     /**
@@ -267,7 +290,7 @@ public class Lesson {
     public Lesson complete(String newNotes) {
         return new Lesson(id, studentId, academicLevel, preparation, studentName, studentPhone,
                 subject, date, time, duration, venue, LessonStatus.COMPLETED,
-                newNotes == null ? notes : newNotes, cancelReason);
+                newNotes == null ? notes : newNotes, cancelReason, seriesId);
     }
 
     /**
@@ -276,7 +299,7 @@ public class Lesson {
     public Lesson miss() {
         return new Lesson(id, studentId, academicLevel, preparation, studentName, studentPhone,
                 subject, date, time, duration, venue, LessonStatus.MISSED,
-                notes, cancelReason);
+                notes, cancelReason, seriesId);
     }
 
     /**
@@ -293,7 +316,7 @@ public class Lesson {
         assert person != null : "The new student of a lesson must not be null";
         return new Lesson(id, person.getId(), academicLevel, preparation, person.getName(), person.getPhone(),
                 subject, date, time, duration, venue, status, notes,
-                cancelReason);
+                cancelReason, seriesId);
     }
 
     /**
@@ -363,13 +386,14 @@ public class Lesson {
                 && status == otherLesson.status
                 && Objects.equals(notes, otherLesson.notes)
                 && Objects.equals(cancelReason, otherLesson.cancelReason)
-                && Objects.equals(preparation, otherLesson.preparation);
+                && Objects.equals(preparation, otherLesson.preparation)
+                && Objects.equals(seriesId, otherLesson.seriesId);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(studentName, studentPhone, subject, date, time, duration, venue, status, notes,
-                cancelReason, preparation);
+                cancelReason, preparation, seriesId);
     }
 
     @Override

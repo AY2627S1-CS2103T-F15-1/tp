@@ -30,6 +30,7 @@ class JsonAdaptedLesson {
     private String studentId;
     private String academicLevel;
     private String preparation;
+    private String seriesId;
     private final String studentName;
     private final String studentPhone;
     private final String subject;
@@ -73,6 +74,7 @@ class JsonAdaptedLesson {
         studentId = source.getStudentId().map(UUID::toString).orElse(null);
         academicLevel = source.getAcademicLevel().map(level -> level.value).orElse(null);
         preparation = source.getPreparation().orElse(null);
+        seriesId = source.getSeriesId().orElse(null);
         studentName = source.getStudentName().fullName;
         studentPhone = source.getStudentPhone().value;
         subject = source.getSubject().value;
@@ -125,9 +127,9 @@ class JsonAdaptedLesson {
                     studentId == null ? null : UUID.fromString(studentId),
                     academicLevel == null ? null : new Level(academicLevel), preparation,
                     modelStudentName, modelStudentPhone, modelSubject, modelDate, modelTime, modelDuration,
-                    modelVenue, modelStatus, notes, cancelReason);
+                    modelVenue, modelStatus, notes, cancelReason, seriesId);
         } catch (IllegalArgumentException e) {
-            throw new IllegalValueException("Invalid lesson ID, historical level, or preparation notes.");
+            throw new IllegalValueException("Invalid lesson ID, historical level, preparation notes, or series ID.");
         }
     }
 

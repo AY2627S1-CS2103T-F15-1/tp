@@ -2,6 +2,7 @@ package seedu.address.model;
 
 import javafx.collections.ObservableList;
 import seedu.address.model.lesson.Lesson;
+import seedu.address.model.lesson.TravelGap;
 import seedu.address.model.person.Person;
 
 /**
@@ -20,5 +21,10 @@ public interface ReadOnlyAddressBook {
      * This list will not contain any duplicate lessons.
      */
     ObservableList<Lesson> getLessonList();
+
+    /** Returns the offline travel buffer; older data sets use thirty minutes. */
+    default int getTravelBuffer() {
+        return TravelGap.DEFAULT_BUFFER;
+    }
 
 }

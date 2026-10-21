@@ -3,6 +3,10 @@ package seedu.address.logic.commands;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Messages;
@@ -13,6 +17,7 @@ import seedu.address.model.lesson.LessonDate;
 import seedu.address.model.lesson.LessonDuration;
 import seedu.address.model.lesson.LessonStatus;
 import seedu.address.model.lesson.LessonTime;
+import seedu.address.model.lesson.TravelGap;
 import seedu.address.model.person.Person;
 
 /**
@@ -122,5 +127,35 @@ final class LessonCommandUtil {
             return "";
         }
         return String.format(MESSAGE_OVERLAP_WARNING, Messages.formatOverlaps(overlappingLessons));
+    }
+
+    /** Reports travel warnings for the selected destination lessons without changing any displayed numbers. */
+    static String getTravelWarnings(Model model, Predicate<Lesson> destinations) {
+        return TravelGap.find(model.getAddressBook().getLessonList(), model.getAddressBook().getTravelBuffer())
+                .stream().filter(gap -> destinations.test(gap.next()))
+                .map(gap -> String.format("\nWarning: only %d minutes to travel from %s to %s before %s "
+                                + "on %s at %s (buffer: %d minutes).", gap.minutes(),
+                        Messages.formatVenue(gap.previous()), Messages.formatVenue(gap.next()),
+                        gap.next().getStudentName(), gap.next().getDate(), gap.next().getTime(), gap.buffer()))
+                .collect(Collectors.joining());
+    }
+
+    /** Captures the exact identities referred to by the currently displayed lesson numbers. */
+    static List<UUID> displayedLessonIds(Model model) {
+        return model.getFilteredLessonList().stream().map(Lesson::getId).toList();
+    }
+
+    /** Echoes refreshed numbers whenever an edit removes or reorders a displayed lesson. */
+    static String getChangedLessonNumbers(Model model, List<UUID> before) {
+        if (before.equals(displayedLessonIds(model))) {
+            return "";
+        }
+        List<Lesson> lessons = model.getFilteredLessonList();
+        return "\n\nLesson numbers have changed. Current lesson list:"
+                + (lessons.isEmpty() ? "\nNo lessons in the current list."
+                    : IntStream.range(0, lessons.size())
+                        .mapToObj(i -> "\n" + (i + 1) + ". " + Messages.format(lessons.get(i)) + ", "
+                                + Messages.formatVenue(lessons.get(i)) + "  (" + lessons.get(i).getStatus() + ")")
+                        .collect(Collectors.joining()));
     }
 }

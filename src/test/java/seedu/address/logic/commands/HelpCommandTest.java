@@ -27,7 +27,7 @@ public class HelpCommandTest {
         assertTrue(message.startsWith(HelpCommand.MESSAGE_ALL_COMMANDS));
         for (String command : new String[] {"add", "edit", "delete", "list", "find", "view", "sort", "remark",
             "lesson add", "lesson list", "lesson move", "lesson cancel", "lesson done", "lesson missed",
-            "agenda", "today", "clear", "help", "exit"}) {
+            "lesson series cancel", "travel", "agenda", "today", "clear", "help", "exit"}) {
             assertTrue(message.contains("\n  " + command + " "), command + " is missing from the list");
         }
         assertTrue(message.contains("Schedules a lesson"));
@@ -57,6 +57,8 @@ public class HelpCommandTest {
         assertHelpUsage(LessonCancelCommand.MESSAGE_USAGE, "lesson cancel");
         assertHelpUsage(LessonDoneCommand.MESSAGE_USAGE, "lesson done");
         assertHelpUsage(LessonMissedCommand.MESSAGE_USAGE, "lesson missed");
+        assertHelpUsage(LessonSeriesCancelCommand.MESSAGE_USAGE, "lesson series cancel");
+        assertHelpUsage(TravelCommand.MESSAGE_USAGE, "travel");
         assertHelpUsage(AgendaCommand.MESSAGE_USAGE, "agenda");
         assertHelpUsage(TodayCommand.MESSAGE_USAGE, "today");
         assertHelpUsage(ClearCommand.MESSAGE_USAGE, "clear");

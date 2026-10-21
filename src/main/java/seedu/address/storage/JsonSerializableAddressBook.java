@@ -15,6 +15,7 @@ import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.lesson.Lesson;
+import seedu.address.model.lesson.TravelGap;
 import seedu.address.model.person.Person;
 
 /**
@@ -29,6 +30,7 @@ class JsonSerializableAddressBook {
             "Lessons list contains a lesson whose student is not in the persons list.";
 
     private Integer schemaVersion;
+    private Integer travelBuffer;
 
     private final List<JsonAdaptedPerson> persons = new ArrayList<>();
     private final List<JsonAdaptedLesson> lessons = new ArrayList<>();
@@ -53,6 +55,7 @@ class JsonSerializableAddressBook {
      */
     public JsonSerializableAddressBook(ReadOnlyAddressBook source) {
         schemaVersion = 14;
+        travelBuffer = source.getTravelBuffer();
         persons.addAll(source.getPersonList().stream().map(JsonAdaptedPerson::new).collect(Collectors.toList()));
         lessons.addAll(source.getLessonList().stream().map(lesson -> {
             Lesson linked = lesson.getStudentId().isPresent() ? lesson : source.getPersonList().stream()
@@ -73,6 +76,12 @@ class JsonSerializableAddressBook {
         Set<UUID> studentIds = new HashSet<>();
         Set<UUID> lessonIds = new HashSet<>();
         AddressBook addressBook = new AddressBook();
+        if (travelBuffer != null) {
+            if (!TravelGap.isValidBuffer(travelBuffer)) {
+                throw new IllegalValueException(TravelGap.MESSAGE_CONSTRAINTS);
+            }
+            addressBook.setTravelBuffer(travelBuffer);
+        }
         for (JsonAdaptedPerson jsonAdaptedPerson : persons) {
             if (jsonAdaptedPerson == null) {
                 throw new IllegalValueException("Persons list contains a null student.");

@@ -25,6 +25,18 @@ public class JsonSerializableAddressBookTest {
     private static final Path DUPLICATE_PERSON_FILE = TEST_DATA_FOLDER.resolve("duplicatePersonAddressBook.json");
 
     @Test
+    public void toModelType_missingBufferUsesDefaultAndInvalidBufferRejected() throws Exception {
+        JsonSerializableAddressBook legacy = JsonUtil.fromJsonString("{\"persons\":[]}",
+                JsonSerializableAddressBook.class);
+        assertEquals(30, legacy.toModelType().getTravelBuffer());
+        for (int invalid : new int[]{-1, 181}) {
+            JsonSerializableAddressBook data = JsonUtil.fromJsonString("{\"persons\":[],\"travelBuffer\":"
+                    + invalid + "}", JsonSerializableAddressBook.class);
+            assertThrows(IllegalValueException.class, data::toModelType);
+        }
+    }
+
+    @Test
     public void toModelType_typicalPersonsFile_success() throws Exception {
         JsonSerializableAddressBook dataFromFile = JsonUtil.readJsonFile(TYPICAL_PERSONS_FILE,
                 JsonSerializableAddressBook.class).get();
