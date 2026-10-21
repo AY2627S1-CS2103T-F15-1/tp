@@ -224,7 +224,10 @@ public class ModelManager implements Model {
     }
 
     private void resetDestructiveAction() {
-        lastDestructiveAction = DestructiveActionType.NONE;
+        // reset only if changed
+        if (!this.lastState.equals(this.addressBook)) {
+            lastDestructiveAction = DestructiveActionType.NONE;
+        }
     }
 
     @Override
