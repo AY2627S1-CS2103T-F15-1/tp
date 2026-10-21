@@ -39,4 +39,15 @@ public class AppUtil {
             throw new IllegalArgumentException(errorMessage);
         }
     }
+
+    /**
+     * Checks that {@code condition} is true. Used for validating the state of an object before a method acts.
+     *
+     * @throws IllegalStateException with {@code errorMessage} if {@code condition} is false.
+     */
+    public static void checkState(boolean condition, String errorMessage) {
+        if (!condition) {
+            throw new IllegalStateException(errorMessage);
+        }
+    }
 }

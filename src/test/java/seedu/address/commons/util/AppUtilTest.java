@@ -33,4 +33,14 @@ public class AppUtilTest {
         String errorMessage = "error message";
         assertThrows(IllegalArgumentException.class, errorMessage, () -> AppUtil.checkArgument(false, errorMessage));
     }
+
+    @Test
+    public void checkState_true_nothingHappens() {
+        AppUtil.checkState(true, "");
+    }
+
+    @Test
+    public void checkState_false_throwsIllegalStateExceptionWithTheMessage() {
+        assertThrows(IllegalStateException.class, "bad", () -> AppUtil.checkState(false, "bad"));
+    }
 }
