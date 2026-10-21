@@ -13,6 +13,7 @@ import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
+import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
 
@@ -27,6 +28,7 @@ public class ModelManager implements Model {
     private final FilteredList<Person> filteredPersons;
     private final FilteredList<Lesson> filteredLessons;
     private final SortedList<Lesson> sortedLessons;
+    private List<Homework> displayedHomework = List.of();
 
     /**
      * Initializes a ModelManager with the given addressBook and userPrefs.
@@ -106,6 +108,31 @@ public class ModelManager implements Model {
         requireNonNull(comparator);
 
         addressBook.sortPersons(comparator);
+    }
+
+    @Override
+    public void addHomework(Homework homework) {
+        addressBook.addHomework(homework);
+    }
+
+    @Override
+    public void setHomework(Homework target, Homework replacement) {
+        addressBook.setHomework(target, replacement);
+    }
+
+    @Override
+    public void deleteHomework(Homework homework) {
+        addressBook.removeHomework(homework);
+    }
+
+    @Override
+    public List<Homework> getDisplayedHomework() {
+        return displayedHomework;
+    }
+
+    @Override
+    public void showHomework(List<Homework> homework) {
+        displayedHomework = List.copyOf(homework);
     }
 
     //=========== Lessons ====================================================================================

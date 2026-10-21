@@ -169,6 +169,7 @@ Format: `view INDEX`
   * the **next lesson**: the date, time, subject and venue of the first scheduled lesson from today onwards
   * the **recent lesson notes**: the notes of the 3 most recent completed lessons, newest first
   * the **lesson history**: how many lessons are completed, cancelled and missed
+  * the **outstanding homework**: assignments awaiting submission or review, with due dates and feedback
 * A section with nothing to show says so, for example `No upcoming lessons.`, instead of disappearing.
 * The command only shows information. It does not change the student list, so the indexes you use for other commands stay the same.
 
@@ -199,12 +200,12 @@ Format: `delete INDEX [confirm]`
 * Deletes the student at the specified `INDEX`.
 * The index refers to the index number shown in the displayed student list.
 * The index **must be a positive integer** 1, 2, 3, ...
-* A student with no lessons is deleted immediately.
-* Deleting a student also deletes **all of their lessons**, and this cannot be undone. If the student has any lessons, TutorFlow does not delete anything yet. It shows the student's name, phone number, number of lessons and, if there are any, a warning about upcoming lessons, and asks you to repeat the command with `confirm`.
+* A student with no lessons or homework is deleted immediately.
+* Deleting a student also deletes **all of their lessons and homework**, including feedback, and this cannot be undone. If the student has linked records, TutorFlow shows their name, phone number, linked counts, and upcoming commitments, and asks you to repeat the command with `confirm`.
 * The keyword `confirm` is in lower case.
 
 Examples:
-* `list` followed by `delete 2` deletes the 2nd student, if they have no lessons.
+* `list` followed by `delete 2` deletes the 2nd student, if they have no lessons or homework.
 * `delete 3` on a student with 12 lessons shows a prompt; `delete 3 confirm` then deletes the student and the 12 lessons.
 * `find Betsy` followed by `delete 1` deletes the 1st student in the results of the `find` command.
 
@@ -267,12 +268,13 @@ Examples:
 
 ### Viewing today's dashboard: `today`
 
-Shows what today requires: today's lessons, and the past lessons that are not yet marked completed. TutorFlow also shows this when it starts.
+Shows what today requires: today's lessons, past lessons not yet marked completed, and overdue homework. TutorFlow also shows this when it starts.
 
 Format: `today`
 
 * The first section, `TODAY'S LESSONS`, shows the number of lessons today and their total time, followed by the time, student, subject and venue of each lesson. Lessons that overlap another lesson are marked `⚠ overlaps`. Cancelled lessons are left out.
 * The second section, `LESSONS AWAITING NOTES`, shows the scheduled lessons from earlier days that were not marked completed, the most recent first.
+* The third section, `OVERDUE HOMEWORK`, shows assigned work due before today, or `No overdue homework.`. Run `hw list overdue/` to get selectable numbers.
 * An empty section is not an error: it shows `No lessons today.` or `All past lessons are recorded.`
 * Today is the date on your computer, so a wrong system clock shows the wrong day.
 
@@ -372,7 +374,7 @@ Examples:
 
 ### Clearing all entries: `clear`
 
-Deletes **all** students and lessons from TutorFlow.
+Deletes **all** students, lessons, and homework from TutorFlow.
 
 Format: `clear confirm`
 
@@ -382,7 +384,7 @@ Format: `clear confirm`
 * Clearing data that is already empty works and does nothing.
 
 Examples:
-* `clear` shows `This deletes ALL students and lessons. Type 'clear confirm' to proceed.`
+* `clear` shows `This deletes ALL students, lessons, and homework. Type 'clear confirm' to proceed.`
 * `clear confirm` deletes everything.
 
 ### Exiting the program: `exit`
@@ -411,7 +413,7 @@ Previously accepted names, short phone numbers, email terminal labels and venues
 
 TutorFlow data is saved automatically as a JSON file `data/tutorflow-v14.json` relative to the folder from which TutorFlow is launched. Advanced users are welcome to update data directly by editing that data file.
 
-Every lesson in the file must be with a student in the same file, with the same name and phone number. A file with a lesson whose student is missing is treated as invalid, as described below.
+Every lesson and homework assignment must link to a student in the same file through its internal student ID. Legacy lessons are linked by name and phone during migration. Missing student links are treated as invalid, as described below.
 
 <box type="warning" seamless>
 
@@ -495,12 +497,64 @@ rename, reschedule, cancellation, or deletion shifts that selection, the result 
 current numbered list before another indexed command is accepted. This refresh also appears
 in a save-error message if the session changed but the write failed.
 
+### Homework assignments and history
+
+Use `hw list` before an indexed homework command. Homework numbers belong to that displayed
+list until you explicitly run `hw list` again. Adding homework, changing due dates or status,
+renaming students, archiving, and failed saves do not shift those numbers. A deleted number
+reports that its homework was deleted; it never selects the next item. Run `hw list` to refresh.
+Numbers are session-local, so display a new list after restarting.
+
+| Action | Command |
+|---|---|
+| Assign | `hw add st/STUDENT_INDEX desc/DESCRIPTION due/DATE` |
+| List all history | `hw list [st/STUDENT_INDEX]` |
+| Find unsubmitted past-due work | `hw list [st/STUDENT_INDEX] overdue/` |
+| Find work awaiting submission or review | `hw list [st/STUDENT_INDEX] outstanding/` |
+| Correct description or due date | `hw edit INDEX [desc/DESCRIPTION] [due/DATE]` |
+| Update lifecycle | `hw status INDEX s/assigned`, `s/submitted`, or `s/reviewed` |
+| Record or replace feedback | `hw feedback INDEX f/FEEDBACK` |
+| Delete | `hw delete INDEX [confirm]` |
+
+* Descriptions contain 1-200 printable characters on one line. Feedback contains 1-1000.
+  Surrounding spaces are trimmed and repeated spaces are collapsed. Empty values and duplicate
+  prefixes are rejected. Free text may contain unrelated prefix-like words, such as `n/`.
+* Due dates accept `YYYY-MM-DD`, `DD/MM/YYYY`, `today`, or `tmr`. Assignment dates and changed due
+  dates must be today through one calendar year ahead, inclusive, using the local computer date.
+  Editing another field preserves an old due date; explicitly supplying the same old date also works.
+* Identical normalized descriptions and due dates for the same student are rejected, even when
+  the earlier item is reviewed. In-place edits preserve identity, status, and existing feedback.
+* New homework starts `assigned`. Status values are case-insensitive. `overdue` is derived only
+  when assigned homework has a due date before today; submission clears it. Repeating the same
+  status reports that it is already set. Backward corrections are allowed with a warning and retain
+  recorded feedback. Recording new feedback requires `submitted` or `reviewed`.
+* Lists show overdue items first, then due dates ascending, retaining insertion order for ties.
+  History includes reviewed items and feedback; `outstanding/` includes assigned and submitted work.
+  `overdue/` and `outstanding/` take no values and cannot be combined.
+* Homework may be assigned without an upcoming lesson; the result includes a note. Archived
+  students retain homework and can receive status/feedback corrections. Restore them before assigning
+  new work. Use `student list archived/` then `hw list st/INDEX` to inspect their full history.
+* `view INDEX` includes outstanding homework; `today` and the startup dashboard include overdue
+  homework. These summaries do not change the numbered homework selection.
+* Homework deletion requires `confirm` when feedback exists. Student deletion reports linked
+  homework and upcoming outstanding homework counts and requires confirmation. Confirmed student
+  deletion removes its homework and feedback; `clear confirm` removes all homework as well.
+* A failed save retains the change and the same numbered selection in this session. Fix the write
+  problem and use `save` before closing; the normal exit flow refuses to discard unsaved work.
+
+Example journey: `hw add st/1 desc/Algebra Q1-10 due/tmr`, `hw list`,
+`hw status 1 s/submitted`, `hw feedback 1 f/Revisit sign errors`, `hw status 1 s/reviewed`,
+then `hw list st/1` to inspect the completed history.
+
 ### Migrating older data
 
 v1.4 writes `data/tutorflow-v14.json`. If this file is absent, it reads legacy
 `data/addressbook.json`, assigns stable internal student and lesson identifiers, and saves
 an initial v1.4 copy. The legacy file remains untouched so an older application cannot erase
 v1.4 fields. If both files exist, the v1.4 file takes precedence. Keep both in your backup.
+This homework alpha writes schema 15 and accepts unversioned legacy files plus schema 14 and 15.
+Older files without homework start with an empty homework domain. The foundation alpha cannot open
+schema 15, which protects homework from being dropped by an older build.
 An unsupported schema version stops startup and leaves the original file in place. Open that data
 with a compatible TutorFlow build, or restore a backup made by your installed build. An older alpha
 cannot open data saved by a newer alpha that added data fields. Invalid files use the recovery flow

@@ -22,6 +22,7 @@ import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.ReadOnlyUserPrefs;
+import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
 import seedu.address.testutil.PersonBuilder;
@@ -114,6 +115,31 @@ public class AddCommandTest {
      * A default model stub that has all of the methods failing.
      */
     private class ModelStub implements Model {
+        @Override
+        public void addHomework(Homework homework) {
+            throw new AssertionError("Unexpected homework operation");
+        }
+
+        @Override
+        public void setHomework(Homework target, Homework replacement) {
+            throw new AssertionError("Unexpected homework operation");
+        }
+
+        @Override
+        public void deleteHomework(Homework homework) {
+            throw new AssertionError("Unexpected homework operation");
+        }
+
+        @Override
+        public java.util.List<Homework> getDisplayedHomework() {
+            throw new AssertionError("Unexpected homework operation");
+        }
+
+        @Override
+        public void showHomework(java.util.List<Homework> homework) {
+            throw new AssertionError("Unexpected homework operation");
+        }
+
         @Override
         public ReadOnlyUserPrefs getUserPrefs() {
             throw new AssertionError("This method should not be called.");
