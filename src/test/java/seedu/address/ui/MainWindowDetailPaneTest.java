@@ -7,37 +7,26 @@ import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.ui.FxTestSupport.awaitFx;
 import static seedu.address.ui.FxTestSupport.onFx;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import javafx.event.ActionEvent;
 import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SplitPane;
-import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.stage.Stage;
 import javafx.util.Duration;
-import seedu.address.logic.LogicManager;
 import seedu.address.logic.view.DetailView;
-import seedu.address.model.AddressBook;
-import seedu.address.model.ModelManager;
-import seedu.address.model.ReadOnlyAddressBook;
-import seedu.address.model.UserPrefs;
-import seedu.address.storage.JsonAddressBookStorage;
-import seedu.address.storage.JsonUserPrefsStorage;
-import seedu.address.storage.StorageManager;
 import seedu.address.testutil.LessonBuilder;
 
 /** Tests the layout of the main window and what its detail pane shows, on the JavaFX application thread. */
@@ -48,72 +37,41 @@ public class MainWindowDetailPaneTest {
     @TempDir
     public Path temporaryFolder;
 
-    private Stage stage;
-    private LogicManager logic;
-    private ModelManager model;
-    private boolean shouldFailWrites;
+    private MainWindowFixture fixture;
 
     @BeforeAll
     public static void startJavaFx() throws Exception {
         FxTestSupport.start();
     }
 
+    @BeforeEach
+    public void createFixture() {
+        fixture = new MainWindowFixture(temporaryFolder);
+    }
+
     @AfterEach
     public void closeWindow() throws Exception {
-        onFx(() -> {
-            if (stage != null) {
-                stage.hide();
-            }
-            return null;
-        });
+        fixture.close();
     }
 
     private MainWindow open(String startupWarning) throws Exception {
-        AddressBook book = new AddressBook();
-        book.addPerson(ALICE);
-        model = new ModelManager(book, new UserPrefs());
-        JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("data.json")) {
-            @Override
-            public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
-                if (shouldFailWrites) {
-                    throw new IOException("Disk full");
-                }
-                super.saveAddressBook(addressBook);
-            }
-        };
-        logic = new LogicManager(model, new StorageManager(storage,
-                new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json"))), startupWarning);
-        return onFx(() -> {
-            stage = new Stage();
-            MainWindow window = new MainWindow(stage, logic, storage.getAddressBookFilePath());
-            window.fillInnerParts();
-            window.show();
-            layout(window);
-            return window;
-        });
+        return fixture.open(startupWarning);
     }
 
     private static void layout(MainWindow window) {
-        window.getRoot().getScene().getRoot().applyCss();
-        window.getRoot().getScene().getRoot().layout();
+        MainWindowFixture.layout(window);
     }
 
-    private static Node find(MainWindow window, String selector) {
-        return window.getRoot().getScene().lookup(selector);
+    private Node find(MainWindow window, String selector) {
+        return fixture.find(selector);
     }
 
     private String type(MainWindow window, String command) throws Exception {
-        return onFx(() -> {
-            TextField input = (TextField) find(window, "#commandTextField");
-            input.setText(command);
-            input.fireEvent(new ActionEvent());
-            layout(window);
-            return ((TextArea) find(window, "#resultDisplay")).getText();
-        });
+        return fixture.type(command);
     }
 
     private String resultBox(MainWindow window) throws Exception {
-        return onFx(() -> ((TextArea) find(window, "#resultDisplay")).getText());
+        return fixture.resultBox();
     }
 
     private DetailView shown(MainWindow window) throws Exception {
@@ -150,12 +108,12 @@ public class MainWindowDetailPaneTest {
         MainWindow window = open("");
 
         onFx(() -> {
-            assertEquals(640, stage.getMinWidth(), 0.1);
-            assertEquals(480, stage.getMinHeight(), 0.1);
-            stage.setWidth(640);
-            stage.setHeight(480);
+            assertEquals(640, fixture.stage().getMinWidth(), 0.1);
+            assertEquals(480, fixture.stage().getMinHeight(), 0.1);
+            fixture.stage().setWidth(640);
+            fixture.stage().setHeight(480);
             layout(window);
-            Scene scene = stage.getScene();
+            Scene scene = fixture.stage().getScene();
             Node command = find(window, "#commandTextField");
             Bounds commandBounds = command.localToScene(command.getBoundsInLocal());
             assertTrue(commandBounds.getMaxY() <= scene.getHeight() + 0.5,
@@ -185,7 +143,7 @@ public class MainWindowDetailPaneTest {
         DetailView dashboard = shown(window);
 
         assertTrue(dashboard.isLive());
-        assertEquals(logic.getDashboardView(), dashboard);
+        assertEquals(fixture.logic().getDashboardView(), dashboard);
         assertEquals(dashboard.title() + "\nShown in the detail pane.", resultBox(window));
     }
 
@@ -229,7 +187,7 @@ public class MainWindowDetailPaneTest {
     @Test
     public void dashboard_isRedrawnAfterAFailedCommandToo() throws Exception {
         MainWindow window = open("");
-        shouldFailWrites = true;
+        fixture.failWrites(true);
 
         String result = type(window, LESSON_TODAY);
 
@@ -252,7 +210,7 @@ public class MainWindowDetailPaneTest {
     @Test
     public void unsavedChanges_warningStaysInTheResultBoxWhileAViewIsShown() throws Exception {
         MainWindow window = open("");
-        shouldFailWrites = true;
+        fixture.failWrites(true);
         type(window, ADD_BOB);
 
         String result = type(window, "today");
@@ -265,7 +223,7 @@ public class MainWindowDetailPaneTest {
     public void pageKeysAndControlArrows_scrollThePaneFromTheCommandBox() throws Exception {
         MainWindow window = open("");
         for (int i = 0; i < 60; i++) {
-            model.addLesson(new LessonBuilder().withStudent(ALICE).withDate(LocalDate.now())
+            fixture.model().addLesson(new LessonBuilder().withStudent(ALICE).withDate(LocalDate.now())
                     .withTime(String.format("%02d:%02d", 6 + i / 4, (i % 4) * 15)).withDuration(15).build());
         }
         type(window, "today");
