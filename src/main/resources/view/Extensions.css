@@ -210,3 +210,62 @@
 .tab-pane.panel-tabs .tab:selected .tab-label {
     -fx-font-weight: bold;
 }
+
+/* The guided tour */
+.tour-spotlight {
+    -fx-fill: transparent;
+    -fx-stroke: #f2b84b;
+    -fx-stroke-width: 3;
+}
+
+.tour-card {
+    -fx-background-color: #2b2b2b;
+    -fx-border-color: #f2b84b;
+    -fx-border-width: 2;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.7), 14, 0.2, 0, 4);
+}
+
+.tour-progress {
+    -fx-text-fill: #b0b0b0;
+    -fx-font-size: 9pt;
+}
+
+.tour-title {
+    -fx-text-fill: white;
+    -fx-font-size: 14pt;
+    -fx-font-weight: bold;
+}
+
+.tour-text {
+    -fx-text-fill: #e6e6e6;
+    -fx-font-size: 10.5pt;
+}
+
+.tour-example {
+    -fx-background-color: #3e7b91;
+    -fx-text-fill: white;
+    -fx-border-color: transparent;
+}
+
+.tour-next {
+    -fx-background-color: #f2b84b;
+    -fx-text-fill: #1d1d1d;
+    -fx-font-weight: bold;
+    -fx-border-color: transparent;
+}
+
+.tour-back,
+.tour-skip {
+    -fx-background-color: transparent;
+    -fx-text-fill: #d6d6d6;
+    -fx-border-color: #6b6b6b;
+}
+
+.tour-next:focused,
+.tour-back:focused,
+.tour-skip:focused,
+.tour-example:focused {
+    -fx-border-color: white;
+}

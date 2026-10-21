@@ -24,6 +24,7 @@
         <URL value="@Extensions.css" />
       </stylesheets>
 
+      <StackPane fx:id="windowRoot">
       <BorderPane>
         <top>
           <VBox>
@@ -33,6 +34,8 @@
               </Menu>
               <Menu mnemonicParsing="false" text="Help">
                 <MenuItem fx:id="helpMenuItem" mnemonicParsing="false" onAction="#handleHelp" text="Help" />
+                <MenuItem fx:id="tourMenuItem" mnemonicParsing="false" onAction="#handleTour"
+                          text="Guided tour" />
               </Menu>
             </MenuBar>
             <StackPane fx:id="demoBannerPlaceholder" />
@@ -68,6 +71,7 @@
           </VBox>
         </bottom>
       </BorderPane>
+      </StackPane>
     </Scene>
   </scene>
 </fx:root>

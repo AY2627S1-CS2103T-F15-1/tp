@@ -56,6 +56,11 @@ public class CommandBox extends UiPart<Region> {
         commandTextField.positionCaret(text.length());
     }
 
+    /** Focuses the command box and leaves what it holds as it is. */
+    public void focus() {
+        commandTextField.requestFocus();
+    }
+
     /**
      * Sets the command box style to use the default style.
      */

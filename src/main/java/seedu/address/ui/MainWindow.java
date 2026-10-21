@@ -1,9 +1,11 @@
 package seedu.address.ui;
 
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.util.Optional;
 import java.util.logging.Logger;
 
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.fxml.FXML;
@@ -51,6 +53,7 @@ public class MainWindow extends UiPart<Stage> {
     private DemoBanner demoBanner;
     private ConfirmBar confirmBar;
     private CommandBox commandBox;
+    private TourOverlay tourOverlay;
     private ResultDisplay resultDisplay;
     private HelpWindow helpWindow;
 
@@ -65,6 +68,9 @@ public class MainWindow extends UiPart<Stage> {
 
     @FXML
     private MenuItem helpMenuItem;
+
+    @FXML
+    private StackPane windowRoot;
 
     @FXML
     private StackPane panelTabsPlaceholder;
@@ -202,6 +208,9 @@ public class MainWindow extends UiPart<Stage> {
 
         confirmBar = new ConfirmBar(panelActions, () -> resultDisplay.setFeedbackToUser(ConfirmBar.MESSAGE_CANCELLED));
         confirmBarPlaceholder.getChildren().add(confirmBar.getRoot());
+        if (!logic.isTourSeen()) {
+            Platform.runLater(this::handleTour);
+        }
         getRoot().getScene().addEventFilter(KeyEvent.KEY_PRESSED, event -> {
             if (event.getCode() == KeyCode.ESCAPE && confirmBar.isAsking()) {
                 confirmBar.cancel();
@@ -256,6 +265,29 @@ public class MainWindow extends UiPart<Stage> {
         } else {
             helpWindow.focus();
         }
+    }
+
+    /**
+     * Starts the guided tour, from its first step, unless it is on screen already.
+     */
+    @FXML
+    public void handleTour() {
+        if (tourOverlay != null && tourOverlay.isShowing()) {
+            return;
+        }
+        panelTabs.select(PanelTabs.Panel.STUDENTS);
+        tourOverlay = new TourOverlay(GuidedTour.steps(LocalDate.now()),
+                selector -> Optional.ofNullable(primaryStage.getScene().lookup(selector)),
+                commandBox::prefill, this::endTour);
+        windowRoot.getChildren().add(tourOverlay.getRoot());
+        tourOverlay.start();
+    }
+
+    /** Takes the tour off the window and remembers that the user has seen it, so that it is not offered again. */
+    private void endTour() {
+        windowRoot.getChildren().remove(tourOverlay.getRoot());
+        logic.markTourSeen();
+        commandBox.focus();
     }
 
     void show() {
@@ -370,6 +402,10 @@ public class MainWindow extends UiPart<Stage> {
 
             if (commandResult.isShowHelp()) {
                 handleHelp();
+            }
+
+            if (commandResult.isTourRequested()) {
+                handleTour();
             }
 
             if (commandResult.isExit()) {

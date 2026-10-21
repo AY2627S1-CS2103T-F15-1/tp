@@ -38,11 +38,18 @@ final class MainWindowFixture {
         this.folder = folder;
     }
 
+    /** Returns preferences of a user who has seen the guided tour, so that it does not open over the window. */
+    static UserPrefs seenTourPrefs() {
+        UserPrefs prefs = new UserPrefs();
+        prefs.setTourSeen(true);
+        return prefs;
+    }
+
     /** Opens a window that holds Alice and starts with {@code startupWarning}. */
     MainWindow open(String startupWarning) throws Exception {
         AddressBook book = new AddressBook();
         book.addPerson(ALICE);
-        return open(book, new UserPrefs(), startupWarning);
+        return open(book, seenTourPrefs(), startupWarning);
     }
 
     /** Opens a window that holds {@code book}, with {@code prefs}, and starts with {@code startupWarning}. */
