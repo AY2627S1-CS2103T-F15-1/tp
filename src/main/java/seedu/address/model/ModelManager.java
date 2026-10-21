@@ -74,8 +74,8 @@ public class ModelManager implements Model {
 
     @Override
     public void setAddressBook(ReadOnlyAddressBook addressBook) {
-        this.resetDestructiveAction();
         this.addressBook.resetData(addressBook);
+        this.resetDestructiveAction();
     }
 
     @Override
@@ -104,15 +104,15 @@ public class ModelManager implements Model {
     @Override
     public void addPerson(Person person) {
         addressBook.addPerson(person);
-        resetDestructiveAction();
         updateFilteredPersonList(PREDICATE_SHOW_ACTIVE_PERSONS);
+        resetDestructiveAction();
     }
 
     @Override
     public void setPerson(Person target, Person editedPerson) {
         requireAllNonNull(target, editedPerson);
-        resetDestructiveAction();
         addressBook.setPerson(target, editedPerson);
+        resetDestructiveAction();
     }
 
     @Override
@@ -124,14 +124,14 @@ public class ModelManager implements Model {
 
     @Override
     public void addHomework(Homework homework) {
-        resetDestructiveAction();
         addressBook.addHomework(homework);
+        resetDestructiveAction();
     }
 
     @Override
     public void setHomework(Homework target, Homework replacement) {
-        resetDestructiveAction();
         addressBook.setHomework(target, replacement);
+        resetDestructiveAction();
     }
 
     @Override
@@ -161,8 +161,8 @@ public class ModelManager implements Model {
     @Override
     public void addLesson(Lesson lesson) {
         addressBook.addLesson(lesson);
-        resetDestructiveAction();
         logger.fine("Added lesson");
+        resetDestructiveAction();
     }
 
     @Override
@@ -174,8 +174,8 @@ public class ModelManager implements Model {
     @Override
     public void setLesson(Lesson target, Lesson editedLesson) {
         requireAllNonNull(target, editedLesson);
-        resetDestructiveAction();
         addressBook.setLesson(target, editedLesson);
+        resetDestructiveAction();
     }
 
     @Override
