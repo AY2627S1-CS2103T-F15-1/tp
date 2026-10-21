@@ -51,17 +51,37 @@ public final class HomeworkQueries {
                 + item.getFeedback().map(feedback -> "\n    Feedback: " + feedback).orElse("");
     }
 
-    /** Formats a non-indexed summary that leaves the command selection unchanged. */
-    public static String summary(ReadOnlyAddressBook book, UUID studentId, boolean isOverdueSummary,
+    /**
+     * A non-indexed summary of unsubmitted or outstanding work that leaves the command selection unchanged.
+     *
+     * @param heading the title with the number of items, such as {@code OVERDUE HOMEWORK (1)}.
+     * @param hasItems whether there is any homework to list.
+     * @param lines one entry for each item, or the sentence that says there are none.
+     */
+    public record Summary(String heading, boolean hasItems, List<String> lines) {
+
+        /** Returns the summary as text, with its entries indented below the heading. */
+        public String toText() {
+            StringBuilder text = new StringBuilder(heading);
+            lines.forEach(line -> text.append("\n  ").append(line));
+            return text.toString();
+        }
+    }
+
+    /** Summarises the overdue homework if {@code isOverdueSummary} is true, and the outstanding homework otherwise. */
+    public static Summary summaryOf(ReadOnlyAddressBook book, UUID studentId, boolean isOverdueSummary,
             LocalDate today) {
         List<Homework> items = select(book, studentId, isOverdueSummary, !isOverdueSummary, today);
         String title = isOverdueSummary ? "OVERDUE HOMEWORK" : "OUTSTANDING HOMEWORK";
-        StringBuilder text = new StringBuilder(title + " (" + items.size() + ")");
-        if (items.isEmpty()) {
-            text.append(isOverdueSummary ? "\n  No overdue homework." : "\n  No outstanding homework.");
-        } else {
-            items.forEach(item -> text.append("\n  ").append(format(book, item, today)));
-        }
-        return text.toString();
+        List<String> lines = items.isEmpty()
+                ? List.of(isOverdueSummary ? "No overdue homework." : "No outstanding homework.")
+                : items.stream().map(item -> format(book, item, today)).toList();
+        return new Summary(title + " (" + items.size() + ")", !items.isEmpty(), lines);
+    }
+
+    /** Formats a non-indexed summary that leaves the command selection unchanged. */
+    public static String summary(ReadOnlyAddressBook book, UUID studentId, boolean isOverdueSummary,
+            LocalDate today) {
+        return summaryOf(book, studentId, isOverdueSummary, today).toText();
     }
 }
