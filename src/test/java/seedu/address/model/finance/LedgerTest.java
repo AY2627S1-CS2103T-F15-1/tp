@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.model.AddressBook;
 import seedu.address.model.lesson.Lesson;
+import seedu.address.model.lesson.LessonStatus;
 import seedu.address.model.person.Person;
 import seedu.address.testutil.LessonBuilder;
 import seedu.address.testutil.PersonBuilder;
@@ -124,6 +125,24 @@ public class LedgerTest {
         Lesson completed = scheduled.complete(null);
         assertThrows(IllegalArgumentException.class, () -> book.chargeLesson(completed, completed));
         assertTrue(book.getLedgerEntries().isEmpty());
+    }
+
+    @Test
+    public void chargeLesson_seriesLesson_preservesIdentityAndRecordsOneCharge() {
+        AddressBook book = new AddressBook();
+        book.addPerson(alice);
+        UUID seriesId = UUID.randomUUID();
+        Lesson lesson = new LessonBuilder().withStudent(alice).withDate(DAY).withSeriesId(seriesId).build();
+        book.addLesson(lesson);
+
+        LedgerEntry charge = book.chargeLesson(lesson, lesson.complete(null)).orElseThrow();
+
+        Lesson storedLesson = book.getLessonList().getFirst();
+        assertEquals(lesson.getId(), storedLesson.getId());
+        assertEquals(lesson.getSeriesId(), storedLesson.getSeriesId());
+        assertEquals(LessonStatus.COMPLETED, storedLesson.getStatus());
+        assertEquals(lesson.getId(), charge.lessonId());
+        assertEquals(1, book.getLedgerEntries().size());
     }
 
     @Test
