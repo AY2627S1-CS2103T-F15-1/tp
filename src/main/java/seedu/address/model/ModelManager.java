@@ -82,9 +82,7 @@ public class ModelManager implements Model {
     @Override
     public void clearAddressBook() {
         if (!this.addressBook.equals(new AddressBook())) {
-            this.saveState(DestructiveActionType.CLEAR);
-            this.addressBook.resetData(new AddressBook());
-            saveNewState();
+            wrapDestructiveAction(() -> this.addressBook.resetData(new AddressBook()), DestructiveActionType.CLEAR);
         }
     }
 
@@ -101,9 +99,7 @@ public class ModelManager implements Model {
 
     @Override
     public void deletePerson(Person target) {
-        saveState(DestructiveActionType.DELETE_STUDENT);
-        addressBook.removePerson(target);
-        saveNewState();
+        wrapDestructiveAction(() -> addressBook.removePerson(target), DestructiveActionType.DELETE_STUDENT);
     }
 
     @Override
@@ -142,9 +138,7 @@ public class ModelManager implements Model {
 
     @Override
     public void deleteHomework(Homework homework) {
-        saveState(DestructiveActionType.DELETE_HW);
-        addressBook.removeHomework(homework);
-        saveNewState();
+        wrapDestructiveAction(() -> addressBook.removeHomework(homework), DestructiveActionType.DELETE_HW);
     }
 
     @Override
@@ -174,9 +168,7 @@ public class ModelManager implements Model {
 
     @Override
     public void deleteLesson(Lesson target) {
-        saveState(DestructiveActionType.DELETE_LESSON);
-        addressBook.removeLesson(target);
-        saveNewState();
+        wrapDestructiveAction(() -> addressBook.removeLesson(target), DestructiveActionType.DELETE_LESSON);
     }
 
     @Override
@@ -225,13 +217,16 @@ public class ModelManager implements Model {
     }
 
     //=========== Undo =============================================================
-    private void saveState(DestructiveActionType actionType) {
-        this.lastState = new AddressBook(this.addressBook);
+    private void saveStates(DestructiveActionType actionType, AddressBook record) {
+        this.lastState = record;
         this.lastDestructiveAction = actionType;
+        this.newState = new AddressBook(this.addressBook);
     }
 
-    private void saveNewState() {
-        this.newState = new AddressBook(this.addressBook);
+    private void wrapDestructiveAction(Runnable action, DestructiveActionType type) {
+        AddressBook record = new AddressBook(this.addressBook);
+        action.run();
+        saveStates(type, record);
     }
 
     private void resetDestructiveAction() {
