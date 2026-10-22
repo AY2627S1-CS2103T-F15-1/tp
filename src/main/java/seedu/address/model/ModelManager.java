@@ -15,6 +15,8 @@ import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
+import seedu.address.model.finance.LedgerEntry;
+import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
 import seedu.address.model.task.Task;
@@ -31,6 +33,7 @@ public class ModelManager implements Model {
     private final FilteredList<Lesson> filteredLessons;
     private final SortedList<Lesson> sortedLessons;
     private List<Task> shownTasks = new ArrayList<>();
+    private List<Homework> displayedHomework = List.of();
 
     /**
      * Initializes a ModelManager with the given addressBook and userPrefs.
@@ -42,7 +45,7 @@ public class ModelManager implements Model {
 
         this.addressBook = new AddressBook(addressBook);
         this.userPrefs = new UserPrefs(userPrefs);
-        filteredPersons = new FilteredList<>(this.addressBook.getPersonList());
+        filteredPersons = new FilteredList<>(this.addressBook.getPersonList(), PREDICATE_SHOW_ACTIVE_PERSONS);
         filteredLessons = new FilteredList<>(this.addressBook.getLessonList());
         sortedLessons = new SortedList<>(filteredLessons, Lesson.CHRONOLOGICAL);
     }
@@ -95,7 +98,7 @@ public class ModelManager implements Model {
     @Override
     public void addPerson(Person person) {
         addressBook.addPerson(person);
-        updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
+        updateFilteredPersonList(PREDICATE_SHOW_ACTIVE_PERSONS);
     }
 
     @Override
@@ -112,7 +115,44 @@ public class ModelManager implements Model {
         addressBook.sortPersons(comparator);
     }
 
+    @Override
+    public void addHomework(Homework homework) {
+        addressBook.addHomework(homework);
+    }
+
+    @Override
+    public void setHomework(Homework target, Homework replacement) {
+        addressBook.setHomework(target, replacement);
+    }
+
+    @Override
+    public void deleteHomework(Homework homework) {
+        addressBook.removeHomework(homework);
+    }
+
+    @Override
+    public List<Homework> getDisplayedHomework() {
+        return displayedHomework;
+    }
+
+    @Override
+    public void showHomework(List<Homework> homework) {
+        displayedHomework = List.copyOf(homework);
+    }
+
     //=========== Lessons ====================================================================================
+
+    @Override
+    public void addLedgerEntry(LedgerEntry entry) {
+        requireNonNull(entry);
+        addressBook.addLedgerEntry(entry);
+    }
+
+    @Override
+    public Optional<LedgerEntry> chargeLesson(Lesson target, Lesson completedLesson) {
+        requireAllNonNull(target, completedLesson);
+        return addressBook.chargeLesson(target, completedLesson);
+    }
 
     @Override
     public boolean hasLesson(Lesson lesson) {

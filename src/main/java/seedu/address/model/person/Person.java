@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 import seedu.address.commons.util.ToStringBuilder;
 
@@ -20,6 +21,9 @@ public class Person {
 
     public static final int MAX_SUBJECTS = 10;
     public static final String MESSAGE_SUBJECT_COUNT = "A student must have between 1 and 10 subjects.";
+
+    private final UUID id;
+    private final boolean isArchived;
 
     // Identity fields
     private final Name name;
@@ -46,7 +50,15 @@ public class Person {
      */
     public Person(Name name, Phone phone, Email email, Level level, Set<Subject> subjects, Rate rate, Venue venue,
             Remark remark) {
-        requireAllNonNull(name, phone, level, subjects, rate, remark);
+        this(UUID.randomUUID(), false, name, phone, email, level, subjects, rate, venue, remark);
+    }
+
+    /** Creates an immutable student with a persisted identity and archive state. */
+    public Person(UUID id, boolean isArchived, Name name, Phone phone, Email email, Level level,
+            Set<Subject> subjects, Rate rate, Venue venue, Remark remark) {
+        requireAllNonNull(id, name, phone, level, subjects, rate, remark);
+        this.id = id;
+        this.isArchived = isArchived;
         checkArgument(isValidSubjectCount(subjects.size()), MESSAGE_SUBJECT_COUNT);
         this.name = name;
         this.phone = phone;
@@ -61,6 +73,24 @@ public class Person {
     /** Returns whether a new or replacement subject set meets the shared domain limit. */
     public static boolean isValidSubjectCount(int size) {
         return size >= 1 && size <= MAX_SUBJECTS;
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public boolean isArchived() {
+        return isArchived;
+    }
+
+    /** Returns a copy with the requested archive state, retaining the persistent identity. */
+    public Person withArchived(boolean shouldBeArchived) {
+        return new Person(id, shouldBeArchived, name, phone, email, level, subjects, rate, venue, remark);
+    }
+
+    /** Retains this student's details under the supplied persistent identity. */
+    public Person withId(UUID value) {
+        return new Person(value, isArchived, name, phone, email, level, subjects, rate, venue, remark);
     }
 
     public Name getName() {
@@ -149,13 +179,14 @@ public class Person {
                 && subjects.equals(otherPerson.subjects)
                 && rate.equals(otherPerson.rate)
                 && Objects.equals(venue, otherPerson.venue)
-                && remark.equals(otherPerson.remark);
+                && remark.equals(otherPerson.remark)
+                && isArchived == otherPerson.isArchived;
     }
 
     @Override
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
-        return Objects.hash(name, phone, email, level, subjects, rate, venue, remark);
+        return Objects.hash(name, phone, email, level, subjects, rate, venue, remark, isArchived);
     }
 
     @Override

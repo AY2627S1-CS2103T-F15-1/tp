@@ -2,9 +2,10 @@ package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_REMARK;
-import static seedu.address.model.Model.PREDICATE_SHOW_ALL_PERSONS;
+import static seedu.address.model.Model.PREDICATE_SHOW_ACTIVE_PERSONS;
 
 import java.util.List;
+import java.util.Objects;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.ToStringBuilder;
@@ -53,13 +54,13 @@ public class RemarkCommand extends Command {
         }
 
         Person personToEdit = lastShownList.get(index.getZeroBased());
-        Person editedPerson = new Person(
+        Person editedPerson = new Person(personToEdit.getId(), personToEdit.isArchived(),
                 personToEdit.getName(), personToEdit.getPhone(), personToEdit.getEmail().orElse(null),
                 personToEdit.getLevel(), personToEdit.getSubjects(), personToEdit.getRate(),
                 personToEdit.getVenue().orElse(null), remark);
 
         model.setPerson(personToEdit, editedPerson);
-        model.updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
+        model.updateFilteredPersonList(PREDICATE_SHOW_ACTIVE_PERSONS);
         return new CommandResult(generateSuccessMessage(editedPerson));
     }
 
@@ -76,6 +77,11 @@ public class RemarkCommand extends Command {
                 || (other instanceof RemarkCommand otherCommand
                 && index.equals(otherCommand.index)
                 && remark.equals(otherCommand.remark));
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(index, remark);
     }
 
     @Override

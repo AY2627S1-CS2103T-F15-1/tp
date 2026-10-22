@@ -3,151 +3,71 @@ package seedu.address.ui;
 import java.io.IOException;
 import java.util.logging.Logger;
 
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.events.EventTarget;
-
-import javafx.concurrent.Worker;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
-import javafx.scene.web.WebView;
 import javafx.stage.Stage;
 import seedu.address.commons.core.LogsCenter;
 
-/**
- * Controller for a help page
- */
+/** Controller for the offline user guide window. */
 public class HelpWindow extends UiPart<Stage> {
-
     private static final Logger logger = LogsCenter.getLogger(HelpWindow.class);
     private static final String FXML = "HelpWindow.fxml";
     private final GuideLoader guideLoader;
+    private boolean loaded;
 
     @FXML
-    private WebView userGuide;
-
+    private GuideView userGuide;
     @FXML
     private Label loadStatus;
 
-    /**
-     * Creates a new HelpWindow.
-     *
-     * @param root Stage to use as the root of the HelpWindow.
-     */
+    /** Creates a help window using the supplied stage. */
     public HelpWindow(Stage root) {
         this(root, UserGuide::loadHtml);
     }
 
-    /**
-     * Creates a help window with a loader, allowing read failures to be handled independently of the viewer.
-     */
+    /** Creates a help window with a loader that can report resource failures. */
     HelpWindow(Stage root, GuideLoader guideLoader) {
         super(FXML, root);
         this.guideLoader = guideLoader;
-        userGuide.getEngine().getLoadWorker().stateProperty().addListener((observable, oldState, newState) -> {
-            switch (newState) {
-                case SCHEDULED, RUNNING -> loadStatus.setText("Loading User Guide...");
-                case SUCCEEDED -> {
-                    guardNavigation();
-                    loadStatus.setText("");
-                }
-                case FAILED, CANCELLED -> loadStatus.setText(
-                        "Could not load the bundled User Guide. Click Reload guide to try again.");
-                default -> loadStatus.setText("");
-            }
-        });
-        userGuide.setContextMenuEnabled(false);
-        userGuide.getEngine().setCreatePopupHandler(features -> null);
-
+        userGuide.setStatusHandler(loadStatus::setText);
     }
 
-    /**
-     * Creates a new HelpWindow.
-     */
     public HelpWindow() {
         this(new Stage());
     }
 
-    /** Cancels external links before WebKit can dispatch navigation, including keyboard and nested-link clicks. */
-    private void guardNavigation() {
-        if (userGuide.getEngine().getDocument() == null) {
-            return;
-        }
-        EventTarget document = (EventTarget) userGuide.getEngine().getDocument();
-        document.addEventListener("click", event -> {
-            Node target = (Node) event.getTarget();
-            while (target != null) {
-                if (target instanceof Element element && element.getTagName().equalsIgnoreCase("a")) {
-                    String destination = element.getAttribute("href");
-                    if (!destination.isEmpty() && !destination.startsWith("#")) {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        loadStatus.setText("Help works offline. External navigation is disabled.");
-                    }
-                    return;
-                }
-                target = target.getParentNode();
-            }
-        }, true);
-    }
-
-    /**
-     * Shows the help window.
-     * @throws IllegalStateException
-     *     <ul>
-     *         <li>
-     *             if this method is called on a thread other than the JavaFX Application Thread.
-     *         </li>
-     *         <li>
-     *             if this method is called during animation or layout processing.
-     *         </li>
-     *         <li>
-     *             if this method is called on the primary stage.
-     *         </li>
-     *         <li>
-     *             if {@code dialogStage} is already showing.
-     *         </li>
-     *     </ul>
-     */
+    /** Shows the guide and retries loading if an earlier read failed. */
     public void show() {
         logger.fine("Showing help page about the application.");
         getRoot().show();
         getRoot().centerOnScreen();
-        Worker.State state = userGuide.getEngine().getLoadWorker().getState();
-        if (state == Worker.State.READY || state == Worker.State.FAILED || state == Worker.State.CANCELLED) {
+        if (!loaded) {
             reloadGuide();
         }
     }
 
-    /**
-     * Returns true if the help window is currently being shown.
-     */
     public boolean isShowing() {
         return getRoot().isShowing();
     }
 
-    /**
-     * Hides the help window.
-     */
     public void hide() {
         getRoot().hide();
     }
 
-    /**
-     * Focuses on the help window.
-     */
     public void focus() {
         getRoot().requestFocus();
     }
 
-    /**
-     * Loads the User Guide bundled from this project's documentation in the help window.
-     */
+    /** Reloads the documentation bundled with this version of the application. */
     @FXML
     private void reloadGuide() {
         try {
-            userGuide.getEngine().loadContent(guideLoader.load());
+            loadStatus.setText("Loading User Guide...");
+            userGuide.loadHtml(guideLoader.load());
+            loaded = true;
+            loadStatus.setText("");
         } catch (IOException e) {
+            loaded = false;
             logger.warning("Could not read the bundled User Guide: " + e);
             loadStatus.setText("Could not read the bundled User Guide. Click Reload guide to try again.");
         }

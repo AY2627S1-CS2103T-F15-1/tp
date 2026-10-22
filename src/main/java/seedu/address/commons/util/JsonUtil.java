@@ -10,8 +10,11 @@ import java.util.logging.Logger;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
@@ -62,7 +65,7 @@ public class JsonUtil {
         try {
             jsonFile = deserializeObjectFromJsonFile(filePath, classOfObjectToDeserialize);
             if (jsonFile == null) {
-                throw new IOException("JSON data must not be null.");
+                throw JsonMappingException.from((JsonParser) null, "JSON data must not be null.");
             }
         } catch (IOException e) {
             logger.warning("Data file read failed: " + e.getClass().getSimpleName());
@@ -94,6 +97,11 @@ public class JsonUtil {
      */
     public static <T> T fromJsonString(String json, Class<T> instanceClass) throws IOException {
         return objectMapper.readValue(json, instanceClass);
+    }
+
+    /** Binds an already parsed JSON document using the same configuration as file loading. */
+    public static <T> T fromJsonTree(JsonNode json, Class<T> instanceClass) throws IOException {
+        return objectMapper.treeToValue(json, instanceClass);
     }
 
     /**

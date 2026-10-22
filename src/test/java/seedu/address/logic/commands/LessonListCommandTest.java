@@ -48,7 +48,7 @@ public class LessonListCommandTest {
         assertEquals(List.of(upcoming), model.getFilteredLessonList());
         assertEquals(String.format(LessonListCommand.MESSAGE_HEADER_UPCOMING, ALICE.getName(), 1) + "\n1. "
                 + upcoming.getDate() + "  " + upcoming.getTimeRange() + "  Math  "
-                + Messages.formatVenue(upcoming) + "  scheduled", message);
+                + Messages.formatVenue(upcoming) + "  [Level at booking: unknown (not recorded)]  scheduled", message);
     }
 
     @Test
@@ -125,5 +125,16 @@ public class LessonListCommandTest {
         for (Lesson lesson : lessons) {
             model.addLesson(lesson);
         }
+    }
+
+    @Test
+    public void execute_lessonWithRecordedLevel_showsLevelAtBooking() throws Exception {
+        Lesson booked = new LessonBuilder().withStudent(ALICE).withDate(LocalDate.now().plusDays(3))
+                .withAcademicLevel("S3").build();
+        addLessons(booked);
+
+        String message = new LessonListCommand(INDEX_FIRST_PERSON, false).execute(model).getFeedbackToUser();
+
+        assertTrue(message.endsWith("  [Level at booking: S3]  scheduled"));
     }
 }

@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ALL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_STUDENT;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.function.Predicate;
@@ -41,15 +42,22 @@ public class LessonListCommand extends Command {
 
     private final Index studentIndex;
     private final boolean isShowingAll;
+    private final Clock clock;
 
     /**
      * Creates a {@code LessonListCommand} to list the lessons of the student at {@code studentIndex}.
      * Past and cancelled lessons are only listed if {@code isShowingAll} is true.
      */
     public LessonListCommand(Index studentIndex, boolean isShowingAll) {
+        this(studentIndex, isShowingAll, Clock.systemDefaultZone());
+    }
+
+    /** Creates a list request with an explicit date source for upcoming lessons. */
+    public LessonListCommand(Index studentIndex, boolean isShowingAll, Clock clock) {
         requireNonNull(studentIndex);
         this.studentIndex = studentIndex;
         this.isShowingAll = isShowingAll;
+        this.clock = requireNonNull(clock);
     }
 
     @Override
@@ -61,7 +69,7 @@ public class LessonListCommand extends Command {
         model.updateFilteredLessonList(isStudentsLesson);
         boolean hasLessons = !model.getFilteredLessonList().isEmpty();
         if (!isShowingAll) {
-            LocalDate today = LocalDate.now();
+            LocalDate today = LocalDate.now(clock);
             model.updateFilteredLessonList(isStudentsLesson.and(lesson -> lesson.isUpcoming(today)));
         }
 
@@ -69,12 +77,14 @@ public class LessonListCommand extends Command {
             return new CommandResult(String.format(MESSAGE_NO_LESSONS, student.getName()));
         }
         if (isShowingAll) {
-            return new CommandResult(format(MESSAGE_HEADER_ALL, student, model.getFilteredLessonList()));
+            return new CommandResult(format(MESSAGE_HEADER_ALL, student, model.getFilteredLessonList()))
+                    .withDisplayedLessons(model.getFilteredLessonList());
         }
         if (model.getFilteredLessonList().isEmpty()) {
             return new CommandResult(String.format(MESSAGE_NO_UPCOMING_LESSONS, student.getName()));
         }
-        return new CommandResult(format(MESSAGE_HEADER_UPCOMING, student, model.getFilteredLessonList()));
+        return new CommandResult(format(MESSAGE_HEADER_UPCOMING, student, model.getFilteredLessonList()))
+                .withDisplayedLessons(model.getFilteredLessonList());
     }
 
     private static String format(String headerFormat, Person student, List<Lesson> lessons) {
@@ -87,7 +97,9 @@ public class LessonListCommand extends Command {
     }
 
     private static String describe(Lesson lesson) {
-        return Messages.formatVenue(lesson) + "  " + lesson.getStatus();
+        return Messages.formatVenue(lesson) + "  [" + Messages.formatAcademicLevel(lesson) + "]"
+                + lesson.getPreparation().map(notes -> "  [Preparation: " + notes + "]").orElse("")
+                + "  " + lesson.getStatus();
     }
 
     @Override

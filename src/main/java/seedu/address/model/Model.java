@@ -7,6 +7,8 @@ import java.util.function.Predicate;
 
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
+import seedu.address.model.finance.LedgerEntry;
+import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
 import seedu.address.model.task.Task;
@@ -17,6 +19,7 @@ import seedu.address.model.task.Task;
 public interface Model {
     /** {@code Predicate} that always evaluates to true */
     Predicate<Person> PREDICATE_SHOW_ALL_PERSONS = unused -> true;
+    Predicate<Person> PREDICATE_SHOW_ACTIVE_PERSONS = person -> !person.isArchived();
 
     /** {@code Predicate} that always evaluates to true for lessons */
     Predicate<Lesson> PREDICATE_SHOW_ALL_LESSONS = unused -> true;
@@ -43,6 +46,12 @@ public interface Model {
 
     /** Returns the AddressBook */
     ReadOnlyAddressBook getAddressBook();
+
+    /** Records a charge or payment for an existing student. */
+    void addLedgerEntry(LedgerEntry entry);
+
+    /** Completes a lesson and records its fee in one operation; free lessons return no charge. */
+    Optional<LedgerEntry> chargeLesson(Lesson target, Lesson completedLesson);
 
     /**
      * Returns true if a person with the same identity as {@code person} exists in the address book.
@@ -153,4 +162,19 @@ public interface Model {
      * Replaces the tasks that the task commands take their indices from with a copy of {@code tasks}.
      */
     void setShownTasks(List<Task> tasks);
+
+    /** Adds an assignment belonging to a known student. */
+    void addHomework(Homework homework);
+
+    /** Replaces an assignment without changing its persistent identity. */
+    void setHomework(Homework target, Homework replacement);
+
+    /** Deletes an assignment. */
+    void deleteHomework(Homework homework);
+
+    /** Returns the immutable rows last explicitly numbered by hw list, including deleted placeholders. */
+    List<Homework> getDisplayedHomework();
+
+    /** Replaces the numbered selection only when a new list is explicitly displayed. */
+    void showHomework(List<Homework> homework);
 }

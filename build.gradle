@@ -72,12 +72,6 @@ dependencies {
     implementation "org.openjfx:javafx-graphics:${javaFxVersion}:win"
     implementation "org.openjfx:javafx-graphics:${javaFxVersion}:mac"
     implementation "org.openjfx:javafx-graphics:${javaFxVersion}:linux"
-    implementation "org.openjfx:javafx-media:${javaFxVersion}:win"
-    implementation "org.openjfx:javafx-media:${javaFxVersion}:mac"
-    implementation "org.openjfx:javafx-media:${javaFxVersion}:linux"
-    implementation "org.openjfx:javafx-web:${javaFxVersion}:win"
-    implementation "org.openjfx:javafx-web:${javaFxVersion}:mac"
-    implementation "org.openjfx:javafx-web:${javaFxVersion}:linux"
 
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.7.0'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.7.4'
@@ -94,6 +88,12 @@ dependencies {
 
 shadowJar {
     archiveFileName = 'tutorflow.jar'
+    doLast {
+        long jarBytes = archiveFile.get().asFile.length()
+        if (jarBytes > 100_000_000L) {
+            throw new GradleException("Submission JAR exceeds 100 MB: ${jarBytes} bytes")
+        }
+    }
 }
 
 defaultTasks 'clean', 'test'

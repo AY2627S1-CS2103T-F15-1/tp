@@ -2,7 +2,10 @@ package seedu.address.logic;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.time.Clock;
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Objects;
 import java.util.logging.Logger;
 
 import javafx.collections.ObservableList;
@@ -37,6 +40,7 @@ public class LogicManager implements Logic {
     private final Storage storage;
     private final AddressBookParser addressBookParser;
     private final String startupWarning;
+    private final Clock clock;
     private boolean dirty;
 
     /**
@@ -46,15 +50,40 @@ public class LogicManager implements Logic {
         this(model, storage, "");
     }
 
+    /** Shares a fixed date source with parsers and commands for deterministic workflow tests. */
+    public LogicManager(Model model, Storage storage, Clock clock) {
+        this(model, storage, "", false, clock);
+    }
+
     /**
      * Constructs a {@code LogicManager} that shows {@code startupWarning}, which may be empty, before the dashboard
      * when TutorFlow starts.
      */
     public LogicManager(Model model, Storage storage, String startupWarning) {
+        this(model, storage, startupWarning, false);
+    }
+
+    /** Creates logic with an optional pending migration save. */
+    public LogicManager(Model model, Storage storage, String startupWarning, boolean requiresInitialSave) {
+        this(model, storage, startupWarning, requiresInitialSave, Clock.systemDefaultZone());
+    }
+
+    /** Creates logic with explicit migration state and a shared date source. */
+    public LogicManager(Model model, Storage storage, String startupWarning, boolean requiresInitialSave, Clock clock) {
         this.model = model;
         this.storage = storage;
-        this.startupWarning = startupWarning;
-        addressBookParser = new AddressBookParser();
+        this.clock = Objects.requireNonNull(clock);
+        String warning = startupWarning;
+        if (requiresInitialSave) {
+            dirty = true;
+            try {
+                saveChanges();
+            } catch (CommandException e) {
+                warning += "\nMigration is pending. " + e.getMessage() + "\n" + UNSAVED_WARNING;
+            }
+        }
+        this.startupWarning = warning;
+        addressBookParser = new AddressBookParser(clock);
     }
 
     @Override
@@ -64,6 +93,7 @@ public class LogicManager implements Logic {
         CommandResult commandResult;
         Command command = addressBookParser.parseCommand(commandText);
         String before = snapshot();
+        List<String> shownBefore = lessonSelection();
         boolean wasDirty = dirty;
         boolean changed;
         try {
@@ -75,15 +105,35 @@ public class LogicManager implements Logic {
             dirty = wasDirty || changed;
         }
 
+        String numbering = "";
+        List<String> shownAfter = lessonSelection();
+        boolean preservesShownRows = shownAfter.size() >= shownBefore.size()
+                && shownAfter.subList(0, shownBefore.size()).equals(shownBefore);
+        if (changed && !preservesShownRows) {
+            numbering = Messages.formatLessonList(model.getFilteredLessonList());
+            if (commandResult.getDisplayedLessons().isEmpty()) {
+                commandResult = commandResult.withFeedback(commandResult.getFeedbackToUser() + numbering)
+                        .withDisplayedLessons(model.getFilteredLessonList());
+            }
+        }
         if (dirty && (commandResult.isExit() || command instanceof SaveCommand
                 || changed)) {
-            saveChanges();
+            try {
+                saveChanges();
+            } catch (CommandException e) {
+                throw new CommandException(e.getMessage() + numbering + "\n" + UNSAVED_WARNING, e);
+            }
         }
         if (dirty) {
-            return new CommandResult(commandResult.getFeedbackToUser() + "\n" + UNSAVED_WARNING,
-                    commandResult.isShowHelp(), commandResult.isExit());
+            return commandResult.withFeedback(commandResult.getFeedbackToUser() + "\n" + UNSAVED_WARNING);
         }
         return commandResult;
+    }
+
+    /** Captures visible row identity and labels before mutation can reorder a live sorted list. */
+    private List<String> lessonSelection() {
+        return model.getFilteredLessonList().stream()
+                .map(lesson -> lesson.getId() + " " + Messages.format(lesson) + " " + lesson.getStatus()).toList();
     }
 
     /** Captures serialized state without writing, keeping persistence comparison separate from domain equality. */
@@ -101,11 +151,15 @@ public class LogicManager implements Logic {
             storage.saveAddressBook(model.getAddressBook());
             dirty = false;
         } catch (AccessDeniedException e) {
-            throw new CommandException(String.format(FILE_OPS_PERMISSION_ERROR_FORMAT, e.getMessage()), e);
+            throw new CommandException(String.format(FILE_OPS_PERMISSION_ERROR_FORMAT, describe(e)), e);
         } catch (IOException ioe) {
-            throw new CommandException(String.format(FILE_OPS_ERROR_FORMAT, ioe.getMessage()), ioe);
+            throw new CommandException(String.format(FILE_OPS_ERROR_FORMAT, describe(ioe)), ioe);
         }
+    }
 
+    /** Returns the reason a write failed, naming the kind of failure if the exception gives no message. */
+    private static String describe(IOException e) {
+        return e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
     }
 
     @Override
@@ -115,7 +169,7 @@ public class LogicManager implements Logic {
 
     @Override
     public String getDashboard() {
-        return new TodayCommand(LocalDate.now()).execute(model).getFeedbackToUser();
+        return new TodayCommand(LocalDate.now(clock)).execute(model).getFeedbackToUser();
     }
 
     @Override

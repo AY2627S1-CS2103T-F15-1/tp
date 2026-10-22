@@ -8,7 +8,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_RATE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_VENUE;
-import static seedu.address.model.Model.PREDICATE_SHOW_ALL_PERSONS;
+import static seedu.address.model.Model.PREDICATE_SHOW_ACTIVE_PERSONS;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -57,8 +57,7 @@ public class EditCommand extends Command {
     public static final String MESSAGE_EDIT_PERSON_SUCCESS = "Edited student: %1$s";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
     public static final String MESSAGE_DUPLICATE_PERSON = "This student already exists in TutorFlow.";
-    public static final String MESSAGE_SAME_NAME_WARNING =
-            "\nNote: you already have another student named %1$s. Both are now in your list.";
+    public static final String MESSAGE_SAME_NAME_WARNING = AddCommand.MESSAGE_SAME_NAME_WARNING;
 
     private final Index index;
     private final EditPersonDescriptor editPersonDescriptor;
@@ -96,8 +95,11 @@ public class EditCommand extends Command {
                 && model.getAddressBook().getPersonList().stream().anyMatch(editedPerson::hasSameName);
 
         model.setPerson(personToEdit, editedPerson);
-        model.updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
+        model.updateFilteredPersonList(PREDICATE_SHOW_ACTIVE_PERSONS);
         String message = String.format(MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson));
+        if (!personToEdit.getLevel().equals(editedPerson.getLevel())) {
+            message += "\nPast lessons keep their original details.";
+        }
         if (hasNewSameName) {
             message += String.format(MESSAGE_SAME_NAME_WARNING, editedPerson.getName());
         }
@@ -119,7 +121,8 @@ public class EditCommand extends Command {
         Rate updatedRate = editPersonDescriptor.getRate().orElse(personToEdit.getRate());
         Venue updatedVenue = editPersonDescriptor.getVenue().or(personToEdit::getVenue).orElse(null);
 
-        return new Person(updatedName, updatedPhone, updatedEmail, updatedLevel, updatedSubjects, updatedRate,
+        return new Person(personToEdit.getId(), personToEdit.isArchived(), updatedName, updatedPhone, updatedEmail,
+                updatedLevel, updatedSubjects, updatedRate,
                 updatedVenue, personToEdit.getRemark());
     }
 
@@ -136,6 +139,11 @@ public class EditCommand extends Command {
 
         return index.equals(otherEditCommand.index)
                 && editPersonDescriptor.equals(otherEditCommand.editPersonDescriptor);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(index, editPersonDescriptor);
     }
 
     @Override
@@ -265,6 +273,11 @@ public class EditCommand extends Command {
                     && Objects.equals(subjects, otherEditPersonDescriptor.subjects)
                     && Objects.equals(rate, otherEditPersonDescriptor.rate)
                     && Objects.equals(venue, otherEditPersonDescriptor.venue);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(name, phone, email, level, subjects, rate, venue);
         }
 
         @Override

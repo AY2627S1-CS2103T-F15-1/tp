@@ -22,12 +22,14 @@ import org.junit.jupiter.api.Test;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.exceptions.DuplicateLessonException;
 import seedu.address.model.lesson.exceptions.LessonNotFoundException;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.exceptions.DuplicatePersonException;
 import seedu.address.model.task.Task;
+import seedu.address.testutil.HomeworkBuilder;
 import seedu.address.testutil.LessonBuilder;
 import seedu.address.testutil.PersonBuilder;
 import seedu.address.testutil.TaskBuilder;
@@ -155,6 +157,15 @@ public class AddressBookTest {
     }
 
     @Test
+    public void setLesson_replacementWithDifferentId_isRejected() {
+        addressBook.addLesson(ALICE_MATH);
+        Lesson replacement = new LessonBuilder(ALICE_MATH).withId(java.util.UUID.randomUUID()).build();
+
+        assertThrows(IllegalArgumentException.class, () -> addressBook.setLesson(ALICE_MATH, replacement));
+        assertEquals(List.of(ALICE_MATH), addressBook.getLessonList());
+    }
+
+    @Test
     public void removeLesson_existingLesson_removesLesson() {
         addressBook.addLesson(ALICE_MATH);
         addressBook.removeLesson(ALICE_MATH);
@@ -235,8 +246,20 @@ public class AddressBookTest {
     public void toStringMethod() {
         String expected = AddressBook.class.getCanonicalName() + "{persons=" + addressBook.getPersonList()
                 + ", lessons=" + addressBook.getLessonList()
+                + ", ledgerEntries=" + addressBook.getLedgerEntries()
                 + ", tasks=" + addressBook.getTaskList() + "}";
         assertEquals(expected, addressBook.toString());
+    }
+
+    @Test
+    public void resetData_copiesTheHomeworkOfAnyImplementation() {
+        AddressBookStub newData = new AddressBookStub(List.of(ALICE));
+        Homework item = new HomeworkBuilder(ALICE).build();
+        newData.getHomeworkList().add(item);
+
+        addressBook.resetData(newData);
+
+        assertEquals(List.of(item), addressBook.getHomeworkList());
     }
 
     /**
@@ -245,6 +268,7 @@ public class AddressBookTest {
     private static class AddressBookStub implements ReadOnlyAddressBook {
         private final ObservableList<Person> persons = FXCollections.observableArrayList();
         private final ObservableList<Lesson> lessons = FXCollections.observableArrayList();
+        private final ObservableList<Homework> homework = FXCollections.observableArrayList();
 
         AddressBookStub(Collection<Person> persons) {
             this.persons.setAll(persons);
@@ -268,6 +292,16 @@ public class AddressBookTest {
         @Override
         public ObservableList<Task> getTaskList() {
             return FXCollections.observableArrayList();
+        }
+
+        @Override
+        public ObservableList<seedu.address.model.finance.LedgerEntry> getLedgerEntries() {
+            return FXCollections.emptyObservableList();
+        }
+
+        @Override
+        public ObservableList<Homework> getHomeworkList() {
+            return homework;
         }
     }
 

@@ -15,7 +15,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.commons.exceptions.DataLoadingException;
@@ -82,6 +84,42 @@ public class JsonAddressBookStorageTest {
     @Test
     public void readAddressBook_nullSubject_throwsDataLoadingException() throws Exception {
         assertInvalidJsonIsRejected("{\"persons\":[{\"subjects\":[null]}]}");
+    }
+
+    @Test
+    public void isAccessFailure_separatesAFileThatCannotBeOpenedFromInvalidContent() throws Exception {
+        Path folder = testFolder.resolve("a-folder.json");
+        Files.createDirectory(folder);
+
+        Executable readFolder = () -> new JsonAddressBookStorage(folder).readAddressBook();
+
+        DataLoadingException unopened = Assertions.assertThrows(DataLoadingException.class, readFolder);
+
+        assertTrue(JsonAddressBookStorage.isAccessFailure(unopened));
+        for (String content : new String[] {"null", "{ not json", "", "[]", "{\"persons\":[null]}",
+            "{\"schemaVersion\":99}"}) {
+            Path file = testFolder.resolve("content.json");
+            Files.writeString(file, content);
+            Executable readFile = () -> new JsonAddressBookStorage(file).readAddressBook();
+            DataLoadingException invalid = Assertions.assertThrows(DataLoadingException.class, readFile);
+            assertFalse(JsonAddressBookStorage.isAccessFailure(invalid), "content: " + content);
+        }
+    }
+
+    @Test
+    public void saveAddressBook_afterTheFileCouldNotBeOpened_refusesAndLeavesItAlone() throws Exception {
+        Path folder = testFolder.resolve("a-folder.json");
+        Files.createDirectory(folder);
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(folder);
+        assertThrows(DataLoadingException.class, storage::readAddressBook);
+
+        Executable save = () -> storage.saveAddressBook(new AddressBook());
+
+        IOException refused = Assertions.assertThrows(IOException.class, save);
+
+        assertEquals(String.format(DataFileRecovery.MESSAGE_NOT_OPENED_SAVE, folder), refused.getMessage());
+        assertTrue(Files.isDirectory(folder));
+        assertFalse(Files.exists(testFolder.resolve("a-folder.json.corrupt")));
     }
 
     private void assertInvalidJsonIsRejected(String invalidJson) throws Exception {

@@ -1,0 +1,112 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+
+box Logic LOGIC_COLOR_T1
+participant ":LogicManager" as LogicManager LOGIC_COLOR
+participant ":AddressBookParser" as AddressBookParser LOGIC_COLOR
+participant "t:TodayCommand" as TodayCommand LOGIC_COLOR
+participant "r:CommandResult" as CommandResult LOGIC_COLOR
+end box
+
+box Model MODEL_COLOR_T1
+participant "m:Model" as Model MODEL_COLOR
+participant "ab:ReadOnlyAddressBook" as ReadOnlyAddressBook MODEL_COLOR
+participant "<<class>>\nHomeworkQueries" as HomeworkQueries MODEL_COLOR
+end box
+
+box "<color:#806600>Storage</color>" STORAGE_COLOR_T1
+participant ":Storage" as Storage STORAGE_COLOR
+end box
+
+[-> LogicManager : execute("today")
+activate LogicManager
+
+LogicManager -> AddressBookParser : parseCommand("today")
+activate AddressBookParser
+
+AddressBookParser -> AddressBookParser : requireNoArguments("today", "")
+activate AddressBookParser
+note right
+  "today 2" throws a ParseException:
+  The 'today' command takes no parameters.
+end note
+AddressBookParser --> AddressBookParser
+deactivate AddressBookParser
+
+create TodayCommand
+AddressBookParser -> TodayCommand : TodayCommand(LocalDate.now())
+activate TodayCommand
+TodayCommand --> AddressBookParser
+deactivate TodayCommand
+
+AddressBookParser --> LogicManager : t
+deactivate AddressBookParser
+
+LogicManager -> Model : getAddressBook()
+activate Model
+Model --> LogicManager : ab
+deactivate Model
+
+LogicManager -> Storage : snapshotAddressBook(ab)
+activate Storage
+Storage --> LogicManager : before
+deactivate Storage
+
+LogicManager -> TodayCommand : execute(m)
+activate TodayCommand
+
+TodayCommand -> Model : getAddressBook()
+activate Model
+Model --> TodayCommand : ab
+deactivate Model
+
+TodayCommand -> ReadOnlyAddressBook : getLessonList()
+activate ReadOnlyAddressBook
+ReadOnlyAddressBook --> TodayCommand : lessons
+deactivate ReadOnlyAddressBook
+
+loop for each lesson today
+    TodayCommand -> Model : getConflictingLessons(lesson)
+    activate Model
+    Model --> TodayCommand : conflicting lessons
+    deactivate Model
+end
+
+TodayCommand -> Model : getAddressBook()
+activate Model
+Model --> TodayCommand : ab
+deactivate Model
+
+TodayCommand -> HomeworkQueries : summary(ab, null, true, today)
+activate HomeworkQueries
+HomeworkQueries --> TodayCommand : OVERDUE HOMEWORK section
+deactivate HomeworkQueries
+
+create CommandResult
+TodayCommand -> CommandResult : CommandResult(feedbackToUser)
+activate CommandResult
+CommandResult --> TodayCommand
+deactivate CommandResult
+
+TodayCommand --> LogicManager : r
+deactivate TodayCommand
+
+LogicManager -> Model : getAddressBook()
+activate Model
+Model --> LogicManager : ab
+deactivate Model
+
+LogicManager -> Storage : snapshotAddressBook(ab)
+activate Storage
+Storage --> LogicManager : after
+deactivate Storage
+
+note right of LogicManager
+  before equals after,
+  so nothing is saved
+end note
+
+[<--LogicManager : r
+deactivate LogicManager
+@enduml

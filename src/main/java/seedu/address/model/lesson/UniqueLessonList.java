@@ -59,7 +59,7 @@ public class UniqueLessonList implements Iterable<Lesson> {
     public void setLesson(Lesson target, Lesson editedLesson) {
         requireAllNonNull(target, editedLesson);
 
-        int index = internalList.indexOf(target);
+        int index = indexOfRecord(target);
         if (index == -1) {
             throw new LessonNotFoundException();
         }
@@ -77,9 +77,21 @@ public class UniqueLessonList implements Iterable<Lesson> {
      */
     public void remove(Lesson toRemove) {
         requireNonNull(toRemove);
-        if (!internalList.remove(toRemove)) {
+        int index = indexOfRecord(toRemove);
+        if (index < 0) {
             throw new LessonNotFoundException();
         }
+        internalList.remove(index);
+    }
+
+    /** Finds the persisted record first, retaining legacy value lookup for detached callers. */
+    private int indexOfRecord(Lesson target) {
+        for (int i = 0; i < internalList.size(); i++) {
+            if (internalList.get(i).getId().equals(target.getId())) {
+                return i;
+            }
+        }
+        return internalList.indexOf(target);
     }
 
     /**

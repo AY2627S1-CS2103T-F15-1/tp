@@ -1,7 +1,7 @@
 package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
-import static seedu.address.model.Model.PREDICATE_SHOW_ALL_PERSONS;
+import static seedu.address.model.Model.PREDICATE_SHOW_ACTIVE_PERSONS;
 
 import java.util.Comparator;
 
@@ -46,7 +46,7 @@ public class SortCommand extends Command {
         requireNonNull(model);
         model.sortPersons(isDescending ? NAME_COMPARATOR.reversed() : NAME_COMPARATOR);
         // Sorting a filtered list would leave the user unsure which persons were sorted, so show everyone.
-        model.updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
+        model.updateFilteredPersonList(PREDICATE_SHOW_ACTIVE_PERSONS);
         return new CommandResult(isDescending ? MESSAGE_SUCCESS_DESCENDING : MESSAGE_SUCCESS_ASCENDING);
     }
 
@@ -62,6 +62,11 @@ public class SortCommand extends Command {
         }
 
         return isDescending == otherSortCommand.isDescending;
+    }
+
+    @Override
+    public int hashCode() {
+        return Boolean.hashCode(isDescending);
     }
 
     @Override

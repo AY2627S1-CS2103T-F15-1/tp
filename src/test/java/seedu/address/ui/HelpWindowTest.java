@@ -5,11 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
@@ -24,17 +22,13 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import com.sun.net.httpserver.HttpServer;
-
 import javafx.application.Platform;
-import javafx.concurrent.Worker;
 import javafx.event.ActionEvent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToolBar;
-import javafx.scene.web.WebView;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import seedu.address.logic.LogicManager;
@@ -46,8 +40,6 @@ import seedu.address.storage.StorageManager;
 
 /** Tests the real FXML viewer on the JavaFX application thread, without a network connection. */
 public class HelpWindowTest {
-    private static final String LOAD_ERROR =
-            "Could not load the bundled User Guide. Click Reload guide to try again.";
     @TempDir
     public Path temporaryFolder;
 
@@ -94,47 +86,6 @@ public class HelpWindowTest {
             }
             return null;
         });
-    }
-
-    @Test
-    public void click_remoteLinkAndNewWindowLink_blocksLoopbackRequestsAndKeepsGuide() throws Exception {
-        AtomicInteger requests = new AtomicInteger();
-        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
-        server.createContext("/", exchange -> {
-            requests.incrementAndGet();
-            exchange.sendResponseHeaders(200, -1);
-            exchange.close();
-        });
-        server.start();
-        try {
-            String url = "http://127.0.0.1:" + server.getAddress().getPort() + "/private";
-            CompletableFuture<Void> loaded = onFx(() -> {
-                window = new HelpWindow(new Stage(), () -> "<html><body><h1 id='local'>Local guide</h1>"
-                        + "<a id='remote' href='" + url + "'>Remote</a>"
-                        + "<a id='new-window' target='_blank' href='" + url + "'>New window</a>"
-                        + "<a id='anchor' href='#local'>Local section</a></body></html>");
-                CompletableFuture<Void> result = awaitState(Worker.State.SUCCEEDED);
-                window.show();
-                return result;
-            });
-            loaded.get(10, TimeUnit.SECONDS);
-            onFx(() -> {
-                viewer().getEngine().executeScript("document.getElementById('new-window').click()");
-                viewer().getEngine().executeScript("document.getElementById('anchor').click()");
-                viewer().getEngine().executeScript("document.getElementById('remote').click()");
-                return null;
-            });
-            Thread.sleep(500); // Allow a forbidden request to reach the controlled listener if the guard regresses.
-            assertEquals(0, requests.get());
-            onFx(() -> {
-                assertTrue(status().getText().contains("offline"));
-                assertTrue(viewer().getEngine().getDocument().getDocumentElement().getTextContent()
-                        .contains("Local guide"));
-                return null;
-            });
-        } finally {
-            server.stop(0);
-        }
     }
 
     @Test
@@ -206,7 +157,6 @@ public class HelpWindowTest {
     public void closeWindow() throws Exception {
         onFx(() -> {
             if (window != null) {
-                viewer().getEngine().load(null);
                 window.hide();
             }
             return null;
@@ -214,54 +164,75 @@ public class HelpWindowTest {
     }
 
     @Test
-    public void show_bundledGuide_rendersContentAndClearsLoadingStatus() throws Exception {
-        CompletableFuture<Void> loaded = onFx(() -> {
+    public void show_bundledGuide_rendersContentAndNavigatesContents() throws Exception {
+        onFx(() -> {
             window = new HelpWindow();
-            assertFalse(window.isShowing());
-            CompletableFuture<Void> result = awaitState(Worker.State.SUCCEEDED);
             window.show();
             assertTrue(window.isShowing());
             assertTrue(window.getRoot().isResizable());
-            assertEquals("Loading User Guide...", status().getText());
-            return result;
-        });
-        loaded.get(10, TimeUnit.SECONDS);
-        onFx(() -> {
-            assertTrue(viewer().getEngine().getDocument().getDocumentElement().getTextContent()
-                    .contains("TutorFlow User Guide"));
-            assertEquals(1, viewer().getEngine().getDocument().getElementsByTagName("nav").getLength());
-            assertTrue((Boolean) viewer().getEngine().executeScript(
-                    "document.querySelector('nav a[href=\"#recording-a-missed-lesson-lesson-missed\"]') !== null"));
-            assertTrue(viewer().getEngine().getDocument().getDocumentElement().getTextContent()
-                    .contains("A student must have between 1 and 10 subjects."));
+            String content = renderedText(viewer().getContent());
+            assertTrue(content.contains("TutorFlow User Guide"));
+            assertTrue(content.contains("A student must have between 1 and 10 subjects."));
+            assertFalse(viewer().lookupAll("ImageView").isEmpty());
+            assertFalse(viewer().lookupAll("GridPane").isEmpty());
+            window.getRoot().getScene().getRoot().applyCss();
+            window.getRoot().getScene().getRoot().layout();
+            savePreview();
+            var link = viewer().lookupAll(".hyperlink").stream()
+                    .map(javafx.scene.control.Hyperlink.class::cast)
+                    .filter(item -> item.getText().contains("Recording a missed lesson"))
+                    .findFirst().orElseThrow();
+            link.fire();
+            assertTrue(viewer().getVvalue() > 0);
             assertEquals("", status().getText());
             window.focus();
             window.hide();
             assertFalse(window.isShowing());
             window.show();
-            assertEquals(Worker.State.SUCCEEDED, viewer().getEngine().getLoadWorker().getState());
+            assertEquals(content, renderedText(viewer().getContent()));
             return null;
         });
     }
 
     @Test
-    public void reloadButton_returnsToGuideAfterNavigation() throws Exception {
-        CompletableFuture<Void> loaded = onFx(() -> {
-            window = new HelpWindow();
-            CompletableFuture<Void> result = awaitState(Worker.State.SUCCEEDED);
-            viewer().getEngine().loadContent("<html><body>Another page</body></html>");
-            return result;
+    public void click_externalLinksAndImages_neverFetchesRemoteResources() throws Exception {
+        AtomicInteger requests = new AtomicInteger();
+        var server = com.sun.net.httpserver.HttpServer.create(new java.net.InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/", exchange -> {
+            requests.incrementAndGet();
+            exchange.sendResponseHeaders(200, -1);
+            exchange.close();
         });
-        loaded.get(10, TimeUnit.SECONDS);
-        CompletableFuture<Void> reloaded = onFx(() -> {
-            CompletableFuture<Void> result = awaitState(Worker.State.SUCCEEDED);
-            reloadButton().fire();
-            return result;
-        });
-        reloaded.get(10, TimeUnit.SECONDS);
+        server.start();
+        try {
+            String url = "http://127.0.0.1:" + server.getAddress().getPort() + "/private";
+            onFx(() -> {
+                window = new HelpWindow(new Stage(), () -> "<html><body><h1>Local guide</h1>"
+                        + "<a href='" + url + "'>Remote</a><a target='_blank' href='" + url + "'>New window</a>"
+                        + "<img src='" + url + "' alt='Blocked image'></body></html>");
+                window.show();
+                viewer().lookupAll(".hyperlink").forEach(node -> ((javafx.scene.control.Hyperlink) node).fire());
+                assertTrue(status().getText().contains("offline"));
+                assertTrue(renderedText(viewer().getContent()).contains("Local guide"));
+                assertTrue(renderedText(viewer().getContent()).contains("Blocked image"));
+                return null;
+            });
+            Thread.sleep(500); // Detect any accidental asynchronous network request.
+            assertEquals(0, requests.get());
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
+    public void reloadButton_restoresGuideAndResetsScroll() throws Exception {
         onFx(() -> {
-            assertTrue(viewer().getEngine().getDocument().getDocumentElement().getTextContent()
-                    .contains("TutorFlow User Guide"));
+            window = new HelpWindow();
+            window.show();
+            viewer().loadHtml("<html><body>Another page</body></html>");
+            reloadButton().fire();
+            assertTrue(renderedText(viewer().getContent()).contains("TutorFlow User Guide"));
+            assertEquals(0, viewer().getVvalue());
             assertEquals("", status().getText());
             return null;
         });
@@ -269,8 +240,8 @@ public class HelpWindowTest {
 
     @Test
     public void reload_readFailure_showsErrorAndCanRetry() throws Exception {
-        AtomicInteger attempts = new AtomicInteger();
-        CompletableFuture<Void> reloaded = onFx(() -> {
+        onFx(() -> {
+            AtomicInteger attempts = new AtomicInteger();
             window = new HelpWindow(new Stage(), () -> {
                 if (attempts.getAndIncrement() == 0) {
                     throw new IOException("Cannot read guide");
@@ -278,14 +249,8 @@ public class HelpWindowTest {
                 return UserGuide.loadHtml();
             });
             window.show();
-            assertEquals("Could not read the bundled User Guide. Click Reload guide to try again.",
-                    status().getText());
-            CompletableFuture<Void> result = awaitState(Worker.State.SUCCEEDED);
+            assertTrue(status().getText().startsWith("Could not read"));
             reloadButton().fire();
-            return result;
-        });
-        reloaded.get(10, TimeUnit.SECONDS);
-        onFx(() -> {
             assertEquals(2, attempts.get());
             assertEquals("", status().getText());
             return null;
@@ -293,44 +258,55 @@ public class HelpWindowTest {
     }
 
     @Test
-    public void show_failedPage_retriesBundledGuide() throws Exception {
-        CompletableFuture<Void> failed = onFx(() -> {
-            window = new HelpWindow();
-            CompletableFuture<Void> result = awaitState(Worker.State.FAILED);
-            viewer().getEngine().load(temporaryFolder.resolve("missing.html").toUri().toString());
-            return result;
-        });
-        failed.get(10, TimeUnit.SECONDS);
-        CompletableFuture<Void> loaded = onFx(() -> {
-            assertEquals(LOAD_ERROR, status().getText());
-            CompletableFuture<Void> result = awaitState(Worker.State.SUCCEEDED);
-            window.show();
-            return result;
-        });
-        loaded.get(10, TimeUnit.SECONDS);
+    public void show_afterReadFailure_retries() throws Exception {
         onFx(() -> {
+            AtomicInteger attempts = new AtomicInteger();
+            window = new HelpWindow(new Stage(), () -> {
+                if (attempts.getAndIncrement() == 0) {
+                    throw new IOException("Cannot read guide");
+                }
+                return "<html><body>Recovered guide</body></html>";
+            });
+            window.show();
+            window.hide();
+            window.show();
             assertEquals("", status().getText());
+            assertTrue(renderedText(viewer().getContent()).contains("Recovered guide"));
             return null;
         });
     }
 
-    @Test
-    public void show_cancelledLoad_retriesBundledGuide() throws Exception {
-        CompletableFuture<Void> loaded = onFx(() -> {
-            window = new HelpWindow();
-            viewer().getEngine().loadContent("<html><body>Cancelled page</body></html>");
-            assertTrue(viewer().getEngine().getLoadWorker().cancel());
-            assertEquals(Worker.State.CANCELLED, viewer().getEngine().getLoadWorker().getState());
-            assertEquals(LOAD_ERROR, status().getText());
-            CompletableFuture<Void> result = awaitState(Worker.State.SUCCEEDED);
-            window.show();
-            return result;
-        });
-        loaded.get(10, TimeUnit.SECONDS);
+    private static String renderedText(javafx.scene.Node node) {
+        if (node instanceof javafx.scene.text.Text text) {
+            return text.getText();
+        }
+        if (node instanceof javafx.scene.control.Hyperlink link) {
+            return link.getText();
+        }
+        if (node instanceof javafx.scene.Parent parent) {
+            return parent.getChildrenUnmodifiable().stream().map(HelpWindowTest::renderedText)
+                    .collect(java.util.stream.Collectors.joining(" "));
+        }
+        return "";
     }
 
-    private WebView viewer() {
-        return (WebView) window.getRoot().getScene().lookup("#userGuide");
+    private void savePreview() throws IOException {
+        var snapshot = window.getRoot().getScene().snapshot(null);
+        int width = (int) snapshot.getWidth();
+        int height = (int) snapshot.getHeight();
+        var image = new java.awt.image.BufferedImage(width, height, java.awt.image.BufferedImage.TYPE_INT_ARGB);
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                image.setRGB(x, y, snapshot.getPixelReader().getArgb(x, y));
+            }
+        }
+        Path output = Path.of("build", "help-preview.png");
+        Files.createDirectories(output.getParent());
+        javax.imageio.ImageIO.write(image, "png", output.toFile());
+    }
+
+    private GuideView viewer() {
+        return (GuideView) window.getRoot().getScene().lookup("#userGuide");
     }
 
     private Label status() {
@@ -343,18 +319,6 @@ public class HelpWindowTest {
 
     private ToolBar toolbar() {
         return (ToolBar) window.getRoot().getScene().lookup(".tool-bar");
-    }
-
-    private CompletableFuture<Void> awaitState(Worker.State state) {
-        CompletableFuture<Void> result = new CompletableFuture<>();
-        viewer().getEngine().getLoadWorker().stateProperty().addListener((observable, oldState, newState) -> {
-            if (newState == state) {
-                result.complete(null);
-            } else if (state == Worker.State.SUCCEEDED && newState == Worker.State.FAILED) {
-                result.completeExceptionally(new AssertionError("Guide failed to load"));
-            }
-        });
-        return result;
     }
 
     private static <T> T onFx(Callable<T> action) throws Exception {

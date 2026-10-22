@@ -3,7 +3,9 @@ package seedu.address.logic.parser;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 
+import java.time.Clock;
 import java.time.LocalDate;
+import java.util.Objects;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -11,14 +13,19 @@ import java.util.regex.Pattern;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.AgendaCommand;
+import seedu.address.logic.commands.ArchiveCommand;
+import seedu.address.logic.commands.BalanceCommand;
 import seedu.address.logic.commands.ClearCommand;
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.DeleteCommand;
+import seedu.address.logic.commands.DemoCommand;
+import seedu.address.logic.commands.DuesCommand;
 import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
+import seedu.address.logic.commands.PaymentCommand;
 import seedu.address.logic.commands.RemarkCommand;
 import seedu.address.logic.commands.SaveCommand;
 import seedu.address.logic.commands.SortCommand;
@@ -38,6 +45,17 @@ public class AddressBookParser {
      */
     private static final Pattern BASIC_COMMAND_FORMAT = Pattern.compile("(?<commandWord>\\S+)(?<arguments>.*)");
     private static final Logger logger = LogsCenter.getLogger(AddressBookParser.class);
+    private final Clock clock;
+
+    /** Uses the local system date for interactive commands. */
+    public AddressBookParser() {
+        this(Clock.systemDefaultZone());
+    }
+
+    /** Shares one injectable date source across finance and lesson commands. */
+    public AddressBookParser(Clock clock) {
+        this.clock = Objects.requireNonNull(clock);
+    }
 
     /**
      * Parses user input into command for execution.
@@ -62,25 +80,41 @@ public class AddressBookParser {
         logger.fine("Parsing command");
 
         return switch (commandWord) {
+            case BalanceCommand.COMMAND_WORD -> new BalanceCommandParser().parse(arguments);
+            case PaymentCommand.COMMAND_WORD -> new PaymentCommandParser(clock).parse(arguments);
+            case DuesCommand.COMMAND_WORD -> {
+                requireNoArguments(commandWord, arguments);
+                yield new DuesCommand(clock);
+            }
             case SaveCommand.COMMAND_WORD -> {
                 requireNoArguments(commandWord, arguments);
                 yield new SaveCommand();
             }
+            case "demo" -> {
+                if (!arguments.isBlank() && !arguments.strip().equals("confirm")) {
+                    throw new ParseException("Usage: demo [confirm]");
+                }
+                yield new DemoCommand(arguments.strip().equals("confirm"));
+            }
+            case "hw" -> new HomeworkCommandParser(clock).parse(arguments);
+            case "student" -> new StudentCommandParser().parse(arguments);
+            case ArchiveCommand.COMMAND_WORD_ARCHIVE -> new ArchiveCommandParser(true).parse(arguments);
+            case ArchiveCommand.COMMAND_WORD_RESTORE -> new ArchiveCommandParser(false).parse(arguments);
             case AddCommand.COMMAND_WORD -> new AddCommandParser().parse(arguments);
             case EditCommand.COMMAND_WORD -> new EditCommandParser().parse(arguments);
             case DeleteCommand.COMMAND_WORD -> new DeleteCommandParser().parse(arguments);
             case ClearCommand.COMMAND_WORD -> new ClearCommandParser().parse(arguments);
             case FindCommand.COMMAND_WORD -> new FindCommandParser().parse(arguments);
-            case ListCommand.COMMAND_WORD -> new ListCommand();
+            case ListCommand.COMMAND_WORD -> new ListCommandParser().parse(arguments);
             case RemarkCommand.COMMAND_WORD -> new RemarkCommandParser().parse(arguments);
             case SortCommand.COMMAND_WORD -> new SortCommandParser().parse(arguments);
             case AgendaCommand.COMMAND_WORD -> new AgendaCommandParser().parse(arguments);
             case ViewCommand.COMMAND_WORD -> new ViewCommandParser().parse(arguments);
             case TodayCommand.COMMAND_WORD -> {
                 requireNoArguments(commandWord, arguments);
-                yield new TodayCommand(LocalDate.now());
+                yield new TodayCommand(LocalDate.now(clock));
             }
-            case LessonCommandParser.COMMAND_WORD -> new LessonCommandParser().parse(arguments);
+            case LessonCommandParser.COMMAND_WORD -> new LessonCommandParser(clock).parse(arguments);
             case TaskCommandParser.COMMAND_WORD -> new TaskCommandParser().parse(arguments);
             case ExitCommand.COMMAND_WORD -> {
                 requireNoArguments(commandWord, arguments);

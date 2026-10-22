@@ -3,11 +3,14 @@ package seedu.address.model;
 import static java.util.Objects.requireNonNull;
 
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -15,7 +18,11 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.util.ToStringBuilder;
+import seedu.address.model.finance.Ledger;
+import seedu.address.model.finance.LedgerEntry;
+import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
+import seedu.address.model.lesson.LessonStatus;
 import seedu.address.model.lesson.UniqueLessonList;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.UniquePersonList;
@@ -36,6 +43,10 @@ public class AddressBook implements ReadOnlyAddressBook {
     private final UniqueLessonList lessons = new UniqueLessonList();
     private final ObservableList<Task> tasks = FXCollections.observableArrayList();
     private final ObservableList<Task> unmodifiableTasks = FXCollections.unmodifiableObservableList(tasks);
+    private final ObservableList<LedgerEntry> ledgerEntries = FXCollections.observableArrayList();
+    private final ObservableList<LedgerEntry> unmodifiableLedgerEntries =
+            FXCollections.unmodifiableObservableList(ledgerEntries);
+    private final ObservableList<Homework> homework = FXCollections.observableArrayList();
 
     public AddressBook() {}
 
@@ -86,9 +97,13 @@ public class AddressBook implements ReadOnlyAddressBook {
     public void resetData(ReadOnlyAddressBook newData) {
         requireNonNull(newData);
 
+        List<LedgerEntry> replacementEntries = List.copyOf(newData.getLedgerEntries());
+        validateLedgerEntries(newData.getPersonList(), newData.getLessonList(), replacementEntries);
         setPersons(newData.getPersonList());
         setLessons(newData.getLessonList());
+        ledgerEntries.setAll(replacementEntries);
         setTasks(newData.getTaskList());
+        homework.setAll(newData.getHomeworkList());
     }
 
     //// person-level operations
@@ -117,6 +132,7 @@ public class AddressBook implements ReadOnlyAddressBook {
     public void setPerson(Person target, Person editedPerson) {
         requireNonNull(editedPerson);
 
+        editedPerson = editedPerson.withId(target.getId());
         persons.setPerson(target, editedPerson);
         updateStudentOfLessons(target, editedPerson);
         updateStudentOfTasks(target, editedPerson);
@@ -128,6 +144,8 @@ public class AddressBook implements ReadOnlyAddressBook {
      */
     public void removePerson(Person key) {
         persons.remove(key);
+        ledgerEntries.removeIf(entry -> entry.isWith(key));
+        homework.removeIf(item -> item.getStudentId().equals(key.getId()));
         boolean hasRemovedLessons = lessons.removeIf(lesson -> lesson.isWith(key));
         if (hasRemovedLessons) {
             logger.fine("Removed linked lessons");
@@ -190,12 +208,45 @@ public class AddressBook implements ReadOnlyAddressBook {
      * The lesson identity of {@code editedLesson} must not be the same as another existing lesson in the address book.
      */
     public void setLesson(Lesson target, Lesson editedLesson) {
+        requireNonNull(target);
         requireNonNull(editedLesson);
-
+        requireSameLessonId(target, editedLesson);
         lessons.setLesson(target, editedLesson);
         if (!target.isSameLesson(editedLesson)) {
             // The lesson was moved, so the tasks about it follow it to its new slot
             tasks.replaceAll(task -> task.isAbout(target) ? task.withLesson(editedLesson) : task);
+        }
+    }
+
+    /** Completes a lesson and captures its fee atomically, returning no charge for a free lesson. */
+    public Optional<LedgerEntry> chargeLesson(Lesson target, Lesson completedLesson) {
+        requireNonNull(target);
+        requireNonNull(completedLesson);
+        requireSameLessonId(target, completedLesson);
+        if ((!target.isScheduled() && target.getStatus() != LessonStatus.MISSED)
+                || completedLesson.getStatus() != LessonStatus.COMPLETED) {
+            throw new IllegalArgumentException("Only scheduled or missed lessons can be completed and charged.");
+        }
+        Lesson replacement = completedLesson;
+        Person student = persons.asUnmodifiableObservableList().stream().filter(replacement::isWith)
+                .findFirst().orElseThrow(() -> new IllegalArgumentException("Lesson student does not exist."));
+        LedgerEntry charge = null;
+        if (LedgerEntry.lessonFee(student, replacement).signum() > 0) {
+            charge = LedgerEntry.charge(student, replacement);
+            validateLedgerEntry(charge);
+        }
+        lessons.setLesson(target, replacement);
+        if (charge != null) {
+            ledgerEntries.add(charge);
+            logger.fine("Recorded automatic lesson charge");
+        }
+        return Optional.ofNullable(charge);
+    }
+
+    /** Rejects replacement values that change a lesson's permanent identity. */
+    private static void requireSameLessonId(Lesson target, Lesson replacement) {
+        if (!target.getId().equals(replacement.getId())) {
+            throw new IllegalArgumentException("A replacement lesson must retain its permanent ID.");
         }
     }
 
@@ -204,6 +255,15 @@ public class AddressBook implements ReadOnlyAddressBook {
      * {@code key} must exist in the address book.
      */
     public void removeLesson(Lesson key) {
+        requireNonNull(key);
+        Lesson stored = lessons.asUnmodifiableObservableList().stream()
+                .filter(lesson -> lesson.getId().equals(key.getId())).findFirst()
+                .orElseGet(() -> lessons.asUnmodifiableObservableList().stream()
+                        .filter(key::equals).findFirst().orElse(key));
+        if (ledgerEntries.stream().anyMatch(entry -> stored.getId().equals(entry.lessonId()))) {
+            throw new IllegalArgumentException(
+                    "Cannot delete a billed lesson. Its financial history must be retained.");
+        }
         lessons.remove(key);
         tasks.removeIf(task -> task.isAbout(key));
     }
@@ -263,11 +323,120 @@ public class AddressBook implements ReadOnlyAddressBook {
         return lessons.getOverlapping(lesson);
     }
 
+    /** Adds a charge or payment for an existing student. Duplicate entry IDs are rejected. */
+    public void addLedgerEntry(LedgerEntry entry) {
+        validateLedgerEntry(entry);
+        ledgerEntries.add(entry);
+        logger.fine("Recorded ledger entry");
+    }
+
+    /** Restores a complete ledger with one validation pass rather than repeated individual insertions. */
+    public void setLedgerEntries(List<LedgerEntry> entries) {
+        List<LedgerEntry> replacement = List.copyOf(entries);
+        validateLedgerEntries(getPersonList(), getLessonList(), replacement);
+        ledgerEntries.setAll(replacement);
+    }
+
+    private static void validateLedgerEntries(List<Person> students, List<Lesson> lessonList,
+            List<LedgerEntry> entries) {
+        Map<UUID, Person> studentsById = new HashMap<>();
+        students.forEach(student -> studentsById.put(student.getId(), student));
+        Map<UUID, Lesson> lessonsById = new HashMap<>();
+        lessonList.forEach(lesson -> lessonsById.put(lesson.getId(), lesson));
+        Set<UUID> entryIds = new HashSet<>();
+        Set<UUID> chargedLessons = new HashSet<>();
+        for (LedgerEntry entry : entries) {
+            Person student = studentsById.get(entry.studentId());
+            if (student == null) {
+                throw new IllegalArgumentException("Ledger student does not exist.");
+            }
+            if (!entryIds.add(entry.id())) {
+                throw new IllegalArgumentException("Duplicate ledger entry ID.");
+            }
+            if (entry.kind() == LedgerEntry.Kind.CHARGE) {
+                Lesson lesson = lessonsById.get(entry.lessonId());
+                if (lesson == null || !lesson.isWith(student)) {
+                    throw new IllegalArgumentException("Ledger lesson does not exist or belongs to another student.");
+                }
+                if (!chargedLessons.add(entry.lessonId())) {
+                    throw new IllegalArgumentException("That lesson already has a charge.");
+                }
+            }
+        }
+    }
+
+    private void validateLedgerEntry(LedgerEntry entry) {
+        requireNonNull(entry);
+        Person student = persons.asUnmodifiableObservableList().stream().filter(entry::isWith).findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Ledger student does not exist."));
+        if (entry.kind() == LedgerEntry.Kind.CHARGE) {
+            if (lessons.asUnmodifiableObservableList().stream().noneMatch(lesson ->
+                    lesson.getId().equals(entry.lessonId()) && lesson.isWith(student))) {
+                throw new IllegalArgumentException("Ledger lesson does not exist or belongs to another student.");
+            }
+            ledgerEntries.stream().filter(existing -> entry.lessonId().equals(existing.lessonId()))
+                    .findFirst().ifPresent(existing -> {
+                        throw new IllegalArgumentException("That lesson already has a charge of "
+                                + Ledger.format(existing.amount()) + ".");
+                    });
+        }
+        if (ledgerEntries.stream().anyMatch(existing -> existing.id().equals(entry.id()))) {
+            throw new IllegalArgumentException("Duplicate ledger entry ID.");
+        }
+    }
+
     /**
      * Sorts the persons in this {@code AddressBook} using the given {@code comparator}.
      */
     public void sortPersons(Comparator<Person> comparator) {
         persons.sort(comparator);
+    }
+
+    /** Adds a unique assignment belonging to a known student. */
+    public void addHomework(Homework item) {
+        validateHomework(item, null);
+        homework.add(item);
+    }
+
+    /** Replaces an assignment while preserving its identity. */
+    public void setHomework(Homework target, Homework replacement) {
+        if (!target.getId().equals(replacement.getId()) || !target.getStudentId().equals(replacement.getStudentId())
+                || !homework.contains(target)) {
+            throw new IllegalArgumentException("Homework identity must be preserved.");
+        }
+        validateHomework(replacement, target);
+        homework.set(homework.indexOf(target), replacement);
+    }
+
+    /** Removes an assignment. */
+    public void removeHomework(Homework target) {
+        if (!homework.remove(target)) {
+            throw new IllegalArgumentException("Homework no longer exists.");
+        }
+    }
+
+    /** Rejects duplicate identities, duplicate assignments, and dangling student links. */
+    private void validateHomework(Homework item, Homework target) {
+        requireNonNull(item);
+        if (persons.asUnmodifiableObservableList().stream()
+                .noneMatch(person -> person.getId().equals(item.getStudentId()))) {
+            throw new IllegalArgumentException("Homework student does not exist.");
+        }
+        List<Homework> others = homework.stream()
+                .filter(existing -> target == null || !existing.getId().equals(target.getId())).toList();
+        if (others.stream().anyMatch(existing -> existing.getId().equals(item.getId()))) {
+            throw new IllegalArgumentException("Homework identity already exists.");
+        }
+        Optional<Homework> duplicate = others.stream().filter(existing -> existing.isSameAssignment(item)).findFirst();
+        if (duplicate.isPresent()) {
+            throw new IllegalArgumentException(String.format(Homework.MESSAGE_DUPLICATE,
+                    duplicate.get().getDescription(), duplicate.get().getDueDate()));
+        }
+    }
+
+    @Override
+    public ObservableList<Homework> getHomeworkList() {
+        return FXCollections.unmodifiableObservableList(homework);
     }
 
     //// util methods
@@ -277,6 +446,7 @@ public class AddressBook implements ReadOnlyAddressBook {
         return new ToStringBuilder(this)
                 .add("persons", persons)
                 .add("lessons", lessons)
+                .add("ledgerEntries", ledgerEntries)
                 .add("tasks", tasks)
                 .toString();
     }
@@ -297,6 +467,11 @@ public class AddressBook implements ReadOnlyAddressBook {
     }
 
     @Override
+    public ObservableList<LedgerEntry> getLedgerEntries() {
+        return unmodifiableLedgerEntries;
+    }
+
+    @Override
     public boolean equals(Object other) {
         if (other == this) {
             return true;
@@ -309,11 +484,13 @@ public class AddressBook implements ReadOnlyAddressBook {
 
         return persons.equals(otherAddressBook.persons)
                 && lessons.equals(otherAddressBook.lessons)
+                && homework.equals(otherAddressBook.homework)
+                && ledgerEntries.equals(otherAddressBook.ledgerEntries)
                 && tasks.equals(otherAddressBook.tasks);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(persons, lessons, tasks);
+        return Objects.hash(persons, lessons, homework, ledgerEntries, tasks);
     }
 }

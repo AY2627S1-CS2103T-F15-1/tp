@@ -27,6 +27,7 @@ import seedu.address.logic.commands.LessonDoneCommand;
 import seedu.address.logic.commands.LessonListCommand;
 import seedu.address.logic.commands.LessonMissedCommand;
 import seedu.address.logic.commands.LessonMoveCommand;
+import seedu.address.logic.commands.LessonRepeatCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.RemarkCommand;
 import seedu.address.logic.commands.SortCommand;
@@ -166,7 +167,7 @@ public class AddressBookParserTest {
     @Test
     public void parseCommand_list() throws Exception {
         assertTrue(parser.parseCommand(ListCommand.COMMAND_WORD) instanceof ListCommand);
-        assertTrue(parser.parseCommand(ListCommand.COMMAND_WORD + " 3") instanceof ListCommand);
+        assertThrows(ParseException.class, () -> parser.parseCommand(ListCommand.COMMAND_WORD + " 3"));
     }
 
     @Test
@@ -193,5 +194,11 @@ public class AddressBookParserTest {
     @Test
     public void parseCommand_unknownCommand_throwsParseException() {
         assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () -> parser.parseCommand("unknownCommand"));
+    }
+
+    @Test
+    public void parseCommand_lessonRepeat_routedToLessonParser() throws Exception {
+        assertTrue(parser.parseCommand("lesson repeat st/1 d/2026-12-22 t/16:30 count/4")
+                instanceof LessonRepeatCommand);
     }
 }

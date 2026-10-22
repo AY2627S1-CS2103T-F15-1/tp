@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -12,6 +13,8 @@ import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
+import seedu.address.model.finance.Ledger;
+import seedu.address.model.homework.HomeworkQueries;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonStatus;
 import seedu.address.model.person.Person;
@@ -19,15 +22,17 @@ import seedu.address.model.person.Subject;
 
 /**
  * Shows everything needed to prepare for a student on one screen: the student's details, their next lesson, the
- * notes of their most recent completed lessons and a count of their lessons by status.
- * It only reads the student and the lessons, so the displayed student list is left unchanged.
+ * notes of their most recent completed lessons, a count of their lessons by status, their balance and their
+ * outstanding homework.
+ * It only reads the data, so the displayed student list is left unchanged.
  */
 public class ViewCommand extends Command {
 
     public static final String COMMAND_WORD = "view";
 
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Shows the overview of the student identified by the "
-            + "index number used in the displayed student list.\n"
+            + "index number used in the displayed student list: their details, next lesson, recent lesson notes, "
+            + "lesson history, balance and outstanding homework.\n"
             + "Parameters: INDEX (must be a positive integer)\n"
             + "Example: " + COMMAND_WORD + " 1";
 
@@ -35,6 +40,7 @@ public class ViewCommand extends Command {
     public static final String HEADING_NEXT_LESSON = "NEXT LESSON";
     public static final String HEADING_RECENT_NOTES = "RECENT LESSON NOTES";
     public static final String HEADING_LESSON_HISTORY = "LESSON HISTORY";
+    public static final String HEADING_BALANCE = "BALANCE";
     public static final String MESSAGE_NO_UPCOMING_LESSON = "  No upcoming lessons.";
     public static final String MESSAGE_NO_NOTES = "  No lesson notes yet.";
     public static final String MESSAGE_HISTORY = "  %1$d completed \u00b7 %2$d cancelled \u00b7 %3$d missed";
@@ -76,7 +82,9 @@ public class ViewCommand extends Command {
         return new CommandResult(formatStudent(student)
                 + "\n\n" + formatNextLesson(lessons)
                 + "\n\n" + formatRecentNotes(lessons)
-                + "\n\n" + formatHistory(lessons));
+                + "\n\n" + formatHistory(lessons)
+                + "\n\n" + formatBalance(model, student)
+                + "\n\n" + HomeworkQueries.summary(model.getAddressBook(), student.getId(), false, today));
     }
 
     private static String formatStudent(Person student) {
@@ -90,7 +98,7 @@ public class ViewCommand extends Command {
 
         StringBuilder text = new StringBuilder(String.format(MESSAGE_VIEWING, student.getName()));
         text.append("\nLevel ").append(student.getLevel()).append(SEPARATOR).append(subjects)
-                .append(SEPARATOR).append(student.getRate().toDisplayString()).append("/lesson");
+                .append(SEPARATOR).append(student.getRate().toDisplayString()).append("/hour");
         text.append("\n").append(contact);
         if (!student.getRemark().value.isEmpty()) {
             text.append("\nRemark: ").append(student.getRemark());
@@ -103,7 +111,8 @@ public class ViewCommand extends Command {
         Optional<Lesson> nextLesson = lessons.stream().filter(lesson -> lesson.isUpcoming(today)).findFirst();
         String body = nextLesson
                 .map(lesson -> String.format("  %s, %s%s%s%s%s", lesson.getDate(), lesson.getTimeRange(), SEPARATOR,
-                        lesson.getSubject(), SEPARATOR, Messages.formatVenue(lesson)))
+                        lesson.getSubject(), SEPARATOR, Messages.formatVenue(lesson))
+                        + lesson.getPreparation().map(notes -> "\n  Preparation: " + notes).orElse(""))
                 .orElse(MESSAGE_NO_UPCOMING_LESSON);
         return HEADING_NEXT_LESSON + "\n" + body;
     }
@@ -131,6 +140,11 @@ public class ViewCommand extends Command {
         return lessons.stream().filter(lesson -> lesson.getStatus() == status).count();
     }
 
+    private static String formatBalance(Model model, Person student) {
+        // Unlike the lines of the other sections, the amount is deliberately not indented
+        return HEADING_BALANCE + "\n" + Ledger.describeBalance(Ledger.balance(model.getAddressBook(), student));
+    }
+
     @Override
     public boolean equals(Object other) {
         if (other == this) {
@@ -143,6 +157,11 @@ public class ViewCommand extends Command {
         }
 
         return targetIndex.equals(otherViewCommand.targetIndex) && today.equals(otherViewCommand.today);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(targetIndex, today);
     }
 
     @Override
