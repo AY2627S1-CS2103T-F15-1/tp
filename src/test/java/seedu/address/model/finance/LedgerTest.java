@@ -103,6 +103,13 @@ public class LedgerTest {
     }
 
     @Test
+    public void charge_differentStudentFromLesson_isRejected() {
+        Lesson lesson = new LessonBuilder().withStudent(alice).build();
+
+        assertThrows(IllegalArgumentException.class, () -> LedgerEntry.charge(bob, lesson));
+    }
+
+    @Test
     public void charge_sameSlotAfterRename_hasIndependentStudentAndLessonIds() {
         AddressBook book = new AddressBook();
         book.addPerson(alice);

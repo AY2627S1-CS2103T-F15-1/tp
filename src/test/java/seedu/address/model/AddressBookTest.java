@@ -155,6 +155,15 @@ public class AddressBookTest {
     }
 
     @Test
+    public void setLesson_replacementWithDifferentId_isRejected() {
+        addressBook.addLesson(ALICE_MATH);
+        Lesson replacement = new LessonBuilder(ALICE_MATH).withId(java.util.UUID.randomUUID()).build();
+
+        assertThrows(IllegalArgumentException.class, () -> addressBook.setLesson(ALICE_MATH, replacement));
+        assertEquals(List.of(ALICE_MATH), addressBook.getLessonList());
+    }
+
+    @Test
     public void removeLesson_existingLesson_removesLesson() {
         addressBook.addLesson(ALICE_MATH);
         addressBook.removeLesson(ALICE_MATH);

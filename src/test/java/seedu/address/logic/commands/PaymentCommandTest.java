@@ -97,6 +97,20 @@ public class PaymentCommandTest {
     }
 
     @Test
+    public void execute_futureDate_isRejectedWithoutRecordingPayment() {
+        Model model = new ModelManager();
+        model.addPerson(ALICE);
+        PaymentCommand futurePayment = new PaymentCommand(INDEX_FIRST_PERSON, BigDecimal.TEN,
+                TODAY.plusDays(1), null, CLOCK);
+
+        CommandException error = org.junit.jupiter.api.Assertions.assertThrows(
+                CommandException.class, () -> futurePayment.execute(model));
+
+        assertEquals(PaymentCommand.MESSAGE_FUTURE_DATE, error.getMessage());
+        assertTrue(model.getAddressBook().getLedgerEntries().isEmpty());
+    }
+
+    @Test
     public void equals() {
         PaymentCommand command = payment(INDEX_FIRST_PERSON, BigDecimal.TEN);
         assertTrue(command.equals(command));
@@ -105,5 +119,8 @@ public class PaymentCommandTest {
         assertFalse(command.equals(payment(INDEX_SECOND_PERSON, BigDecimal.TEN)));
         assertFalse(command.equals(null));
         assertFalse(command.equals(new BalanceCommand(INDEX_FIRST_PERSON)));
+        assertFalse(command.equals(new PaymentCommand(INDEX_FIRST_PERSON, BigDecimal.TEN,
+                TODAY, "different note", CLOCK)));
+        assertTrue(command.toString().contains("studentIndex"));
     }
 }

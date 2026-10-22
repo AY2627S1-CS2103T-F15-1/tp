@@ -1,6 +1,7 @@
 package seedu.address.logic.commands;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
@@ -35,5 +36,6 @@ public class BalanceCommandTest {
         assertFalse(command.equals(differentIndex));
         assertFalse(command.equals(null));
         assertFalse(command.equals(new DuesCommand()));
+        assertNotNull(command.toString());
     }
 }
