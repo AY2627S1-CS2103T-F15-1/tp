@@ -407,7 +407,11 @@ Format: `clear confirm`
 * `confirm` must be written exactly in lower case. Anything else after `clear` is rejected, so a mistyped command can never wipe your data.
 * TutorFlow saves the empty data straight away, so copy `data/tutorflow-v14.json` first if you may want your records back.
 * Clearing data that is already empty works and does nothing.
-* If the clear is done in the current session and the empty data was not modified, this reversed with the `undo` command. A backup is still recommended, since the data can still be easily lost.
+* If you run `clear confirm` without changing data since, it can be reversed with `undo` in the same session. A backup is still recommended, as `undo` does not work after closing TutorFlow.
+
+Examples:
+* `clear` shows `This deletes ALL students, lessons, and homework. Type 'clear confirm' to proceed.`
+* `clear confirm` deletes everything.
 
 ### Undoing your latest deletion or clear: `undo`
 
@@ -417,11 +421,11 @@ Format: `undo`
 
 * Deletion commands include the commands with `delete` in them, and the `clear` command.
 * Changes can only be undone in the current session, and for one deletion command.
-* Reversals will fail if the data is changed in any way after the deletion, including sorting lessons or another deletion.
+* Reversals will fail if the data is changed in any way after the deletion, including sorting students or another deletion.
 
 Examples:
-* `clear` shows `This deletes ALL students, lessons, and homework. Type 'clear confirm' to proceed.`
-* `clear confirm` deletes everything.
+* `undo` shows `Nothing to undo.`
+* `delete confirm 2` followed by `undo` shows `Undone: student deletion. Your data is back as it was before.`, reversing the delete.
 
 ### Exiting the program: `exit`
 
