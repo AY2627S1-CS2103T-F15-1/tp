@@ -3,6 +3,8 @@ package seedu.address.logic.parser;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 
+import java.time.Clock;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -18,6 +20,18 @@ public class TaskCommandParser implements Parser<Command> {
 
     private static final Pattern SUB_COMMAND_FORMAT = Pattern.compile("(?<subCommandWord>\\S+)(?<arguments>.*)");
 
+    private final Clock clock;
+
+    /** Creates a parser that reads today's date from the system clock. */
+    public TaskCommandParser() {
+        this(Clock.systemDefaultZone());
+    }
+
+    /** Creates a parser that reads today's date, for due dates, from {@code clock}. */
+    public TaskCommandParser(Clock clock) {
+        this.clock = Objects.requireNonNull(clock);
+    }
+
     /**
      * Parses the given {@code String} of arguments, which start with the name of a task command, and returns the
      * command for execution.
@@ -32,9 +46,9 @@ public class TaskCommandParser implements Parser<Command> {
 
         String arguments = matcher.group("arguments");
         return switch (matcher.group("subCommandWord")) {
-            case "add" -> new TaskAddCommandParser().parse(arguments);
+            case "add" -> new TaskAddCommandParser(clock).parse(arguments);
             case "list" -> new TaskListCommandParser().parse(arguments);
-            case "edit" -> new TaskEditCommandParser().parse(arguments);
+            case "edit" -> new TaskEditCommandParser(clock).parse(arguments);
             case "done" -> new TaskDoneCommandParser().parse(arguments);
             case "delete" -> new TaskDeleteCommandParser().parse(arguments);
             default -> throw new ParseException(MESSAGE_UNKNOWN_COMMAND);
