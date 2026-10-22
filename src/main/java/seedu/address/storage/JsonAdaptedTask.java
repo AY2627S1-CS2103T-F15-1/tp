@@ -2,64 +2,50 @@ package seedu.address.storage;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
-import java.util.function.Function;
-import java.util.function.Predicate;
+import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import seedu.address.commons.exceptions.IllegalValueException;
-import seedu.address.model.lesson.LessonDate;
-import seedu.address.model.lesson.LessonDuration;
-import seedu.address.model.lesson.LessonTime;
-import seedu.address.model.person.Name;
-import seedu.address.model.person.Phone;
-import seedu.address.model.person.Subject;
 import seedu.address.model.task.Task;
-import seedu.address.model.task.TaskLessonLink;
 
 /**
- * Jackson-friendly version of {@link Task}.
+ * Jackson-friendly version of {@link Task}. A task is stored with the permanent ids of its student and, if it has
+ * one, of its lesson or homework item.
  */
 class JsonAdaptedTask {
 
     public static final String MISSING_FIELD_MESSAGE_FORMAT = "Task's %s field is missing!";
     public static final String MESSAGE_INVALID_DUE = "Task's due field must be a date in YYYY-MM-DD format.";
-    public static final String MESSAGE_INCOMPLETE_LESSON_LINK = "A task about a lesson needs the subject, date, "
-            + "time and duration of the lesson.";
+    public static final String MESSAGE_INVALID_ID_FORMAT = "Task's %s field must be a valid identifier.";
+    public static final String MESSAGE_TWO_LINKS = "A task can be about a lesson or about homework, not both.";
 
     private final String id;
     private final String description;
     private final String due;
     private final Boolean done;
-    private final String studentName;
-    private final String studentPhone;
-    private final String lessonSubject;
-    private final String lessonDate;
-    private final String lessonTime;
-    private final Integer lessonDuration;
+    private final String studentId;
+    private final String lessonId;
+    private final String homeworkId;
 
     /**
      * Constructs a {@code JsonAdaptedTask} with the given task details.
-     * The {@code due} date and the four lesson fields are optional, and may be null. A missing {@code done}
-     * means that the task is open.
+     * The {@code due} date, {@code lessonId} and {@code homeworkId} are optional, and may be null. A missing
+     * {@code done} means that the task is open.
      */
     @JsonCreator
     public JsonAdaptedTask(@JsonProperty("id") String id, @JsonProperty("description") String description,
             @JsonProperty("due") String due, @JsonProperty("done") Boolean done,
-            @JsonProperty("studentName") String studentName, @JsonProperty("studentPhone") String studentPhone,
-            @JsonProperty("lessonSubject") String lessonSubject, @JsonProperty("lessonDate") String lessonDate,
-            @JsonProperty("lessonTime") String lessonTime, @JsonProperty("lessonDuration") Integer lessonDuration) {
+            @JsonProperty("studentId") String studentId, @JsonProperty("lessonId") String lessonId,
+            @JsonProperty("homeworkId") String homeworkId) {
         this.id = id;
         this.description = description;
         this.due = due;
         this.done = done;
-        this.studentName = studentName;
-        this.studentPhone = studentPhone;
-        this.lessonSubject = lessonSubject;
-        this.lessonDate = lessonDate;
-        this.lessonTime = lessonTime;
-        this.lessonDuration = lessonDuration;
+        this.studentId = studentId;
+        this.lessonId = lessonId;
+        this.homeworkId = homeworkId;
     }
 
     /**
@@ -70,12 +56,9 @@ class JsonAdaptedTask {
         description = source.getDescription();
         due = source.getDue().map(LocalDate::toString).orElse(null);
         done = source.isDone();
-        studentName = source.getStudentName().fullName;
-        studentPhone = source.getStudentPhone().value;
-        lessonSubject = source.getLessonLink().map(link -> link.getSubject().value).orElse(null);
-        lessonDate = source.getLessonLink().map(link -> link.getDate().toStorageString()).orElse(null);
-        lessonTime = source.getLessonLink().map(link -> link.getTime().toString()).orElse(null);
-        lessonDuration = source.getLessonLink().map(link -> link.getDuration().value).orElse(null);
+        studentId = source.getStudentId().toString();
+        lessonId = source.getLessonId().map(UUID::toString).orElse(null);
+        homeworkId = source.getHomeworkId().map(UUID::toString).orElse(null);
     }
 
     /**
@@ -93,10 +76,15 @@ class JsonAdaptedTask {
         if (!Task.isValidDescription(description)) {
             throw new IllegalValueException(Task.MESSAGE_DESCRIPTION_CONSTRAINTS);
         }
-        final Name modelStudentName = convert("studentName", studentName, Name::isValidStoredName,
-                Name.MESSAGE_CONSTRAINTS, Name::fromStored);
-        final Phone modelStudentPhone = convert("studentPhone", studentPhone, Phone::isValidStoredPhone,
-                Phone.MESSAGE_CONSTRAINTS, Phone::fromStored);
+        if (studentId == null) {
+            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, "studentId"));
+        }
+        UUID modelStudentId = parseId("studentId", studentId);
+        UUID modelLessonId = lessonId == null ? null : parseId("lessonId", lessonId);
+        UUID modelHomeworkId = homeworkId == null ? null : parseId("homeworkId", homeworkId);
+        if (modelLessonId != null && modelHomeworkId != null) {
+            throw new IllegalValueException(MESSAGE_TWO_LINKS);
+        }
 
         LocalDate modelDue = null;
         if (due != null) {
@@ -106,45 +94,16 @@ class JsonAdaptedTask {
                 throw new IllegalValueException(MESSAGE_INVALID_DUE);
             }
         }
-        return new Task(id, description, modelDue, done != null && done, modelStudentName, modelStudentPhone,
-                toLessonLink());
+        return new Task(id, description, modelDue, done != null && done, modelStudentId, modelLessonId,
+                modelHomeworkId);
     }
 
-    private TaskLessonLink toLessonLink() throws IllegalValueException {
-        boolean hasAnyLessonField = lessonSubject != null || lessonDate != null || lessonTime != null
-                || lessonDuration != null;
-        if (!hasAnyLessonField) {
-            return null;
+    private static UUID parseId(String fieldName, String raw) throws IllegalValueException {
+        try {
+            return UUID.fromString(raw);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalValueException(String.format(MESSAGE_INVALID_ID_FORMAT, fieldName));
         }
-        if (lessonSubject == null || lessonDate == null || lessonTime == null || lessonDuration == null) {
-            throw new IllegalValueException(MESSAGE_INCOMPLETE_LESSON_LINK);
-        }
-        return new TaskLessonLink(
-                convert("lessonSubject", lessonSubject, Subject::isValidSubject, Subject.MESSAGE_CONSTRAINTS,
-                        Subject::new),
-                convert("lessonDate", lessonDate, LessonDate::isValidDate, LessonDate.MESSAGE_CONSTRAINTS,
-                        LessonDate::new),
-                convert("lessonTime", lessonTime, LessonTime::isValidTime, LessonTime.MESSAGE_CONSTRAINTS,
-                        LessonTime::new),
-                convert("lessonDuration", lessonDuration, LessonDuration::isValidDuration,
-                        LessonDuration.MESSAGE_CONSTRAINTS, LessonDuration::new));
-    }
-
-    /**
-     * Returns {@code raw} converted by {@code factory} after checking that it is present and passes
-     * {@code isValid}.
-     *
-     * @throws IllegalValueException if {@code raw} is missing or is not valid.
-     */
-    private static <R, T> T convert(String fieldName, R raw, Predicate<R> isValid, String constraints,
-            Function<R, T> factory) throws IllegalValueException {
-        if (raw == null) {
-            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, fieldName));
-        }
-        if (!isValid.test(raw)) {
-            throw new IllegalValueException(constraints);
-        }
-        return factory.apply(raw);
     }
 
 }
