@@ -7,7 +7,10 @@ import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSucces
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 
 import org.junit.jupiter.api.Test;
 
@@ -24,7 +27,10 @@ public class TaskCommandParserTest {
     private static final String ADD_USAGE = TaskAddCommand.MESSAGE_USAGE;
     private static final String DESCRIPTION_TOO_LONG = "a".repeat(Task.MAX_DESCRIPTION_LENGTH + 1);
 
-    private TaskCommandParser parser = new TaskCommandParser();
+    private static final LocalDate TODAY = LocalDate.of(2026, 10, 22);
+    private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-10-22T04:00:00Z"), ZoneId.of("Asia/Singapore"));
+
+    private TaskCommandParser parser = new TaskCommandParser(CLOCK);
 
     // ---- routing
 
@@ -34,6 +40,31 @@ public class TaskCommandParserTest {
                 "Task commands: task add, task list, task edit, task done, task delete"));
         assertParseFailure(parser, " remove 1", MESSAGE_UNKNOWN_COMMAND);
         assertParseFailure(parser, " ADD st/1 desc/x", MESSAGE_UNKNOWN_COMMAND);
+    }
+
+    // ---- due dates
+
+    @Test
+    public void parseAdd_dueDate_pastIsRejectedAndTodayOnwardsAccepted() {
+        assertParseFailure(parser, " add st/1 desc/x due/2026-10-21", TaskAddCommandParser.MESSAGE_PAST_DUE);
+        assertParseSuccess(parser, " add st/1 desc/x due/2026-10-22",
+                new TaskAddCommand(INDEX_FIRST_PERSON, null, null, null, "x", TODAY));
+        assertParseSuccess(parser, " add st/1 desc/x due/2026-10-23",
+                new TaskAddCommand(INDEX_FIRST_PERSON, null, null, null, "x", TODAY.plusDays(1)));
+        assertParseSuccess(parser, " add st/1 desc/x due/today",
+                new TaskAddCommand(INDEX_FIRST_PERSON, null, null, null, "x", TODAY));
+        assertParseSuccess(parser, " add st/1 desc/x due/TMR",
+                new TaskAddCommand(INDEX_FIRST_PERSON, null, null, null, "x", TODAY.plusDays(1)));
+    }
+
+    @Test
+    public void parseEdit_dueDate_pastIsRejectedAndClearingStillWorks() {
+        assertParseFailure(parser, " edit 1 desc/x due/2026-10-21", TaskAddCommandParser.MESSAGE_PAST_DUE);
+        assertParseSuccess(parser, " edit 1 desc/x due/2026-10-22",
+                new TaskEditCommand(INDEX_FIRST_PERSON, "x", TODAY, false));
+        assertParseSuccess(parser, " edit 1 desc/x due/tmr",
+                new TaskEditCommand(INDEX_FIRST_PERSON, "x", TODAY.plusDays(1), false));
+        assertParseSuccess(parser, " edit 1 desc/x due/-", new TaskEditCommand(INDEX_FIRST_PERSON, "x", null, true));
     }
 
     // ---- task add
