@@ -135,6 +135,33 @@ public class TasksIntegrationTest {
     }
 
     @Test
+    public void execute_taskListForStudent_includesTheirLessonAndHomeworkTasksOnly() throws Exception {
+        logic.execute("lesson add st/1 d/" + DAY + " t/16:00");
+        logic.execute("lesson list st/1");
+        logic.execute("task add lesson/1 desc/Prepare mock paper");
+        logic.execute("hw add st/1 desc/Algebra Q1-10 due/" + DAY);
+        logic.execute("hw list");
+        logic.execute("task add hw/1 desc/Mark the algebra");
+        logic.execute("task add st/1 desc/Call parent");
+        logic.execute("task add st/2 desc/Other student");
+
+        // changing the student and the lesson does not change which tasks belong to the student
+        logic.execute("edit 1 n/Alice Tan p/90000001");
+        logic.execute("lesson move 1 d/" + DAY.plusDays(1));
+
+        String alice = logic.execute("task list st/1").getFeedbackToUser();
+        assertTrue(alice.startsWith("Tasks (3)"), alice);
+        assertTrue(alice.contains("Prepare mock paper"), alice);
+        assertTrue(alice.contains("Mark the algebra"), alice);
+        assertTrue(alice.contains("Call parent"), alice);
+        assertFalse(alice.contains("Other student"), alice);
+
+        String benson = logic.execute("task list st/2").getFeedbackToUser();
+        assertTrue(benson.startsWith("Tasks (1)"), benson);
+        assertTrue(benson.contains("Other student"), benson);
+    }
+
+    @Test
     public void execute_deletingStudentWithTasks_needsConfirmAndTakesTasksAlong() throws Exception {
         logic.execute("task add st/1 desc/Call parent");
         logic.execute("task add st/2 desc/Other student");
