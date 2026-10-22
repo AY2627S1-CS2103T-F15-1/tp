@@ -10,11 +10,11 @@ import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BENSON;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 
-import seedu.address.model.person.Name;
-import seedu.address.model.person.Phone;
+import seedu.address.model.homework.Homework;
 import seedu.address.testutil.LessonBuilder;
 import seedu.address.testutil.PersonBuilder;
 import seedu.address.testutil.TaskBuilder;
@@ -38,21 +38,21 @@ public class TaskTest {
 
     @Test
     public void constructor_invalidArguments_throws() {
-        Name name = ALICE.getName();
-        Phone phone = ALICE.getPhone();
-        assertThrows(NullPointerException.class, () -> new Task(null, "x", null, false, name, phone, null));
-        assertThrows(NullPointerException.class, () -> new Task("id", null, null, false, name, phone, null));
-        assertThrows(NullPointerException.class, () -> new Task("id", "x", null, false, null, phone, null));
-        assertThrows(NullPointerException.class, () -> new Task("id", "x", null, false, name, null, null));
+        UUID student = ALICE.getId();
+        assertThrows(NullPointerException.class, () -> new Task(null, "x", null, false, student, null, null));
+        assertThrows(NullPointerException.class, () -> new Task("id", null, null, false, student, null, null));
+        assertThrows(NullPointerException.class, () -> new Task("id", "x", null, false, null, null, null));
         assertThrows(IllegalArgumentException.class, Task.MESSAGE_DESCRIPTION_CONSTRAINTS, ()
-                -> new Task("id", " ", null, false, name, phone, null));
-        assertThrows(IllegalArgumentException.class, () -> new Task(" ", "x", null, false, name, phone, null));
+                -> new Task("id", " ", null, false, student, null, null));
+        assertThrows(IllegalArgumentException.class, () -> new Task(" ", "x", null, false, student, null, null));
+        assertThrows(IllegalArgumentException.class, () -> new Task("id", "x", null, false, student,
+                UUID.randomUUID(), UUID.randomUUID())); // a lesson and homework at once
     }
 
     @Test
     public void create_assignsDistinctIds() {
-        Task first = Task.create("Same text", null, ALICE, null);
-        Task second = Task.create("Same text", null, ALICE, null);
+        Task first = Task.create("Same text", null, ALICE);
+        Task second = Task.create("Same text", null, ALICE);
 
         assertNotEquals(first.getId(), second.getId());
         assertNotEquals(first, second); // two tasks with the same text are allowed and stay distinct
@@ -78,33 +78,43 @@ public class TaskTest {
     }
 
     @Test
-    public void isAbout_studentAndLesson() {
+    public void isAbout_studentLessonAndHomework() {
         Task studentTask = new TaskBuilder().withStudent(ALICE).build();
         Task lessonTask = new TaskBuilder().withLesson(ALICE_MATH).build();
+        Homework homework = Homework.assign(ALICE.getId(), "Practice set", LocalDate.of(2030, 1, 1));
+        Task homeworkTask = new TaskBuilder().withHomework(homework).build();
 
         assertTrue(studentTask.isAbout(ALICE));
         assertFalse(studentTask.isAbout(BENSON));
         assertFalse(studentTask.isAbout(ALICE_MATH)); // a task about a student is not about their lessons
+        assertFalse(studentTask.isAbout(homework));
         assertTrue(lessonTask.isAbout(ALICE_MATH));
         assertTrue(lessonTask.isAbout(ALICE)); // but a task about a lesson is also about the student
-        assertFalse(lessonTask.isAbout(new LessonBuilder(ALICE_MATH).withDate("2030-01-01").build()));
-        assertFalse(lessonTask.isAbout(new LessonBuilder(ALICE_MATH).withSubject("Science").build()));
-        assertFalse(lessonTask.isAbout(new LessonBuilder(ALICE_MATH).withStudent(BENSON).build()));
-        assertTrue(lessonTask.isAbout(new LessonBuilder(ALICE_MATH).build().cancel("Cancelled")));
+        assertFalse(lessonTask.isAbout(BENSON));
+        assertTrue(homeworkTask.isAbout(homework));
+        assertTrue(homeworkTask.isAbout(ALICE));
+        assertFalse(homeworkTask.isAbout(ALICE_MATH));
+        assertFalse(homeworkTask.isAbout(Homework.assign(ALICE.getId(), "Practice set", LocalDate.of(2030, 1, 1))));
     }
 
     @Test
-    public void withStudentAndWithLesson_relinkTheTask() {
-        Task studentTask = new TaskBuilder().withStudent(ALICE).build();
-        Task renamed = studentTask.withStudent(new PersonBuilder(ALICE).withName("Alice Tan").build());
-        assertEquals("Alice Tan", renamed.getStudentName().toString());
-        assertEquals(studentTask.getId(), renamed.getId());
-
+    public void isAbout_lessonFollowsTheLessonIdNotTheSlotOrStatus() {
         Task lessonTask = new TaskBuilder().withLesson(ALICE_MATH).build();
-        var moved = new LessonBuilder(ALICE_MATH).withDate("2031-05-04").withTime("09:00").build();
-        Task followed = lessonTask.withLesson(moved);
-        assertTrue(followed.isAbout(moved));
-        assertFalse(followed.isAbout(ALICE_MATH));
+
+        // the same lesson moved, renamed or cancelled is still the lesson the task is about
+        assertTrue(lessonTask.isAbout(new LessonBuilder(ALICE_MATH).withDate("2030-01-01").build()));
+        assertTrue(lessonTask.isAbout(new LessonBuilder(ALICE_MATH).withSubject("Science").build()));
+        assertTrue(lessonTask.isAbout(new LessonBuilder(ALICE_MATH).build().cancel("Cancelled")));
+        // a different lesson in exactly the same slot, such as a rebooking, is not
+        assertFalse(lessonTask.isAbout(new LessonBuilder(ALICE_MATH).withId(UUID.randomUUID()).build()));
+    }
+
+    @Test
+    public void isAbout_studentFollowsTheStudentIdNotNameOrPhone() {
+        Task studentTask = new TaskBuilder().withStudent(ALICE).build();
+
+        assertTrue(studentTask.isAbout(new PersonBuilder(ALICE).withName("Alice Tan").build().withId(ALICE.getId())));
+        assertFalse(studentTask.isAbout(new PersonBuilder(ALICE).build().withId(UUID.randomUUID())));
     }
 
     @Test
@@ -122,27 +132,15 @@ public class TaskTest {
         assertNotEquals(task, new TaskBuilder().done().build());
         assertNotEquals(task, new TaskBuilder().withStudent(BENSON).build());
         assertNotEquals(task, new TaskBuilder().withLesson(ALICE_MATH).build());
+        assertNotEquals(task, new TaskBuilder().withHomework(
+                Homework.assign(ALICE.getId(), "Practice set", LocalDate.of(2030, 1, 1))).build());
     }
 
     @Test
     public void toStringMethod() {
         Task task = new TaskBuilder().build();
         String expected = Task.class.getCanonicalName() + "{id=task-1, description=Call parent, due=null, "
-                + "isDone=false, studentName=" + ALICE.getName() + ", studentPhone=" + ALICE.getPhone()
-                + ", lessonLink=null}";
+                + "isDone=false, studentId=" + ALICE.getId() + ", lessonId=null, homeworkId=null}";
         assertEquals(expected, task.toString());
-    }
-
-    @Test
-    public void lessonLink_matchesSlotButNotStudent() {
-        TaskLessonLink link = TaskLessonLink.of(ALICE_MATH);
-
-        assertTrue(link.matches(ALICE_MATH));
-        assertTrue(link.matches(new LessonBuilder(ALICE_MATH).withStudent(BENSON).build()));
-        assertFalse(link.matches(new LessonBuilder(ALICE_MATH).withDuration(60).build()));
-        assertEquals(link, TaskLessonLink.of(ALICE_MATH));
-        assertEquals(link.hashCode(), TaskLessonLink.of(ALICE_MATH).hashCode());
-        assertNotEquals(link, null);
-        assertThrows(NullPointerException.class, () -> TaskLessonLink.of(null));
     }
 }
