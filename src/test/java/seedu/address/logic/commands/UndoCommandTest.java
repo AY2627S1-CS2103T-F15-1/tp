@@ -21,8 +21,15 @@ import seedu.address.model.homework.Homework;
  * {@code UndoCommand}.
  */
 public class UndoCommandTest {
-    private final Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
-    private final Model expectedModel = new ModelManager(getTypicalAddressBook(), new UserPrefs());
+    private final Homework hw = Homework.assign(BENSON.getId(), "hw test", LocalDate.of(3000, 10, 20));
+    private final Model model;
+    private final Model expectedModel;
+
+    public UndoCommandTest() {
+        model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
+        model.addHomework(hw);
+        expectedModel = new ModelManager(model.getAddressBook(), model.getUserPrefs());
+    }
 
     @Test
     public void execute_nothing_failure() {
@@ -41,8 +48,6 @@ public class UndoCommandTest {
 
     @Test
     public void execute_delete_success() {
-        Homework hw = Homework.assign(BENSON.getId(), "hw test", LocalDate.of(3000, 10, 20));
-        model.addHomework(hw);
         model.deleteHomework(hw);
         CommandResult expected = new CommandResult(
                 String.format(MESSAGE_SUCCESS, "homework deletion"),

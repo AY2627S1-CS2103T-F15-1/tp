@@ -238,7 +238,7 @@ public class ModelManagerTest {
     }
 
     @Test
-    public void undoDestructiveAction_removeHomework_returnsDestructiveActionDeleteHWAndUndoes() {
+    public void undoDestructiveAction_removeHomework_returnsDestructiveActionDeleteHwAndUndoes() {
         modelManager.addPerson(GEORGE);
         Homework hw = Homework.assign(
                 GEORGE.getId(), "Test Homework",
@@ -262,13 +262,11 @@ public class ModelManagerTest {
 
         ModelManager before = copyOfModelManager();
 
+        // check that multiple clears do not affect saved
         modelManager.clearAddressBook();
         modelManager.clearAddressBook();
-
 
         assertEquals(DestructiveActionType.CLEAR, modelManager.undoDestructiveAction());
-        System.out.println(modelManager.getAddressBook());
-        System.out.println(before.getAddressBook());
         assertEquals(before, modelManager);
     }
 
@@ -283,10 +281,12 @@ public class ModelManagerTest {
         modelManager.hasLesson(ALICE_MATH);
         modelManager.hasPerson(DANIEL);
         modelManager.setPerson(DANIEL, DANIEL);
-        System.out.println(before.getAddressBook());
-        System.out.println(modelManager.getAddressBook());
 
         assertEquals(DestructiveActionType.DELETE_LESSON, modelManager.undoDestructiveAction());
+        assertEquals(before, modelManager);
+
+        // multiple undos should fail
+        assertEquals(DestructiveActionType.NONE, modelManager.undoDestructiveAction());
         assertEquals(before, modelManager);
     }
 
