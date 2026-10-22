@@ -43,6 +43,8 @@ public class PaymentCommandTest {
             assertThrows(IllegalArgumentException.class, () -> payment(INDEX_FIRST_PERSON,
                     new BigDecimal(amount)));
         }
+        assertThrows(IllegalArgumentException.class, () -> new PaymentCommand(INDEX_FIRST_PERSON,
+                BigDecimal.TEN, TODAY, "line\nbreak", CLOCK));
     }
 
     @Test
@@ -82,6 +84,17 @@ public class PaymentCommandTest {
     }
 
     @Test
+    public void execute_twoArgumentConstructor_usesSystemDateAndRecordsPayment() throws Exception {
+        Model model = new ModelManager();
+        model.addPerson(ALICE);
+
+        CommandResult result = new PaymentCommand(INDEX_FIRST_PERSON, BigDecimal.TEN).execute(model);
+
+        assertTrue(result.getFeedbackToUser().startsWith("Payment of $10.00 recorded for " + ALICE.getName()));
+        assertEquals(1, model.getAddressBook().getLedgerEntries().size());
+    }
+
+    @Test
     public void execute_rejectedLedgerEntry_reportsCommandErrorWithoutRecordingPayment() {
         Model model = new ModelManager() {
             @Override
@@ -117,6 +130,13 @@ public class PaymentCommandTest {
         assertTrue(command.equals(payment(INDEX_FIRST_PERSON, new BigDecimal("10.00"))));
         assertFalse(command.equals(payment(INDEX_FIRST_PERSON, BigDecimal.ONE)));
         assertFalse(command.equals(payment(INDEX_SECOND_PERSON, BigDecimal.TEN)));
+        assertFalse(command.equals(new PaymentCommand(INDEX_FIRST_PERSON, BigDecimal.TEN,
+                TODAY.plusDays(1), null, CLOCK)));
+        assertFalse(command.equals(new PaymentCommand(INDEX_FIRST_PERSON, BigDecimal.TEN,
+                null, "reference", CLOCK)));
+        Clock anotherClock = Clock.fixed(Instant.parse("2026-10-20T04:00:00Z"), ZoneId.of("Asia/Singapore"));
+        assertFalse(command.equals(new PaymentCommand(INDEX_FIRST_PERSON, BigDecimal.TEN,
+                null, null, anotherClock)));
         assertFalse(command.equals(null));
         assertFalse(command.equals(new BalanceCommand(INDEX_FIRST_PERSON)));
         assertFalse(command.equals(new PaymentCommand(INDEX_FIRST_PERSON, BigDecimal.TEN,

@@ -1,5 +1,6 @@
 package seedu.address.logic.parser;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -98,5 +99,12 @@ public class PaymentCommandParserTest {
             assertParseSuccess(parser, " st/1 amt/10 d/" + date, new PaymentCommand(INDEX_FIRST_PERSON,
                     BigDecimal.TEN, new seedu.address.model.lesson.LessonDate(date).value, null, CLOCK));
         }
+    }
+
+    @Test
+    public void parse_defaultConstructor_acceptsPaymentWithoutOptionalDate() throws Exception {
+        PaymentCommand parsed = new PaymentCommandParser().parse(" st/1 amt/10");
+
+        assertEquals(new PaymentCommand(INDEX_FIRST_PERSON, BigDecimal.TEN), parsed);
     }
 }

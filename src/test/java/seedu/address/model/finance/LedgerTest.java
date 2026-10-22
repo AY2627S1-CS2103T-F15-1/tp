@@ -69,6 +69,10 @@ public class LedgerTest {
         });
         assertThrows(IllegalArgumentException.class, () -> LedgerEntry.payment(alice, BigDecimal.ZERO, DAY));
         assertThrows(IllegalArgumentException.class, () -> LedgerEntry.payment(alice, BigDecimal.ONE.negate(), DAY));
+        assertThrows(IllegalArgumentException.class, () -> LedgerEntry.payment(alice, BigDecimal.ONE, DAY,
+                "line\u2028break"));
+        assertThrows(IllegalArgumentException.class, () -> LedgerEntry.payment(alice, BigDecimal.ONE, DAY,
+                "line\u2029break"));
         AddressBook book = new AddressBook();
         Lesson lesson = new LessonBuilder().withStudent(alice).build();
         LedgerEntry charge = LedgerEntry.charge(alice, lesson);
@@ -107,6 +111,31 @@ public class LedgerTest {
         Lesson lesson = new LessonBuilder().withStudent(alice).build();
 
         assertThrows(IllegalArgumentException.class, () -> LedgerEntry.charge(bob, lesson));
+    }
+
+    @Test
+    public void chargeLesson_rejectsCompletedTargetAndNonCompletedReplacement() {
+        AddressBook book = new AddressBook();
+        book.addPerson(alice);
+        Lesson scheduled = new LessonBuilder().withStudent(alice).withDate(DAY).build();
+        book.addLesson(scheduled);
+
+        assertThrows(IllegalArgumentException.class, () -> book.chargeLesson(scheduled, scheduled.miss()));
+        Lesson completed = scheduled.complete(null);
+        assertThrows(IllegalArgumentException.class, () -> book.chargeLesson(completed, completed));
+        assertTrue(book.getLedgerEntries().isEmpty());
+    }
+
+    @Test
+    public void addLedgerEntry_duplicatePaymentId_isRejected() {
+        AddressBook book = new AddressBook();
+        book.addPerson(alice);
+        LedgerEntry payment = LedgerEntry.payment(alice, BigDecimal.ONE, DAY);
+        book.addLedgerEntry(payment);
+        LedgerEntry sameId = new LedgerEntry(payment.id(), alice.getId(), null,
+                LedgerEntry.Kind.PAYMENT, BigDecimal.TEN, DAY);
+
+        assertThrows(IllegalArgumentException.class, () -> book.addLedgerEntry(sameId));
     }
 
     @Test
@@ -157,6 +186,7 @@ public class LedgerTest {
         assertEquals("-$10.00", Ledger.format(BigDecimal.TEN.negate()));
         assertEquals("No outstanding balances. Everyone is up to date.",
                 Ledger.formatDues(new AddressBook(), DAY));
+        assertTrue(Ledger.dues(new AddressBook()).isEmpty());
     }
 
     @Test
