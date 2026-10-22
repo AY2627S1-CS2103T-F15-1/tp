@@ -3,6 +3,7 @@ package seedu.address.storage;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -29,7 +30,7 @@ class JsonSerializableAddressBook {
     public static final String MESSAGE_DUPLICATE_LESSON = "Lessons list contains duplicate lesson(s).";
     public static final String MESSAGE_DUPLICATE_TASK = "Tasks list contains tasks with the same id.";
     public static final String MESSAGE_TASK_WITHOUT_TARGET =
-            "Tasks list contains a task whose student or lesson is not in the data.";
+            "Tasks list contains a task whose student, lesson or homework is not in the data.";
     public static final String MESSAGE_LESSON_WITHOUT_STUDENT =
             "Lessons list contains a lesson whose student is not in the persons list.";
 
@@ -178,10 +179,10 @@ class JsonSerializableAddressBook {
     }
 
     /**
-     * Adds the tasks to {@code addressBook}, whose students and lessons must already be added.
+     * Adds the tasks to {@code addressBook}, whose students, lessons and homework must already be added.
      *
-     * @throws IllegalValueException if a task is invalid, shares an id, or is about a student or lesson that is
-     *     not in {@code addressBook}.
+     * @throws IllegalValueException if a task is invalid, shares an id, or is about a student, lesson or homework
+     *     item that is not in {@code addressBook} or does not belong to the student of the task.
      */
     private void addTasksTo(AddressBook addressBook) throws IllegalValueException {
         for (JsonAdaptedTask jsonAdaptedTask : tasks) {
@@ -192,10 +193,14 @@ class JsonSerializableAddressBook {
             if (addressBook.findTask(task.getId()).isPresent()) {
                 throw new IllegalValueException(MESSAGE_DUPLICATE_TASK);
             }
-            boolean hasStudent = addressBook.getPersonList().stream().anyMatch(task::isAbout);
-            boolean hasLesson = task.getLessonLink().isEmpty()
-                    || addressBook.getLessonList().stream().anyMatch(task::isAbout);
-            if (!hasStudent || !hasLesson) {
+            Optional<Person> student = addressBook.getPersonList().stream().filter(task::isAbout).findFirst();
+            // A lesson or homework item that a task is about must exist, and be the student's own
+            boolean hasLesson = task.getLessonId().isEmpty() || student.isPresent()
+                    && addressBook.getLessonList().stream()
+                            .anyMatch(lesson -> task.isAbout(lesson) && lesson.isWith(student.get()));
+            boolean hasHomework = task.getHomeworkId().isEmpty() || addressBook.getHomeworkList().stream()
+                    .anyMatch(item -> task.isAbout(item) && item.getStudentId().equals(task.getStudentId()));
+            if (student.isEmpty() || !hasLesson || !hasHomework) {
                 throw new IllegalValueException(MESSAGE_TASK_WITHOUT_TARGET);
             }
             addressBook.addTask(task);
