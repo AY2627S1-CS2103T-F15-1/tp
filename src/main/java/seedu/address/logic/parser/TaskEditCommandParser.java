@@ -4,7 +4,9 @@ import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_DESCRIPTION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_DUE;
 
+import java.time.Clock;
 import java.time.LocalDate;
+import java.util.Objects;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.TaskEditCommand;
@@ -14,6 +16,18 @@ import seedu.address.logic.parser.exceptions.ParseException;
  * Parses input arguments and creates a new TaskEditCommand object
  */
 public class TaskEditCommandParser implements Parser<TaskEditCommand> {
+
+    private final Clock clock;
+
+    /** Creates a parser that reads today's date from the system clock. */
+    public TaskEditCommandParser() {
+        this(Clock.systemDefaultZone());
+    }
+
+    /** Creates a parser that reads today's date, for due dates, from {@code clock}. */
+    public TaskEditCommandParser(Clock clock) {
+        this.clock = Objects.requireNonNull(clock);
+    }
 
     /**
      * Parses the given {@code String} of arguments in the context of the TaskEditCommand
@@ -39,7 +53,8 @@ public class TaskEditCommandParser implements Parser<TaskEditCommand> {
         String description = TaskAddCommandParser.parseDescription(argMultimap.getValue(PREFIX_DESCRIPTION).get());
         String dueValue = argMultimap.getValue(PREFIX_DUE).map(String::strip).orElse(null);
         boolean isClearingDue = TaskEditCommand.CLEAR_DUE_VALUE.equals(dueValue);
-        LocalDate newDue = dueValue == null || isClearingDue ? null : ParserUtil.parseDate(dueValue).value;
+        LocalDate newDue = dueValue == null || isClearingDue ? null
+                : TaskAddCommandParser.parseDue(dueValue, LocalDate.now(clock));
         return new TaskEditCommand(index, description, newDue, isClearingDue);
     }
 
