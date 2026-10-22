@@ -1,12 +1,10 @@
 package seedu.address.logic.commands;
 
 import java.util.List;
-import java.util.Optional;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
-import seedu.address.model.lesson.Lesson;
 import seedu.address.model.task.Task;
 
 /**
@@ -41,27 +39,30 @@ final class TaskCommandUtil {
      */
     static String format(Model model, Task task) {
         String due = task.getDue().map(date -> "due " + date).orElse("(no due date)");
-        return String.format("[%s] %s %s | %s (%s) | %s", task.isDone() ? "done" : "open", task.getDescription(),
-                due, task.getStudentName(), task.getStudentPhone(), describeLink(model, task));
+        return String.format("[%s] %s %s | %s | %s", task.isDone() ? "done" : "open", task.getDescription(),
+                due, describeStudent(model, task), describeLink(model, task));
+    }
+
+    private static String describeStudent(Model model, Task task) {
+        return model.getAddressBook().getPersonList().stream().filter(task::isAbout).findFirst()
+                .map(person -> person.getName() + " (" + person.getPhone() + ")")
+                .orElse("unknown student");
     }
 
     private static String describeLink(Model model, Task task) {
-        if (task.getLessonLink().isEmpty()) {
-            return "student";
+        if (task.getLessonId().isPresent()) {
+            return model.getAddressBook().getLessonList().stream().filter(task::isAbout).findFirst()
+                    .map(lesson -> String.format("lesson %s %s %s (%s)", lesson.getSubject(), lesson.getDate(),
+                            lesson.getTimeRange(), lesson.getStatus()))
+                    // Not expected, because a lesson takes its tasks with it when it is deleted
+                    .orElse("lesson (no longer exists)");
         }
-        Optional<Lesson> lesson = findLesson(model, task);
-        if (lesson.isPresent()) {
-            return String.format("lesson %s %s %s (%s)", lesson.get().getSubject(), lesson.get().getDate(),
-                    lesson.get().getTimeRange(), lesson.get().getStatus());
+        if (task.getHomeworkId().isPresent()) {
+            return model.getAddressBook().getHomeworkList().stream().filter(task::isAbout).findFirst()
+                    .map(item -> String.format("homework %s due %s (%s)", item.getDescription(), item.getDueDate(),
+                            item.getStatus()))
+                    .orElse("homework (no longer exists)");
         }
-        // Not expected, because a lesson takes its tasks with it when it is deleted, but never fail a listing
-        return "lesson " + task.getLessonLink().get();
-    }
-
-    private static Optional<Lesson> findLesson(Model model, Task task) {
-        List<Lesson> matches = model.getAddressBook().getLessonList().stream().filter(task::isAbout).toList();
-        // A cancelled lesson can share its slot with a new one, so prefer the lesson that is still to be taught
-        return matches.stream().filter(Lesson::isScheduled).findFirst()
-                .or(() -> matches.stream().findFirst());
+        return "student";
     }
 }
