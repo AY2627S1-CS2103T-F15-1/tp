@@ -1,6 +1,5 @@
 package seedu.address.model;
 
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.homework.Homework;
@@ -27,8 +26,9 @@ public interface ReadOnlyAddressBook {
     /** Returns the immutable view of recorded charges and payments. */
     ObservableList<LedgerEntry> getLedgerEntries();
 
-    /** Returns persisted homework; pre-homework implementations represent the legacy empty domain. */
-    default ObservableList<Homework> getHomeworkList() {
-        return FXCollections.emptyObservableList();
-    }
+    /**
+     * Returns an unmodifiable view of the homework list.
+     * Every implementation must provide it, so that none can be saved or copied without its homework.
+     */
+    ObservableList<Homework> getHomeworkList();
 }

@@ -170,19 +170,22 @@ public class AddressBook implements ReadOnlyAddressBook {
      * The lesson identity of {@code editedLesson} must not be the same as another existing lesson in the address book.
      */
     public void setLesson(Lesson target, Lesson editedLesson) {
+        requireNonNull(target);
         requireNonNull(editedLesson);
-        lessons.setLesson(target, editedLesson.withId(target.getId()));
+        requireSameLessonId(target, editedLesson);
+        lessons.setLesson(target, editedLesson);
     }
 
     /** Completes a lesson and captures its fee atomically, returning no charge for a free lesson. */
     public Optional<LedgerEntry> chargeLesson(Lesson target, Lesson completedLesson) {
         requireNonNull(target);
         requireNonNull(completedLesson);
+        requireSameLessonId(target, completedLesson);
         if ((!target.isScheduled() && target.getStatus() != LessonStatus.MISSED)
                 || completedLesson.getStatus() != LessonStatus.COMPLETED) {
             throw new IllegalArgumentException("Only scheduled or missed lessons can be completed and charged.");
         }
-        Lesson replacement = completedLesson.withId(target.getId());
+        Lesson replacement = completedLesson;
         Person student = persons.asUnmodifiableObservableList().stream().filter(replacement::isWith)
                 .findFirst().orElseThrow(() -> new IllegalArgumentException("Lesson student does not exist."));
         LedgerEntry charge = null;
@@ -196,6 +199,13 @@ public class AddressBook implements ReadOnlyAddressBook {
             logger.fine("Recorded automatic lesson charge");
         }
         return Optional.ofNullable(charge);
+    }
+
+    /** Rejects replacement values that change a lesson's permanent identity. */
+    private static void requireSameLessonId(Lesson target, Lesson replacement) {
+        if (!target.getId().equals(replacement.getId())) {
+            throw new IllegalArgumentException("A replacement lesson must retain its permanent ID.");
+        }
     }
 
     /**
@@ -299,7 +309,8 @@ public class AddressBook implements ReadOnlyAddressBook {
 
     /** Replaces an assignment while preserving its identity. */
     public void setHomework(Homework target, Homework replacement) {
-        if (!target.getId().equals(replacement.getId()) || !homework.contains(target)) {
+        if (!target.getId().equals(replacement.getId()) || !target.getStudentId().equals(replacement.getStudentId())
+                || !homework.contains(target)) {
             throw new IllegalArgumentException("Homework identity must be preserved.");
         }
         validateHomework(replacement, target);
@@ -320,11 +331,15 @@ public class AddressBook implements ReadOnlyAddressBook {
                 .noneMatch(person -> person.getId().equals(item.getStudentId()))) {
             throw new IllegalArgumentException("Homework student does not exist.");
         }
-        if (homework.stream().filter(existing -> target == null || !existing.getId().equals(target.getId()))
-                .anyMatch(existing ->
-                existing.getId().equals(item.getId()) || existing.isSameAssignment(item))) {
-            throw new IllegalArgumentException("This student already has homework '" + item.getDescription()
-                    + "' due " + item.getDueDate() + ".");
+        List<Homework> others = homework.stream()
+                .filter(existing -> target == null || !existing.getId().equals(target.getId())).toList();
+        if (others.stream().anyMatch(existing -> existing.getId().equals(item.getId()))) {
+            throw new IllegalArgumentException("Homework identity already exists.");
+        }
+        Optional<Homework> duplicate = others.stream().filter(existing -> existing.isSameAssignment(item)).findFirst();
+        if (duplicate.isPresent()) {
+            throw new IllegalArgumentException(String.format(Homework.MESSAGE_DUPLICATE,
+                    duplicate.get().getDescription(), duplicate.get().getDueDate()));
         }
     }
 

@@ -154,11 +154,11 @@ public class FinanceIntegrationTest {
     public void payment_recordsPartialFullAndExcessPaymentsAndPersistsThem() throws Exception {
         logic.execute("lesson add st/1 d/" + TODAY + " t/10:00");
         logic.execute("lesson done 1");
-        assertTrue(logic.execute("payment st/1 a/20").getFeedbackToUser().endsWith("OUTSTANDING $30.00."));
+        assertTrue(logic.execute("pay st/1 amt/20").getFeedbackToUser().endsWith("OUTSTANDING $30.00."));
         assertTrue(logic.execute("dues").getFeedbackToUser().contains("$30.00 total"));
-        assertTrue(logic.execute("payment st/1 a/30").getFeedbackToUser().endsWith("OUTSTANDING $0.00."));
+        assertTrue(logic.execute("pay st/1 amt/30").getFeedbackToUser().endsWith("OUTSTANDING $0.00."));
         assertEquals(DuesCommand.MESSAGE_NO_DUES, logic.execute("dues").getFeedbackToUser());
-        assertTrue(logic.execute("payment a/10.25 st/1").getFeedbackToUser().contains("IN CREDIT $10.25"));
+        assertTrue(logic.execute("pay amt/10.25 st/1").getFeedbackToUser().contains("IN CREDIT $10.25"));
         assertTrue(logic.execute("balance st/1").getFeedbackToUser().contains("IN CREDIT $10.25"));
         ReadOnlyAddressBook saved = storage.readAddressBook().orElseThrow();
         assertEquals(new BigDecimal("-10.25"), Ledger.balance(saved, alice));
@@ -171,7 +171,7 @@ public class FinanceIntegrationTest {
         // Bob is student 2, but his lesson is lesson 1. No agenda or list command is needed.
         logic.execute("lesson add st/2 d/" + TODAY + " t/10:00 dur/90");
         assertTrue(logic.execute("lesson done 1").getFeedbackToUser().contains("Charge of $120.00 recorded."));
-        String payment = logic.execute("payment st/2 a/120").getFeedbackToUser();
+        String payment = logic.execute("pay st/2 amt/120").getFeedbackToUser();
 
         assertTrue(payment.contains("Payment of $120.00 recorded for Bob"));
         assertTrue(payment.endsWith("OUTSTANDING $0.00."));
@@ -191,7 +191,7 @@ public class FinanceIntegrationTest {
         logic.execute("find Bob");
         logic.execute("lesson add st/1 d/" + TODAY + " t/10:00");
         logic.execute("lesson done 1");
-        String payment = logic.execute("payment st/1 a/80").getFeedbackToUser();
+        String payment = logic.execute("pay st/1 amt/80").getFeedbackToUser();
 
         assertTrue(payment.contains("Payment of $80.00 recorded for Bob"));
         assertTrue(payment.endsWith("OUTSTANDING $0.00."));
@@ -212,7 +212,7 @@ public class FinanceIntegrationTest {
 
         logic.execute("lesson done 1");
         assertTrue(model.getFilteredLessonList().isEmpty());
-        String payment = logic.execute("payment st/2 a/80").getFeedbackToUser();
+        String payment = logic.execute("pay st/2 amt/80").getFeedbackToUser();
 
         assertTrue(payment.contains("Payment of $80.00 recorded for Bob"));
         assertTrue(payment.endsWith("OUTSTANDING $0.00."));
@@ -227,13 +227,13 @@ public class FinanceIntegrationTest {
     @Test
     public void payment_filteredIndexTargetsDisplayedStudentAndKeepsFilter() throws Exception {
         logic.execute("find Bob");
-        logic.execute("payment st/1 a/5");
+        logic.execute("pay st/1 amt/5");
         assertEquals(new BigDecimal("-5.00"), Ledger.balance(model.getAddressBook(), bob));
         assertEquals(Ledger.ZERO, Ledger.balance(model.getAddressBook(), alice));
         assertEquals(1, model.getFilteredPersonList().size());
         assertEquals(bob, model.getFilteredPersonList().getFirst());
-        assertThrows(CommandException.class, () -> logic.execute("payment st/2 a/5"));
-        assertThrows(ParseException.class, () -> logic.execute("payment st/1 a/0"));
+        assertThrows(CommandException.class, () -> logic.execute("pay st/2 amt/5"));
+        assertThrows(ParseException.class, () -> logic.execute("pay st/1 amt/0"));
         assertEquals(1, model.getAddressBook().getLedgerEntries().size());
     }
 
@@ -242,7 +242,7 @@ public class FinanceIntegrationTest {
         RetryPaymentStorage retryStorage = new RetryPaymentStorage(temporaryFolder.resolve("retry.json"));
         Logic retryLogic = new LogicManager(model, new StorageManager(retryStorage,
                 new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json"))), CLOCK);
-        assertThrows(CommandException.class, () -> retryLogic.execute("payment st/1 a/20"));
+        assertThrows(CommandException.class, () -> retryLogic.execute("pay st/1 amt/20"));
         assertTrue(retryLogic.hasUnsavedChanges());
         assertEquals(new BigDecimal("-20.00"), Ledger.balance(model.getAddressBook(), alice));
         retryStorage.failSave = false;
@@ -287,7 +287,7 @@ public class FinanceIntegrationTest {
 
     @Test
     public void deleteStudentWithHomeworkAndCredit_warnsAboutBothAndCascades() throws Exception {
-        logic.execute("payment st/1 a/10");
+        logic.execute("pay st/1 amt/10");
         logic.execute("hw add st/1 desc/Algebra due/today");
         String preview = logic.execute("delete 1").getFeedbackToUser();
         assertTrue(preview.contains("homework"));

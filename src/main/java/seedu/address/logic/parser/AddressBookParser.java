@@ -81,8 +81,7 @@ public class AddressBookParser {
 
         return switch (commandWord) {
             case BalanceCommand.COMMAND_WORD -> new BalanceCommandParser().parse(arguments);
-            case PaymentCommand.COMMAND_WORD -> new PaymentCommandParser(clock, false).parse(arguments);
-            case PaymentCommand.LEGACY_COMMAND_WORD -> new PaymentCommandParser(clock, true).parse(arguments);
+            case PaymentCommand.COMMAND_WORD -> new PaymentCommandParser(clock).parse(arguments);
             case DuesCommand.COMMAND_WORD -> {
                 requireNoArguments(commandWord, arguments);
                 yield new DuesCommand(clock);
@@ -99,8 +98,8 @@ public class AddressBookParser {
             }
             case "hw" -> new HomeworkCommandParser(clock).parse(arguments);
             case "student" -> new StudentCommandParser().parse(arguments);
-            case "archive" -> new ArchiveCommand(ParserUtil.parseIndex(arguments), true);
-            case "restore" -> new ArchiveCommand(ParserUtil.parseIndex(arguments), false);
+            case ArchiveCommand.COMMAND_WORD_ARCHIVE -> new ArchiveCommandParser(true).parse(arguments);
+            case ArchiveCommand.COMMAND_WORD_RESTORE -> new ArchiveCommandParser(false).parse(arguments);
             case AddCommand.COMMAND_WORD -> new AddCommandParser().parse(arguments);
             case EditCommand.COMMAND_WORD -> new EditCommandParser().parse(arguments);
             case DeleteCommand.COMMAND_WORD -> new DeleteCommandParser().parse(arguments);

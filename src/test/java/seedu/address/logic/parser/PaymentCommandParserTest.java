@@ -21,7 +21,7 @@ import seedu.address.model.finance.LedgerEntry;
 public class PaymentCommandParserTest {
     private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-10-19T04:00:00Z"),
             ZoneId.of("Asia/Singapore"));
-    private final PaymentCommandParser parser = new PaymentCommandParser(CLOCK, false);
+    private final PaymentCommandParser parser = new PaymentCommandParser(CLOCK);
 
     @Test
     public void parse_validArguments_acceptsEitherOrder() {
@@ -87,9 +87,16 @@ public class PaymentCommandParserTest {
     }
 
     @Test
-    public void parse_legacyPaymentAlias_stillAcceptsOriginalAmountPrefixAndDollarSign() {
-        PaymentCommandParser legacy = new PaymentCommandParser(CLOCK, true);
-        assertParseSuccess(legacy, " st/1 a/$50.00",
-                new PaymentCommand(INDEX_FIRST_PERSON, new BigDecimal("50.00"), null, null, CLOCK));
+    public void parse_legacySyntax_rejected() {
+        assertThrows(ParseException.class, () -> new AddressBookParser().parseCommand("payment st/1 a/10"));
+        assertThrows(ParseException.class, () -> parser.parse(" st/1 a/10"));
+    }
+
+    @Test
+    public void parse_singleDigitDates_matchesSharedParser() {
+        for (String date : new String[]{"5/10/2026", "05/10/2026", "5/1/2026", "2026-01-05"}) {
+            assertParseSuccess(parser, " st/1 amt/10 d/" + date, new PaymentCommand(INDEX_FIRST_PERSON,
+                    BigDecimal.TEN, new seedu.address.model.lesson.LessonDate(date).value, null, CLOCK));
+        }
     }
 }

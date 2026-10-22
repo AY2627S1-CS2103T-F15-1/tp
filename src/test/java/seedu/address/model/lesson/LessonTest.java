@@ -24,6 +24,8 @@ import seedu.address.testutil.PersonBuilder;
 
 public class LessonTest {
 
+    private static final java.util.UUID SERIES = java.util.UUID.fromString("00000000-0000-0000-0000-0000000000a1");
+
     @Test
     public void isValidNotes() {
         assertTrue(Lesson.isValidNotes("Covered algebra; revise x² + 2x + 1."));
@@ -407,5 +409,30 @@ public class LessonTest {
         assertTrue(Lesson.CHRONOLOGICAL.compare(ALICE_MATH, sameDayLater) < 0);
         assertTrue(Lesson.CHRONOLOGICAL.compare(ALICE_MATH, sameSlotOtherStudent) < 0);
         assertEquals(0, Lesson.CHRONOLOGICAL.compare(ALICE_MATH, ALICE_MATH));
+    }
+
+    @Test
+    public void levelAndSeries_defaultToEmptyAndAreKeptByEveryCopy() {
+        assertTrue(ALICE_MATH.getAcademicLevel().isEmpty());
+        assertTrue(ALICE_MATH.getSeriesId().isEmpty());
+
+        Lesson booked = new LessonBuilder(ALICE_MATH).withAcademicLevel("S3").withSeriesId(SERIES).build();
+        assertEquals("S3", booked.cancel("Unwell").getAcademicLevel().get().value);
+        assertEquals(SERIES, booked.cancel("Unwell").getSeriesId().get());
+        assertEquals(SERIES, booked.complete("Notes").getSeriesId().get());
+        assertEquals(SERIES, booked.miss().getSeriesId().get());
+        assertEquals("S3", booked.reschedule(booked.getDate(), booked.getTime(), booked.getDuration(), null)
+                .getAcademicLevel().get().value);
+    }
+
+    @Test
+    public void equals_differentLevelOrSeries_notEqualButSameLesson() {
+        Lesson withLevel = new LessonBuilder(ALICE_MATH).withAcademicLevel("S3").build();
+        Lesson withSeries = new LessonBuilder(ALICE_MATH).withSeriesId(SERIES).build();
+
+        assertFalse(ALICE_MATH.equals(withLevel));
+        assertFalse(ALICE_MATH.equals(withSeries));
+        assertTrue(ALICE_MATH.isSameLesson(withLevel)); // a series member is still the same slot
+        assertTrue(ALICE_MATH.isDuplicateOf(withSeries));
     }
 }

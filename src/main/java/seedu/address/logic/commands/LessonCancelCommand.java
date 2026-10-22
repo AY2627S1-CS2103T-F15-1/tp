@@ -53,6 +53,7 @@ public class LessonCancelCommand extends Command {
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
         Lesson target = LessonCommandUtil.getLesson(model, lessonIndex);
+        LessonCommandUtil.requireNotCharged(model, target);
         if (target.getStatus() == LessonStatus.CANCELLED) {
             throw new CommandException(MESSAGE_ALREADY_CANCELLED);
         }

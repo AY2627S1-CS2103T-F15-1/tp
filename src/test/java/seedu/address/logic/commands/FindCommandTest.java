@@ -18,6 +18,7 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
+import seedu.address.model.person.Person;
 
 /**
  * Contains integration tests (interaction with the Model) for {@code FindCommand}.
@@ -51,6 +52,19 @@ public class FindCommandTest {
 
         // different person -> returns false
         assertFalse(findFirstCommand.equals(findSecondCommand));
+    }
+
+    @Test
+    public void execute_archivedStudent_isFoundSoThatItCanBeRestored() {
+        Person carl = model.getAddressBook().getPersonList().stream()
+                .filter(person -> person.getName().equals(CARL.getName())).findFirst().orElseThrow();
+        model.setPerson(carl, carl.withArchived(true));
+        model.updateFilteredPersonList(Model.PREDICATE_SHOW_ACTIVE_PERSONS);
+
+        new FindCommand(preparePredicate("Kurz")).execute(model);
+
+        assertEquals(1, model.getFilteredPersonList().size());
+        assertTrue(model.getFilteredPersonList().get(0).isArchived());
     }
 
     @Test

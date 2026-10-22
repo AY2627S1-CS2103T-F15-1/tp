@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -146,6 +147,11 @@ public class ViewCommand extends Command {
         }
 
         return targetIndex.equals(otherViewCommand.targetIndex) && today.equals(otherViewCommand.today);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(targetIndex, today);
     }
 
     @Override

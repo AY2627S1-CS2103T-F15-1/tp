@@ -121,7 +121,7 @@ public class LogicManager implements Logic {
             try {
                 saveChanges();
             } catch (CommandException e) {
-                throw new CommandException(e.getMessage() + numbering, e);
+                throw new CommandException(e.getMessage() + numbering + "\n" + UNSAVED_WARNING, e);
             }
         }
         if (dirty) {
@@ -151,11 +151,15 @@ public class LogicManager implements Logic {
             storage.saveAddressBook(model.getAddressBook());
             dirty = false;
         } catch (AccessDeniedException e) {
-            throw new CommandException(String.format(FILE_OPS_PERMISSION_ERROR_FORMAT, e.getMessage()), e);
+            throw new CommandException(String.format(FILE_OPS_PERMISSION_ERROR_FORMAT, describe(e)), e);
         } catch (IOException ioe) {
-            throw new CommandException(String.format(FILE_OPS_ERROR_FORMAT, ioe.getMessage()), ioe);
+            throw new CommandException(String.format(FILE_OPS_ERROR_FORMAT, describe(ioe)), ioe);
         }
+    }
 
+    /** Returns the reason a write failed, naming the kind of failure if the exception gives no message. */
+    private static String describe(IOException e) {
+        return e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
     }
 
     @Override

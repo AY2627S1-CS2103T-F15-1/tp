@@ -156,7 +156,7 @@ This section describes some noteworthy details on how certain features are imple
 
 ### Lesson scheduling, agenda and conflict detection
 
-The lesson commands are `lesson add`, `lesson list`, `lesson move`, `lesson cancel`, `lesson done` and `lesson missed`. They share the `lesson` command word, which `AddressBookParser` hands to `LessonCommandParser`. That parser reads the next word and passes the rest of the arguments to the parser of that command. `agenda` is its own command word.
+The lesson commands are `lesson add`, `lesson repeat`, `lesson list`, `lesson move`, `lesson cancel`, `lesson done` and `lesson missed`. They share the `lesson` command word, which `AddressBookParser` hands to `LessonCommandParser`. That parser reads the next word and passes the rest of the arguments to the parser of that command. `agenda` is its own command word.
 
 The sequence diagram below shows `execute("lesson move 1 d/2026-12-24")`.
 
@@ -205,6 +205,31 @@ When notes are supplied again on a completed lesson, they replace the existing n
 The command replaces a scheduled lesson with the immutable copy returned by `Lesson#miss`, which retains all booking details, notes and identity fields. Repeating it on an already-missed lesson returns an informative message without replacing the record. Existing lesson filters, overlap checks, `view` history counts and JSON storage already support `LessonStatus.MISSED`; no new storage format is needed. A missed lesson can disappear from an upcoming-only filter, but remains accessible with `lesson list st/INDEX all/`. The existing `lesson done` command can correct a missed status to completed. `lesson move` rejects a missed lesson, because the moved copy would keep `MISSED` on its new date and the record of the missed slot would be lost. A make-up lesson is scheduled with `lesson add` instead.
 
 `LessonMissedIntegrationTest` exercises command parsing, status changes, student history and JSON reload together. It also verifies that invalid arguments, invalid indices and rejected status/date changes leave the saved file unchanged.
+
+### Weekly lesson series and back-dated lessons
+
+`lesson repeat` (user story 9) and the `past/` flag of `lesson add` (user story 8) are routed through `LessonCommandParser` like the other lesson commands. `LessonRepeatCommandParser` tokenises the lesson prefixes together with `count/` and `every/`, and also tokenises `past/` so that it can reject it with a clear message, because a series starts today or later. It reads `count/` and `every/` with one pattern check, at most 3 digits, before parsing, so a huge or non-numeric value is rejected as a range error and cannot overflow.
+
+`LessonRepeatCommand` builds every occurrence first, one per week (or every `every/` weeks) from the start date, and each is a normal `Lesson` made with `snapshotStudent`, so it records the student's id and academic level as `lesson add` does. All occurrences share one `seriesId`. The command then checks every occurrence against the existing lessons, and adds none of them if any is a duplicate. The adding itself is wrapped so that, if the model throws part-way, the occurrences added so far are deleted again. This makes the series all or nothing. An overlapping occurrence only produces a warning, which is listed for up to three occurrences and then summarised in one line. The command reports whether the displayed lesson list renumbered by comparing the displayed lessons before and after, not by guessing from the size of the list.
+
+**The series id.** `Lesson` has an optional `seriesId` (a `UUID`, null when the lesson is not part of a series). It is copied by every method that returns a changed copy (`reschedule`, `cancel`, `complete`, `miss`, `prepare`, `withStudent`, `snapshotStudent`), so an occurrence stays in its series when it is moved or its status changes, and a later series cancel command can find every occurrence. `JsonAdaptedLesson` saves it as an optional field, so a data file written before series existed still loads. A `seriesId` that is present but is not a valid UUID, including a blank one, is rejected with `Lesson's seriesId is not a valid ID.`
+
+**Dates.** `LessonCommandUtil` holds the date and subject checks that `lesson add`, `lesson repeat` and `lesson move` share: `requireNotInPast`, `requireNotAfterToday`, `requireNotTooFarPast`, `requireNearFuture` and `chooseSubject`. The date checks have a version that takes a `Clock`, and `LessonAddCommand` and `LessonRepeatCommand` have a constructor that takes one, in the same way as `LessonDoneCommand`, so that the boundaries (today, two years ahead and two years back) can be tested with a fixed date. With `past/`, a date after today is rejected, so that `past/` cannot create a scheduled lesson that `lesson done` would refuse.
+
+**Not yet done.** The spec also asks for travel warnings on each occurrence. They depend on the travel-time feature and are not part of this change.
+
+`LessonRepeatCommandTest`, `LessonRepeatCommandParserTest` and `SeriesIntegrationTest` cover the series rules, the all-or-nothing behaviour, moving and cancelling an occurrence, and saving and reloading a series.
+
+#### Design considerations
+
+**Aspect: how to make a series all or nothing**
+
+* **Alternative 1 (current choice):** check every occurrence first, then add them and delete the added ones again if adding fails.
+    * Pros: No partial series is ever visible to the tutor, and the check catches every duplicate before anything changes.
+    * Cons: The rollback is written by hand in the command, because the model has no transaction.
+* **Alternative 2:** add the occurrences one by one and stop at the first failure.
+    * Pros: Simpler.
+    * Cons: A tutor could be left with half a series and have to find and delete it.
 
 ### \[Proposed\] Undo/redo feature
 
@@ -336,12 +361,20 @@ running account statements from alpha §4.29 are deliberately deferred. `DuesCom
 with shared wording, including `(archived)` and the singular `1 day`.
 
 `PaymentCommandParser` parses `pay st/INDEX amt/AMOUNT [d/DATE] [n/NOTES]`, requiring a positive decimal
-amount with at most two fractional digits and no currency symbol. The legacy `payment ... a/AMOUNT`
-alias preserves the earlier optional dollar sign. Dates accept ISO, DD/MM/YYYY and today/tmr; the command
+amount with at most two fractional digits and no currency symbol. Dates use the shared `ParserUtil.parseDate`
+rules (ISO, D/M/YYYY and today/tmr resolved against the injected clock); the command
 rejects future dates. Notes are optional 1–200 printable one-line characters and persist in the JSON
 adapter; absent notes in existing finance files default to null. Missing JSON fields are named in errors.
 The response confirms the amount, student, date and updated balance. Payment list/reverse, manual charge,
 and running account statements are follow-up increments; no success message points to unavailable commands.
+
+Integration follow-ups before full alpha sign-off:
+* Finance: introduce reversal records and a schema migration before implementing payment/charge reversal.
+  A charge currently uses the lesson UUID, so recharging after reversal requires a new event identity design.
+* Finance: implement the running account statement in specification section 4.29.
+* Lesson move/cancel and series cancellation (#142): check active charges before changing a billed lesson.
+  Preserve lesson and series UUIDs across every copy operation.
+* Task integration: include linked task counts in student deletion once the task domain is implemented.
 
 `LogicManager(Model, Storage, Clock)` passes a shared date source to the finance and relevant lesson
 parsers/commands. Interactive constructors default to the system clock. Finance workflow tests use a
@@ -859,6 +892,22 @@ testers are expected to do more *exploratory* testing.
    1. Other incorrect commands to try: `lesson add st/1 d/2020-01-01 t/16:30` (past date), `lesson add st/1 d/<next week> t/23:00 dur/120` (past midnight), `lesson add st/0 d/<next week> t/16:30`, `lesson add st/1`<br>
       Expected: Nothing is scheduled. The result shows an error message.
 
+1. Scheduling a weekly series
+
+   1. Prerequisites: Use `list`, with at least one student who takes one subject.
+
+   1. Test case: `lesson repeat st/1 d/<a date next week> t/16:00 count/4`<br>
+      Expected: The result says `Scheduled 4 weekly occurrences.` and, on the next line, that the new lessons are not in the displayed list. `lesson list st/1` then shows 4 lessons, each with the student's level at booking.
+
+   1. Test case: `lesson repeat st/1 d/<a date next week> t/16:00 count/4 past/`<br>
+      Expected: Rejected with a message that `past/` is not accepted for a series.
+
+   1. Test case: `lesson repeat st/1 d/<a date next week> t/16:00 count/53`<br>
+      Expected: Rejected with the range message for `count/` and `every/`.
+
+   1. Test case: `lesson add st/1 d/<a date next week> t/09:00 past/`<br>
+      Expected: Rejected, because `past/` is only for a lesson that has already taken place. Using a date from last week succeeds.
+
 1. Viewing lessons
 
    1. Prerequisites: Schedule the two lessons above.
@@ -922,6 +971,16 @@ testers are expected to do more *exploratory* testing.
    1. Test case: Close TutorFlow, delete `data/tutorflow-v14.json` and launch TutorFlow.<br>
       Expected: With no legacy addressbook.json either, TutorFlow starts empty. Use demo confirm to load sample students.
 
+1. Dealing with a data file that cannot be opened
+
+   1. Prerequisites: Close TutorFlow. As a user who is not an administrator, remove the read permission of `data/tutorflow-v14.json` (for example `chmod 000`). To test the migration, do this to `data/addressbook.json` instead, with no `data/tutorflow-v14.json`.
+
+   1. Test case: Launch TutorFlow.<br>
+      Expected: A dialog says that TutorFlow could not open the file and why, and that nothing has been changed. TutorFlow does not start, the file is not renamed, and no `.corrupt` file or new data file appears.
+
+   1. Test case: Restore the permission and launch TutorFlow.<br>
+      Expected: The students are loaded, or, for the older file, migrated into a new `data/tutorflow-v14.json`.
+
 1. Dealing with a data file that cannot be written
 
    1. Prerequisites: Make `data/tutorflow-v14.json` read-only, as a user who is not an administrator.
@@ -963,6 +1022,15 @@ version produces `UnsupportedSchemaException` as the cause of `DataLoadingExcept
 propagates it before constructing a model, logic, or UI. The original stays at its original path,
 and storage refuses subsequent saves. Never route this exception through corruption recovery or
 silently ignore newer domain fields. Users need a compatible binary or a matching backup.
+
+A file that cannot be opened is not corrupt. `JsonAddressBookStorage#isAccessFailure` tells a failure
+to open or read a file, which is an `IOException` that is not a `JsonProcessingException`, from
+invalid content. Only invalid content is set aside. A file that another program holds, or that the
+permissions forbid reading, can well be valid, so setting it aside would hide the records of a tutor,
+and for the legacy file it would stop them from ever being migrated. `MainApp` therefore refuses to
+start in the same way as for an unsupported schema, with a message that names the file and the
+reason, and `JsonAddressBookStorage#requireOpenedSource` makes every save refuse to replace the file.
+The next start that can open the file loads or migrates it.
 
 The command-result seam for later detail-pane integration is
 `CommandResult.getDisplayedLessons()`: when present, it is an immutable typed snapshot in the

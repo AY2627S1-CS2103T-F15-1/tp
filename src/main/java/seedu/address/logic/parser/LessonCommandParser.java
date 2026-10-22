@@ -48,6 +48,7 @@ public class LessonCommandParser implements Parser<Command> {
             case "prep" -> new LessonPrepCommandParser().parse(arguments);
             case "add" -> new LessonAddCommandParser(clock).parse(arguments);
             case "list" -> new LessonListCommandParser(clock).parse(arguments);
+            case "repeat" -> new LessonRepeatCommandParser().parse(arguments);
             case "move" -> new LessonMoveCommandParser().parse(arguments);
             case "cancel" -> new LessonCancelCommandParser().parse(arguments);
             case "done" -> new LessonDoneCommandParser(clock).parse(arguments);
@@ -57,7 +58,8 @@ public class LessonCommandParser implements Parser<Command> {
     }
 
     private static String getUsage() {
-        return "Lesson commands: " + COMMAND_WORD + " add, " + COMMAND_WORD + " list, " + COMMAND_WORD + " move, "
-                + COMMAND_WORD + " cancel, " + COMMAND_WORD + " done, " + COMMAND_WORD + " missed";
+        return "Lesson commands: " + COMMAND_WORD + " add, " + COMMAND_WORD + " repeat, " + COMMAND_WORD + " list, "
+                + COMMAND_WORD + " move, " + COMMAND_WORD + " cancel, " + COMMAND_WORD + " done, " + COMMAND_WORD
+                + " missed";
     }
 }

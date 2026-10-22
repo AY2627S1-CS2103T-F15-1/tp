@@ -36,7 +36,7 @@ public class VersionedAddressBookStorage extends JsonAddressBookStorage {
             isInitialSaveRequired = migrated.isPresent();
             return migrated;
         } catch (DataLoadingException e) {
-            hasLegacyReadFailed = !(e.getCause() instanceof UnsupportedSchemaException);
+            hasLegacyReadFailed = !(e.getCause() instanceof UnsupportedSchemaException) && !isAccessFailure(e);
             throw e;
         }
     }
@@ -44,6 +44,7 @@ public class VersionedAddressBookStorage extends JsonAddressBookStorage {
     @Override
     public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
         requireSupportedSource(readSource);
+        requireOpenedSource(readSource);
         if (sourcePresence(getAddressBookFilePath()) == SourcePresence.UNKNOWN) {
             throw new IOException("Restore access to the data files and restart before saving.");
         }

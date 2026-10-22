@@ -16,7 +16,6 @@ public class CliSyntax {
     public static final Prefix PREFIX_REMARK = new Prefix("r/");
     public static final Prefix PREFIX_STUDENT = new Prefix("st/");
     public static final Prefix PREFIX_AMOUNT = new Prefix("amt/");
-    public static final Prefix PREFIX_LEGACY_AMOUNT = new Prefix("a/");
     public static final Prefix PREFIX_DATE = new Prefix("d/");
     public static final Prefix PREFIX_TIME = new Prefix("t/");
     public static final Prefix PREFIX_DURATION = new Prefix("dur/");
@@ -24,5 +23,8 @@ public class CliSyntax {
     public static final Prefix PREFIX_NOTES = new Prefix("n/");
     public static final Prefix PREFIX_WEEK = new Prefix("week/");
     public static final Prefix PREFIX_ALL = new Prefix("all/");
+    public static final Prefix PREFIX_PAST = new Prefix("past/");
+    public static final Prefix PREFIX_COUNT = new Prefix("count/");
+    public static final Prefix PREFIX_EVERY = new Prefix("every/");
 
 }

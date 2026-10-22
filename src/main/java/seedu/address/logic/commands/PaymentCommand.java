@@ -21,7 +21,6 @@ import seedu.address.model.person.Person;
 /** Records money received from a student and shows the updated amount owed or credit. */
 public class PaymentCommand extends Command {
     public static final String COMMAND_WORD = "pay";
-    public static final String LEGACY_COMMAND_WORD = "payment";
     public static final String MESSAGE_USAGE = "pay: Records a payment from a student in the displayed list.\n"
             + "Parameters: st/STUDENT_INDEX amt/AMOUNT [d/DATE] [n/NOTES]\nExample: pay st/1 amt/50.00";
     public static final String MESSAGE_AMOUNT_CONSTRAINTS =
