@@ -27,4 +27,9 @@ public class UndoCommand extends Command {
                 ? MESSAGE_NOTHING
                 : String.format(MESSAGE_SUCCESS, type.description), false, false);
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj instanceof UndoCommand;
+    }
 }
