@@ -8,7 +8,6 @@ public enum DestructiveActionType {
     CLEAR("clear"),
     DELETE_STUDENT("student deletion"),
     DELETE_HW("homework deletion"),
-    DELETE_TASK("task deletion"),
     DELETE_LESSON("lesson deletion");
 
     public final String description;
