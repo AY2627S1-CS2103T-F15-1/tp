@@ -7,15 +7,17 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.commons.util.JsonUtil;
 import seedu.address.model.AddressBook;
+import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
+import seedu.address.model.lesson.LessonDate;
 import seedu.address.testutil.LessonBuilder;
-import seedu.address.testutil.PersonBuilder;
 import seedu.address.testutil.TaskBuilder;
 import seedu.address.testutil.TypicalLessons;
 import seedu.address.testutil.TypicalPersons;
@@ -125,21 +127,63 @@ public class JsonSerializableAddressBookTest {
     }
 
     @Test
-    public void toModelType_taskWithoutStudentOrLesson_throwsIllegalValueException() {
+    public void toModelType_taskWithoutItsTarget_throwsIllegalValueException() {
         AddressBook addressBook = TypicalLessons.getTypicalAddressBookWithLessons();
-        var persons = addressBook.getPersonList().stream().map(JsonAdaptedPerson::new).toList();
-        JsonAdaptedTask unknownStudent = new JsonAdaptedTask(new TaskBuilder()
-                .withStudent(new PersonBuilder().withName("Nobody Here").withPhone("90000000").build()).build());
-        Lesson missingLesson = new LessonBuilder(TypicalLessons.ALICE_MATH).withDate("2031-01-01").build();
-        JsonAdaptedTask unknownLesson = new JsonAdaptedTask(new TaskBuilder().withLesson(missingLesson).build());
+        Homework alicesHomework = Homework.assign(TypicalPersons.ALICE.getId(), "Practice set",
+                LocalDate.of(2030, 1, 1));
+        addressBook.addHomework(alicesHomework);
+        String alice = TypicalPersons.ALICE.getId().toString();
+        String benson = TypicalPersons.BENSON.getId().toString();
+        String aliceMath = TypicalLessons.ALICE_MATH.getId().toString();
+        String missing = UUID.randomUUID().toString();
+        List<JsonAdaptedPerson> persons = addressBook.getPersonList().stream().map(JsonAdaptedPerson::new).toList();
+        List<JsonAdaptedLesson> lessons = addressBook.getLessonList().stream().map(JsonAdaptedLesson::new).toList();
+        List<JsonAdaptedHomework> homework = addressBook.getHomeworkList().stream()
+                .map(JsonAdaptedHomework::new).toList();
+        List<JsonAdaptedTask> unresolvable = List.of(
+                new JsonAdaptedTask("a", "Call", null, false, missing, null, null), // no such student
+                new JsonAdaptedTask("b", "Call", null, false, alice, missing, null), // no such lesson
+                new JsonAdaptedTask("c", "Call", null, false, benson, aliceMath, null), // Alice's lesson
+                new JsonAdaptedTask("d", "Call", null, false, alice, null, missing), // no such homework
+                new JsonAdaptedTask("e", "Call", null, false, benson, null,
+                        alicesHomework.getId().toString())); // Alice's homework
 
-        for (JsonAdaptedTask task : List.of(unknownStudent, unknownLesson)) {
-            JsonSerializableAddressBook data = new JsonSerializableAddressBook(persons, List.of(
-                    new JsonAdaptedLesson(TypicalLessons.ALICE_MATH)), List.of(), List.of(),
-                    List.of(task));
+        for (JsonAdaptedTask task : unresolvable) {
+            JsonSerializableAddressBook data = new JsonSerializableAddressBook(persons, lessons, homework,
+                    List.of(), List.of(task));
             assertThrows(IllegalValueException.class, JsonSerializableAddressBook.MESSAGE_TASK_WITHOUT_TARGET,
                     data::toModelType);
         }
+    }
+
+    @Test
+    public void toModelType_cancelledAndRebookedSlot_eachTaskKeepsItsOwnLessonThroughJson() throws Exception {
+        AddressBook addressBook = TypicalLessons.getTypicalAddressBookWithLessons();
+        Lesson cancelled = TypicalLessons.ALICE_MATH.cancel("Student unwell");
+        addressBook.setLesson(TypicalLessons.ALICE_MATH, cancelled);
+        Lesson rebooked = new LessonBuilder(TypicalLessons.ALICE_MATH).withId(UUID.randomUUID()).build();
+        addressBook.addLesson(rebooked);
+        Homework homework = Homework.assign(TypicalPersons.ALICE.getId(), "Practice set", LocalDate.of(2030, 1, 1));
+        addressBook.addHomework(homework);
+        addressBook.addTask(new TaskBuilder().withId("old").withLesson(cancelled).build());
+        addressBook.addTask(new TaskBuilder().withId("new").withLesson(rebooked).build());
+        addressBook.addTask(new TaskBuilder().withId("hw").withHomework(homework).build());
+
+        String json = JsonUtil.toJsonString(new JsonSerializableAddressBook(addressBook));
+        AddressBook restored = JsonUtil.fromJsonString(json, JsonSerializableAddressBook.class).toModelType();
+
+        assertEquals(addressBook, restored);
+        assertEquals(cancelled.getId(), restored.findTask("old").get().getLessonId().get());
+        assertEquals(rebooked.getId(), restored.findTask("new").get().getLessonId().get());
+        assertEquals(homework.getId(), restored.findTask("hw").get().getHomeworkId().get());
+        assertEquals(TypicalPersons.ALICE.getId(), restored.findTask("hw").get().getStudentId());
+        // moving the rebooked lesson after the reload still changes nothing about the cancelled lesson's task
+        Lesson moved = rebooked.reschedule(new LessonDate("2031-05-04"), rebooked.getTime(),
+                rebooked.getDuration(), null);
+        Lesson restoredRebooked = restored.getLessonList().stream()
+                .filter(lesson -> lesson.getId().equals(rebooked.getId())).findFirst().get();
+        restored.setLesson(restoredRebooked, moved);
+        assertEquals(addressBook.getTaskList(), restored.getTaskList());
     }
 
     @Test
