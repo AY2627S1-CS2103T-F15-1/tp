@@ -1,71 +1,90 @@
 @startuml
-!include style.puml
+!define LOGIC_COLOR #3333C4
+!define LOGIC_COLOR_T1 #C8C8FA
+!define MODEL_COLOR #9D0012
+!define MODEL_COLOR_T1 #F97181
+!define STORAGE_COLOR #A38300
+!define STORAGE_COLOR_T1 #FFE374
+skinparam Shadowing false
+skinparam SequenceMessageAlign center
+skinparam SequenceBoxFontColor #FFFFFF
+skinparam ParticipantFontColor #FFFFFF
 skinparam ArrowFontStyle plain
+hide footbox
 
 box Logic LOGIC_COLOR_T1
 participant ":LogicManager" as LogicManager LOGIC_COLOR
-participant ":AddressBookParser" as AddressBookParser LOGIC_COLOR
-participant ":LessonCommandParser" as LessonCommandParser LOGIC_COLOR
-participant ":LessonMoveCommandParser" as LessonMoveCommandParser LOGIC_COLOR
-participant "l:LessonMoveCommand" as LessonMoveCommand LOGIC_COLOR
+participant ":AddressBookParser" as Parser LOGIC_COLOR
+participant "command:LessonMoveCommand" as Command LOGIC_COLOR
 end box
 
 box Model MODEL_COLOR_T1
-participant "m:Model" as Model MODEL_COLOR
-participant "target:Lesson" as Lesson MODEL_COLOR
+participant "model:Model" as Model MODEL_COLOR
+end box
+
+box Storage STORAGE_COLOR_T1
+participant "storage:Storage" as Storage STORAGE_COLOR
 end box
 
 [-> LogicManager : execute("lesson move 1 d/2026-12-24")
 activate LogicManager
+LogicManager -> Parser : parseCommand(...)
+activate Parser
+ref over Parser, Command
+Dispatch to lesson parsers and construct command
+end ref
+Parser --> LogicManager : command
+deactivate Parser
 
-LogicManager -> AddressBookParser : parseCommand("lesson move 1 d/2026-12-24")
-activate AddressBookParser
+ref over LogicManager, Storage
+Capture the serialized state and displayed lesson rows
+end ref
 
-AddressBookParser -> LessonCommandParser : parse(" move 1 d/2026-12-24")
-activate LessonCommandParser
-
-LessonCommandParser -> LessonMoveCommandParser : parse(" 1 d/2026-12-24")
-activate LessonMoveCommandParser
-
-create LessonMoveCommand
-LessonMoveCommandParser -> LessonMoveCommand : LessonMoveCommand(1, date, null, null, null)
-activate LessonMoveCommand
-LessonMoveCommand --> LessonMoveCommandParser
-deactivate LessonMoveCommand
-
-LessonMoveCommandParser --> LessonCommandParser : l
-deactivate LessonMoveCommandParser
-LessonCommandParser --> AddressBookParser : l
-deactivate LessonCommandParser
-AddressBookParser --> LogicManager : l
-deactivate AddressBookParser
-
-LogicManager -> LessonMoveCommand : execute(m)
-activate LessonMoveCommand
-
-LessonMoveCommand -> Model : getFilteredLessonList()
+LogicManager -> Command : execute(model)
+activate Command
+Command -> Model : getFilteredLessonList()
 activate Model
-Model --> LessonMoveCommand : target
+Model --> Command : displayed lessons
 deactivate Model
 
-LessonMoveCommand -> Lesson : reschedule(date, time, duration, venue)
-activate Lesson
-Lesson --> LessonMoveCommand : moved
-deactivate Lesson
+note over Command
+Select the target by its displayed index.
+Validate its status, new slot and duplicates.
+Build an immutable replacement that retains its ID.
+end note
 
-LessonMoveCommand -> Model : setLesson(target, moved)
+Command -> Model : setLesson(target, moved)
 activate Model
-Model --> LessonMoveCommand
+Model --> Command
 deactivate Model
-
-LessonMoveCommand -> Model : getConflictingLessons(moved)
+Command -> Model : getConflictingLessons(moved)
 activate Model
-Model --> LessonMoveCommand : overlapping lessons
+Model --> Command : overlapping lessons
 deactivate Model
+Command --> LogicManager : result (with overlap warning, if any)
+deactivate Command
 
-LessonMoveCommand --> LogicManager : r
-deactivate LessonMoveCommand
+ref over LogicManager, Storage
+Compare serialized state and displayed rows after the update
+end ref
 
-[<--LogicManager : r
+opt displayed rows changed and result has no displayed list
+LogicManager -> LogicManager : append refreshed lesson numbers to result
+activate LogicManager
+LogicManager --> LogicManager
 deactivate LogicManager
+end opt
+
+LogicManager -> Storage : saveAddressBook(model.getAddressBook())
+activate Storage
+Storage --> LogicManager
+deactivate Storage
+[<-- LogicManager : result
+deactivate LogicManager
+
+note over LogicManager, Storage
+Successful changed-data path shown; parser internals are omitted.
+If saving fails, the in-memory change is retained and an error
+asks the tutor to retry with save instead of reporting success.
+end note
 @enduml
