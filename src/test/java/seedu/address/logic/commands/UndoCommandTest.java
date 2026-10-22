@@ -1,5 +1,6 @@
 package seedu.address.logic.commands;
 
+import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
 import static seedu.address.logic.commands.UndoCommand.MESSAGE_NOTHING;
 import static seedu.address.logic.commands.UndoCommand.MESSAGE_SUCCESS;
@@ -21,13 +22,19 @@ import seedu.address.model.homework.Homework;
  * {@code UndoCommand}.
  */
 public class UndoCommandTest {
-    private final Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
-    private final Model expectedModel = new ModelManager(getTypicalAddressBook(), new UserPrefs());
+    private final Homework hw = Homework.assign(BENSON.getId(), "hw test", LocalDate.of(3000, 10, 20));
+    private final Model model;
+    private final Model expectedModel;
+
+    public UndoCommandTest() {
+        model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
+        model.addHomework(hw);
+        expectedModel = new ModelManager(model.getAddressBook(), model.getUserPrefs());
+    }
 
     @Test
     public void execute_nothing_failure() {
-        CommandResult expected = new CommandResult(MESSAGE_NOTHING, false, false);
-        assertCommandSuccess(new UndoCommand(), model, expected, expectedModel);
+        assertCommandFailure(new UndoCommand(), model, MESSAGE_NOTHING);
     }
 
     @Test
@@ -35,18 +42,16 @@ public class UndoCommandTest {
         // GEORGE is the last person, so this does not affect the order of persons.
         model.deletePerson(GEORGE);
         model.addPerson(GEORGE);
-        CommandResult expected = new CommandResult(MESSAGE_NOTHING, false, false);
-        assertCommandSuccess(new UndoCommand(), model, expected, expectedModel);
+        assertCommandFailure(new UndoCommand(), model, MESSAGE_NOTHING);
     }
 
     @Test
-    public void execute_delete_success() {
-        Homework hw = Homework.assign(BENSON.getId(), "hw test", LocalDate.of(3000, 10, 20));
-        model.addHomework(hw);
+    public void execute_deleteAndUndo_successAndFailure() {
         model.deleteHomework(hw);
         CommandResult expected = new CommandResult(
                 String.format(MESSAGE_SUCCESS, "homework deletion"),
                 false, false);
         assertCommandSuccess(new UndoCommand(), model, expected, expectedModel);
+        assertCommandFailure(new UndoCommand(), model, MESSAGE_NOTHING);
     }
 }
