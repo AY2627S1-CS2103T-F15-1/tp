@@ -22,10 +22,10 @@ public class UndoCommand extends Command {
     @Override
     public CommandResult execute(Model model) throws CommandException {
         DestructiveActionType type = model.undoDestructiveAction();
-        return new CommandResult(
-                type == DestructiveActionType.NONE
-                ? MESSAGE_NOTHING
-                : String.format(MESSAGE_SUCCESS, type.description), false, false);
+        if (type == DestructiveActionType.NONE) {
+            throw new CommandException(MESSAGE_NOTHING);
+        }
+        return new CommandResult(String.format(MESSAGE_SUCCESS, type.description), false, false);
     }
 
     @Override

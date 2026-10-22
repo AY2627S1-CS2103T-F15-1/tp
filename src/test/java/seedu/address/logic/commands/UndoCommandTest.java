@@ -1,5 +1,6 @@
 package seedu.address.logic.commands;
 
+import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
 import static seedu.address.logic.commands.UndoCommand.MESSAGE_NOTHING;
 import static seedu.address.logic.commands.UndoCommand.MESSAGE_SUCCESS;
@@ -33,8 +34,7 @@ public class UndoCommandTest {
 
     @Test
     public void execute_nothing_failure() {
-        CommandResult expected = new CommandResult(MESSAGE_NOTHING, false, false);
-        assertCommandSuccess(new UndoCommand(), model, expected, expectedModel);
+        assertCommandFailure(new UndoCommand(), model, MESSAGE_NOTHING);
     }
 
     @Test
@@ -42,16 +42,16 @@ public class UndoCommandTest {
         // GEORGE is the last person, so this does not affect the order of persons.
         model.deletePerson(GEORGE);
         model.addPerson(GEORGE);
-        CommandResult expected = new CommandResult(MESSAGE_NOTHING, false, false);
-        assertCommandSuccess(new UndoCommand(), model, expected, expectedModel);
+        assertCommandFailure(new UndoCommand(), model, MESSAGE_NOTHING);
     }
 
     @Test
-    public void execute_delete_success() {
+    public void execute_deleteAndUndo_successAndFailure() {
         model.deleteHomework(hw);
         CommandResult expected = new CommandResult(
                 String.format(MESSAGE_SUCCESS, "homework deletion"),
                 false, false);
         assertCommandSuccess(new UndoCommand(), model, expected, expectedModel);
+        assertCommandFailure(new UndoCommand(), model, MESSAGE_NOTHING);
     }
 }
