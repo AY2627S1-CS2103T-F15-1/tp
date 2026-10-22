@@ -18,14 +18,16 @@ import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.TaskCommandParser;
 import seedu.address.model.Model;
+import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
 import seedu.address.model.task.Task;
 
 /**
  * Adds a follow-up task about a student or a lesson that is shown (user story 31).
- * Exactly one link is given. Links to homework and payments are accepted so that the command already has its final
- * format, but there is nothing for them to point at until the homework and payment lists exist.
+ * Exactly one link is given. A task about a student, a lesson or a homework item is linked by the permanent id of
+ * that record. A link to a payment is accepted so that the command already has its final format, but there is no
+ * numbered payment list to point at yet.
  */
 public class TaskAddCommand extends Command {
 
@@ -44,8 +46,7 @@ public class TaskAddCommand extends Command {
             + PREFIX_DUE + "2026-12-01";
 
     public static final String MESSAGE_SUCCESS = "Added task: %1$s. Run 'task list' to display its index.";
-    public static final String MESSAGE_INVALID_HOMEWORK_INDEX = "Invalid homework index. "
-            + "Run 'hw list' to display homework first.";
+    public static final String MESSAGE_HOMEWORK_WITHOUT_STUDENT = "The student of that homework no longer exists.";
     public static final String MESSAGE_INVALID_PAYMENT_INDEX = "Invalid payment index. Run 'pay list' first.";
 
     private static final Logger logger = LogsCenter.getLogger(TaskAddCommand.class);
@@ -94,7 +95,7 @@ public class TaskAddCommand extends Command {
 
     private Task createTask(Model model) throws CommandException {
         if (studentIndex != null) {
-            return Task.create(description, due, LessonCommandUtil.getStudent(model, studentIndex), null);
+            return Task.create(description, due, LessonCommandUtil.getStudent(model, studentIndex));
         }
         if (lessonIndex != null) {
             Lesson lesson = LessonCommandUtil.getLesson(model, lessonIndex);
@@ -102,9 +103,16 @@ public class TaskAddCommand extends Command {
                     .orElseThrow(() -> new CommandException("The student of that lesson no longer exists."));
             return Task.create(description, due, student, lesson);
         }
-        // Homework and payments are not recorded yet, so no number can point at one
-        throw new CommandException(homeworkIndex != null ? MESSAGE_INVALID_HOMEWORK_INDEX
-                : MESSAGE_INVALID_PAYMENT_INDEX);
+        if (homeworkIndex != null) {
+            // The number comes from the last hw list, and a deleted row is reported instead of another item
+            Homework homework = HomeworkCommandSupport.target(model, homeworkIndex);
+            Person student = model.getAddressBook().getPersonList().stream()
+                    .filter(person -> person.getId().equals(homework.getStudentId())).findFirst()
+                    .orElseThrow(() -> new CommandException(MESSAGE_HOMEWORK_WITHOUT_STUDENT));
+            return Task.create(description, due, student, homework);
+        }
+        // Payments cannot be listed yet, so no number can point at one
+        throw new CommandException(MESSAGE_INVALID_PAYMENT_INDEX);
     }
 
     @Override
