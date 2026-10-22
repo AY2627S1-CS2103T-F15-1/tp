@@ -8,6 +8,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TIME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_VENUE;
 
+import java.time.Clock;
 import java.util.Objects;
 
 import seedu.address.commons.core.index.Index;
@@ -23,6 +24,17 @@ import seedu.address.model.person.Venue;
  * Parses input arguments and creates a new LessonAddCommand object
  */
 public class LessonAddCommandParser implements Parser<LessonAddCommand> {
+    private final Clock clock;
+
+    /** Uses the local system date. */
+    public LessonAddCommandParser() {
+        this(Clock.systemDefaultZone());
+    }
+
+    /** Uses an explicit date source for scheduling validation. */
+    public LessonAddCommandParser(Clock clock) {
+        this.clock = Objects.requireNonNull(clock);
+    }
 
     /**
      * Parses the given {@code String} of arguments in the context of the LessonAddCommand
@@ -47,12 +59,12 @@ public class LessonAddCommandParser implements Parser<LessonAddCommand> {
         LessonDuration duration = Objects.requireNonNullElse(
                 ParserUtil.parseOptional(argMultimap, PREFIX_DURATION, ParserUtil::parseDuration),
                 new LessonDuration(LessonDuration.DEFAULT_MINUTES));
-        LessonDate date = ParserUtil.parseDate(argMultimap.getValue(PREFIX_DATE).get());
+        LessonDate date = ParserUtil.parseDate(argMultimap.getValue(PREFIX_DATE).get(), java.time.LocalDate.now(clock));
         LessonTime time = ParserUtil.parseTime(argMultimap.getValue(PREFIX_TIME).get());
 
         boolean isPast = ParserUtil.parseFlag(argMultimap, PREFIX_PAST);
 
-        return new LessonAddCommand(studentIndex, subject, date, time, duration, venue, isPast);
+        return new LessonAddCommand(studentIndex, subject, date, time, duration, venue, isPast, clock);
     }
 
 }

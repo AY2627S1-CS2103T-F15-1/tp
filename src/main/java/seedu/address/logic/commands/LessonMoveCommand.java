@@ -73,6 +73,7 @@ public class LessonMoveCommand extends Command {
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
         Lesson target = LessonCommandUtil.getLesson(model, lessonIndex);
+        LessonCommandUtil.requireNotCharged(model, target);
         requireMovable(target);
         Lesson moved = createMovedLesson(target);
 

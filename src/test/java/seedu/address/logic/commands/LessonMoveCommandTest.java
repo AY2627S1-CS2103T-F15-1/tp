@@ -21,6 +21,7 @@ import seedu.address.logic.Messages;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonDate;
 import seedu.address.model.lesson.LessonDuration;
@@ -119,6 +120,16 @@ public class LessonMoveCommandTest {
 
         assertCommandFailure(new LessonMoveCommand(INDEX_FIRST_PERSON, NEW_DATE, null, null, null), model,
                 LessonMoveCommand.MESSAGE_COMPLETED_LESSON);
+    }
+
+    @Test
+    public void execute_chargedLesson_throwsCommandException() {
+        Lesson completed = lesson.complete(null);
+        model.addLesson(completed);
+        model.addLedgerEntry(LedgerEntry.charge(ALICE, completed));
+
+        assertCommandFailure(new LessonMoveCommand(INDEX_FIRST_PERSON, NEW_DATE, null, null, null), model,
+                LessonCommandUtil.MESSAGE_CHARGED_LESSON);
     }
 
     @Test

@@ -2,6 +2,7 @@ package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
@@ -11,6 +12,7 @@ import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
+import seedu.address.model.finance.Ledger;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
@@ -38,6 +40,10 @@ public class DeleteCommand extends Command {
     public static final String MESSAGE_CONFIRMATION = "%1$s (phone: %2$s) has %3$d lesson(s). "
             + "These will all be deleted.\n%4$sType '" + COMMAND_WORD + " %5$d " + CONFIRM_KEYWORD + "' to proceed.";
     public static final String MESSAGE_UPCOMING_WARNING = "Warning: this student has %1$d upcoming lesson(s).\n";
+    public static final String MESSAGE_FINANCE_WARNING = "\nThis also deletes %1$d financial event(s).\n"
+            + "Balance: %2$s.";
+    public static final String MESSAGE_ARCHIVE_ADVICE =
+            "\nUse 'archive INDEX' to retain these obligations and all history instead.";
 
     private final Index targetIndex;
     private final boolean isConfirmed;
@@ -91,11 +97,14 @@ public class DeleteCommand extends Command {
      */
     private String getConfirmationPreview(Person student, LinkedRecords records) {
         String preview = getConfirmationPrompt(student, records.lessons());
-        if (!records.hasHomework()) {
-            return preview;
+        if (records.hasHomework()) {
+            preview += "\n" + describeHistory(records);
         }
-        return preview + "\n" + describeHistory(records)
-                + "\nUse 'archive INDEX' to retain these obligations and all history instead.";
+        if (records.financialEvents() > 0) {
+            preview += String.format(MESSAGE_FINANCE_WARNING, records.financialEvents(),
+                    Ledger.describeBalance(records.balance()));
+        }
+        return records.hasHomework() || records.financialEvents() > 0 ? preview + MESSAGE_ARCHIVE_ADVICE : preview;
     }
 
     /**
@@ -115,6 +124,11 @@ public class DeleteCommand extends Command {
 
     /** Returns what was deleted along with {@code student}, listing every kind of record that was present. */
     private static String getSuccessMessage(Person student, LinkedRecords records) {
+        if (records.financialEvents() > 0) {
+            return "Deleted student: " + Messages.format(student) + ", along with " + records.lessons().size()
+                    + " lesson(s), " + records.homework().size() + " homework item(s) and "
+                    + records.financialEvents() + " financial event(s).";
+        }
         if (!records.hasHomework()) {
             return String.format(MESSAGE_DELETE_PERSON_WITH_LESSONS_SUCCESS, Messages.format(student),
                     records.lessons().size());
@@ -124,13 +138,17 @@ public class DeleteCommand extends Command {
     }
 
     /** The records that are deleted together with a student. */
-    private record LinkedRecords(List<Lesson> lessons, List<Homework> homework) {
+    private record LinkedRecords(List<Lesson> lessons, List<Homework> homework,
+            long financialEvents, BigDecimal balance) {
         static LinkedRecords of(Model model, Person student) {
             List<Lesson> lessons = model.getAddressBook().getLessonList().stream()
                     .filter(lesson -> lesson.isWith(student)).toList();
             List<Homework> homework = model.getAddressBook().getHomeworkList().stream()
                     .filter(item -> item.getStudentId().equals(student.getId())).toList();
-            return new LinkedRecords(lessons, homework);
+            long financialEvents = model.getAddressBook().getLedgerEntries().stream()
+                    .filter(entry -> entry.isWith(student)).count();
+            return new LinkedRecords(lessons, homework, financialEvents,
+                    Ledger.balance(model.getAddressBook(), student));
         }
 
         boolean hasHomework() {
@@ -138,7 +156,7 @@ public class DeleteCommand extends Command {
         }
 
         boolean isEmpty() {
-            return lessons.isEmpty() && homework.isEmpty();
+            return lessons.isEmpty() && homework.isEmpty() && financialEvents == 0;
         }
     }
 

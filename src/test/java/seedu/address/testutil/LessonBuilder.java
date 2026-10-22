@@ -39,6 +39,9 @@ public class LessonBuilder {
     private String cancelReason;
     private Level academicLevel;
     private UUID seriesId;
+    private UUID id = UUID.randomUUID();
+    private UUID studentId;
+    private String preparation;
 
     /**
      * Creates a {@code LessonBuilder} with the default details: a scheduled lesson without a venue, notes or
@@ -58,6 +61,9 @@ public class LessonBuilder {
      * Initializes the LessonBuilder with the data of {@code lessonToCopy}.
      */
     public LessonBuilder(Lesson lessonToCopy) {
+        id = lessonToCopy.getId();
+        studentId = lessonToCopy.getStudentId().orElse(null);
+        preparation = lessonToCopy.getPreparation().orElse(null);
         studentName = lessonToCopy.getStudentName();
         studentPhone = lessonToCopy.getStudentPhone();
         subject = lessonToCopy.getSubject();
@@ -177,11 +183,17 @@ public class LessonBuilder {
         return this;
     }
 
+    /** Sets the lesson ID for tests that create a distinct record from a copied lesson. */
+    public LessonBuilder withId(UUID id) {
+        this.id = id;
+        return this;
+    }
+
     /**
      * Returns the {@code Lesson} that we have built.
      */
     public Lesson build() {
-        return new Lesson(UUID.randomUUID(), null, academicLevel, null, seriesId, studentName, studentPhone,
+        return new Lesson(id, studentId, academicLevel, preparation, seriesId, studentName, studentPhone,
                 subject, date, time, duration, venue, status, notes, cancelReason);
     }
 }
