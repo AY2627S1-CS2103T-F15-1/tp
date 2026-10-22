@@ -415,7 +415,7 @@ Format: `task add st/INDEX|lesson/INDEX|hw/INDEX|pay/INDEX desc/TEXT [due/DATE]`
 * Give **exactly one** link. `st/INDEX` takes a number from the displayed student list. `lesson/INDEX` takes a lesson number from the last `agenda` or `lesson list`.
 * `hw/INDEX` takes a homework number from the last `hw list`. If that homework was deleted since, TutorFlow says so instead of picking another item. `pay/INDEX` is accepted for the final command format, but payments cannot be listed yet, so it answers `Invalid payment index. Run 'pay list' first.`
 * `TEXT` is 1 to 200 characters on one line.
-* `DATE` is written as for [`lesson add`](#scheduling-a-lesson-lesson-add). It is optional, and a task without one is shown as `(no due date)`.
+* `DATE` is written as for [`lesson add`](#scheduling-a-lesson-lesson-add). It is optional, and a task without one is shown as `(no due date)`. A due date must be today or later (`today` and `tmr` work), otherwise TutorFlow answers `Due dates must be today or later.`
 * Two tasks may have the same text. That is not a duplicate.
 * A task is linked to its student, lesson or homework by their permanent identifiers, not by name, phone or time. Editing a student, moving, cancelling or rebooking a lesson, or editing homework never changes what a task is about, and a new booking in the slot of a cancelled lesson does not take over that lesson's tasks. When a student, a lesson or a homework item is deleted, the tasks about it are deleted with it.
 
@@ -445,7 +445,7 @@ Changes the text, and optionally the due date, of a task.
 Format: `task edit INDEX desc/TEXT [due/DATE|due/-]`
 
 * `INDEX` is the task number from the last `task list`.
-* `desc/` is always needed. Leave out `due/` to keep the due date, give a date to change it, or write `due/-` to remove it.
+* `desc/` is always needed. Leave out `due/` to keep the due date, give a date (today or later) to change it, or write `due/-` to remove it.
 * Whether a task is done, and what it is about, do not change.
 
 Examples:
