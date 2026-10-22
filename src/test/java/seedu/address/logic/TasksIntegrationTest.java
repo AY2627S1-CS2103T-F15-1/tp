@@ -80,6 +80,61 @@ public class TasksIntegrationTest {
     }
 
     @Test
+    public void execute_cancelledSlotRebookedThenMoved_eachTaskStaysWithItsOwnLesson() throws Exception {
+        logic.execute("lesson add st/1 d/" + DAY + " t/16:00");
+        logic.execute("lesson list st/1");
+        logic.execute("task add lesson/1 desc/Original lesson task");
+        logic.execute("lesson cancel 1 r/Student unwell");
+        logic.execute("lesson add st/1 d/" + DAY + " t/16:00"); // the same slot, booked again
+        logic.execute("lesson list st/1");
+        logic.execute("task add lesson/1 desc/Rebooked lesson task");
+
+        logic.execute("lesson move 1 d/" + DAY.plusDays(1));
+
+        var lessons = saved().getLessonList();
+        var cancelled = lessons.stream().filter(lesson -> !lesson.isScheduled()).findFirst().get();
+        var rebooked = lessons.stream().filter(lesson -> lesson.isScheduled()).findFirst().get();
+        assertEquals(DAY, cancelled.getDate().value);
+        assertEquals(DAY.plusDays(1), rebooked.getDate().value);
+        var original = saved().getTaskList().stream()
+                .filter(task -> task.getDescription().equals("Original lesson task")).findFirst().get();
+        var second = saved().getTaskList().stream()
+                .filter(task -> task.getDescription().equals("Rebooked lesson task")).findFirst().get();
+        assertEquals(cancelled.getId(), original.getLessonId().get());
+        assertEquals(rebooked.getId(), second.getLessonId().get());
+
+        String list = logic.execute("task list").getFeedbackToUser();
+        String originalRow = list.lines().filter(line -> line.contains("Original lesson task")).findFirst().get();
+        String rebookedRow = list.lines().filter(line -> line.contains("Rebooked lesson task")).findFirst().get();
+        assertTrue(originalRow.contains("lesson Math " + cancelled.getDate() + " 16:00"), originalRow);
+        assertTrue(originalRow.toLowerCase().contains("cancelled"), originalRow);
+        assertTrue(rebookedRow.contains("lesson Math " + rebooked.getDate() + " 16:00"), rebookedRow);
+    }
+
+    @Test
+    public void execute_homeworkTask_isLinkedByIdAndDeletedWithTheHomework() throws Exception {
+        logic.execute("hw add st/1 desc/Algebra Q1-10 due/" + DAY);
+        logic.execute("hw list");
+        logic.execute("task add hw/1 desc/Mark the algebra");
+        logic.execute("task add st/1 desc/Call parent");
+
+        var homework = saved().getHomeworkList().get(0);
+        var task = saved().getTaskList().stream()
+                .filter(each -> each.getDescription().equals("Mark the algebra")).findFirst().get();
+        assertEquals(homework.getId(), task.getHomeworkId().get());
+        assertEquals(ALICE.getId(), task.getStudentId());
+        String list = logic.execute("task list").getFeedbackToUser();
+        assertTrue(list.contains("homework Algebra Q1-10 due " + DAY), list);
+
+        logic.execute("hw edit 1 desc/Algebra Q1-12"); // editing homework keeps the link
+        assertTrue(logic.execute("task list").getFeedbackToUser().contains("homework Algebra Q1-12"));
+
+        logic.execute("hw delete 1");
+        assertEquals(1, saved().getTaskList().size());
+        assertEquals("Call parent", saved().getTaskList().get(0).getDescription());
+    }
+
+    @Test
     public void execute_deletingStudentWithTasks_needsConfirmAndTakesTasksAlong() throws Exception {
         logic.execute("task add st/1 desc/Call parent");
         logic.execute("task add st/2 desc/Other student");
