@@ -9,19 +9,20 @@ import java.util.Optional;
 import java.util.UUID;
 
 import seedu.address.commons.util.ToStringBuilder;
+import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
-import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
-import seedu.address.model.person.Phone;
 
 /**
- * Represents a follow-up task in TutorFlow, attached to the student or the lesson that it is about (user story 31).
- * Guarantees: details are present and not null, except for the optional due date and lesson link, field values are
- * validated, immutable.
+ * Represents a follow-up task in TutorFlow, attached to the student, lesson or homework item that it is about
+ * (user story 31).
+ * Guarantees: details are present and not null, except for the optional due date, lesson and homework links, field
+ * values are validated, immutable.
  *
  * <p>Every task has a permanent {@code id}, so that two tasks with the same text stay distinct. A task refers to
- * its student by name and phone number, as a lesson does, and {@code AddressBook} keeps these links up to date
- * when a student or a lesson is edited or deleted.
+ * its student, and to its lesson or homework item if it has one, by their permanent UUIDs. Editing a student,
+ * moving, cancelling or rebooking a lesson, or editing homework therefore never changes what a task is about, and
+ * {@code AddressBook} only has to delete the tasks about a record when that record is deleted.
  */
 public class Task {
 
@@ -33,35 +34,56 @@ public class Task {
     private final String description;
     private final LocalDate due; // optional, null if the task has no due date
     private final boolean isDone;
-    private final Name studentName;
-    private final Phone studentPhone;
-    private final TaskLessonLink lessonLink; // null if the task is linked to the student alone
+    private final UUID studentId;
+    private final UUID lessonId; // null unless the task is about a lesson
+    private final UUID homeworkId; // null unless the task is about a homework item
 
     /**
-     * Every field must be present and not null, except for {@code due} and {@code lessonLink}.
+     * Every field must be present and not null, except for {@code due}, {@code lessonId} and {@code homeworkId}.
+     * A task is about at most one lesson or homework item.
      */
-    public Task(String id, String description, LocalDate due, boolean isDone, Name studentName, Phone studentPhone,
-            TaskLessonLink lessonLink) {
-        requireAllNonNull(id, description, studentName, studentPhone);
+    public Task(String id, String description, LocalDate due, boolean isDone, UUID studentId, UUID lessonId,
+            UUID homeworkId) {
+        requireAllNonNull(id, description, studentId);
         checkArgument(!id.isBlank(), "A task needs an id.");
         checkArgument(isValidDescription(description), MESSAGE_DESCRIPTION_CONSTRAINTS);
+        checkArgument(lessonId == null || homeworkId == null, "A task cannot be about a lesson and homework.");
         this.id = id;
         this.description = description.strip();
         this.due = due;
         this.isDone = isDone;
-        this.studentName = studentName;
-        this.studentPhone = studentPhone;
-        this.lessonLink = lessonLink;
+        this.studentId = studentId;
+        this.lessonId = lessonId;
+        this.homeworkId = homeworkId;
     }
 
     /**
-     * Creates a new open task about {@code student}, which is about {@code lesson} if that is given.
-     * The {@code due} date and {@code lesson} are optional, and the other arguments must not be null.
+     * Creates a new open task about {@code student} alone. The {@code due} date is optional, and the other
+     * arguments must not be null.
+     */
+    public static Task create(String description, LocalDate due, Person student) {
+        requireAllNonNull(description, student);
+        return new Task(UUID.randomUUID().toString(), description, due, false, student.getId(), null, null);
+    }
+
+    /**
+     * Creates a new open task about {@code lesson} of {@code student}. The {@code due} date is optional, and the
+     * other arguments must not be null.
      */
     public static Task create(String description, LocalDate due, Person student, Lesson lesson) {
-        requireAllNonNull(description, student);
-        return new Task(UUID.randomUUID().toString(), description, due, false, student.getName(),
-                student.getPhone(), lesson == null ? null : TaskLessonLink.of(lesson));
+        requireAllNonNull(description, student, lesson);
+        return new Task(UUID.randomUUID().toString(), description, due, false, student.getId(), lesson.getId(),
+                null);
+    }
+
+    /**
+     * Creates a new open task about {@code homework} of {@code student}. The {@code due} date is optional, and the
+     * other arguments must not be null.
+     */
+    public static Task create(String description, LocalDate due, Person student, Homework homework) {
+        requireAllNonNull(description, student, homework);
+        return new Task(UUID.randomUUID().toString(), description, due, false, student.getId(), null,
+                homework.getId());
     }
 
     /**
@@ -89,68 +111,59 @@ public class Task {
         return isDone;
     }
 
-    public Name getStudentName() {
-        return studentName;
+    public UUID getStudentId() {
+        return studentId;
     }
 
-    public Phone getStudentPhone() {
-        return studentPhone;
+    public Optional<UUID> getLessonId() {
+        return Optional.ofNullable(lessonId);
     }
 
-    public Optional<TaskLessonLink> getLessonLink() {
-        return Optional.ofNullable(lessonLink);
+    public Optional<UUID> getHomeworkId() {
+        return Optional.ofNullable(homeworkId);
     }
 
     /**
-     * Returns true if this task is about {@code person}, directly or through one of the lessons of the person.
+     * Returns true if this task is about {@code person}, directly or through one of their lessons or homework.
      */
     public boolean isAbout(Person person) {
-        return person.hasIdentity(studentName, studentPhone);
+        return studentId.equals(person.getId());
     }
 
     /**
-     * Returns true if this task is about {@code lesson}.
+     * Returns true if this task is about {@code lesson}. Another lesson in the same slot, such as a rebooking of
+     * a cancelled lesson, is a different lesson.
      */
     public boolean isAbout(Lesson lesson) {
-        return lessonLink != null && lessonLink.matches(lesson)
-                && lesson.getStudentName().fullName.equalsIgnoreCase(studentName.fullName)
-                && lesson.getStudentPhone().equals(studentPhone);
+        return lessonId != null && lessonId.equals(lesson.getId());
+    }
+
+    /**
+     * Returns true if this task is about {@code item}.
+     */
+    public boolean isAbout(Homework item) {
+        return homeworkId != null && homeworkId.equals(item.getId());
     }
 
     /**
      * Returns a copy of this task with the given description.
      */
     public Task withDescription(String newDescription) {
-        return new Task(id, newDescription, due, isDone, studentName, studentPhone, lessonLink);
+        return new Task(id, newDescription, due, isDone, studentId, lessonId, homeworkId);
     }
 
     /**
      * Returns a copy of this task with the given due date, which is null to remove the due date.
      */
     public Task withDue(LocalDate newDue) {
-        return new Task(id, description, newDue, isDone, studentName, studentPhone, lessonLink);
+        return new Task(id, description, newDue, isDone, studentId, lessonId, homeworkId);
     }
 
     /**
      * Returns a completed copy of this task.
      */
     public Task markDone() {
-        return new Task(id, description, due, true, studentName, studentPhone, lessonLink);
-    }
-
-    /**
-     * Returns a copy of this task that is about {@code person} instead of the current student.
-     */
-    public Task withStudent(Person person) {
-        return new Task(id, description, due, isDone, person.getName(), person.getPhone(), lessonLink);
-    }
-
-    /**
-     * Returns a copy of this task that is about {@code lesson} instead of the lesson it is about now.
-     */
-    public Task withLesson(Lesson lesson) {
-        return new Task(id, description, due, isDone, lesson.getStudentName(), lesson.getStudentPhone(),
-                TaskLessonLink.of(lesson));
+        return new Task(id, description, due, true, studentId, lessonId, homeworkId);
     }
 
     @Override
@@ -168,14 +181,14 @@ public class Task {
                 && description.equals(otherTask.description)
                 && Objects.equals(due, otherTask.due)
                 && isDone == otherTask.isDone
-                && studentName.equals(otherTask.studentName)
-                && studentPhone.equals(otherTask.studentPhone)
-                && Objects.equals(lessonLink, otherTask.lessonLink);
+                && studentId.equals(otherTask.studentId)
+                && Objects.equals(lessonId, otherTask.lessonId)
+                && Objects.equals(homeworkId, otherTask.homeworkId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, description, due, isDone, studentName, studentPhone, lessonLink);
+        return Objects.hash(id, description, due, isDone, studentId, lessonId, homeworkId);
     }
 
     @Override
@@ -185,9 +198,9 @@ public class Task {
                 .add("description", description)
                 .add("due", due)
                 .add("isDone", isDone)
-                .add("studentName", studentName)
-                .add("studentPhone", studentPhone)
-                .add("lessonLink", lessonLink)
+                .add("studentId", studentId)
+                .add("lessonId", lessonId)
+                .add("homeworkId", homeworkId)
                 .toString();
     }
 }
