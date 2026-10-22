@@ -7,7 +7,9 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_LESSON;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PAYMENT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_STUDENT;
 
+import java.time.Clock;
 import java.time.LocalDate;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import seedu.address.commons.core.index.Index;
@@ -20,6 +22,20 @@ import seedu.address.model.task.Task;
  * Parses input arguments and creates a new TaskAddCommand object
  */
 public class TaskAddCommandParser implements Parser<TaskAddCommand> {
+
+    public static final String MESSAGE_PAST_DUE = "Due dates must be today or later.";
+
+    private final Clock clock;
+
+    /** Creates a parser that reads today's date from the system clock. */
+    public TaskAddCommandParser() {
+        this(Clock.systemDefaultZone());
+    }
+
+    /** Creates a parser that reads today's date, for due dates, from {@code clock}. */
+    public TaskAddCommandParser(Clock clock) {
+        this.clock = Objects.requireNonNull(clock);
+    }
 
     /**
      * Parses the given {@code String} of arguments in the context of the TaskAddCommand
@@ -50,9 +66,23 @@ public class TaskAddCommandParser implements Parser<TaskAddCommand> {
         Index paymentIndex = ParserUtil.parseOptional(argMultimap, PREFIX_PAYMENT, ParserUtil::parseIndex);
         String description = parseDescription(argMultimap.getValue(PREFIX_DESCRIPTION).get());
         LocalDate due = argMultimap.getValue(PREFIX_DUE).isPresent()
-                ? ParserUtil.parseDate(argMultimap.getValue(PREFIX_DUE).get()).value : null;
+                ? parseDue(argMultimap.getValue(PREFIX_DUE).get(), LocalDate.now(clock)) : null;
 
         return new TaskAddCommand(studentIndex, lessonIndex, homeworkIndex, paymentIndex, description, due);
+    }
+
+    /**
+     * Parses a due date, which may be written as {@code today} or {@code tmr}, and checks that it is not before
+     * {@code today}.
+     *
+     * @throws ParseException if the date is invalid or in the past.
+     */
+    static LocalDate parseDue(String value, LocalDate today) throws ParseException {
+        LocalDate due = ParserUtil.parseDate(value, today).value;
+        if (due.isBefore(today)) {
+            throw new ParseException(MESSAGE_PAST_DUE);
+        }
+        return due;
     }
 
     /**
