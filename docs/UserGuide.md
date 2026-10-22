@@ -413,11 +413,11 @@ Keeps a to-do attached to the student or the lesson that it is about, so that yo
 Format: `task add st/INDEX|lesson/INDEX|hw/INDEX|pay/INDEX desc/TEXT [due/DATE]`
 
 * Give **exactly one** link. `st/INDEX` takes a number from the displayed student list. `lesson/INDEX` takes a lesson number from the last `agenda` or `lesson list`.
-* `hw/INDEX` and `pay/INDEX` are for homework and payments. Until those features are available they answer `Invalid homework index. Run 'hw list' to display homework first.` or `Invalid payment index. Run 'pay list' first.`
+* `hw/INDEX` takes a homework number from the last `hw list`. If that homework was deleted since, TutorFlow says so instead of picking another item. `pay/INDEX` is accepted for the final command format, but payments cannot be listed yet, so it answers `Invalid payment index. Run 'pay list' first.`
 * `TEXT` is 1 to 200 characters on one line.
 * `DATE` is written as for [`lesson add`](#scheduling-a-lesson-lesson-add). It is optional, and a task without one is shown as `(no due date)`.
 * Two tasks may have the same text. That is not a duplicate.
-* A task about a lesson follows that lesson when it is moved, and a task about a student follows the student when their name or phone number is edited. When a student or a lesson is deleted, the tasks about it are deleted with it.
+* A task is linked to its student, lesson or homework by their permanent identifiers, not by name, phone or time. Editing a student, moving, cancelling or rebooking a lesson, or editing homework never changes what a task is about, and a new booking in the slot of a cancelled lesson does not take over that lesson's tasks. When a student, a lesson or a homework item is deleted, the tasks about it are deleted with it.
 
 Examples:
 * `task add st/1 desc/Call parent due/2026-12-01` adds a task to the 1st student, due on 1 December 2026.
