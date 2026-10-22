@@ -1,5 +1,6 @@
 package seedu.address.model.lesson;
 
+import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
@@ -49,6 +50,7 @@ public class Lesson {
     private final UUID studentId;
     private final Level academicLevel;
     private final String preparation;
+    private final UUID seriesId; // optional, null if the lesson does not belong to a weekly series
 
     // Identity fields
     private final Name studentName;
@@ -86,12 +88,24 @@ public class Lesson {
     public Lesson(UUID id, UUID studentId, Level academicLevel, String preparation, Name studentName,
             Phone studentPhone, Subject subject, LessonDate date, LessonTime time, LessonDuration duration,
             Venue venue, LessonStatus status, String notes, String cancelReason) {
+        this(id, studentId, academicLevel, preparation, null, studentName, studentPhone, subject, date, time,
+                duration, venue, status, notes, cancelReason);
+    }
+
+    /**
+     * Creates a lesson as above that may also belong to a weekly series. A null {@code seriesId} means that the
+     * lesson is not part of a series (user story 9).
+     */
+    public Lesson(UUID id, UUID studentId, Level academicLevel, String preparation, UUID seriesId,
+            Name studentName, Phone studentPhone, Subject subject, LessonDate date, LessonTime time,
+            LessonDuration duration, Venue venue, LessonStatus status, String notes, String cancelReason) {
         requireAllNonNull(id, studentName, studentPhone, subject, date, time, duration, status);
         checkArgument(preparation == null || isValidNotes(preparation), MESSAGE_NOTES_CONSTRAINTS);
         this.id = id;
         this.studentId = studentId;
         this.academicLevel = academicLevel;
         this.preparation = preparation;
+        this.seriesId = seriesId;
         checkArgument(isValidTimeRange(time, duration), MESSAGE_CONSTRAINTS);
         checkArgument(notes == null || isValidNotes(notes), MESSAGE_NOTES_CONSTRAINTS);
         checkArgument(cancelReason == null || isValidCancelReason(cancelReason), MESSAGE_REASON_CONSTRAINTS);
@@ -149,16 +163,28 @@ public class Lesson {
         return Optional.ofNullable(preparation);
     }
 
+    /** Returns the id shared by every occurrence of the weekly series this lesson belongs to, if any. */
+    public Optional<UUID> getSeriesId() {
+        return Optional.ofNullable(seriesId);
+    }
+
+    /** Returns a copy of this lesson that belongs to the series {@code newSeriesId}. */
+    public Lesson withSeries(UUID newSeriesId) {
+        requireNonNull(newSeriesId);
+        return new Lesson(id, studentId, academicLevel, preparation, newSeriesId, studentName, studentPhone,
+                subject, date, time, duration, venue, status, notes, cancelReason);
+    }
+
     /** Captures the student's current level only when creating a new lesson. */
     public Lesson snapshotStudent(Person student) {
-        return new Lesson(id, student.getId(), student.getLevel(), preparation, student.getName(),
+        return new Lesson(id, student.getId(), student.getLevel(), preparation, seriesId, student.getName(),
                 student.getPhone(), subject, date, time, duration, venue, status, notes, cancelReason);
     }
 
     /** Records preparation independently of status and teaching notes. */
     public Lesson prepare(String value) {
-        return new Lesson(id, studentId, academicLevel, value, studentName, studentPhone, subject, date, time,
-                duration, venue, status, notes, cancelReason);
+        return new Lesson(id, studentId, academicLevel, value, seriesId, studentName, studentPhone, subject, date,
+                time, duration, venue, status, notes, cancelReason);
     }
 
     public Name getStudentName() {
@@ -245,7 +271,7 @@ public class Lesson {
      * Every other detail is retained.
      */
     public Lesson reschedule(LessonDate newDate, LessonTime newTime, LessonDuration newDuration, Venue newVenue) {
-        return new Lesson(id, studentId, academicLevel, preparation, studentName, studentPhone,
+        return new Lesson(id, studentId, academicLevel, preparation, seriesId, studentName, studentPhone,
                 subject, newDate, newTime, newDuration, newVenue, status,
                 notes, cancelReason);
     }
@@ -255,7 +281,7 @@ public class Lesson {
      * Every other detail is retained, so that the record of the lesson is kept.
      */
     public Lesson cancel(String reason) {
-        return new Lesson(id, studentId, academicLevel, preparation, studentName, studentPhone,
+        return new Lesson(id, studentId, academicLevel, preparation, seriesId, studentName, studentPhone,
                 subject, date, time, duration, venue, LessonStatus.CANCELLED,
                 notes, reason);
     }
@@ -265,7 +291,7 @@ public class Lesson {
      * Omitting notes retains the existing notes, and every booking detail is retained.
      */
     public Lesson complete(String newNotes) {
-        return new Lesson(id, studentId, academicLevel, preparation, studentName, studentPhone,
+        return new Lesson(id, studentId, academicLevel, preparation, seriesId, studentName, studentPhone,
                 subject, date, time, duration, venue, LessonStatus.COMPLETED,
                 newNotes == null ? notes : newNotes, cancelReason);
     }
@@ -274,7 +300,7 @@ public class Lesson {
      * Returns a missed copy of this lesson, retaining all booking details and existing notes.
      */
     public Lesson miss() {
-        return new Lesson(id, studentId, academicLevel, preparation, studentName, studentPhone,
+        return new Lesson(id, studentId, academicLevel, preparation, seriesId, studentName, studentPhone,
                 subject, date, time, duration, venue, LessonStatus.MISSED,
                 notes, cancelReason);
     }
@@ -291,7 +317,8 @@ public class Lesson {
      */
     public Lesson withStudent(Person person) {
         assert person != null : "The new student of a lesson must not be null";
-        return new Lesson(id, person.getId(), academicLevel, preparation, person.getName(), person.getPhone(),
+        return new Lesson(id, person.getId(), academicLevel, preparation, seriesId, person.getName(),
+                person.getPhone(),
                 subject, date, time, duration, venue, status, notes,
                 cancelReason);
     }
@@ -364,13 +391,14 @@ public class Lesson {
                 && Objects.equals(notes, otherLesson.notes)
                 && Objects.equals(cancelReason, otherLesson.cancelReason)
                 && Objects.equals(preparation, otherLesson.preparation)
-                && Objects.equals(academicLevel, otherLesson.academicLevel);
+                && Objects.equals(academicLevel, otherLesson.academicLevel)
+                && Objects.equals(seriesId, otherLesson.seriesId);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(studentName, studentPhone, subject, date, time, duration, venue, status, notes,
-                cancelReason, preparation, academicLevel);
+                cancelReason, preparation, academicLevel, seriesId);
     }
 
     @Override

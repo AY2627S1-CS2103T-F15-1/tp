@@ -3,6 +3,7 @@ package seedu.address.logic.parser;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Optional;
@@ -41,6 +42,8 @@ public class ParserUtil {
             + MAX_SUBJECTS_PER_STUDENT + " subjects.";
     public static final String MESSAGE_FLAG_TAKES_NO_VALUE = "The '%1$s' flag does not take a value.";
 
+    private static final String KEYWORD_TODAY = "today";
+    private static final String KEYWORD_TOMORROW = "tmr";
     /** The word "s/o" ("son of"), which a name may contain although {@code s/} is the subject prefix. */
     private static final Pattern SON_OF = Pattern.compile("(?<=\\s)s/o(?=\\s|$)");
     private static final char SON_OF_MASK = '\uE000';
@@ -215,6 +218,25 @@ public class ParserUtil {
      * @throws ParseException if the given {@code date} is invalid.
      */
     public static LessonDate parseDate(String date) throws ParseException {
+        return parseDate(date, LocalDate.now());
+    }
+
+    /**
+     * Parses a {@code String date} into a {@code LessonDate}, resolving the keywords {@code today} and {@code tmr}
+     * (in any letter case) against {@code today}. Leading and trailing whitespaces will be trimmed.
+     *
+     * @throws ParseException if the given {@code date} is invalid.
+     */
+    public static LessonDate parseDate(String date, LocalDate today) throws ParseException {
+        requireNonNull(date);
+        requireNonNull(today);
+        String keyword = date.strip();
+        if (keyword.equalsIgnoreCase(KEYWORD_TODAY)) {
+            return new LessonDate(today.toString());
+        }
+        if (keyword.equalsIgnoreCase(KEYWORD_TOMORROW)) {
+            return new LessonDate(today.plusDays(1).toString());
+        }
         return parseValue(date, LessonDate::isValidDate, LessonDate.MESSAGE_CONSTRAINTS, LessonDate::new);
     }
 

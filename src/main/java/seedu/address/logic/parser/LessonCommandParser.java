@@ -34,6 +34,7 @@ public class LessonCommandParser implements Parser<Command> {
         return switch (matcher.group("subCommandWord")) {
             case "prep" -> new LessonPrepCommandParser().parse(arguments);
             case "add" -> new LessonAddCommandParser().parse(arguments);
+            case "repeat" -> new LessonRepeatCommandParser().parse(arguments);
             case "list" -> new LessonListCommandParser().parse(arguments);
             case "move" -> new LessonMoveCommandParser().parse(arguments);
             case "cancel" -> new LessonCancelCommandParser().parse(arguments);
@@ -44,7 +45,8 @@ public class LessonCommandParser implements Parser<Command> {
     }
 
     private static String getUsage() {
-        return "Lesson commands: " + COMMAND_WORD + " add, " + COMMAND_WORD + " list, " + COMMAND_WORD + " move, "
-                + COMMAND_WORD + " cancel, " + COMMAND_WORD + " done, " + COMMAND_WORD + " missed";
+        return "Lesson commands: " + COMMAND_WORD + " add, " + COMMAND_WORD + " repeat, " + COMMAND_WORD + " list, "
+                + COMMAND_WORD + " move, " + COMMAND_WORD + " cancel, " + COMMAND_WORD + " done, " + COMMAND_WORD
+                + " missed";
     }
 }

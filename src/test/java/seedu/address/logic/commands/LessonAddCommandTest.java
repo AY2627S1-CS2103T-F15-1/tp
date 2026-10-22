@@ -12,7 +12,10 @@ import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BENSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 
 import org.junit.jupiter.api.Test;
 
@@ -58,7 +61,8 @@ public class LessonAddCommandTest {
     @Test
     public void execute_allFieldsGiven_success() {
         Venue venue = new Venue("Online");
-        Lesson lesson = new LessonBuilder().withStudent(ALICE).withDate(FUTURE_DATE).withVenue("Online").build();
+        Lesson lesson = new LessonBuilder().withStudent(ALICE).withDate(FUTURE_DATE).withVenue("Online")
+                .withAcademicLevel(ALICE.getLevel().value).build();
         LessonAddCommand command = new LessonAddCommand(INDEX_FIRST_PERSON, MATH, DATE, TIME, DURATION, venue);
 
         assertCommandSuccess(command, model, getSuccessMessage(lesson, "Online"), getExpectedModel(lesson));
@@ -67,7 +71,7 @@ public class LessonAddCommandTest {
     @Test
     public void execute_subjectAndVenueOmitted_usesStudentSubjectAndVenue() {
         Lesson lesson = new LessonBuilder().withStudent(ALICE).withDate(FUTURE_DATE)
-                .withVenue(ALICE.getVenue().get().value).build();
+                .withVenue(ALICE.getVenue().get().value).withAcademicLevel(ALICE.getLevel().value).build();
         LessonAddCommand command = new LessonAddCommand(INDEX_FIRST_PERSON, null, DATE, TIME, DURATION, null);
 
         assertCommandSuccess(command, model, getSuccessMessage(lesson, ALICE.getVenue().get().value),
@@ -85,7 +89,8 @@ public class LessonAddCommandTest {
     public void execute_studentAndLessonWithoutVenue_showsNoVenue() {
         Person studentWithoutVenue = new PersonBuilder(ALICE).withoutVenue().build();
         model.setPerson(ALICE, studentWithoutVenue);
-        Lesson lesson = new LessonBuilder().withStudent(studentWithoutVenue).withDate(FUTURE_DATE).build();
+        Lesson lesson = new LessonBuilder().withStudent(studentWithoutVenue).withDate(FUTURE_DATE)
+                .withAcademicLevel(ALICE.getLevel().value).build();
         LessonAddCommand command = new LessonAddCommand(INDEX_FIRST_PERSON, MATH, DATE, TIME, DURATION, null);
 
         assertCommandSuccess(command, model, getSuccessMessage(lesson, Messages.MESSAGE_NO_VENUE),
@@ -98,7 +103,7 @@ public class LessonAddCommandTest {
                 .withTime("17:00").withDuration(60).build();
         model.addLesson(existing);
         Lesson lesson = new LessonBuilder().withStudent(ALICE).withDate(FUTURE_DATE)
-                .withVenue(ALICE.getVenue().get().value).build();
+                .withVenue(ALICE.getVenue().get().value).withAcademicLevel(ALICE.getLevel().value).build();
         LessonAddCommand command = new LessonAddCommand(INDEX_FIRST_PERSON, MATH, DATE, TIME, DURATION, null);
 
         Model expectedModel = getExpectedModel(lesson);
@@ -203,7 +208,7 @@ public class LessonAddCommandTest {
         LessonAddCommand command = new LessonAddCommand(INDEX_FIRST_PERSON, MATH, DATE, TIME, DURATION, null);
         String expected = LessonAddCommand.class.getCanonicalName() + "{studentIndex=" + INDEX_FIRST_PERSON
                 + ", subject=" + MATH + ", date=" + DATE + ", time=" + TIME + ", duration=" + DURATION
-                + ", venue=null}";
+                + ", venue=null, isPast=false}";
         assertEquals(expected, command.toString());
     }
 
@@ -224,5 +229,94 @@ public class LessonAddCommandTest {
         expectedModel.addLesson(lesson.snapshotStudent(model.getAddressBook().getPersonList().stream()
                 .filter(lesson::isWith).findFirst().orElseThrow()));
         return expectedModel;
+    }
+
+    @Test
+    public void execute_pastDateWithPastFlag_success() {
+        LocalDate yesterday = LocalDate.now().minusDays(1);
+        Lesson lesson = new LessonBuilder().withStudent(ALICE).withDate(yesterday)
+                .withVenue(ALICE.getVenue().get().value).withAcademicLevel(ALICE.getLevel().value).build();
+        LessonAddCommand command = new LessonAddCommand(INDEX_FIRST_PERSON, MATH,
+                new LessonDate(yesterday.toString()), TIME, DURATION, null, true);
+
+        assertCommandSuccess(command, model, getSuccessMessage(lesson, ALICE.getVenue().get().value),
+                getExpectedModel(lesson));
+    }
+
+    @Test
+    public void execute_futureDateWithPastFlag_throwsCommandException() {
+        LessonAddCommand command = new LessonAddCommand(INDEX_FIRST_PERSON, MATH,
+                new LessonDate(LocalDate.now().plusDays(1).toString()), TIME, DURATION, null, true);
+
+        assertCommandFailure(command, model, LessonAddCommand.MESSAGE_PAST_FLAG_FUTURE_DATE);
+        assertTrue(model.getAddressBook().getLessonList().isEmpty());
+    }
+
+    @Test
+    public void execute_todayWithPastFlag_success() {
+        Clock clock = Clock.fixed(Instant.parse("2026-10-21T04:00:00Z"), ZoneOffset.UTC);
+        LessonAddCommand command = new LessonAddCommand(INDEX_FIRST_PERSON, MATH, new LessonDate("2026-10-21"),
+                TIME, DURATION, null, true, clock);
+
+        assertTrue(executeSuccessfully(command).startsWith("Scheduled:"));
+    }
+
+    @Test
+    public void execute_tomorrowOfClockWithPastFlag_throwsCommandException() {
+        Clock clock = Clock.fixed(Instant.parse("2026-10-21T04:00:00Z"), ZoneOffset.UTC);
+        LessonAddCommand command = new LessonAddCommand(INDEX_FIRST_PERSON, MATH, new LessonDate("2026-10-22"),
+                TIME, DURATION, null, true, clock);
+
+        assertCommandFailure(command, model, LessonAddCommand.MESSAGE_PAST_FLAG_FUTURE_DATE);
+    }
+
+    @Test
+    public void execute_pastDateOlderThanTwoYears_throwsCommandException() {
+        LessonAddCommand command = new LessonAddCommand(INDEX_FIRST_PERSON, MATH,
+                new LessonDate(LocalDate.now().minusYears(2).minusDays(1).toString()), TIME, DURATION, null, true);
+
+        assertCommandFailure(command, model, LessonCommandUtil.MESSAGE_DATE_TOO_FAR_PAST);
+    }
+
+    @Test
+    public void execute_pastDateExactlyTwoYearsAgo_success() {
+        LessonAddCommand command = new LessonAddCommand(INDEX_FIRST_PERSON, MATH,
+                new LessonDate(LocalDate.now().minusYears(2).toString()), TIME, DURATION, null, true);
+
+        assertTrue(executeSuccessfully(command).startsWith("Scheduled:"));
+    }
+
+    @Test
+    public void execute_pastFlagStillRejectsOtherInvalidLessons_throwsCommandException() {
+        LocalDate yesterday = LocalDate.now().minusDays(1);
+        LessonAddCommand midnight = new LessonAddCommand(INDEX_FIRST_PERSON, MATH,
+                new LessonDate(yesterday.toString()), new LessonTime("23:00"), new LessonDuration(120), null, true);
+        LessonAddCommand wrongSubject = new LessonAddCommand(INDEX_FIRST_PERSON, new Subject("Physics"),
+                new LessonDate(yesterday.toString()), TIME, DURATION, null, true);
+
+        assertCommandFailure(midnight, model, Lesson.MESSAGE_CONSTRAINTS);
+        assertCommandFailure(wrongSubject, model,
+                String.format(LessonAddCommand.MESSAGE_SUBJECT_NOT_TAKEN, ALICE.getName(), "Physics"));
+    }
+
+    @Test
+    public void execute_pastDateWithoutPastFlag_messageTellsUserToAddPast() {
+        assertEquals("That date is in the past. Add past/ to record a lesson that has already taken place.",
+                LessonAddCommand.MESSAGE_DATE_IN_PAST);
+    }
+
+    @Test
+    public void execute_success_recordsLevelAtBooking() {
+        executeSuccessfully(new LessonAddCommand(INDEX_FIRST_PERSON, MATH, DATE, TIME, DURATION, null));
+
+        assertEquals(ALICE.getLevel().value, model.getFilteredLessonList().get(0).getAcademicLevel().get().value);
+    }
+
+    @Test
+    public void equals_differentPastFlag_notEqual() {
+        LessonAddCommand command = new LessonAddCommand(INDEX_FIRST_PERSON, MATH, DATE, TIME, DURATION, null);
+
+        assertFalse(command.equals(new LessonAddCommand(INDEX_FIRST_PERSON, MATH, DATE, TIME, DURATION, null,
+                true)));
     }
 }
