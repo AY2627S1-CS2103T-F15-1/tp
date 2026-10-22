@@ -278,6 +278,18 @@ More sections are planned: dues from the ledger after `OVERDUE HOMEWORK` on the 
     * Pros: A new feature adds its section without editing `TodayCommand`.
     * Cons: The sections and their order are fixed, so for a few sections the extra class adds indirection without removing code.
 
+### Homework status and deletion
+
+Homework commands take a number from the last `hw list`. `HomeworkCommandSupport#target` resolves that number against the snapshot that `Model#getDisplayedHomework()` returns, and then finds the item again in the address book by its id, so a number never selects another item.
+
+The sequence diagram below shows `execute("hw status 2 s/submitted")`.
+
+<puml src="diagrams/HomeworkStatusSequenceDiagram.puml" alt="Interactions Inside the Logic, Model and Storage Components for the `hw status 2 s/submitted` Command" />
+
+The activity diagram below shows what `hw delete INDEX [confirm]` does. Homework that has feedback is only deleted when `confirm` is given.
+
+<puml src="diagrams/HomeworkDeleteActivityDiagram.puml" alt="Activity Diagram for the `hw delete INDEX [confirm]` Command" />
+
 ### \[Proposed\] Undo/redo feature
 
 #### Proposed Implementation
