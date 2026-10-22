@@ -158,9 +158,11 @@ This section describes some noteworthy details on how certain features are imple
 
 The lesson commands are `lesson add`, `lesson repeat`, `lesson list`, `lesson move`, `lesson cancel`, `lesson done` and `lesson missed`. They share the `lesson` command word, which `AddressBookParser` hands to `LessonCommandParser`. That parser reads the next word and passes the rest of the arguments to the parser of that command. `agenda` is its own command word.
 
-The sequence diagram below shows `execute("lesson move 1 d/2026-12-24")`.
+The sequence diagram below shows the successful changed-data path for `execute("lesson move 1 d/2026-12-24")`. It focuses on the Logic component; parser internals and the internal workings of Model and Storage are omitted. The command resolves the displayed index, validates and replaces the lesson, and reports overlaps without blocking the move. `LogicManager` then refreshes changed lesson numbers once and saves the updated data before returning success. A save failure retains the in-memory change and asks the tutor to retry `save`.
 
-<puml src="diagrams/LessonMoveSequenceDiagram.puml" alt="Interactions Inside the Logic and Model Components for the `lesson move 1 d/2026-12-24` Command" />
+![Lesson rescheduling through Logic, with Model and Storage shown as black boxes](images/LessonMoveSequenceDiagram.svg)
+
+Diagram source: [LessonMoveSequenceDiagram.puml](diagrams/LessonMoveSequenceDiagram.puml). Regenerate the SVG with `java -jar plantuml.jar -tsvg -o ../images docs/diagrams/LessonMoveSequenceDiagram.puml` from the repository root.
 
 How the pieces fit together:
 
@@ -230,6 +232,51 @@ The command replaces a scheduled lesson with the immutable copy returned by `Les
 * **Alternative 2:** add the occurrences one by one and stop at the first failure.
     * Pros: Simpler.
     * Cons: A tutor could be left with half a series and have to find and delete it.
+
+### Dashboard and student overview
+
+`today` shows the dashboard, which answers "what does today require?", and `view INDEX` shows the overview of one student. Both are read-only commands that return their whole result as text for the result box.
+
+**Parsing.** `today` takes no parameters, so `AddressBookParser` calls `requireNoArguments` before it creates the command: `today 2` fails with `The 'today' command takes no parameters.` instead of running. `AddressBookParser` passes `LocalDate.now()` to `TodayCommand`, and `ViewCommandParser` passes it to `ViewCommand` with the parsed index. The commands do not read the clock themselves, so tests can give them a fixed date.
+
+**Building the dashboard.** `TodayCommand#execute` gets the lessons from `Model#getAddressBook()` and returns the date followed by three sections, in this order:
+
+* `TODAY'S LESSONS`: the lessons on that date that are not cancelled, in time order, with their count and total time in the heading. A completed or missed lesson shows its status. For each lesson, `Model#getConflictingLessons(Lesson)` decides whether to add the `⚠ overlaps` marker that `agenda` uses.
+* `LESSONS AWAITING NOTES`: the scheduled lessons from earlier days, most recent first.
+* `OVERDUE HOMEWORK`: `HomeworkQueries#summary(book, null, true, today)` selects every student's assigned homework that was due before today. It writes each item as `hw list` does, but without numbers, so the homework numbers that `hw list` showed still apply.
+
+A section with nothing to show gives its own empty state, such as `No lessons today.`, instead of disappearing.
+
+The sequence diagram below shows `execute("today")`. For simplicity, it leaves out the calls inside `HomeworkQueries#summary` and two checks that run for every command, on the input and on the displayed lesson numbers.
+
+<puml src="diagrams/TodaySequenceDiagram.puml" alt="Interactions Inside the Logic, Model and Storage Components for the `today` Command" />
+
+**Read-only.** `today` calls only query methods, so it changes neither the data nor the displayed lists. Before and after every command, `LogicManager` calls `Storage#snapshotAddressBook`, which turns the data into the JSON text that a save would write, without writing the file. For `today` the two snapshots are equal, so nothing is saved. The dashboard shows the data as it was when the command ran. The next command replaces it in the result box, and the tutor runs `today` again to see it up to date.
+
+**At start-up.** `MainWindow#fillInnerParts` puts `Logic#getStartupMessage()` in the result box. `LogicManager#getStartupMessage()` returns the start-up warning, if there is one (the first-run welcome, a data file that could not be read, or a migration that could not be saved), followed by `getDashboard()`, which executes a new `TodayCommand` directly on the model, without the parser or the snapshots.
+
+**Student overview.** `ViewCommand#execute` takes the student at `INDEX` in the displayed student list, and that student's lessons from the address book in time order. It returns five sections, in this order:
+
+1. the student's details: `Viewing:` with the name, then the level, subjects, rate, contact details and any remark
+1. `NEXT LESSON`: the first scheduled lesson from today onwards, with any preparation notes
+1. `RECENT LESSON NOTES`: the three most recent notes of completed lessons, newest first
+1. `LESSON HISTORY`: the numbers of completed, cancelled and missed lessons
+1. `OUTSTANDING HOMEWORK`: `HomeworkQueries#summary(book, studentId, false, today)` selects the student's homework that is not yet reviewed, overdue first
+
+Like the dashboard, the overview gives an empty state for a section with nothing to show. It does not change the displayed student list, so the numbers used by other commands stay the same.
+
+More sections are planned: dues from the ledger after `OVERDUE HOMEWORK` on the dashboard, a balance between `LESSON HISTORY` and `OUTSTANDING HOMEWORK` in the overview, and travel warnings in `TODAY'S LESSONS`. None of them exists yet. Each is meant to plug in the same way, as another read-only query on the address book whose text the command adds at its position in the order.
+
+#### Design considerations
+
+**Aspect: where the text of the dashboard is built**
+
+* **Alternative 1 (current choice):** the command builds its own text, and takes the homework section from `HomeworkQueries`, a shared query class in the model whose selection and formatting rules `view` and `hw list` also use.
+    * Pros: The order of the sections is in one place: `TodayCommand#execute` joins them in the order they are shown. `today`, `view` and `hw list` share the homework rules, so they cannot drift apart.
+    * Cons: The result is a single string. Another display, such as a panel beside the student list, would need the sections as data instead.
+* **Alternative 2:** a separate dashboard class that collects a section from each feature.
+    * Pros: A new feature adds its section without editing `TodayCommand`.
+    * Cons: The sections and their order are fixed, so for a few sections the extra class adds indirection without removing code.
 
 ### \[Proposed\] Undo/redo feature
 
@@ -322,6 +369,74 @@ The following activity diagram summarizes what happens when a user executes a ne
 --------------------------------------------------------------------------------------------------------------------
 
 ## **Documentation, logging, testing, dev-ops**
+
+### Student balances and dues
+
+`LedgerEntry` is immutable and records its UUID, permanent student UUID, optional lesson UUID, kind,
+positive exact `BigDecimal` amount and date. Charges require a lesson UUID; payments have none.
+`AddressBook` owns the unmodifiable list and validates student/lesson references, unique entry IDs,
+and at most one charge per lesson. Profile edits never rewrite financial records. Copy/reset,
+equality, student deletion, clear, and the real JSON snapshot include both finance and homework.
+
+`LessonDoneCommand` explicitly calls `Model.chargeLesson(target, completedLesson)` on first completion.
+This operation validates the charge, replaces the lesson and records the charge atomically, returning
+`Optional<LedgerEntry>` for the command's success text. A zero rounded fee returns no charge. The general
+`setLesson` operation only updates lesson data; it never bills implicitly. Existing completed notes
+use `setLesson`, so note corrections do not bill again. Fees use the current hourly rate × duration
+in minutes ÷ 60, rounded once with `RoundingMode.HALF_UP`, and retain the permanent lesson UUID.
+The command translates model validation failures to `CommandException` and gives an accurate zero-fee
+message without directing users to a manual charge command that is not implemented yet.
+
+Ledger copy/reset and JSON restoration validate records in one pass using student/lesson maps and
+sets of entry IDs and charged lesson IDs. The ledger validation cost is O(students + lessons + entries),
+rather than scanning the growing list once per entry. Other domains keep their existing uniqueness checks.
+`getLedgerEntries` returns one cached immutable live wrapper. Individual insertions remain validated.
+`removeLesson` refuses to delete a billed lesson, including detached equal-value lookup, so a saved
+charge cannot point at a deleted lesson. Student deletion still cascades all of that student's history.
+
+`Ledger.balance(book, student)` adds charges and subtracts payments, returning a negative value for credit.
+`Ledger.describeBalance(amount)` shares the `OUTSTANDING $X.XX` / `IN CREDIT $X.XX` labels.
+`Ledger.dues(book, today)` returns immutable `Due(student, amount, oldestUnpaidDate)` rows, oldest first,
+breaking ties by name then phone. Payments cover charges FIFO by charge date, including partial payments
+and advance credit. The supplied date is the reference for displaying unpaid ages, not a cutoff that
+excludes transactions. `Ledger.formatDues(book, today)` formats what `dues` prints: the DUES header, count and
+total, then each debtor, marked `(archived)` if archived, with the age of their oldest unpaid charge (`1 day`,
+`2 days`), or only the up-to-date message when nobody owes money. `today` shows this text as its DUES section
+and adds the header above the up-to-date message. `view` shows `describeBalance` of the student's balance under
+BALANCE. Credit from one account never reduces another student's debt. Queries include archived/filtered
+students and never mutate data.
+
+`BalanceCommand` parses `balance st/INDEX` and reports the displayed student's current summary;
+running account statements from alpha §4.29 are deliberately deferred. `DuesCommand` reports all debtors
+with shared wording, including `(archived)` and the singular `1 day`.
+
+`PaymentCommandParser` parses `pay st/INDEX amt/AMOUNT [d/DATE] [n/NOTES]`, requiring a positive decimal
+amount with at most two fractional digits and no currency symbol. Dates use the shared `ParserUtil.parseDate`
+rules (ISO, D/M/YYYY and today/tmr resolved against the injected clock); the command
+rejects future dates. Notes are optional 1–200 printable one-line characters and persist in the JSON
+adapter; absent notes in existing finance files default to null. Missing JSON fields are named in errors.
+The response confirms the amount, student, date and updated balance. Payment list/reverse, manual charge,
+and running account statements are follow-up increments; no success message points to unavailable commands.
+
+Integration follow-ups before full alpha sign-off:
+* Finance: introduce reversal records and a schema migration before implementing payment/charge reversal.
+  A charge currently uses the lesson UUID, so recharging after reversal requires a new event identity design.
+* Finance: implement the running account statement in specification section 4.29.
+* Lesson move/cancel and series cancellation (#142): check active charges before changing a billed lesson.
+  Preserve lesson and series UUIDs across every copy operation.
+* Task integration: include linked task counts in student deletion once the task domain is implemented.
+
+`LogicManager(Model, Storage, Clock)` passes a shared date source to the finance and relevant lesson
+parsers/commands. Interactive constructors default to the system clock. Finance workflow tests use a
+fixed Singapore clock, including scheduling/completion and payment, and cover a UTC/local-date boundary.
+The snapshot/save flow persists every recorded payment. After a failed save, `save` retries without
+recording another payment. Repeating `pay` intentionally adds another entry. Student filters do not change.
+
+Student edits retain permanent financial references without changing amounts. Confirmed student deletion removes their
+records and prompts even when they only have payment records and no lessons. Clearing data removes the ledger too.
+`JsonAdaptedLedgerEntry` and the optional `ledgerEntries` collection in `JsonSerializableAddressBook` persist every
+record. Loading validates IDs, amounts and student references. Older files load an empty ledger: completed lessons
+are not billed retroactively, because their historical rate and payment state are unknown.
 
 * [Documentation guide](Documentation.md)
 * [Testing guide](Testing.md)
@@ -937,7 +1052,7 @@ Equal cancelled lessons remain separate records and exact-ID lookup chooses the 
 All domain extensions must update `ReadOnlyAddressBook`, `AddressBook.resetData` and its copy
 constructor/equality, the real JSON root/adapters, and focused round-trip tests together.
 `Storage.snapshotAddressBook` uses that exact persisted representation for dirty detection,
-so UI-only equality must never decide whether a write is required. Schema 15 is written to
+so UI-only equality must never decide whether a write is required. Schema 16 is written to
 `tutorflow-v14.json`; `VersionedAddressBookStorage` reads legacy data only when the current
 path is positively absent. The logic constructor's initial-save flag explicitly persists
 migrated IDs even before a command mutates the model. Failed initial writes remain dirty.
@@ -946,9 +1061,9 @@ precreates the current destination, so an interrupted first save leaves legacy f
 on restart. The storage writeSnapshot seam passes the actual serialized bytes to this writer.
 Unreadable source protection is retained until positive absence or successful preservation.
 
-`StorageSchema.MINIMUM_VERSION` and `CURRENT_VERSION` centralize the supported range (14 through 15 now).
+`StorageSchema.MINIMUM_VERSION` and `CURRENT_VERSION` centralize the supported range (14 through 16 now).
 The shared `tutorflow-v14.json` path stays fixed as later domains are added. Homework uses
-schema 15; finance must advance it to 16, and workflows to 17. Each build accepts unversioned legacy
+schema 15; finance uses schema 16, and workflows must advance it to 17. Each build accepts unversioned legacy
 data and versions 14 through its current version, with explicit defaults for missing older fields.
 Add prior-version loading and future-version refusal tests alongside each schema increment.
 

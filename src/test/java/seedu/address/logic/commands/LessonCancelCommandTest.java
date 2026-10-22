@@ -21,6 +21,7 @@ import seedu.address.logic.Messages;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonStatus;
 import seedu.address.testutil.LessonBuilder;
@@ -96,6 +97,34 @@ public class LessonCancelCommandTest {
 
         assertCommandFailure(new LessonCancelCommand(INDEX_FIRST_PERSON, null), model,
                 LessonCancelCommand.MESSAGE_COMPLETED_LESSON);
+    }
+
+    @Test
+    public void execute_chargedLesson_throwsCommandException() {
+        Lesson completed = new LessonBuilder().withStudent(ALICE).withDate(LocalDate.now()).build().complete(null);
+        model.addLesson(completed);
+        model.addLedgerEntry(LedgerEntry.charge(ALICE, completed));
+
+        assertCommandFailure(new LessonCancelCommand(INDEX_FIRST_PERSON, "Student unwell"), model,
+                LessonCommandUtil.MESSAGE_CHARGED_LESSON);
+    }
+
+    @Test
+    public void execute_anotherLessonIsCharged_stillCancelsUnchargedLesson() throws Exception {
+        Model isolatedModel = new ModelManager();
+        isolatedModel.addPerson(ALICE);
+        Lesson billedLesson = new LessonBuilder().withStudent(ALICE)
+                .withDate(LocalDate.now().minusDays(5)).build().complete(null);
+        Lesson unchargedLesson = new LessonBuilder().withStudent(ALICE)
+                .withDate(LocalDate.now().plusDays(5)).withTime("15:00").build();
+        isolatedModel.addLesson(billedLesson);
+        isolatedModel.addLesson(unchargedLesson);
+        isolatedModel.addLedgerEntry(LedgerEntry.charge(ALICE, billedLesson));
+        int targetPosition = isolatedModel.getFilteredLessonList().indexOf(unchargedLesson);
+
+        new LessonCancelCommand(Index.fromZeroBased(targetPosition), null).execute(isolatedModel);
+
+        assertEquals(LessonStatus.CANCELLED, isolatedModel.getFilteredLessonList().get(targetPosition).getStatus());
     }
 
     @Test
