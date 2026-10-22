@@ -276,6 +276,66 @@ More sections are planned: dues from the ledger after `OVERDUE HOMEWORK` on the 
     * Pros: A new feature adds its section without editing `TodayCommand`.
     * Cons: The sections and their order are fixed, so for a few sections the extra class adds indirection without removing code.
 
+### Follow-up tasks
+
+A follow-up task (user story 31) is a short reminder, with an optional due date, that is about a student and,
+optionally, one of that student's lessons or homework items. The `task` commands (`add`, `list`, `edit`, `done`,
+`delete`) live in `logic/commands/Task*Command` and `logic/parser/Task*CommandParser`.
+
+**Model.** `Task` (in `model/task`) is immutable and holds a task id, a description (at most 200 printable
+characters), an optional due date, a done flag and its links: `studentId` (always present), and at most one of
+`lessonId` or `homeworkId`. All three links are the permanent UUIDs of `Person`, `Lesson` and `Homework`. A task never
+copies a name, phone number or lesson slot, so editing or renaming a student, moving, cancelling or rebooking a lesson
+and editing homework never changes what a task is about. This matters because TutorFlow lets a cancelled lesson and a
+new booking share the same slot: only the lesson UUID tells them apart. `Task#isAbout(Person | Lesson | Homework)` is a
+plain UUID comparison. `AddressBook` owns the list of tasks (task ids are unique) and exposes `addTask`, `findTask`, `setTask` and
+`removeTask`.
+
+**Cascade rules.** `AddressBook` is the only place that deletes tasks, so a task cannot be orphaned by a command:
+
+| Record removed | Tasks removed |
+|----------------|---------------|
+| Student (`delete`) | every task about the student, including those linked to the student's lessons or homework |
+| Lesson (`Model#deleteLesson`; no command calls it yet) | only tasks whose `lessonId` is that lesson. A rebooking in the same slot is a different lesson and keeps its tasks |
+| Homework (`hw delete`) | only tasks whose `homeworkId` is that item |
+| `clear confirm` | all tasks |
+
+Edits (`edit`, archiving a student, `lesson move`, `lesson cancel`, `hw edit`) leave tasks untouched, because the UUIDs do not
+change. `delete INDEX` counts the linked tasks in its confirmation prompt, using the same list of linked-record counts
+as lessons, so a later feature adds one more count instead of a new message.
+
+**Storage.** Tasks are saved in an optional top-level `tasks` array of `JsonAdaptedTask`, beside `persons`, `lessons`,
+`homework` and `ledgerEntries`. A file without `tasks` loads with no tasks. No schema bump is needed for this array:
+`StorageSchema.CURRENT_VERSION` is unchanged.
+
+```json
+{
+  "tasks": [
+    {
+      "id": "6f1c9d52-0f6e-4c0e-9c0a-1f2f4a1f7b11",
+      "description": "Send past paper to parent",
+      "due": "2026-11-02",
+      "done": false,
+      "studentId": "0d1a1d0e-3c52-4a52-8b4e-6b6e5f3b7a10",
+      "lessonId": "b2d0f0f3-6b34-4a27-9f6a-3f1f2f6d9c21"
+    }
+  ]
+}
+```
+
+`done`, `due`, `lessonId` and `homeworkId` may be omitted. `JsonSerializableAddressBook#toModelType` rejects the data
+file as invalid if a task id is duplicated, a link is not a UUID, a
+task has both a lesson and a homework link, or a link does not resolve: the student, lesson or homework must exist,
+and a lesson or homework item must belong to the task's own student. Tasks from an earlier development build that
+stored a student name and phone instead of ids are not migrated.
+
+**Selection by index.** `task add lesson/N` and `hw/N` use the numbering of the last `lesson list`/`agenda` and
+`hw list`, exactly like the lesson and homework commands, and store the UUID of the row that was shown. `task
+list` numbers the tasks it displays, and `task edit|done|delete N` use that numbering. `pay/N` is parsed but rejected
+until a payment list exists to number against; the model has no payment link yet.
+
+**Not in this feature.** Undo of task commands (spec section 4.36) is part of the undo work, not of the task commands.
+
 ### \[Proposed\] Undo/redo feature
 
 #### Proposed Implementation
@@ -422,7 +482,6 @@ Integration follow-ups before full alpha sign-off:
 * Finance: implement the running account statement in specification section 4.29.
 * Lesson move/cancel and series cancellation (#142): check active charges before changing a billed lesson.
   Preserve lesson and series UUIDs across every copy operation.
-* Task integration: include linked task counts in student deletion once the task domain is implemented.
 
 `LogicManager(Model, Storage, Clock)` passes a shared date source to the finance and relevant lesson
 parsers/commands. Interactive constructors default to the system clock. Finance workflow tests use a
