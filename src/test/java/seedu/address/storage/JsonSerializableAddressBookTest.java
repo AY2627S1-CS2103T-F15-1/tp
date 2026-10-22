@@ -118,8 +118,8 @@ public class JsonSerializableAddressBookTest {
         AddressBook addressBook = TypicalLessons.getTypicalAddressBookWithLessons();
         JsonAdaptedTask task = new JsonAdaptedTask(new TaskBuilder().build());
         JsonSerializableAddressBook data = new JsonSerializableAddressBook(
-                addressBook.getPersonList().stream().map(JsonAdaptedPerson::new).toList(), List.of(),
-                List.of(task, task));
+                addressBook.getPersonList().stream().map(JsonAdaptedPerson::new).toList(), List.of(), List.of(),
+                List.of(), List.of(task, task));
         assertThrows(IllegalValueException.class, JsonSerializableAddressBook.MESSAGE_DUPLICATE_TASK,
                 data::toModelType);
     }
@@ -135,7 +135,8 @@ public class JsonSerializableAddressBookTest {
 
         for (JsonAdaptedTask task : List.of(unknownStudent, unknownLesson)) {
             JsonSerializableAddressBook data = new JsonSerializableAddressBook(persons, List.of(
-                    new JsonAdaptedLesson(TypicalLessons.ALICE_MATH)), List.of(task));
+                    new JsonAdaptedLesson(TypicalLessons.ALICE_MATH)), List.of(), List.of(),
+                    List.of(task));
             assertThrows(IllegalValueException.class, JsonSerializableAddressBook.MESSAGE_TASK_WITHOUT_TARGET,
                     data::toModelType);
         }
@@ -143,7 +144,7 @@ public class JsonSerializableAddressBookTest {
 
     @Test
     public void toModelType_nullTask_throwsIllegalValueException() {
-        JsonSerializableAddressBook data = new JsonSerializableAddressBook(List.of(), List.of(),
+        JsonSerializableAddressBook data = new JsonSerializableAddressBook(List.of(), List.of(), List.of(), List.of(),
                 java.util.Collections.singletonList(null));
         assertThrows(IllegalValueException.class, "Tasks list contains a null task.", data::toModelType);
     }
