@@ -158,9 +158,11 @@ This section describes some noteworthy details on how certain features are imple
 
 The lesson commands are `lesson add`, `lesson list`, `lesson move`, `lesson cancel`, `lesson done` and `lesson missed`. They share the `lesson` command word, which `AddressBookParser` hands to `LessonCommandParser`. That parser reads the next word and passes the rest of the arguments to the parser of that command. `agenda` is its own command word.
 
-The sequence diagram below shows `execute("lesson move 1 d/2026-12-24")`.
+The sequence diagram below shows the successful changed-data path for `execute("lesson move 1 d/2026-12-24")`. It focuses on the Logic component; parser internals and the internal workings of Model and Storage are omitted. The command resolves the displayed index, validates and replaces the lesson, and reports overlaps without blocking the move. `LogicManager` then refreshes changed lesson numbers once and saves the updated data before returning success. A save failure retains the in-memory change and asks the tutor to retry `save`.
 
-<puml src="diagrams/LessonMoveSequenceDiagram.puml" alt="Interactions Inside the Logic and Model Components for the `lesson move 1 d/2026-12-24` Command" />
+![Lesson rescheduling through Logic, with Model and Storage shown as black boxes](images/LessonMoveSequenceDiagram.svg)
+
+Diagram source: [LessonMoveSequenceDiagram.puml](diagrams/LessonMoveSequenceDiagram.puml). Regenerate the SVG with `java -jar plantuml.jar -tsvg -o ../images docs/diagrams/LessonMoveSequenceDiagram.puml` from the repository root.
 
 How the pieces fit together:
 
