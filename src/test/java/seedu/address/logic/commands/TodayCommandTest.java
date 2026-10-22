@@ -84,7 +84,7 @@ public class TodayCommandTest {
                 + "LESSONS AWAITING NOTES (1)\n"
                 + "  Wed 9 Jan   Alice Pauline      Math       not yet marked completed\n\n"
                 + "OVERDUE HOMEWORK (1)\n"
-                + "  Carl Kurz  Comprehension worksheet  due 2030-01-07  OVERDUE\n\n"
+                + "  Carl Kurz Comprehension worksheet due 2030-01-07 OVERDUE\n\n"
                 + "DUES\n"
                 + "2 student(s) with outstanding balances \u2014 $60.00 total\n"
                 + "  Carl Kurz $35.00 oldest unpaid 5 days\n"
@@ -114,7 +114,7 @@ public class TodayCommandTest {
         model.setPerson(CARL, CARL.withArchived(true));
 
         assertEquals("OVERDUE HOMEWORK (1)\n"
-                + "  Carl Kurz (archived)  Comprehension worksheet  due 2030-01-07  OVERDUE",
+                + "  Carl Kurz (archived) Comprehension worksheet due 2030-01-07 OVERDUE",
                 section("OVERDUE HOMEWORK"));
         assertEquals("DUES\n"
                 + "1 student(s) with outstanding balances \u2014 $52.50 total\n"

@@ -74,7 +74,7 @@ public class ViewCommandTest {
                 + "RECENT LESSON NOTES\n  Tue 08 Jan 2030  Covered quadratic equations and factorising\n\n"
                 + "LESSON HISTORY\n  1 completed \u00b7 0 cancelled \u00b7 0 missed\n\n"
                 + "BALANCE\nOUTSTANDING $25.00\n\n"
-                + "OUTSTANDING HOMEWORK (1)\n  Alice Pauline  Algebra Q1-10  due 2030-01-11  assigned",
+                + "OUTSTANDING HOMEWORK (1)\n  Alice Pauline Algebra Q1-10 due 2030-01-11 assigned",
                 view(INDEX_FIRST_PERSON));
     }
 

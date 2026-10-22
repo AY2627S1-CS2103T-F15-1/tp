@@ -316,7 +316,7 @@ Examples:
     Tue 15 Sep  Lim Jia Hui        Science    not yet marked completed
 
   OVERDUE HOMEWORK (1)
-    Priya s/o Kumar  Trigonometry worksheet  due 2026-09-15  OVERDUE
+    Priya s/o Kumar Trigonometry worksheet due 2026-09-15 OVERDUE
 
   DUES
   1 student(s) with outstanding balances — $25.00 total
