@@ -7,7 +7,7 @@
 <?import javafx.scene.control.ToolBar?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.web.WebView?>
+<?import seedu.address.ui.GuideView?>
 <?import javafx.stage.Stage?>
 
 <fx:root resizable="true" title="TutorFlow User Guide" minWidth="600" minHeight="400"
@@ -28,7 +28,7 @@
           </ToolBar>
         </top>
         <center>
-          <WebView fx:id="userGuide" />
+          <GuideView fx:id="userGuide" />
         </center>
       </BorderPane>
     </Scene>
