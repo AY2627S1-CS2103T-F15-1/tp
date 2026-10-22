@@ -1,7 +1,6 @@
 package seedu.address.model;
 
 import javafx.collections.ObservableList;
-import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
@@ -22,9 +21,6 @@ public interface ReadOnlyAddressBook {
      * This list will not contain any duplicate lessons.
      */
     ObservableList<Lesson> getLessonList();
-
-    /** Returns the immutable view of recorded charges and payments. */
-    ObservableList<LedgerEntry> getLedgerEntries();
 
     /**
      * Returns an unmodifiable view of the homework list.

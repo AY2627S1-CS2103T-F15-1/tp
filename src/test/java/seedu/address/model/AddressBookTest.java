@@ -155,15 +155,6 @@ public class AddressBookTest {
     }
 
     @Test
-    public void setLesson_replacementWithDifferentId_isRejected() {
-        addressBook.addLesson(ALICE_MATH);
-        Lesson replacement = new LessonBuilder(ALICE_MATH).withId(java.util.UUID.randomUUID()).build();
-
-        assertThrows(IllegalArgumentException.class, () -> addressBook.setLesson(ALICE_MATH, replacement));
-        assertEquals(List.of(ALICE_MATH), addressBook.getLessonList());
-    }
-
-    @Test
     public void removeLesson_existingLesson_removesLesson() {
         addressBook.addLesson(ALICE_MATH);
         addressBook.removeLesson(ALICE_MATH);
@@ -243,8 +234,7 @@ public class AddressBookTest {
     @Test
     public void toStringMethod() {
         String expected = AddressBook.class.getCanonicalName() + "{persons=" + addressBook.getPersonList()
-                + ", lessons=" + addressBook.getLessonList()
-                + ", ledgerEntries=" + addressBook.getLedgerEntries() + "}";
+                + ", lessons=" + addressBook.getLessonList() + "}";
         assertEquals(expected, addressBook.toString());
     }
 
@@ -284,11 +274,6 @@ public class AddressBookTest {
         @Override
         public ObservableList<Lesson> getLessonList() {
             return lessons;
-        }
-
-        @Override
-        public ObservableList<seedu.address.model.finance.LedgerEntry> getLedgerEntries() {
-            return FXCollections.emptyObservableList();
         }
 
         @Override

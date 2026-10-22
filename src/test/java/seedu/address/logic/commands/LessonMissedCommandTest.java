@@ -107,8 +107,7 @@ public class LessonMissedCommandTest {
 
     @Test
     public void execute_filteredList_marksDisplayedLessonOnly() throws Exception {
-        Lesson other = new LessonBuilder(lesson).withId(java.util.UUID.randomUUID())
-                .withStudent(BENSON).withTime("15:00").build();
+        Lesson other = new LessonBuilder(lesson).withStudent(BENSON).withTime("15:00").build();
         model.addLesson(other);
         model.addLesson(lesson);
         model.updateFilteredLessonList(value -> value.isWith(ALICE));

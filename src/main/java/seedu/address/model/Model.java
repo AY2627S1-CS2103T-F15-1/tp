@@ -2,12 +2,10 @@ package seedu.address.model;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Predicate;
 
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
-import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
@@ -45,12 +43,6 @@ public interface Model {
 
     /** Returns the AddressBook */
     ReadOnlyAddressBook getAddressBook();
-
-    /** Records a charge or payment for an existing student. */
-    void addLedgerEntry(LedgerEntry entry);
-
-    /** Completes a lesson and records its fee in one operation; free lessons return no charge. */
-    Optional<LedgerEntry> chargeLesson(Lesson target, Lesson completedLesson);
 
     /**
      * Returns true if a person with the same identity as {@code person} exists in the address book.

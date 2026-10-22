@@ -15,14 +15,13 @@ public class ClearCommand extends Command {
     public static final String CONFIRM_KEYWORD = "confirm";
 
     public static final String MESSAGE_USAGE = COMMAND_WORD
-            + ": Deletes ALL students, lessons, homework and charge/payment records from TutorFlow. "
+            + ": Deletes ALL students, lessons, and homework from TutorFlow. "
             + "Nothing is deleted unless '" + CONFIRM_KEYWORD + "' is added.\n"
             + "Parameters: [" + CONFIRM_KEYWORD + "]\n"
             + "Example: " + COMMAND_WORD + " " + CONFIRM_KEYWORD;
 
     public static final String MESSAGE_SUCCESS = "All data cleared.";
-    public static final String MESSAGE_CONFIRMATION =
-            "This deletes ALL students, lessons, homework and charge/payment records. "
+    public static final String MESSAGE_CONFIRMATION = "This deletes ALL students, lessons, and homework. "
             + "Type '" + COMMAND_WORD + " " + CONFIRM_KEYWORD + "' to proceed.";
 
     private final boolean isConfirmed;

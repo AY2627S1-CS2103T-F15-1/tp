@@ -14,7 +14,6 @@ import com.fasterxml.jackson.annotation.JsonRootName;
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ReadOnlyAddressBook;
-import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
 
@@ -34,7 +33,6 @@ class JsonSerializableAddressBook {
     private final List<JsonAdaptedPerson> persons = new ArrayList<>();
     private final List<JsonAdaptedLesson> lessons = new ArrayList<>();
     private final List<JsonAdaptedHomework> homework = new ArrayList<>();
-    private final List<JsonAdaptedLedgerEntry> ledgerEntries = new ArrayList<>();
 
     /**
      * Constructs a {@code JsonSerializableAddressBook} with the given persons and lessons.
@@ -43,12 +41,8 @@ class JsonSerializableAddressBook {
     @JsonCreator
     public JsonSerializableAddressBook(@JsonProperty("persons") List<JsonAdaptedPerson> persons,
             @JsonProperty("lessons") List<JsonAdaptedLesson> lessons,
-            @JsonProperty("homework") List<JsonAdaptedHomework> homework,
-            @JsonProperty("ledgerEntries") List<JsonAdaptedLedgerEntry> ledgerEntries) {
+            @JsonProperty("homework") List<JsonAdaptedHomework> homework) {
         this.persons.addAll(persons);
-        if (ledgerEntries != null) {
-            this.ledgerEntries.addAll(ledgerEntries);
-        }
         // Absent homework is the explicit default for legacy and earlier schema files.
         if (homework != null) {
             this.homework.addAll(homework);
@@ -60,13 +54,7 @@ class JsonSerializableAddressBook {
 
     /** Loads legacy constructor calls with an explicitly empty homework domain. */
     public JsonSerializableAddressBook(List<JsonAdaptedPerson> persons, List<JsonAdaptedLesson> lessons) {
-        this(persons, lessons, null, null);
-    }
-
-    /** Loads callers with homework but no finance records. */
-    public JsonSerializableAddressBook(List<JsonAdaptedPerson> persons, List<JsonAdaptedLesson> lessons,
-            List<JsonAdaptedHomework> homework) {
-        this(persons, lessons, homework, null);
+        this(persons, lessons, null);
     }
 
     /**
@@ -76,7 +64,6 @@ class JsonSerializableAddressBook {
      */
     public JsonSerializableAddressBook(ReadOnlyAddressBook source) {
         schemaVersion = StorageSchema.CURRENT_VERSION;
-        source.getLedgerEntries().stream().map(JsonAdaptedLedgerEntry::new).forEach(ledgerEntries::add);
         source.getHomeworkList().stream().map(JsonAdaptedHomework::new).forEach(homework::add);
         persons.addAll(source.getPersonList().stream().map(JsonAdaptedPerson::new).collect(Collectors.toList()));
         lessons.addAll(source.getLessonList().stream().map(lesson -> {
@@ -143,18 +130,6 @@ class JsonSerializableAddressBook {
             } catch (IllegalArgumentException e) {
                 throw new IllegalValueException(e.getMessage());
             }
-        }
-        List<LedgerEntry> restoredEntries = new ArrayList<>();
-        for (JsonAdaptedLedgerEntry entry : ledgerEntries) {
-            if (entry == null) {
-                throw new IllegalValueException("Ledger contains a null entry.");
-            }
-            restoredEntries.add(entry.toModelType());
-        }
-        try {
-            addressBook.setLedgerEntries(restoredEntries);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalValueException(e.getMessage());
         }
         return addressBook;
     }

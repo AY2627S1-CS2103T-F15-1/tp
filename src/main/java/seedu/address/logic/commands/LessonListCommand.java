@@ -4,7 +4,6 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ALL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_STUDENT;
 
-import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.function.Predicate;
@@ -42,22 +41,15 @@ public class LessonListCommand extends Command {
 
     private final Index studentIndex;
     private final boolean isShowingAll;
-    private final Clock clock;
 
     /**
      * Creates a {@code LessonListCommand} to list the lessons of the student at {@code studentIndex}.
      * Past and cancelled lessons are only listed if {@code isShowingAll} is true.
      */
     public LessonListCommand(Index studentIndex, boolean isShowingAll) {
-        this(studentIndex, isShowingAll, Clock.systemDefaultZone());
-    }
-
-    /** Creates a list request with an explicit date source for upcoming lessons. */
-    public LessonListCommand(Index studentIndex, boolean isShowingAll, Clock clock) {
         requireNonNull(studentIndex);
         this.studentIndex = studentIndex;
         this.isShowingAll = isShowingAll;
-        this.clock = requireNonNull(clock);
     }
 
     @Override
@@ -69,7 +61,7 @@ public class LessonListCommand extends Command {
         model.updateFilteredLessonList(isStudentsLesson);
         boolean hasLessons = !model.getFilteredLessonList().isEmpty();
         if (!isShowingAll) {
-            LocalDate today = LocalDate.now(clock);
+            LocalDate today = LocalDate.now();
             model.updateFilteredLessonList(isStudentsLesson.and(lesson -> lesson.isUpcoming(today)));
         }
 

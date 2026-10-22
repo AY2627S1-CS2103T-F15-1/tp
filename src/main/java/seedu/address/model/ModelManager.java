@@ -5,7 +5,6 @@ import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
 
@@ -14,7 +13,6 @@ import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
-import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
@@ -138,18 +136,6 @@ public class ModelManager implements Model {
     }
 
     //=========== Lessons ====================================================================================
-
-    @Override
-    public void addLedgerEntry(LedgerEntry entry) {
-        requireNonNull(entry);
-        addressBook.addLedgerEntry(entry);
-    }
-
-    @Override
-    public Optional<LedgerEntry> chargeLesson(Lesson target, Lesson completedLesson) {
-        requireAllNonNull(target, completedLesson);
-        return addressBook.chargeLesson(target, completedLesson);
-    }
 
     @Override
     public boolean hasLesson(Lesson lesson) {
