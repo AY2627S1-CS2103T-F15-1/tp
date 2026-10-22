@@ -11,6 +11,7 @@ import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +20,7 @@ import seedu.address.logic.Messages;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.task.Task;
 import seedu.address.testutil.LessonBuilder;
@@ -49,7 +51,9 @@ public class TaskAddCommandTest {
         assertEquals(DUE, task.getDue().get());
         assertFalse(task.isDone());
         assertTrue(task.isAbout(ALICE));
-        assertTrue(task.getLessonLink().isEmpty());
+        assertEquals(ALICE.getId(), task.getStudentId());
+        assertTrue(task.getLessonId().isEmpty());
+        assertTrue(task.getHomeworkId().isEmpty());
     }
 
     @Test
@@ -62,6 +66,7 @@ public class TaskAddCommandTest {
         Task task = model.getAddressBook().getTaskList().get(0);
         assertTrue(task.isAbout(lesson));
         assertTrue(task.isAbout(ALICE));
+        assertEquals(lesson.getId(), task.getLessonId().get());
         assertTrue(task.getDue().isEmpty());
     }
 
@@ -96,9 +101,46 @@ public class TaskAddCommandTest {
     }
 
     @Test
-    public void execute_homeworkOrPaymentLink_explainsToListFirst() {
+    public void execute_homeworkLink_addsTaskAboutThatHomeworkAndItsStudent() throws Exception {
+        Homework homework = Homework.assign(ALICE.getId(), "Practice set", LocalDate.now().plusDays(2));
+        model.addHomework(homework);
+        model.showHomework(List.of(homework));
+
+        new TaskAddCommand(null, null, INDEX_FIRST_PERSON, null, "Mark the set", null).execute(model);
+
+        Task task = model.getAddressBook().getTaskList().get(0);
+        assertTrue(task.isAbout(homework));
+        assertTrue(task.isAbout(ALICE));
+        assertEquals(homework.getId(), task.getHomeworkId().get());
+        assertTrue(task.getLessonId().isEmpty());
+    }
+
+    @Test
+    public void execute_homeworkLinkWithoutListOrOutOfRange_explainsToListFirst() {
         assertCommandFailure(new TaskAddCommand(null, null, INDEX_FIRST_PERSON, null, "x", null), model,
-                "Invalid homework index. Run 'hw list' to display homework first.");
+                HomeworkCommandSupport.MESSAGE_INVALID_INDEX);
+        Homework homework = Homework.assign(ALICE.getId(), "Practice set", LocalDate.now().plusDays(2));
+        model.addHomework(homework);
+        model.showHomework(List.of(homework));
+        assertCommandFailure(new TaskAddCommand(null, null, INDEX_SECOND_PERSON, null, "x", null), model,
+                HomeworkCommandSupport.MESSAGE_INVALID_INDEX);
+        assertTrue(model.getAddressBook().getTaskList().isEmpty());
+    }
+
+    @Test
+    public void execute_homeworkDeletedSinceTheList_reportsItAsDeleted() {
+        Homework homework = Homework.assign(ALICE.getId(), "Practice set", LocalDate.now().plusDays(2));
+        model.addHomework(homework);
+        model.showHomework(List.of(homework));
+        model.deleteHomework(homework);
+
+        assertCommandFailure(new TaskAddCommand(null, null, INDEX_FIRST_PERSON, null, "x", null), model,
+                HomeworkCommandSupport.MESSAGE_DELETED);
+        assertTrue(model.getAddressBook().getTaskList().isEmpty());
+    }
+
+    @Test
+    public void execute_paymentLink_isNotAvailableUntilPaymentsCanBeListed() {
         assertCommandFailure(new TaskAddCommand(null, null, null, INDEX_FIRST_PERSON, "x", null), model,
                 "Invalid payment index. Run 'pay list' first.");
         assertTrue(model.getAddressBook().getTaskList().isEmpty());
