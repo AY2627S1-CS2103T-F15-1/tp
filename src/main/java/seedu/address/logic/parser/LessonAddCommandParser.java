@@ -2,6 +2,7 @@ package seedu.address.logic.parser;
 
 import static seedu.address.logic.parser.CliSyntax.PREFIX_DATE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_DURATION;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_PAST;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_STUDENT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TIME;
@@ -30,7 +31,7 @@ public class LessonAddCommandParser implements Parser<LessonAddCommand> {
      */
     public LessonAddCommand parse(String args) throws ParseException {
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_STUDENT, PREFIX_SUBJECT, PREFIX_DATE,
-                PREFIX_TIME, PREFIX_DURATION, PREFIX_VENUE);
+                PREFIX_TIME, PREFIX_DURATION, PREFIX_VENUE, PREFIX_PAST);
         ParserUtil.requirePrefixesPresent(argMultimap, LessonAddCommand.MESSAGE_USAGE, PREFIX_STUDENT, PREFIX_DATE,
                 PREFIX_TIME);
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_STUDENT, PREFIX_SUBJECT, PREFIX_DATE, PREFIX_TIME,
@@ -49,7 +50,9 @@ public class LessonAddCommandParser implements Parser<LessonAddCommand> {
         LessonDate date = ParserUtil.parseDate(argMultimap.getValue(PREFIX_DATE).get());
         LessonTime time = ParserUtil.parseTime(argMultimap.getValue(PREFIX_TIME).get());
 
-        return new LessonAddCommand(studentIndex, subject, date, time, duration, venue);
+        boolean isPast = ParserUtil.parseFlag(argMultimap, PREFIX_PAST);
+
+        return new LessonAddCommand(studentIndex, subject, date, time, duration, venue, isPast);
     }
 
 }

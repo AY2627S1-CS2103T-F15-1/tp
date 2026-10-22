@@ -54,6 +54,7 @@ public class HelpCommand extends Command {
             new CommandHelp("sort", "Sorts students by name", SortCommand.MESSAGE_USAGE),
             new CommandHelp("remark", "Sets a student's remark", RemarkCommand.MESSAGE_USAGE),
             new CommandHelp("lesson add", "Schedules a lesson", LessonAddCommand.MESSAGE_USAGE),
+            new CommandHelp("lesson repeat", "Schedules a weekly series of lessons", LessonRepeatCommand.MESSAGE_USAGE),
             new CommandHelp("lesson list", "Lists a student's lessons", LessonListCommand.MESSAGE_USAGE),
             new CommandHelp("lesson prep", "Records preparation notes", LessonPrepCommand.MESSAGE_USAGE,
                     "Parameters: INDEX of a lesson in the lesson list shown; NOTES is 1-1000 characters on one line. "
