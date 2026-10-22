@@ -22,11 +22,13 @@ import org.junit.jupiter.api.Test;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.exceptions.DuplicateLessonException;
 import seedu.address.model.lesson.exceptions.LessonNotFoundException;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.exceptions.DuplicatePersonException;
+import seedu.address.testutil.HomeworkBuilder;
 import seedu.address.testutil.LessonBuilder;
 import seedu.address.testutil.PersonBuilder;
 
@@ -236,12 +238,24 @@ public class AddressBookTest {
         assertEquals(expected, addressBook.toString());
     }
 
+    @Test
+    public void resetData_copiesTheHomeworkOfAnyImplementation() {
+        AddressBookStub newData = new AddressBookStub(List.of(ALICE));
+        Homework item = new HomeworkBuilder(ALICE).build();
+        newData.getHomeworkList().add(item);
+
+        addressBook.resetData(newData);
+
+        assertEquals(List.of(item), addressBook.getHomeworkList());
+    }
+
     /**
      * A stub ReadOnlyAddressBook whose persons list can violate interface constraints.
      */
     private static class AddressBookStub implements ReadOnlyAddressBook {
         private final ObservableList<Person> persons = FXCollections.observableArrayList();
         private final ObservableList<Lesson> lessons = FXCollections.observableArrayList();
+        private final ObservableList<Homework> homework = FXCollections.observableArrayList();
 
         AddressBookStub(Collection<Person> persons) {
             this.persons.setAll(persons);
@@ -260,6 +274,11 @@ public class AddressBookTest {
         @Override
         public ObservableList<Lesson> getLessonList() {
             return lessons;
+        }
+
+        @Override
+        public ObservableList<Homework> getHomeworkList() {
+            return homework;
         }
     }
 

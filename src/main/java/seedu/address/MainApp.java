@@ -7,6 +7,7 @@ import java.util.Optional;
 import java.util.logging.Logger;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.stage.Stage;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.exceptions.DataLoadingException;
@@ -21,6 +22,7 @@ import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.ReadOnlyUserPrefs;
 import seedu.address.model.UserPrefs;
 import seedu.address.storage.DataFileRecovery;
+import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.Storage;
 import seedu.address.storage.StorageManager;
@@ -45,6 +47,7 @@ public class MainApp extends Application {
     protected Storage storage;
     protected Model model;
     protected String startupWarning = "";
+    protected String startupRefusal; // null unless the data file was written by an unsupported version
 
     @Override
     public void init() throws Exception {
@@ -56,7 +59,16 @@ public class MainApp extends Application {
         VersionedAddressBookStorage addressBookStorage = createAddressBookStorage();
         storage = new StorageManager(addressBookStorage, userPrefsStorage);
 
-        model = initModelManager(storage, userPrefs, addressBookStorage);
+        try {
+            model = initModelManager(storage, userPrefs, addressBookStorage);
+        } catch (DataLoadingException e) {
+            // The data file cannot be used, so nothing more is built: start() tells the user and stops
+            startupRefusal = JsonAddressBookStorage.isAccessFailure(e)
+                    ? String.format(DataFileRecovery.MESSAGE_NOT_OPENED, addressBookStorage.getReadSource(),
+                            describe(e.getCause()))
+                    : e.getCause().getMessage();
+            return;
+        }
 
         logic = new LogicManager(model, storage, startupWarning, addressBookStorage.requiresInitialSave());
 
@@ -93,6 +105,11 @@ public class MainApp extends Application {
                 logger.severe(e.getCause().getMessage());
                 throw e;
             }
+            if (JsonAddressBookStorage.isAccessFailure(e)) {
+                // the file may be valid, so it is neither set aside nor replaced
+                logger.severe("Data file at " + addressBookStorage.getReadSource() + " could not be opened.");
+                throw e;
+            }
             logger.warning("Data file at " + storage.getAddressBookFilePath() + " could not be loaded."
                     + " Will be starting with no data.");
             startupWarning = DataFileRecovery.setAside(addressBookStorage.getReadSource());
@@ -103,6 +120,11 @@ public class MainApp extends Application {
         // No lesson numbers are on screen at startup, so lesson commands must not act on a hidden list.
         modelManager.updateFilteredLessonList(unused -> false);
         return modelManager;
+    }
+
+    /** Returns the reason that {@code cause} gives, or the kind of failure if it gives none. */
+    private static String describe(Throwable cause) {
+        return cause.getMessage() == null ? cause.getClass().getSimpleName() : cause.getMessage();
     }
 
     /**
@@ -139,6 +161,12 @@ public class MainApp extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+        if (startupRefusal != null) {
+            // A user who starts the JAR from a file manager has no console, so the reason is shown in a window
+            UiManager.showStartupRefusal(startupRefusal);
+            Platform.exit();
+            System.exit(1);
+        }
         logger.info("Starting AddressBook " + MainApp.VERSION);
         ui.start(primaryStage);
     }
@@ -146,6 +174,9 @@ public class MainApp extends Application {
     @Override
     public void stop() {
         logger.info("============================ [ Stopping AddressBook ] =============================");
+        if (model == null) {
+            return;
+        }
         try {
             storage.saveUserPrefs(model.getUserPrefs());
         } catch (IOException e) {

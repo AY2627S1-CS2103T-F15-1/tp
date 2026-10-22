@@ -14,6 +14,9 @@ import seedu.address.model.lesson.Lesson;
 public final class Homework {
     public static final String DESCRIPTION_CONSTRAINTS =
             "Description must contain 1-200 printable one-line characters.";
+    public static final String MESSAGE_DUPLICATE = "This student already has homework '%1$s' due %2$s.";
+    public static final String MESSAGE_FEEDBACK_NOT_SUBMITTED =
+            "Cannot record feedback on homework that has not been submitted.";
 
     private final UUID id;
     private final UUID studentId;
@@ -94,14 +97,17 @@ public final class Homework {
 
     /** Records or replaces feedback only after submission. */
     public Homework withFeedback(String feedback) {
-        checkArgument(status != HomeworkStatus.ASSIGNED,
-                "Cannot record feedback on homework that has not been submitted.");
+        checkArgument(status != HomeworkStatus.ASSIGNED, MESSAGE_FEEDBACK_NOT_SUBMITTED);
         return new Homework(id, studentId, description, dueDate, status, requireNonNull(feedback));
     }
 
-    /** Returns whether another item duplicates this student's assignment. */
+    /**
+     * Returns whether {@code other} duplicates this assignment: it is for the same student, has the same due date
+     * and a description that is the same when letter case is ignored. Descriptions are compared after their
+     * surrounding and repeated spaces are removed.
+     */
     public boolean isSameAssignment(Homework other) {
-        return studentId.equals(other.studentId) && description.equals(other.description)
+        return studentId.equals(other.studentId) && description.equalsIgnoreCase(other.description)
                 && dueDate.equals(other.dueDate);
     }
 

@@ -443,7 +443,8 @@ Every lesson and homework assignment must link to a student in the same file thr
 
 **Caution:**
 If your changes make the data file invalid, TutorFlow does not delete it. At the next run it renames the file to `tutorflow-v14.json.corrupt` (or `tutorflow-v14.json.corrupt.1` and so on, if that name is taken), starts with no students and lessons, and tells you where the file went. Fix the file and rename it back to `tutorflow-v14.json` while TutorFlow is closed to get your records back. We still recommend backing up the file before editing it.<br>
-If the original cannot be renamed (for example, while another program holds it open), saving is blocked and retries preservation before replacing it. The original bytes are retained in the `.corrupt` copy once the lock clears.
+If the original cannot be renamed (for example, while another program holds it open), saving is blocked and retries preservation before replacing it. The original bytes are retained in the `.corrupt` copy once the lock clears.<br>
+If TutorFlow cannot **open** the data file, for example because another program holds it open or you may not read it, the file can well be valid, so TutorFlow never renames it. It does not start: a window says why, nothing is changed, and nothing is saved over the file. Fix the problem and start TutorFlow again.
 
 Furthermore, certain edits can cause TutorFlow to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
 </box>
@@ -586,6 +587,9 @@ cannot open data saved by a newer alpha that added data fields. Invalid files us
 described above; unsupported versions never enter that flow.
 The current file is created only after a complete atomic save. If the first write fails, a restart
 can still resume migration from the unchanged legacy source.
+If the legacy file cannot be opened, TutorFlow does not start and writes nothing, so that the
+migration can happen at the next start that can open it. The legacy file is never renamed because
+of this.
 If the initial migration save fails, the startup message reports unsaved changes: fix access
 and use `save`. TutorFlow retries before exit and will not close through its normal exit flow
 while that write continues to fail.

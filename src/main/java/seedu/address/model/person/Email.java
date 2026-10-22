@@ -43,9 +43,9 @@ public class Email {
     }
 
     /** Constructs a checked new or grandfathered stored email. */
-    private Email(String email, boolean stored) {
+    private Email(String email, boolean isStored) {
         requireNonNull(email);
-        checkArgument(stored ? isValidStoredEmail(email) : isValidEmail(email), MESSAGE_CONSTRAINTS);
+        checkArgument(isStored ? isValidStoredEmail(email) : isValidEmail(email), MESSAGE_CONSTRAINTS);
         value = email;
     }
 

@@ -21,6 +21,13 @@ public final class DataFileRecovery {
             + "not be set aside (%2$s). TutorFlow has started with an empty list. Copy that file somewhere safe "
             + "for recovery. Saving will retry preservation and is blocked until the original can be preserved.";
 
+    public static final String MESSAGE_NOT_OPENED = "TutorFlow could not open your data file at %1$s (%2$s). "
+            + "The file has not been moved or changed, and TutorFlow has not started, so that your records are not "
+            + "replaced. Fix the problem, such as the permissions or another program that holds the file open, and "
+            + "start TutorFlow again.";
+    public static final String MESSAGE_NOT_OPENED_SAVE = "TutorFlow could not open %1$s at start-up, so it will "
+            + "not replace it. Fix the problem and start TutorFlow again.";
+
     private static final Logger logger = LogsCenter.getLogger(DataFileRecovery.class);
 
     private DataFileRecovery() {} // prevents instantiation

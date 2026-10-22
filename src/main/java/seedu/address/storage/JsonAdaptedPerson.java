@@ -29,7 +29,8 @@ class JsonAdaptedPerson {
     public static final String MISSING_FIELD_MESSAGE_FORMAT = "Student's %s field is missing!";
 
     private String id;
-    private boolean archived;
+    @JsonProperty("archived")
+    private boolean isArchived;
     private final String name;
     private final String phone;
     private final String email;
@@ -65,7 +66,7 @@ class JsonAdaptedPerson {
      */
     public JsonAdaptedPerson(Person source) {
         id = source.getId().toString();
-        archived = source.isArchived();
+        isArchived = source.isArchived();
         name = source.getName().fullName;
         phone = source.getPhone().value;
         email = source.getEmail().map(value -> value.value).orElse(null);
@@ -149,7 +150,7 @@ class JsonAdaptedPerson {
 
         try {
             UUID modelId = id == null ? UUID.randomUUID() : UUID.fromString(id);
-            return new Person(modelId, archived, modelName, modelPhone, modelEmail, modelLevel, modelSubjects,
+            return new Person(modelId, isArchived, modelName, modelPhone, modelEmail, modelLevel, modelSubjects,
                     modelRate, modelVenue, modelRemark);
         } catch (IllegalArgumentException e) {
             throw new IllegalValueException("Invalid student ID.");
