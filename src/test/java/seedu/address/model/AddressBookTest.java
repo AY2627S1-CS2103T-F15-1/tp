@@ -17,6 +17,7 @@ import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 
@@ -323,19 +324,21 @@ public class AddressBookTest {
     }
 
     @Test
-    public void setPerson_nameChanged_updatesStudentOfTasks() {
+    public void setPerson_nameAndPhoneChanged_tasksStayAboutTheSameStudent() {
         addressBook.addPerson(ALICE);
         addressBook.addLesson(ALICE_MATH);
-        addressBook.addTask(new TaskBuilder().withId("s").withStudent(ALICE).build());
-        addressBook.addTask(new TaskBuilder().withId("l").withLesson(ALICE_MATH).build());
-        Person renamed = new PersonBuilder(ALICE).withName("Alice Tan").build();
+        Task aboutStudent = new TaskBuilder().withId("s").withStudent(ALICE).build();
+        Task aboutLesson = new TaskBuilder().withId("l").withLesson(ALICE_MATH).build();
+        addressBook.addTask(aboutStudent);
+        addressBook.addTask(aboutLesson);
+        Person renamed = new PersonBuilder(ALICE).withName("Alice Tan").withPhone("90000001").build();
 
         addressBook.setPerson(ALICE, renamed);
 
-        assertTrue(addressBook.getTaskList().stream().allMatch(task -> task.isAbout(renamed)));
-        Lesson renamedLesson = addressBook.getLessonList().get(0);
-        assertTrue(addressBook.getTaskList().stream().filter(task -> task.getLessonLink().isPresent())
-                .allMatch(task -> task.isAbout(renamedLesson)));
+        // the tasks are not rewritten at all: they refer to the permanent id, which the edit keeps
+        assertEquals(List.of(aboutStudent, aboutLesson), addressBook.getTaskList());
+        Person stored = addressBook.getPersonList().get(0);
+        assertTrue(addressBook.getTaskList().stream().allMatch(task -> task.isAbout(stored)));
     }
 
     @Test
@@ -350,17 +353,18 @@ public class AddressBookTest {
     }
 
     @Test
-    public void setLesson_lessonMoved_tasksFollowTheLesson() {
+    public void setLesson_lessonMoved_taskStaysAboutTheSameLesson() {
         addressBook.addPerson(ALICE);
         addressBook.addLesson(ALICE_MATH);
-        addressBook.addTask(new TaskBuilder().withLesson(ALICE_MATH).build());
+        Task task = new TaskBuilder().withLesson(ALICE_MATH).build();
+        addressBook.addTask(task);
         Lesson moved = ALICE_MATH.reschedule(new seedu.address.model.lesson.LessonDate("2031-05-04"),
                 ALICE_MATH.getTime(), ALICE_MATH.getDuration(), null);
 
         addressBook.setLesson(ALICE_MATH, moved);
 
+        assertEquals(List.of(task), addressBook.getTaskList());
         assertTrue(addressBook.getTaskList().get(0).isAbout(moved));
-        assertFalse(addressBook.getTaskList().get(0).isAbout(ALICE_MATH));
     }
 
     @Test
@@ -373,6 +377,86 @@ public class AddressBookTest {
 
         assertTrue(addressBook.getTaskList().get(0).isAbout(ALICE_MATH));
         assertEquals(1, addressBook.getTaskList().size());
+    }
+
+    @Test
+    public void setLesson_cancelledSlotRebookedThenMoved_onlyTheMovedLessonKeepsItsOwnTask() {
+        addressBook.addPerson(ALICE);
+        addressBook.addLesson(ALICE_MATH);
+        Task originalTask = new TaskBuilder().withId("original").withLesson(ALICE_MATH).build();
+        addressBook.addTask(originalTask);
+        Lesson cancelled = ALICE_MATH.cancel("Student unwell");
+        addressBook.setLesson(ALICE_MATH, cancelled);
+
+        // a new booking in exactly the same slot, which TutorFlow intentionally allows
+        Lesson rebooked = new LessonBuilder(ALICE_MATH).withId(UUID.randomUUID()).build();
+        addressBook.addLesson(rebooked);
+        Task rebookedTask = new TaskBuilder().withId("rebooked").withLesson(rebooked).build();
+        addressBook.addTask(rebookedTask);
+        assertFalse(originalTask.isAbout(rebooked));
+        assertFalse(rebookedTask.isAbout(cancelled));
+
+        Lesson movedRebooking = rebooked.reschedule(new seedu.address.model.lesson.LessonDate("2031-05-04"),
+                rebooked.getTime(), rebooked.getDuration(), null);
+        addressBook.setLesson(rebooked, movedRebooking);
+
+        // the task of the cancelled lesson is unchanged and still about that lesson, not the moved one
+        assertEquals(List.of(originalTask, rebookedTask), addressBook.getTaskList());
+        assertTrue(addressBook.findTask("original").get().isAbout(cancelled));
+        assertFalse(addressBook.findTask("original").get().isAbout(movedRebooking));
+        assertTrue(addressBook.findTask("rebooked").get().isAbout(movedRebooking));
+    }
+
+    @Test
+    public void removeLesson_cancelledSlotRebooked_deletingTheCancelledLessonKeepsTheRebookedTask() {
+        addressBook.addPerson(ALICE);
+        addressBook.addLesson(ALICE_MATH);
+        Task originalTask = new TaskBuilder().withId("original").withLesson(ALICE_MATH).build();
+        addressBook.addTask(originalTask);
+        Lesson cancelled = ALICE_MATH.cancel("Student unwell");
+        addressBook.setLesson(ALICE_MATH, cancelled);
+        Lesson rebooked = new LessonBuilder(ALICE_MATH).withId(UUID.randomUUID()).build();
+        addressBook.addLesson(rebooked);
+        Task rebookedTask = new TaskBuilder().withId("rebooked").withLesson(rebooked).build();
+        addressBook.addTask(rebookedTask);
+
+        addressBook.removeLesson(cancelled);
+
+        assertEquals(List.of(rebookedTask), addressBook.getTaskList());
+        assertEquals(List.of(rebooked), addressBook.getLessonList());
+    }
+
+    @Test
+    public void removeHomework_deletesTasksAboutThatHomeworkOnly() {
+        addressBook.addPerson(ALICE);
+        Homework doomed = Homework.assign(ALICE.getId(), "Practice set", java.time.LocalDate.now().plusDays(2));
+        Homework kept = Homework.assign(ALICE.getId(), "Past paper", java.time.LocalDate.now().plusDays(3));
+        addressBook.addHomework(doomed);
+        addressBook.addHomework(kept);
+        Task aboutStudent = new TaskBuilder().withId("s").withStudent(ALICE).build();
+        Task aboutKept = new TaskBuilder().withId("k").withHomework(kept).build();
+        addressBook.addTask(aboutStudent);
+        addressBook.addTask(aboutKept);
+        addressBook.addTask(new TaskBuilder().withId("d").withHomework(doomed).build());
+
+        addressBook.removeHomework(doomed);
+
+        assertEquals(List.of(aboutStudent, aboutKept), addressBook.getTaskList());
+    }
+
+    @Test
+    public void setHomework_edited_taskStaysAttached() {
+        addressBook.addPerson(ALICE);
+        Homework homework = Homework.assign(ALICE.getId(), "Practice set", java.time.LocalDate.now().plusDays(2));
+        addressBook.addHomework(homework);
+        Task task = new TaskBuilder().withHomework(homework).build();
+        addressBook.addTask(task);
+
+        Homework edited = homework.withStatus(seedu.address.model.homework.HomeworkStatus.SUBMITTED);
+        addressBook.setHomework(homework, edited);
+
+        assertEquals(List.of(task), addressBook.getTaskList());
+        assertTrue(task.isAbout(edited));
     }
 
     @Test
