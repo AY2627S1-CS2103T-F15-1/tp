@@ -30,7 +30,7 @@ For power-users, TutorFlow can help you manage your students and lessons faster 
 
    * `delete 3` : Deletes the 3rd student shown in the current list.
 
-   * `clear confirm` : Deletes all students and lessons.
+   * `clear confirm` : Deletes all students, lessons, homework, follow-up tasks and charge/payment records.
 
    * `exit` : Exits the app.
 
@@ -540,7 +540,7 @@ Format: `clear confirm`
 * Clearing data that is already empty works and does nothing.
 
 Examples:
-* `clear` shows `This deletes ALL students, lessons, homework and charge/payment records. Type 'clear confirm' to proceed.`
+* `clear` shows `This deletes ALL students, lessons, homework, follow-up tasks and charge/payment records. Type 'clear confirm' to proceed.`
 * `clear confirm` deletes everything.
 
 ### Exiting the program: `exit`
