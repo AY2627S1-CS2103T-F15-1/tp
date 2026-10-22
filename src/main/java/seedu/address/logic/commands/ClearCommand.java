@@ -7,7 +7,8 @@ import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 
 /**
- * Clears all students, lessons, and homework from TutorFlow, but only once the user has confirmed.
+ * Clears all students, lessons, homework, follow-up tasks and charge/payment records from TutorFlow, but only once
+ * the user has confirmed.
  */
 public class ClearCommand extends Command {
 
@@ -15,14 +16,14 @@ public class ClearCommand extends Command {
     public static final String CONFIRM_KEYWORD = "confirm";
 
     public static final String MESSAGE_USAGE = COMMAND_WORD
-            + ": Deletes ALL students, lessons, homework and charge/payment records from TutorFlow. "
+            + ": Deletes ALL students, lessons, homework, follow-up tasks and charge/payment records from TutorFlow. "
             + "Nothing is deleted unless '" + CONFIRM_KEYWORD + "' is added.\n"
             + "Parameters: [" + CONFIRM_KEYWORD + "]\n"
             + "Example: " + COMMAND_WORD + " " + CONFIRM_KEYWORD;
 
     public static final String MESSAGE_SUCCESS = "All data cleared.";
     public static final String MESSAGE_CONFIRMATION =
-            "This deletes ALL students, lessons, homework and charge/payment records. "
+            "This deletes ALL students, lessons, homework, follow-up tasks and charge/payment records. "
             + "Type '" + COMMAND_WORD + " " + CONFIRM_KEYWORD + "' to proceed.";
 
     private final boolean isConfirmed;
