@@ -249,8 +249,9 @@ public class DeleteCommandTest {
         model.addTask(new TaskBuilder().withId("b").withStudent(student).build());
         Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
 
-        String expectedMessage = String.format(DeleteCommand.MESSAGE_CONFIRMATION_WITH_TASKS, student.getName(),
-                student.getPhone(), 0, "", INDEX_FIRST_PERSON.getOneBased(), 2L);
+        String expectedMessage = String.format(DeleteCommand.MESSAGE_CONFIRMATION, student.getName(),
+                student.getPhone(), 0, "", INDEX_FIRST_PERSON.getOneBased())
+                + "\nThis also deletes 2 task(s).";
 
         assertCommandSuccess(new DeleteCommand(INDEX_FIRST_PERSON), model, expectedMessage, expectedModel);
         assertTrue(model.getFilteredPersonList().contains(student));
@@ -267,9 +268,24 @@ public class DeleteCommandTest {
         model.addTask(otherTask);
 
         assertCommandSuccess(new DeleteCommand(INDEX_FIRST_PERSON, true), model,
-                String.format(DeleteCommand.MESSAGE_DELETE_PERSON_WITH_TASKS_SUCCESS, Messages.format(student), 1,
-                        1L), expectedAfterDeleting(student));
+                "Deleted student: " + Messages.format(student) + ", along with 1 lesson(s) and 1 task(s).",
+                expectedAfterDeleting(student));
         assertEquals(java.util.List.of(otherTask), model.getAddressBook().getTaskList());
+    }
+
+    @Test
+    public void execute_studentWithLessonHomeworkAndTasksConfirmed_namesEveryKindOfRecord() {
+        Person student = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        model.addLesson(new LessonBuilder().withStudent(student).withDate(LocalDate.now().plusDays(3)).build());
+        model.addHomework(Homework.assign(student.getId(), "Practice set", LocalDate.now().plusDays(1)));
+        model.addTask(new TaskBuilder().withId("a").withStudent(student).build());
+        model.addTask(new TaskBuilder().withId("b").withStudent(student).build());
+
+        assertCommandSuccess(new DeleteCommand(INDEX_FIRST_PERSON, true), model,
+                "Deleted student: " + Messages.format(student)
+                        + ", along with 1 lesson(s), 1 homework item(s) and 2 task(s).",
+                expectedAfterDeleting(student));
+        assertTrue(model.getAddressBook().getTaskList().isEmpty());
     }
 
     private Model expectedAfterDeleting(Person student) {
