@@ -32,7 +32,8 @@ import seedu.address.model.task.Task;
  * Wraps all data at the address-book level.
  * Duplicates are not allowed (by .isSamePerson comparison for persons and .isSameLesson comparison for lessons).
  * A lesson belongs to a person, so deleting or editing a person also updates that person's lessons.
- * A task is about a person or one of their lessons, so deleting or editing either also updates the tasks about it.
+ * A task is about a person and optionally one of their lessons or homework items, by permanent id, so deleting any
+ * of them also deletes the tasks about it, while editing them leaves the tasks as they are.
  * Tasks may have the same text, but never the same id.
  */
 public class AddressBook implements ReadOnlyAddressBook {
@@ -135,7 +136,6 @@ public class AddressBook implements ReadOnlyAddressBook {
         editedPerson = editedPerson.withId(target.getId());
         persons.setPerson(target, editedPerson);
         updateStudentOfLessons(target, editedPerson);
-        updateStudentOfTasks(target, editedPerson);
     }
 
     /**
@@ -153,19 +153,6 @@ public class AddressBook implements ReadOnlyAddressBook {
         if (tasks.removeIf(task -> task.isAbout(key))) {
             logger.fine("Removed linked tasks");
         }
-    }
-
-    /**
-     * Makes the tasks about {@code target} the tasks about {@code editedPerson}, so that they are not left behind
-     * when the name or the phone number that identifies the person is edited.
-     */
-    private void updateStudentOfTasks(Person target, Person editedPerson) {
-        if (target.getName().equals(editedPerson.getName()) && target.getPhone().equals(editedPerson.getPhone())) {
-            return;
-        }
-
-        logger.fine("Updating linked tasks");
-        tasks.replaceAll(task -> task.isAbout(target) ? task.withStudent(editedPerson) : task);
     }
 
     /**
@@ -211,11 +198,8 @@ public class AddressBook implements ReadOnlyAddressBook {
         requireNonNull(target);
         requireNonNull(editedLesson);
         requireSameLessonId(target, editedLesson);
+        // Tasks refer to the permanent lesson id, so moving, cancelling or rebooking never changes what they are about
         lessons.setLesson(target, editedLesson);
-        if (!target.isSameLesson(editedLesson)) {
-            // The lesson was moved, so the tasks about it follow it to its new slot
-            tasks.replaceAll(task -> task.isAbout(target) ? task.withLesson(editedLesson) : task);
-        }
     }
 
     /** Completes a lesson and captures its fee atomically, returning no charge for a free lesson. */
@@ -265,7 +249,8 @@ public class AddressBook implements ReadOnlyAddressBook {
                     "Cannot delete a billed lesson. Its financial history must be retained.");
         }
         lessons.remove(key);
-        tasks.removeIf(task -> task.isAbout(key));
+        // Only the tasks of this very lesson go, not those of another lesson that shares its slot
+        tasks.removeIf(task -> task.isAbout(stored));
     }
 
     //// task-level operations
@@ -412,6 +397,9 @@ public class AddressBook implements ReadOnlyAddressBook {
     public void removeHomework(Homework target) {
         if (!homework.remove(target)) {
             throw new IllegalArgumentException("Homework no longer exists.");
+        }
+        if (tasks.removeIf(task -> task.isAbout(target))) {
+            logger.fine("Removed linked tasks");
         }
     }
 
