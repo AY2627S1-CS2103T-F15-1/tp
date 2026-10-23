@@ -313,7 +313,7 @@ public class ModelManagerTest {
         ModelManager before = copyOfModelManager();
         modelManager.deleteLesson(BENSON_PHYSICS);
         assertThrows(PersonNotFoundException.class, () -> modelManager.deletePerson(FIONA));
-        
+
         assertEquals(DestructiveActionType.DELETE_LESSON, modelManager.undoDestructiveAction());
         assertEquals(before, modelManager);
     }
