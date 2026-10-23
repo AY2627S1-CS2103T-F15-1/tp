@@ -591,6 +591,11 @@ Format: `undo`
 * Deletion commands include the commands with `delete` in them, and the `clear` command.
 * Changes can only be undone in the current session, and for one deletion command.
 * Reversals will fail if the data is changed in any way after the deletion, including sorting lessons or another deletion.
+* Reversals will fail if the data is changed in any way after the deletion, including sorting students or another deletion.
+
+Examples:
+* `undo` shows `Nothing to undo.`
+* `delete 2 confirm` followed by `undo` shows `Undone: student deletion. Your data is back as it was before.`, reversing the delete.
 
 ### Exiting the program: `exit`
 
@@ -620,7 +625,7 @@ TutorFlow data is saved automatically as a JSON file `data/tutorflow-v14.json` r
 
 Every lesson and homework assignment must link to a student in the same file through its internal student ID. Legacy lessons are linked by name and phone during migration. Missing student links are treated as invalid, as described below.
 
-<box type="warning" seamless>
+<box type="warning" seamless/>
 
 **Caution:**
 If your changes make the data file invalid, TutorFlow does not delete it. At the next run it renames the file to `tutorflow-v14.json.corrupt` (or `tutorflow-v14.json.corrupt.1` and so on, if that name is taken), starts with no students and lessons, and tells you where the file went. Fix the file and rename it back to `tutorflow-v14.json` while TutorFlow is closed to get your records back. We still recommend backing up the file before editing it.<br>
