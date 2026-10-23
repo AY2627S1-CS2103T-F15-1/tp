@@ -9,7 +9,7 @@ import seedu.address.commons.core.LogsCenter;
  * The main entry point to the application.
  *
  * This is a workaround for the following error when MainApp is made the
- * entry point of the application:
+ * entry point of the a pplication:
  *
  *     Error: JavaFX runtime components are missing, and are required to run this application
  *
