@@ -488,7 +488,7 @@ Format: `undo`
 
 Examples:
 * `undo` shows `Nothing to undo.`
-* `delete confirm 2` followed by `undo` shows `Undone: student deletion. Your data is back as it was before.`, reversing the delete.
+* `delete 2 confirm` followed by `undo` shows `Undone: student deletion. Your data is back as it was before.`, reversing the delete.
 
 ### Exiting the program: `exit`
 
