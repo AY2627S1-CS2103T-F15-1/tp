@@ -30,7 +30,7 @@ public class Task {
     public static final String MESSAGE_DESCRIPTION_CONSTRAINTS =
             "Task descriptions must be 1-" + MAX_DESCRIPTION_LENGTH + " characters and cannot contain line breaks.";
 
-    private final String id;
+    private final UUID id;
     private final String description;
     private final LocalDate due; // optional, null if the task has no due date
     private final boolean isDone;
@@ -42,10 +42,9 @@ public class Task {
      * Every field must be present and not null, except for {@code due}, {@code lessonId} and {@code homeworkId}.
      * A task is about at most one lesson or homework item.
      */
-    public Task(String id, String description, LocalDate due, boolean isDone, UUID studentId, UUID lessonId,
+    public Task(UUID id, String description, LocalDate due, boolean isDone, UUID studentId, UUID lessonId,
             UUID homeworkId) {
         requireAllNonNull(id, description, studentId);
-        checkArgument(!id.isBlank(), "A task needs an id.");
         checkArgument(isValidDescription(description), MESSAGE_DESCRIPTION_CONSTRAINTS);
         checkArgument(lessonId == null || homeworkId == null, "A task cannot be about a lesson and homework.");
         this.id = id;
@@ -63,7 +62,7 @@ public class Task {
      */
     public static Task create(String description, LocalDate due, Person student) {
         requireAllNonNull(description, student);
-        return new Task(UUID.randomUUID().toString(), description, due, false, student.getId(), null, null);
+        return new Task(UUID.randomUUID(), description, due, false, student.getId(), null, null);
     }
 
     /**
@@ -72,7 +71,7 @@ public class Task {
      */
     public static Task create(String description, LocalDate due, Person student, Lesson lesson) {
         requireAllNonNull(description, student, lesson);
-        return new Task(UUID.randomUUID().toString(), description, due, false, student.getId(), lesson.getId(),
+        return new Task(UUID.randomUUID(), description, due, false, student.getId(), lesson.getId(),
                 null);
     }
 
@@ -82,7 +81,7 @@ public class Task {
      */
     public static Task create(String description, LocalDate due, Person student, Homework homework) {
         requireAllNonNull(description, student, homework);
-        return new Task(UUID.randomUUID().toString(), description, due, false, student.getId(), null,
+        return new Task(UUID.randomUUID(), description, due, false, student.getId(), null,
                 homework.getId());
     }
 
@@ -92,10 +91,10 @@ public class Task {
     public static boolean isValidDescription(String test) {
         return test != null && !test.isBlank() && test.strip().length() <= MAX_DESCRIPTION_LENGTH
                 && test.codePoints().noneMatch(character -> Character.isISOControl(character)
-                        || character == ' ' || character == ' ');
+                        || character == '\u2028' || character == '\u2029');
     }
 
-    public String getId() {
+    public UUID getId() {
         return id;
     }
 

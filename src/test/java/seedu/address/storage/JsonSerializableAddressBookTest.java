@@ -1,6 +1,7 @@
 package seedu.address.storage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
 import java.nio.file.Path;
@@ -17,6 +18,7 @@ import seedu.address.model.AddressBook;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonDate;
+import seedu.address.model.task.Task;
 import seedu.address.testutil.LessonBuilder;
 import seedu.address.testutil.TaskBuilder;
 import seedu.address.testutil.TypicalLessons;
@@ -127,7 +129,7 @@ public class JsonSerializableAddressBookTest {
     }
 
     @Test
-    public void toModelType_taskWithoutItsTarget_throwsIllegalValueException() {
+    public void toModelType_taskWithoutItsTarget_isSkippedAndTheRestOfTheFileLoads() throws Exception {
         AddressBook addressBook = TypicalLessons.getTypicalAddressBookWithLessons();
         Homework alicesHomework = Homework.assign(TypicalPersons.ALICE.getId(), "Practice set",
                 LocalDate.of(2030, 1, 1));
@@ -140,20 +142,40 @@ public class JsonSerializableAddressBookTest {
         List<JsonAdaptedLesson> lessons = addressBook.getLessonList().stream().map(JsonAdaptedLesson::new).toList();
         List<JsonAdaptedHomework> homework = addressBook.getHomeworkList().stream()
                 .map(JsonAdaptedHomework::new).toList();
+        String a = TaskBuilder.idOf("a").toString();
+        String b = TaskBuilder.idOf("b").toString();
+        String c = TaskBuilder.idOf("c").toString();
+        String d = TaskBuilder.idOf("d").toString();
+        String e = TaskBuilder.idOf("e").toString();
         List<JsonAdaptedTask> unresolvable = List.of(
-                new JsonAdaptedTask("a", "Call", null, false, missing, null, null), // no such student
-                new JsonAdaptedTask("b", "Call", null, false, alice, missing, null), // no such lesson
-                new JsonAdaptedTask("c", "Call", null, false, benson, aliceMath, null), // Alice's lesson
-                new JsonAdaptedTask("d", "Call", null, false, alice, null, missing), // no such homework
-                new JsonAdaptedTask("e", "Call", null, false, benson, null,
-                        alicesHomework.getId().toString())); // Alice's homework
+                // no such student
+                new JsonAdaptedTask(a, "Call", null, false, missing, null, null),
+                // no such lesson
+                new JsonAdaptedTask(b, "Call", null, false, alice, missing, null),
+                // Alice's lesson
+                new JsonAdaptedTask(c, "Call", null, false, benson, aliceMath, null),
+                // no such homework
+                new JsonAdaptedTask(d, "Call", null, false, alice, null, missing),
+                // Alice's homework
+                new JsonAdaptedTask(e, "Call", null, false, benson, null, alicesHomework.getId().toString()));
 
         for (JsonAdaptedTask task : unresolvable) {
             JsonSerializableAddressBook data = new JsonSerializableAddressBook(persons, lessons, homework,
                     List.of(), List.of(task));
-            assertThrows(IllegalValueException.class, JsonSerializableAddressBook.MESSAGE_TASK_WITHOUT_TARGET,
-                    data::toModelType);
+            AddressBook loaded = data.toModelType();
+            assertTrue(loaded.getTaskList().isEmpty());
+            assertEquals(addressBook.getPersonList(), loaded.getPersonList());
+            assertEquals(addressBook.getLessonList(), loaded.getLessonList());
+            assertEquals(addressBook.getHomeworkList(), loaded.getHomeworkList());
         }
+
+        // one stale task never costs the valid tasks that are stored beside it
+        JsonAdaptedTask valid = new JsonAdaptedTask(TaskBuilder.idOf("ok").toString(), "Call", null, false,
+                alice, null, null);
+        JsonSerializableAddressBook mixed = new JsonSerializableAddressBook(persons, lessons, homework, List.of(),
+                List.of(unresolvable.get(0), valid, unresolvable.get(3)));
+        assertEquals(List.of(TaskBuilder.idOf("ok")),
+                mixed.toModelType().getTaskList().stream().map(Task::getId).toList());
     }
 
     @Test
@@ -173,10 +195,10 @@ public class JsonSerializableAddressBookTest {
         AddressBook restored = JsonUtil.fromJsonString(json, JsonSerializableAddressBook.class).toModelType();
 
         assertEquals(addressBook, restored);
-        assertEquals(cancelled.getId(), restored.findTask("old").get().getLessonId().get());
-        assertEquals(rebooked.getId(), restored.findTask("new").get().getLessonId().get());
-        assertEquals(homework.getId(), restored.findTask("hw").get().getHomeworkId().get());
-        assertEquals(TypicalPersons.ALICE.getId(), restored.findTask("hw").get().getStudentId());
+        assertEquals(cancelled.getId(), restored.findTask(TaskBuilder.idOf("old")).get().getLessonId().get());
+        assertEquals(rebooked.getId(), restored.findTask(TaskBuilder.idOf("new")).get().getLessonId().get());
+        assertEquals(homework.getId(), restored.findTask(TaskBuilder.idOf("hw")).get().getHomeworkId().get());
+        assertEquals(TypicalPersons.ALICE.getId(), restored.findTask(TaskBuilder.idOf("hw")).get().getStudentId());
         // moving the rebooked lesson after the reload still changes nothing about the cancelled lesson's task
         Lesson moved = rebooked.reschedule(new LessonDate("2031-05-04"), rebooked.getTime(),
                 rebooked.getDuration(), null);

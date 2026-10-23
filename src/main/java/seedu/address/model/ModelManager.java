@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
 
@@ -245,7 +246,7 @@ public class ModelManager implements Model {
     }
 
     @Override
-    public Optional<Task> findTask(String id) {
+    public Optional<Task> findTask(UUID id) {
         requireNonNull(id);
         return addressBook.findTask(id);
     }

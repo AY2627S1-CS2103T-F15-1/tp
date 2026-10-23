@@ -39,13 +39,13 @@ public class TaskTest {
     @Test
     public void constructor_invalidArguments_throws() {
         UUID student = ALICE.getId();
+        UUID id = UUID.randomUUID();
         assertThrows(NullPointerException.class, () -> new Task(null, "x", null, false, student, null, null));
-        assertThrows(NullPointerException.class, () -> new Task("id", null, null, false, student, null, null));
-        assertThrows(NullPointerException.class, () -> new Task("id", "x", null, false, null, null, null));
+        assertThrows(NullPointerException.class, () -> new Task(id, null, null, false, student, null, null));
+        assertThrows(NullPointerException.class, () -> new Task(id, "x", null, false, null, null, null));
         assertThrows(IllegalArgumentException.class, Task.MESSAGE_DESCRIPTION_CONSTRAINTS, ()
-                -> new Task("id", " ", null, false, student, null, null));
-        assertThrows(IllegalArgumentException.class, () -> new Task(" ", "x", null, false, student, null, null));
-        assertThrows(IllegalArgumentException.class, () -> new Task("id", "x", null, false, student,
+                -> new Task(id, " ", null, false, student, null, null));
+        assertThrows(IllegalArgumentException.class, () -> new Task(id, "x", null, false, student,
                 UUID.randomUUID(), UUID.randomUUID())); // a lesson and homework at once
     }
 
@@ -139,8 +139,9 @@ public class TaskTest {
     @Test
     public void toStringMethod() {
         Task task = new TaskBuilder().build();
-        String expected = Task.class.getCanonicalName() + "{id=task-1, description=Call parent, due=null, "
-                + "isDone=false, studentId=" + ALICE.getId() + ", lessonId=null, homeworkId=null}";
+        String expected = Task.class.getCanonicalName() + "{id=" + TaskBuilder.DEFAULT_ID
+                + ", description=Call parent, due=null, isDone=false, studentId=" + ALICE.getId()
+                + ", lessonId=null, homeworkId=null}";
         assertEquals(expected, task.toString());
     }
 }

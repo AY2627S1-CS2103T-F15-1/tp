@@ -699,7 +699,8 @@ Numbers are session-local, so display a new list after restarting.
   new work. Use `student list archived/` then `hw list st/INDEX` to inspect their full history.
 * `view INDEX` includes outstanding homework; `today` and the startup dashboard include overdue
   homework. These summaries do not change the numbered homework selection.
-* Homework deletion requires `confirm` when feedback exists. Student deletion reports linked
+* Homework deletion requires `confirm` when feedback or linked follow-up tasks exist, because
+  deleting the homework also deletes its tasks. Student deletion reports linked
   homework and upcoming outstanding homework counts and requires confirmation. Confirmed student
   deletion removes its homework and feedback; `clear confirm` removes all homework as well.
 * A failed save retains the change and the same numbered selection in this session. Fix the write
@@ -715,9 +716,9 @@ v1.4 writes `data/tutorflow-v14.json`. If this file is absent, it reads legacy
 `data/addressbook.json`, assigns stable internal student and lesson identifiers, and saves
 an initial v1.4 copy. The legacy file remains untouched so an older application cannot erase
 v1.4 fields. If both files exist, the v1.4 file takes precedence. Keep both in your backup.
-This finance alpha writes schema 16 and accepts unversioned legacy files plus schemas 14 through 16.
-Older files without homework or a ledger start with empty records for those features. Older builds
-refuse schema 16, protecting charges and payments from being dropped when saving.
+This alpha writes schema 17 and accepts unversioned legacy files plus schemas 14 through 17.
+Older files without homework, a ledger or follow-up tasks start with empty records for those features. Older builds
+refuse schema 17, protecting follow-up tasks (and any charges and payments) from being dropped when saving.
 An unsupported schema version stops startup and leaves the original file in place. Open that data
 with a compatible TutorFlow build, or restore a backup made by your installed build. An older alpha
 cannot open data saved by a newer alpha that added data fields. Invalid files use the recovery flow

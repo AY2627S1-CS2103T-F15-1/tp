@@ -52,7 +52,7 @@ class JsonAdaptedTask {
      * Converts a given {@code Task} into this class for Jackson use.
      */
     public JsonAdaptedTask(Task source) {
-        id = source.getId();
+        id = source.getId().toString();
         description = source.getDescription();
         due = source.getDue().map(LocalDate::toString).orElse(null);
         done = source.isDone();
@@ -70,6 +70,7 @@ class JsonAdaptedTask {
         if (id == null || id.isBlank()) {
             throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, "id"));
         }
+        UUID modelId = parseId("id", id);
         if (description == null) {
             throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, "description"));
         }
@@ -94,7 +95,7 @@ class JsonAdaptedTask {
                 throw new IllegalValueException(MESSAGE_INVALID_DUE);
             }
         }
-        return new Task(id, description, modelDue, done != null && done, modelStudentId, modelLessonId,
+        return new Task(modelId, description, modelDue, done != null && done, modelStudentId, modelLessonId,
                 modelHomeworkId);
     }
 

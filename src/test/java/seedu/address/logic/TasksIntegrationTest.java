@@ -129,7 +129,13 @@ public class TasksIntegrationTest {
         logic.execute("hw edit 1 desc/Algebra Q1-12"); // editing homework keeps the link
         assertTrue(logic.execute("task list").getFeedbackToUser().contains("homework Algebra Q1-12"));
 
-        logic.execute("hw delete 1");
+        // Deleting homework with a linked task needs confirmation, and nothing is deleted without it
+        String prompt = logic.execute("hw delete 1").getFeedbackToUser();
+        assertTrue(prompt.contains("1 linked task(s)") && prompt.contains("hw delete 1 confirm"), prompt);
+        assertEquals(2, saved().getTaskList().size());
+        assertEquals(1, saved().getHomeworkList().size());
+
+        logic.execute("hw delete 1 confirm");
         assertEquals(1, saved().getTaskList().size());
         assertEquals("Call parent", saved().getTaskList().get(0).getDescription());
     }

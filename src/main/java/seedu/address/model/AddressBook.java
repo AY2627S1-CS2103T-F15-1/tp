@@ -83,13 +83,23 @@ public class AddressBook implements ReadOnlyAddressBook {
      */
     public void setTasks(List<Task> tasks) {
         requireNonNull(tasks);
-        Set<String> ids = new HashSet<>();
+        List<Task> replacement = List.copyOf(tasks);
+        validateTasks(replacement);
+        this.tasks.setAll(replacement);
+    }
+
+    /**
+     * Checks that no two of the given {@code tasks} share an id, without changing any data.
+     *
+     * @throws IllegalArgumentException if two tasks have the same id.
+     */
+    private static void validateTasks(List<Task> tasks) {
+        Set<UUID> ids = new HashSet<>();
         for (Task task : tasks) {
             if (!ids.add(task.getId())) {
                 throw new IllegalArgumentException("Two tasks cannot have the same id.");
             }
         }
-        this.tasks.setAll(tasks);
     }
 
     /**
@@ -98,12 +108,15 @@ public class AddressBook implements ReadOnlyAddressBook {
     public void resetData(ReadOnlyAddressBook newData) {
         requireNonNull(newData);
 
+        // Copy and validate everything first, so that a rejected replacement leaves this address book unchanged
         List<LedgerEntry> replacementEntries = List.copyOf(newData.getLedgerEntries());
+        List<Task> replacementTasks = List.copyOf(newData.getTaskList());
         validateLedgerEntries(newData.getPersonList(), newData.getLessonList(), replacementEntries);
+        validateTasks(replacementTasks);
         setPersons(newData.getPersonList());
         setLessons(newData.getLessonList());
         ledgerEntries.setAll(replacementEntries);
-        setTasks(newData.getTaskList());
+        tasks.setAll(replacementTasks);
         homework.setAll(newData.getHomeworkList());
     }
 
@@ -270,7 +283,7 @@ public class AddressBook implements ReadOnlyAddressBook {
     /**
      * Returns the task with the given {@code id}, or empty if it has been deleted.
      */
-    public Optional<Task> findTask(String id) {
+    public Optional<Task> findTask(UUID id) {
         requireNonNull(id);
         return tasks.stream().filter(task -> task.getId().equals(id)).findFirst();
     }

@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Predicate;
 
 import org.junit.jupiter.api.Test;
@@ -254,7 +255,7 @@ public class AddCommandTest {
         }
 
         @Override
-        public Optional<Task> findTask(String id) {
+        public Optional<Task> findTask(UUID id) {
             throw new AssertionError("This method should not be called.");
         }
 

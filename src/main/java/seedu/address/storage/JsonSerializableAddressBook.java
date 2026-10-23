@@ -6,12 +6,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonRootName;
 
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ReadOnlyAddressBook;
@@ -29,10 +31,12 @@ class JsonSerializableAddressBook {
     public static final String MESSAGE_DUPLICATE_PERSON = "Persons list contains duplicate person(s).";
     public static final String MESSAGE_DUPLICATE_LESSON = "Lessons list contains duplicate lesson(s).";
     public static final String MESSAGE_DUPLICATE_TASK = "Tasks list contains tasks with the same id.";
-    public static final String MESSAGE_TASK_WITHOUT_TARGET =
-            "Tasks list contains a task whose student, lesson or homework is not in the data.";
+    public static final String MESSAGE_STALE_TASK_SKIPPED =
+            "Skipped a task whose student, lesson or homework is not in the data.";
     public static final String MESSAGE_LESSON_WITHOUT_STUDENT =
             "Lessons list contains a lesson whose student is not in the persons list.";
+
+    private static final Logger logger = LogsCenter.getLogger(JsonSerializableAddressBook.class);
 
     private Integer schemaVersion;
 
@@ -181,8 +185,11 @@ class JsonSerializableAddressBook {
     /**
      * Adds the tasks to {@code addressBook}, whose students, lessons and homework must already be added.
      *
-     * @throws IllegalValueException if a task is invalid, shares an id, or is about a student, lesson or homework
-     *     item that is not in {@code addressBook} or does not belong to the student of the task.
+     * A task whose student, lesson or homework item is not in {@code addressBook}, or does not belong to the
+     * student of the task, is stale: it is skipped (and logged without its text) rather than rejecting the whole
+     * data file, so that one dangling link never sets aside every other record.
+     *
+     * @throws IllegalValueException if a task is invalid or shares an id.
      */
     private void addTasksTo(AddressBook addressBook) throws IllegalValueException {
         for (JsonAdaptedTask jsonAdaptedTask : tasks) {
@@ -201,7 +208,8 @@ class JsonSerializableAddressBook {
             boolean hasHomework = task.getHomeworkId().isEmpty() || addressBook.getHomeworkList().stream()
                     .anyMatch(item -> task.isAbout(item) && item.getStudentId().equals(task.getStudentId()));
             if (student.isEmpty() || !hasLesson || !hasHomework) {
-                throw new IllegalValueException(MESSAGE_TASK_WITHOUT_TARGET);
+                logger.warning(MESSAGE_STALE_TASK_SKIPPED);
+                continue;
             }
             addressBook.addTask(task);
         }

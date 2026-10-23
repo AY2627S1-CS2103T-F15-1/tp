@@ -402,9 +402,9 @@ public class AddressBookTest {
 
         // the task of the cancelled lesson is unchanged and still about that lesson, not the moved one
         assertEquals(List.of(originalTask, rebookedTask), addressBook.getTaskList());
-        assertTrue(addressBook.findTask("original").get().isAbout(cancelled));
-        assertFalse(addressBook.findTask("original").get().isAbout(movedRebooking));
-        assertTrue(addressBook.findTask("rebooked").get().isAbout(movedRebooking));
+        assertTrue(addressBook.findTask(TaskBuilder.idOf("original")).get().isAbout(cancelled));
+        assertFalse(addressBook.findTask(TaskBuilder.idOf("original")).get().isAbout(movedRebooking));
+        assertTrue(addressBook.findTask(TaskBuilder.idOf("rebooked")).get().isAbout(movedRebooking));
     }
 
     @Test

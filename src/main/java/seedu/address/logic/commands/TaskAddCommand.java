@@ -24,7 +24,7 @@ import seedu.address.model.person.Person;
 import seedu.address.model.task.Task;
 
 /**
- * Adds a follow-up task about a student or a lesson that is shown (user story 31).
+ * Adds a follow-up task about a student, a lesson or a homework item that is shown (user story 31).
  * Exactly one link is given. A task about a student, a lesson or a homework item is linked by the permanent id of
  * that record. A link to a payment is accepted so that the command already has its final format, but there is no
  * numbered payment list to point at yet.
@@ -39,9 +39,10 @@ public class TaskAddCommand extends Command {
 
     public static final String MESSAGE_USAGE = FORMAT + " (choose exactly one link; use hw list or pay list "
             + "before those indices)\n"
-            + COMMAND_WORD + ": Adds a follow-up task about a student or a lesson. " + PREFIX_STUDENT
-            + " takes a number from the student list, " + PREFIX_LESSON + " a number from the last agenda or "
-            + "lesson list. The description is 1-200 characters.\n"
+            + COMMAND_WORD + ": Adds a follow-up task about a student, a lesson or a homework item. "
+            + PREFIX_STUDENT + " takes a number from the student list, " + PREFIX_LESSON
+            + " a number from the last agenda or lesson list, " + PREFIX_HOMEWORK + " a number from the last "
+            + "hw list. The description is 1-200 characters.\n"
             + "Example: " + COMMAND_WORD + " " + PREFIX_STUDENT + "1 " + PREFIX_DESCRIPTION + "Call parent "
             + PREFIX_DUE + "2026-12-01";
 

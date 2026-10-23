@@ -3,6 +3,7 @@ package seedu.address.model;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Predicate;
 
 import javafx.collections.ObservableList;
@@ -138,7 +139,7 @@ public interface Model {
     /**
      * Returns the task with the given {@code id}, or empty if it does not exist (any more).
      */
-    Optional<Task> findTask(String id);
+    Optional<Task> findTask(UUID id);
 
     /**
      * Replaces the given task {@code target} with {@code editedTask}, which keeps the id of {@code target}.

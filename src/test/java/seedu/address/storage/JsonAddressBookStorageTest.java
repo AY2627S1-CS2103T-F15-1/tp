@@ -147,7 +147,7 @@ public class JsonAddressBookStorageTest {
     }
 
     @Test
-    public void readAddressBook_orphanTaskInDataFile_throwDataLoadingExceptionAndKeepsTheFile() throws Exception {
+    public void readAddressBook_orphanTaskInDataFile_isSkippedAndTheFileStillLoads() throws Exception {
         Path file = testFolder.resolve("orphan.json");
         AddressBook original = getTypicalAddressBook();
         original.addTask(new TaskBuilder().withId("t").withStudent(ALICE).build());
@@ -161,12 +161,13 @@ public class JsonAddressBookStorageTest {
         String orphanJson = json.substring(0, inTask) + UUID.randomUUID() + json.substring(inTask + aliceId.length());
         Files.writeString(file, orphanJson);
 
-        Executable read = () -> new JsonAddressBookStorage(file).readAddressBook();
-        DataLoadingException error = Assertions.assertThrows(DataLoadingException.class, read);
+        // one stale task no longer makes the app set aside the whole data file
+        AddressBook read = new AddressBook(new JsonAddressBookStorage(file).readAddressBook().get());
 
-        String reason = error.getCause().getMessage();
-        assertTrue(reason.contains(JsonSerializableAddressBook.MESSAGE_TASK_WITHOUT_TARGET), reason);
+        assertTrue(read.getTaskList().isEmpty());
+        assertEquals(getTypicalAddressBook().getPersonList(), read.getPersonList());
         assertEquals(orphanJson, Files.readString(file));
+        assertFalse(Files.exists(testFolder.resolve("orphan.json.corrupt")));
     }
 
     @Test

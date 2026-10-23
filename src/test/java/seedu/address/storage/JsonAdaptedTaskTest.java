@@ -21,6 +21,7 @@ import seedu.address.testutil.TaskBuilder;
 public class JsonAdaptedTaskTest {
 
     private static final String STUDENT = ALICE.getId().toString();
+    private static final String ID = TaskBuilder.DEFAULT_ID.toString();
 
     private static JsonAdaptedTask task(String id, String description, String due, Boolean done, String studentId) {
         return new JsonAdaptedTask(id, description, due, done, studentId, null, null);
@@ -55,7 +56,7 @@ public class JsonAdaptedTaskTest {
 
     @Test
     public void toModelType_missingDoneAndDue_meansOpenWithoutDueDate() throws Exception {
-        Task task = task("id", "Call", null, null, STUDENT).toModelType();
+        Task task = task(ID, "Call", null, null, STUDENT).toModelType();
 
         assertEquals(false, task.isDone());
         assertTrue(task.getDue().isEmpty());
@@ -68,34 +69,42 @@ public class JsonAdaptedTaskTest {
         assertThrows(IllegalValueException.class, String.format(MISSING_FIELD_MESSAGE_FORMAT, "id"),
                 task(" ", "Call", null, false, STUDENT)::toModelType);
         assertThrows(IllegalValueException.class, String.format(MISSING_FIELD_MESSAGE_FORMAT, "description"),
-                task("id", null, null, false, STUDENT)::toModelType);
+                task(ID, null, null, false, STUDENT)::toModelType);
         assertThrows(IllegalValueException.class, String.format(MISSING_FIELD_MESSAGE_FORMAT, "studentId"),
-                task("id", "Call", null, false, null)::toModelType);
+                task(ID, "Call", null, false, null)::toModelType);
     }
 
     @Test
     public void toModelType_invalidValues_throwsIllegalValueException() {
         assertThrows(IllegalValueException.class, Task.MESSAGE_DESCRIPTION_CONSTRAINTS,
-                task("id", " ", null, false, STUDENT)::toModelType);
+                task(ID, " ", null, false, STUDENT)::toModelType);
         assertThrows(IllegalValueException.class, Task.MESSAGE_DESCRIPTION_CONSTRAINTS,
-                task("id", "a".repeat(201), null, false, STUDENT)::toModelType);
+                task(ID, "a".repeat(201), null, false, STUDENT)::toModelType);
         assertThrows(IllegalValueException.class, JsonAdaptedTask.MESSAGE_INVALID_DUE,
-                task("id", "Call", "01/12/2026", false, STUDENT)::toModelType);
+                task(ID, "Call", "01/12/2026", false, STUDENT)::toModelType);
         assertThrows(IllegalValueException.class, JsonAdaptedTask.MESSAGE_INVALID_DUE,
-                task("id", "Call", "2026-02-30", false, STUDENT)::toModelType);
+                task(ID, "Call", "2026-02-30", false, STUDENT)::toModelType);
+    }
+
+    @Test
+    public void toModelType_idThatIsNotAUuid_throwsIllegalValueException() {
+        for (String id : new String[] {"task-1", "42", "123e4567-e89b-12d3-a456"}) {
+            assertThrows(IllegalValueException.class, String.format(MESSAGE_INVALID_ID_FORMAT, "id"),
+                    task(id, "Call", null, false, STUDENT)::toModelType);
+        }
     }
 
     @Test
     public void toModelType_malformedIds_throwsIllegalValueException() {
         UUID valid = UUID.randomUUID();
         assertThrows(IllegalValueException.class, String.format(MESSAGE_INVALID_ID_FORMAT, "studentId"),
-                task("id", "Call", null, false, "Alice Pauline")::toModelType);
+                task(ID, "Call", null, false, "Alice Pauline")::toModelType);
         assertThrows(IllegalValueException.class, String.format(MESSAGE_INVALID_ID_FORMAT, "lessonId"),
-                new JsonAdaptedTask("id", "Call", null, false, STUDENT, "not-a-uuid", null)::toModelType);
+                new JsonAdaptedTask(ID, "Call", null, false, STUDENT, "not-a-uuid", null)::toModelType);
         assertThrows(IllegalValueException.class, String.format(MESSAGE_INVALID_ID_FORMAT, "homeworkId"),
-                new JsonAdaptedTask("id", "Call", null, false, STUDENT, null, "")::toModelType);
+                new JsonAdaptedTask(ID, "Call", null, false, STUDENT, null, "")::toModelType);
         assertThrows(IllegalValueException.class, JsonAdaptedTask.MESSAGE_TWO_LINKS,
-                new JsonAdaptedTask("id", "Call", null, false, STUDENT, valid.toString(),
+                new JsonAdaptedTask(ID, "Call", null, false, STUDENT, valid.toString(),
                         valid.toString())::toModelType);
     }
 }

@@ -311,8 +311,9 @@ change. `delete INDEX` counts the linked tasks in its confirmation prompt, using
 as lessons, so a later feature adds one more count instead of a new message.
 
 **Storage.** Tasks are saved in an optional top-level `tasks` array of `JsonAdaptedTask`, beside `persons`, `lessons`,
-`homework` and `ledgerEntries`. A file without `tasks` loads with no tasks. No schema bump is needed for this array:
-`StorageSchema.CURRENT_VERSION` is unchanged.
+`homework` and `ledgerEntries`. A file without `tasks` (schema 16 or older) loads with no tasks. Adding the array bumped
+`StorageSchema.CURRENT_VERSION` to 17, so that a build that stops at schema 16 refuses a schema 17 file rather than loading it
+without the tasks and then deleting them on its next save.
 
 ```json
 {
@@ -330,9 +331,10 @@ as lessons, so a later feature adds one more count instead of a new message.
 ```
 
 `done`, `due`, `lessonId` and `homeworkId` may be omitted. `JsonSerializableAddressBook#toModelType` rejects the data
-file as invalid if a task id is duplicated, a link is not a UUID, a
-task has both a lesson and a homework link, or a link does not resolve: the student, lesson or homework must exist,
-and a lesson or homework item must belong to the task's own student. Tasks from an earlier development build that
+file as invalid if a task id is duplicated, a link is not a UUID, or a
+task has both a lesson and a homework link. A task whose link does not resolve (the student, lesson or homework is missing,
+or a lesson or homework item belongs to another student) is stale: it is skipped and logged, without its text, instead of
+rejecting the whole file, because AddressBook already deletes the tasks of a record that is deleted. Tasks from an earlier development build that
 stored a student name and phone instead of ids are not migrated.
 
 **Selection by index.** `task add lesson/N` and `hw/N` use the numbering of the last `lesson list`/`agenda` and
@@ -350,7 +352,7 @@ The sequence diagram below shows `execute("hw status 2 s/submitted")`.
 
 <puml src="diagrams/HomeworkStatusSequenceDiagram.puml" alt="Interactions Inside the Logic, Model and Storage Components for the `hw status 2 s/submitted` Command" />
 
-The activity diagram below shows what `hw delete INDEX [confirm]` does. Homework that has feedback is only deleted when `confirm` is given.
+The activity diagram below shows what `hw delete INDEX [confirm]` does. Homework that has feedback or linked follow-up tasks is only deleted when `confirm` is given.
 
 <puml src="diagrams/HomeworkDeleteActivityDiagram.puml" alt="Activity Diagram for the `hw delete INDEX [confirm]` Command" />
 
@@ -1139,7 +1141,7 @@ Equal cancelled lessons remain separate records and exact-ID lookup chooses the 
 All domain extensions must update `ReadOnlyAddressBook`, `AddressBook.resetData` and its copy
 constructor/equality, the real JSON root/adapters, and focused round-trip tests together.
 `Storage.snapshotAddressBook` uses that exact persisted representation for dirty detection,
-so UI-only equality must never decide whether a write is required. Schema 16 is written to
+so UI-only equality must never decide whether a write is required. Schema 17 is written to
 `tutorflow-v14.json`; `VersionedAddressBookStorage` reads legacy data only when the current
 path is positively absent. The logic constructor's initial-save flag explicitly persists
 migrated IDs even before a command mutates the model. Failed initial writes remain dirty.
@@ -1148,9 +1150,9 @@ precreates the current destination, so an interrupted first save leaves legacy f
 on restart. The storage writeSnapshot seam passes the actual serialized bytes to this writer.
 Unreadable source protection is retained until positive absence or successful preservation.
 
-`StorageSchema.MINIMUM_VERSION` and `CURRENT_VERSION` centralize the supported range (14 through 16 now).
+`StorageSchema.MINIMUM_VERSION` and `CURRENT_VERSION` centralize the supported range (14 through 17 now).
 The shared `tutorflow-v14.json` path stays fixed as later domains are added. Homework uses
-schema 15; finance uses schema 16, and workflows must advance it to 17. Each build accepts unversioned legacy
+schema 15, finance uses schema 16 and follow-up tasks use schema 17; the next domain must advance it to 18. Each build accepts unversioned legacy
 data and versions 14 through its current version, with explicit defaults for missing older fields.
 Add prior-version loading and future-version refusal tests alongside each schema increment.
 

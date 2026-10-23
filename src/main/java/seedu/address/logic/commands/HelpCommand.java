@@ -89,13 +89,14 @@ public class HelpCommand extends Command {
                     "Parameters: INDEX from the last hw list; FEEDBACK is 1-1000 characters. The homework must be "
                             + "submitted or reviewed, and new feedback replaces the old.\n"
                             + "Example: hw feedback 1 f/Sign errors throughout Q8-12"),
-            new CommandHelp("hw delete", "Deletes homework with feedback protection",
+            new CommandHelp("hw delete", "Deletes homework, after confirmation if it has feedback or tasks",
                     HomeworkDeleteCommand.MESSAGE_USAGE,
-                    "Parameters: INDEX from the last hw list; confirm is needed when the homework has feedback.\n"
+                    "Parameters: INDEX from the last hw list; confirm is needed when the homework has feedback "
+                            + "or follow-up tasks, which are deleted with it.\n"
                             + "Example: hw delete 2 confirm"),
             new CommandHelp("agenda", "Shows the lessons of a day or a week", AgendaCommand.MESSAGE_USAGE),
             new CommandHelp("today", "Shows today's lessons, overdue homework and dues", TodayCommand.MESSAGE_USAGE),
-            new CommandHelp("task add", "Adds a follow-up task to a student or lesson",
+            new CommandHelp("task add", "Adds a follow-up task to a student, lesson or homework item",
                     TaskAddCommand.MESSAGE_USAGE),
             new CommandHelp("task list", "Lists the open tasks", TaskListCommand.MESSAGE_USAGE),
             new CommandHelp("task edit", "Changes a task's text or due date", TaskEditCommand.MESSAGE_USAGE),

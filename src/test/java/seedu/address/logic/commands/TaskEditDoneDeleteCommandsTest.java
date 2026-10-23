@@ -46,7 +46,7 @@ public class TaskEditDoneDeleteCommandsTest {
 
         assertEquals("Updated task 1: Call again. Shown task indices stay unchanged; run 'task list' to refresh.",
                 message);
-        Task edited = model.findTask("a").get();
+        Task edited = model.findTask(TaskBuilder.idOf("a")).get();
         assertEquals("Call again", edited.getDescription());
         assertEquals(DUE, edited.getDue().get());
     }
@@ -55,25 +55,27 @@ public class TaskEditDoneDeleteCommandsTest {
     public void edit_newDueDate_changesIt() throws Exception {
         new TaskEditCommand(INDEX_FIRST_PERSON, "Call the parent", DUE.plusMonths(1), false).execute(model);
 
-        assertEquals(DUE.plusMonths(1), model.findTask("a").get().getDue().get());
+        assertEquals(DUE.plusMonths(1), model.findTask(TaskBuilder.idOf("a")).get().getDue().get());
     }
 
     @Test
     public void edit_clearDue_removesIt() throws Exception {
         new TaskEditCommand(INDEX_FIRST_PERSON, "Call the parent", null, true).execute(model);
 
-        assertTrue(model.findTask("a").get().getDue().isEmpty());
+        assertTrue(model.findTask(TaskBuilder.idOf("a")).get().getDue().isEmpty());
     }
 
     @Test
     public void edit_keepsIdStatusAndLink() throws Exception {
-        model.setTask(model.findTask("a").get(), model.findTask("a").get().markDone());
+        Task original = model.findTask(TaskBuilder.idOf("a")).get();
+        model.setTask(original, original.markDone());
 
         new TaskEditCommand(INDEX_FIRST_PERSON, "Renamed", null, false).execute(model);
 
-        Task edited = model.findTask("a").get();
+        Task edited = model.findTask(TaskBuilder.idOf("a")).get();
         assertTrue(edited.isDone());
-        assertEquals(1, model.getAddressBook().getTaskList().stream().filter(t -> t.getId().equals("a")).count());
+        assertEquals(1, model.getAddressBook().getTaskList().stream()
+                .filter(t -> t.getId().equals(TaskBuilder.idOf("a"))).count());
     }
 
     @Test
@@ -92,7 +94,7 @@ public class TaskEditDoneDeleteCommandsTest {
 
     @Test
     public void edit_taskDeletedMeanwhile_throwsCommandException() {
-        model.deleteTask(model.findTask("a").get());
+        model.deleteTask(model.findTask(TaskBuilder.idOf("a")).get());
 
         assertCommandFailure(new TaskEditCommand(INDEX_FIRST_PERSON, "x", null, false), model,
                 "That task was deleted. Run 'task list' to refresh.");
@@ -106,10 +108,10 @@ public class TaskEditDoneDeleteCommandsTest {
 
         assertEquals("Completed task 1: Call the parent. Shown task indices stay unchanged; "
                 + "run 'task list' to refresh.", message);
-        assertTrue(model.findTask("a").get().isDone());
+        assertTrue(model.findTask(TaskBuilder.idOf("a")).get().isDone());
         // The second task is still number 2 until the next listing
         new TaskDoneCommand(INDEX_SECOND_PERSON).execute(model);
-        assertTrue(model.findTask("b").get().isDone());
+        assertTrue(model.findTask(TaskBuilder.idOf("b")).get().isDone());
     }
 
     @Test
@@ -152,7 +154,7 @@ public class TaskEditDoneDeleteCommandsTest {
 
         assertEquals("Deleted task 1: Call the parent. Remaining shown indices are unchanged; "
                 + "run 'task list' to refresh.", message);
-        assertTrue(model.findTask("a").isEmpty());
+        assertTrue(model.findTask(TaskBuilder.idOf("a")).isEmpty());
         // Task 2 is still task 2, and deleting task 1 again says that it is gone
         assertEquals("Delete task: Second? Type 'task delete 2 confirm' to proceed.",
                 new TaskDeleteCommand(INDEX_SECOND_PERSON, false).execute(model).getFeedbackToUser());

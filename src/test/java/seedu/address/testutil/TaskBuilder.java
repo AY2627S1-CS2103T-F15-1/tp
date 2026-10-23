@@ -1,5 +1,6 @@
 package seedu.address.testutil;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -15,7 +16,9 @@ public class TaskBuilder {
 
     public static final String DEFAULT_DESCRIPTION = "Call parent";
 
-    private String id = "task-1";
+    public static final UUID DEFAULT_ID = idOf("task-1");
+
+    private UUID id = DEFAULT_ID;
     private String description = DEFAULT_DESCRIPTION;
     private LocalDate due;
     private boolean isDone;
@@ -26,10 +29,20 @@ public class TaskBuilder {
     /** Creates a {@code TaskBuilder} for an open task about Alice without a due date. */
     public TaskBuilder() {}
 
+    /** Returns the same id for the same {@code label}, so that tests can name their tasks. */
+    public static UUID idOf(String label) {
+        return UUID.nameUUIDFromBytes(label.getBytes(StandardCharsets.UTF_8));
+    }
+
     /** Sets the permanent id of the {@code Task} that we are building. */
-    public TaskBuilder withId(String id) {
+    public TaskBuilder withId(UUID id) {
         this.id = id;
         return this;
+    }
+
+    /** Sets the permanent id of the {@code Task} to the one that {@link #idOf(String)} gives {@code label}. */
+    public TaskBuilder withId(String label) {
+        return withId(idOf(label));
     }
 
     /** Sets the description of the {@code Task} that we are building. */
