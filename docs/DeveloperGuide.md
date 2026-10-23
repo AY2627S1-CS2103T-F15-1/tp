@@ -316,11 +316,11 @@ The current ModelManager implementation adds three fields.
 * `lastState` is used to restore the destructive action after an `undo` call.
 * `newState` is used to check if actions have actually changed the state, and to reset `lastDestructiveAction` if so, disabling `undo`. This prevents multiple changes from inadvertently being removed at once with `undo`.
 
-`lastState` and `newState` are updated on each destructive action using `wrapDestructiveAction`, as shown below.
+`lastState`, `newState`, and `lastDestructiveAction` are updated on each destructive action using `wrapDestructiveAction`, as shown below.
 
 <puml src="diagrams/UndoCurrentImplementationWrapperSequenceDiagram.puml" alt="Sequence diagram for destructive action supporting Undo" />
 
-This wrapper keeps `lastState` and `newState` consistent and ensures that the state is only saved if the destructive action succeeds.
+This wrapper keeps `lastState`, `newState`, and `lastDestructiveAction` consistent and ensures that the state is only saved if the destructive action succeeds.
 
 #### Proposed Implementation
 
