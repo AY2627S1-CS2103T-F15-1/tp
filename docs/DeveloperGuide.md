@@ -306,7 +306,21 @@ The activity diagram below shows what `delete INDEX [confirm]` does.
 
 <puml src="diagrams/DeleteStudentActivityDiagram.puml" alt="Activity Diagram for the `delete INDEX [confirm]` Command" />
 
-### \[Proposed\] Undo/redo feature
+### Undo/redo feature
+
+#### Current Implementation
+The current ModelManager implementation adds three fields.
+`lastState` and `newState` - store `AddressBook`s track of state before and after a destructive operation.
+`lastDestructiveAction` keeps track of the type of destructive action, for reporting to the user.
+
+* `lastState` is used to restore the destructive action after an `undo` call.
+* `newState` is used to check if actions have actually changed the state, and to reset `lastDestructiveAction` if so, disabling `undo`. This prevents multiple changes from inadvertently being removed at once with `undo`.
+
+`lastState`, `newState`, and `lastDestructiveAction` are updated on each destructive action using `wrapDestructiveAction`, as shown below.
+
+<puml src="diagrams/UndoCurrentImplementationWrapperSequenceDiagram.puml" alt="Sequence diagram for destructive action supporting Undo" />
+
+This wrapper keeps `lastState`, `newState`, and `lastDestructiveAction` consistent and ensures that the state is only saved if the destructive action succeeds.
 
 #### Proposed Implementation
 
