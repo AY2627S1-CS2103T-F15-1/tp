@@ -283,6 +283,68 @@ More sections are planned: dues from the ledger after `OVERDUE HOMEWORK` on the 
     * Pros: A new feature adds its section without editing `TodayCommand`.
     * Cons: The sections and their order are fixed, so for a few sections the extra class adds indirection without removing code.
 
+### Follow-up tasks
+
+A follow-up task (user story 31) is a short reminder, with an optional due date, that is about a student and,
+optionally, one of that student's lessons or homework items. The `task` commands (`add`, `list`, `edit`, `done`,
+`delete`) live in `logic/commands/Task*Command` and `logic/parser/Task*CommandParser`.
+
+**Model.** `Task` (in `model/task`) is immutable and holds a task id, a description (at most 200 printable
+characters), an optional due date, a done flag and its links: `studentId` (always present), and at most one of
+`lessonId` or `homeworkId`. All three links are the permanent UUIDs of `Person`, `Lesson` and `Homework`. A task never
+copies a name, phone number or lesson slot, so editing or renaming a student, moving, cancelling or rebooking a lesson
+and editing homework never changes what a task is about. This matters because TutorFlow lets a cancelled lesson and a
+new booking share the same slot: only the lesson UUID tells them apart. `Task#isAbout(Person | Lesson | Homework)` is a
+plain UUID comparison. `AddressBook` owns the list of tasks (task ids are unique) and exposes `addTask`, `findTask`, `setTask` and
+`removeTask`.
+
+**Cascade rules.** `AddressBook` is the only place that deletes tasks, so a task cannot be orphaned by a command:
+
+| Record removed | Tasks removed |
+|----------------|---------------|
+| Student (`delete`) | every task about the student, including those linked to the student's lessons or homework |
+| Lesson (`Model#deleteLesson`; no command calls it yet) | only tasks whose `lessonId` is that lesson. A rebooking in the same slot is a different lesson and keeps its tasks |
+| Homework (`hw delete`) | only tasks whose `homeworkId` is that item |
+| `clear confirm` | all tasks |
+
+Edits (`edit`, archiving a student, `lesson move`, `lesson cancel`, `hw edit`) leave tasks untouched, because the UUIDs do not
+change. `delete INDEX` counts the linked tasks in its confirmation prompt, using the same list of linked-record counts
+as lessons, so a later feature adds one more count instead of a new message.
+
+**Storage.** Tasks are saved in an optional top-level `tasks` array of `JsonAdaptedTask`, beside `persons`, `lessons`,
+`homework` and `ledgerEntries`. A file without `tasks` (schema 16 or older) loads with no tasks. Adding the array bumped
+`StorageSchema.CURRENT_VERSION` to 17, so that a build that stops at schema 16 refuses a schema 17 file rather than loading it
+without the tasks and then deleting them on its next save.
+
+```json
+{
+  "tasks": [
+    {
+      "id": "6f1c9d52-0f6e-4c0e-9c0a-1f2f4a1f7b11",
+      "description": "Send past paper to parent",
+      "due": "2026-11-02",
+      "done": false,
+      "studentId": "0d1a1d0e-3c52-4a52-8b4e-6b6e5f3b7a10",
+      "lessonId": "b2d0f0f3-6b34-4a27-9f6a-3f1f2f6d9c21"
+    }
+  ]
+}
+```
+
+`done`, `due`, `lessonId` and `homeworkId` may be omitted. `JsonSerializableAddressBook#toModelType` rejects the data
+file as invalid if a task id is duplicated, a link is not a UUID, or a
+task has both a lesson and a homework link. A task whose link does not resolve (the student, lesson or homework is missing,
+or a lesson or homework item belongs to another student) is stale: it is skipped and logged, without its text, instead of
+rejecting the whole file, because AddressBook already deletes the tasks of a record that is deleted. Tasks from an earlier development build that
+stored a student name and phone instead of ids are not migrated.
+
+**Selection by index.** `task add lesson/N` and `hw/N` use the numbering of the last `lesson list`/`agenda` and
+`hw list`, exactly like the lesson and homework commands, and store the UUID of the row that was shown. `task
+list` numbers the tasks it displays, and `task edit|done|delete N` use that numbering. `pay/N` is parsed but rejected
+until a payment list exists to number against; the model has no payment link yet.
+
+**Not in this feature.** Undo of task commands (spec section 4.36) is part of the undo work, not of the task commands.
+
 ### Homework status and deletion
 
 Homework commands take a number from the last `hw list`. `HomeworkCommandSupport#target` resolves that number against the snapshot that `Model#getDisplayedHomework()` returns, and then finds the item again in the address book by its id, so a number never selects another item.
@@ -291,13 +353,13 @@ The sequence diagram below shows `execute("hw status 2 s/submitted")`.
 
 <puml src="diagrams/HomeworkStatusSequenceDiagram.puml" alt="Interactions Inside the Logic, Model and Storage Components for the `hw status 2 s/submitted` Command" />
 
-The activity diagram below shows what `hw delete INDEX [confirm]` does. Homework that has feedback is only deleted when `confirm` is given.
+The activity diagram below shows what `hw delete INDEX [confirm]` does. Homework that has feedback or linked follow-up tasks is only deleted when `confirm` is given.
 
 <puml src="diagrams/HomeworkDeleteActivityDiagram.puml" alt="Activity Diagram for the `hw delete INDEX [confirm]` Command" />
 
 ### Archiving and deleting students
 
-`archive INDEX` and `restore INDEX` replace a student with a copy whose archived flag is changed, so the lessons and homework of the student are kept. The default student list hides archived students. `delete INDEX` removes a student together with their lessons, homework and financial events, and asks for `confirm` first when the student has any.
+`archive INDEX` and `restore INDEX` replace a student with a copy whose archived flag is changed, so the lessons and homework of the student are kept. The default student list hides archived students. `delete INDEX` removes a student together with their lessons, homework, financial events and follow-up tasks, and asks for `confirm` first when the student has any.
 
 The sequence diagram below shows `execute("archive 1")`.
 
@@ -472,7 +534,6 @@ Integration follow-ups before full alpha sign-off:
 * Finance: implement the running account statement in specification section 4.29.
 * Lesson move/cancel and series cancellation (#142): check active charges before changing a billed lesson.
   Preserve lesson and series UUIDs across every copy operation.
-* Task integration: include linked task counts in student deletion once the task domain is implemented.
 
 `LogicManager(Model, Storage, Clock)` passes a shared date source to the finance and relevant lesson
 parsers/commands. Interactive constructors default to the system clock. Finance workflow tests use a
@@ -1100,7 +1161,7 @@ Equal cancelled lessons remain separate records and exact-ID lookup chooses the 
 All domain extensions must update `ReadOnlyAddressBook`, `AddressBook.resetData` and its copy
 constructor/equality, the real JSON root/adapters, and focused round-trip tests together.
 `Storage.snapshotAddressBook` uses that exact persisted representation for dirty detection,
-so UI-only equality must never decide whether a write is required. Schema 16 is written to
+so UI-only equality must never decide whether a write is required. Schema 17 is written to
 `tutorflow-v14.json`; `VersionedAddressBookStorage` reads legacy data only when the current
 path is positively absent. The logic constructor's initial-save flag explicitly persists
 migrated IDs even before a command mutates the model. Failed initial writes remain dirty.
@@ -1109,9 +1170,9 @@ precreates the current destination, so an interrupted first save leaves legacy f
 on restart. The storage writeSnapshot seam passes the actual serialized bytes to this writer.
 Unreadable source protection is retained until positive absence or successful preservation.
 
-`StorageSchema.MINIMUM_VERSION` and `CURRENT_VERSION` centralize the supported range (14 through 16 now).
+`StorageSchema.MINIMUM_VERSION` and `CURRENT_VERSION` centralize the supported range (14 through 17 now).
 The shared `tutorflow-v14.json` path stays fixed as later domains are added. Homework uses
-schema 15; finance uses schema 16, and workflows must advance it to 17. Each build accepts unversioned legacy
+schema 15, finance uses schema 16 and follow-up tasks use schema 17; the next domain must advance it to 18. Each build accepts unversioned legacy
 data and versions 14 through its current version, with explicit defaults for missing older fields.
 Add prior-version loading and future-version refusal tests alongside each schema increment.
 

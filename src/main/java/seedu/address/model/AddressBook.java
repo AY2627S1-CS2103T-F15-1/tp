@@ -26,11 +26,15 @@ import seedu.address.model.lesson.LessonStatus;
 import seedu.address.model.lesson.UniqueLessonList;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.UniquePersonList;
+import seedu.address.model.task.Task;
 
 /**
  * Wraps all data at the address-book level.
  * Duplicates are not allowed (by .isSamePerson comparison for persons and .isSameLesson comparison for lessons).
  * A lesson belongs to a person, so deleting or editing a person also updates that person's lessons.
+ * A task is about a person and optionally one of their lessons or homework items, by permanent id, so deleting any
+ * of them also deletes the tasks about it, while editing them leaves the tasks as they are.
+ * Tasks may have the same text, but never the same id.
  */
 public class AddressBook implements ReadOnlyAddressBook {
 
@@ -38,6 +42,8 @@ public class AddressBook implements ReadOnlyAddressBook {
 
     private final UniquePersonList persons = new UniquePersonList();
     private final UniqueLessonList lessons = new UniqueLessonList();
+    private final ObservableList<Task> tasks = FXCollections.observableArrayList();
+    private final ObservableList<Task> unmodifiableTasks = FXCollections.unmodifiableObservableList(tasks);
     private final ObservableList<LedgerEntry> ledgerEntries = FXCollections.observableArrayList();
     private final ObservableList<LedgerEntry> unmodifiableLedgerEntries =
             FXCollections.unmodifiableObservableList(ledgerEntries);
@@ -46,7 +52,7 @@ public class AddressBook implements ReadOnlyAddressBook {
     public AddressBook() {}
 
     /**
-     * Creates an AddressBook using the Persons and Lessons in the {@code toBeCopied}
+     * Creates an AddressBook using the Persons, Lessons and Tasks in the {@code toBeCopied}
      */
     public AddressBook(ReadOnlyAddressBook toBeCopied) {
         this();
@@ -72,16 +78,45 @@ public class AddressBook implements ReadOnlyAddressBook {
     }
 
     /**
+     * Replaces the contents of the task list with {@code tasks}.
+     * {@code tasks} must not contain two tasks with the same id.
+     */
+    public void setTasks(List<Task> tasks) {
+        requireNonNull(tasks);
+        List<Task> replacement = List.copyOf(tasks);
+        validateTasks(replacement);
+        this.tasks.setAll(replacement);
+    }
+
+    /**
+     * Checks that no two of the given {@code tasks} share an id, without changing any data.
+     *
+     * @throws IllegalArgumentException if two tasks have the same id.
+     */
+    private static void validateTasks(List<Task> tasks) {
+        Set<UUID> ids = new HashSet<>();
+        for (Task task : tasks) {
+            if (!ids.add(task.getId())) {
+                throw new IllegalArgumentException("Two tasks cannot have the same id.");
+            }
+        }
+    }
+
+    /**
      * Resets the existing data of this {@code AddressBook} with {@code newData}.
      */
     public void resetData(ReadOnlyAddressBook newData) {
         requireNonNull(newData);
 
+        // Copy and validate everything first, so that a rejected replacement leaves this address book unchanged
         List<LedgerEntry> replacementEntries = List.copyOf(newData.getLedgerEntries());
+        List<Task> replacementTasks = List.copyOf(newData.getTaskList());
         validateLedgerEntries(newData.getPersonList(), newData.getLessonList(), replacementEntries);
+        validateTasks(replacementTasks);
         setPersons(newData.getPersonList());
         setLessons(newData.getLessonList());
         ledgerEntries.setAll(replacementEntries);
+        tasks.setAll(replacementTasks);
         homework.setAll(newData.getHomeworkList());
     }
 
@@ -128,6 +163,9 @@ public class AddressBook implements ReadOnlyAddressBook {
         if (hasRemovedLessons) {
             logger.fine("Removed linked lessons");
         }
+        if (tasks.removeIf(task -> task.isAbout(key))) {
+            logger.fine("Removed linked tasks");
+        }
     }
 
     /**
@@ -173,6 +211,7 @@ public class AddressBook implements ReadOnlyAddressBook {
         requireNonNull(target);
         requireNonNull(editedLesson);
         requireSameLessonId(target, editedLesson);
+        // Tasks refer to the permanent lesson id, so moving, cancelling or rebooking never changes what they are about
         lessons.setLesson(target, editedLesson);
     }
 
@@ -223,6 +262,56 @@ public class AddressBook implements ReadOnlyAddressBook {
                     "Cannot delete a billed lesson. Its financial history must be retained.");
         }
         lessons.remove(key);
+        // Only the tasks of this very lesson go, not those of another lesson that shares its slot
+        tasks.removeIf(task -> task.isAbout(stored));
+    }
+
+    //// task-level operations
+
+    /**
+     * Adds a task to the address book.
+     * No task with the same id may exist.
+     */
+    public void addTask(Task task) {
+        requireNonNull(task);
+        if (findTask(task.getId()).isPresent()) {
+            throw new IllegalArgumentException("Two tasks cannot have the same id.");
+        }
+        tasks.add(task);
+    }
+
+    /**
+     * Returns the task with the given {@code id}, or empty if it has been deleted.
+     */
+    public Optional<Task> findTask(UUID id) {
+        requireNonNull(id);
+        return tasks.stream().filter(task -> task.getId().equals(id)).findFirst();
+    }
+
+    /**
+     * Replaces the given task {@code target} with {@code editedTask}, which must have the same id.
+     * {@code target} must exist in the address book.
+     */
+    public void setTask(Task target, Task editedTask) {
+        requireNonNull(editedTask);
+        if (!target.getId().equals(editedTask.getId())) {
+            throw new IllegalArgumentException("An edited task must keep its id.");
+        }
+        int index = tasks.indexOf(target);
+        if (index < 0) {
+            throw new IllegalArgumentException("The task to replace does not exist.");
+        }
+        tasks.set(index, editedTask);
+    }
+
+    /**
+     * Removes {@code key} from this {@code AddressBook}.
+     * {@code key} must exist in the address book.
+     */
+    public void removeTask(Task key) {
+        if (!tasks.remove(key)) {
+            throw new IllegalArgumentException("The task to remove does not exist.");
+        }
     }
 
     /**
@@ -322,6 +411,9 @@ public class AddressBook implements ReadOnlyAddressBook {
         if (!homework.remove(target)) {
             throw new IllegalArgumentException("Homework no longer exists.");
         }
+        if (tasks.removeIf(task -> task.isAbout(target))) {
+            logger.fine("Removed linked tasks");
+        }
     }
 
     /** Rejects duplicate identities, duplicate assignments, and dangling student links. */
@@ -356,6 +448,7 @@ public class AddressBook implements ReadOnlyAddressBook {
                 .add("persons", persons)
                 .add("lessons", lessons)
                 .add("ledgerEntries", ledgerEntries)
+                .add("tasks", tasks)
                 .toString();
     }
 
@@ -367,6 +460,11 @@ public class AddressBook implements ReadOnlyAddressBook {
     @Override
     public ObservableList<Lesson> getLessonList() {
         return lessons.asUnmodifiableObservableList();
+    }
+
+    @Override
+    public ObservableList<Task> getTaskList() {
+        return unmodifiableTasks;
     }
 
     @Override
@@ -388,11 +486,12 @@ public class AddressBook implements ReadOnlyAddressBook {
         return persons.equals(otherAddressBook.persons)
                 && lessons.equals(otherAddressBook.lessons)
                 && homework.equals(otherAddressBook.homework)
-                && ledgerEntries.equals(otherAddressBook.ledgerEntries);
+                && ledgerEntries.equals(otherAddressBook.ledgerEntries)
+                && tasks.equals(otherAddressBook.tasks);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(persons, lessons, homework, ledgerEntries);
+        return Objects.hash(persons, lessons, homework, ledgerEntries, tasks);
     }
 }

@@ -115,6 +115,7 @@ public class AddressBookParser {
                 yield new TodayCommand(LocalDate.now(clock));
             }
             case LessonCommandParser.COMMAND_WORD -> new LessonCommandParser(clock).parse(arguments);
+            case TaskCommandParser.COMMAND_WORD -> new TaskCommandParser(clock).parse(arguments);
             case ExitCommand.COMMAND_WORD -> {
                 requireNoArguments(commandWord, arguments);
                 yield new ExitCommand();

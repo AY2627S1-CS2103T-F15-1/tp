@@ -30,7 +30,7 @@ For power-users, TutorFlow can help you manage your students and lessons faster 
 
    * `delete 3` : Deletes the 3rd student shown in the current list.
 
-   * `clear confirm` : Deletes all students and lessons.
+   * `clear confirm` : Deletes all students, lessons, homework, follow-up tasks and charge/payment records.
 
    * `exit` : Exits the app.
 
@@ -201,8 +201,8 @@ Format: `delete INDEX [confirm]`
 * Deletes the student at the specified `INDEX`.
 * The index refers to the index number shown in the displayed student list.
 * The index **must be a positive integer** 1, 2, 3, ...
-* A student with no lessons or homework is deleted immediately.
-* Deleting a student also deletes **all of their lessons and homework**, including feedback, and this cannot be undone. If the student has linked records, TutorFlow shows their name, phone number, linked counts, and upcoming commitments, and asks you to repeat the command with `confirm`.
+* A student with no lessons, no homework and no [follow-up tasks](#adding-a-follow-up-task-task-add) is deleted immediately.
+* Deleting a student also deletes **all of their lessons, homework (including feedback) and follow-up tasks**, and this cannot be undone. If the student has any linked records, TutorFlow does not delete anything yet. It shows the student's name, phone number, linked counts and, if there are any, a warning about upcoming lessons and commitments, and asks you to repeat the command with `confirm`.
 * The keyword `confirm` is in lower case.
 
 Examples:
@@ -406,6 +406,75 @@ Examples:
 * `agenda` followed by `lesson missed 1` marks today's 1st displayed lesson as missed.
 * `lesson list st/1 all/` followed by `lesson missed 2` marks the 2nd displayed lesson as missed, provided it is scheduled for today or earlier.
 
+### Adding a follow-up task: `task add`
+
+Keeps a to-do attached to the student or the lesson that it is about, so that you do not forget it.
+
+Format: `task add st/INDEX|lesson/INDEX|hw/INDEX|pay/INDEX desc/TEXT [due/DATE]`
+
+* Give **exactly one** link. `st/INDEX` takes a number from the displayed student list. `lesson/INDEX` takes a lesson number from the last `agenda` or `lesson list`.
+* `hw/INDEX` takes a homework number from the last `hw list`. If that homework was deleted since, TutorFlow says so instead of picking another item. `pay/INDEX` is accepted for the final command format, but payments cannot be listed yet, so it answers `Invalid payment index. Run 'pay list' first.`
+* `TEXT` is 1 to 200 characters on one line.
+* `DATE` is written as for [`lesson add`](#scheduling-a-lesson-lesson-add). It is optional, and a task without one is shown as `(no due date)`. A due date must be today or later (`today` and `tmr` work), otherwise TutorFlow answers `Due dates must be today or later.`
+* Two tasks may have the same text. That is not a duplicate.
+* A task is linked to its student, lesson or homework by their permanent identifiers, not by name, phone or time. Editing a student, moving, cancelling or rebooking a lesson, or editing homework never changes what a task is about, and a new booking in the slot of a cancelled lesson does not take over that lesson's tasks. When a student, a lesson or a homework item is deleted, the tasks about it are deleted with it.
+
+Examples:
+* `task add st/1 desc/Call parent due/2026-12-01` adds a task to the 1st student, due on 1 December 2026.
+* `task add lesson/1 desc/Prepare mock paper` adds a task to the 1st lesson in the current agenda.
+
+### Listing tasks: `task list`
+
+Shows the tasks that still have to be done.
+
+Format: `task list [all/] [st/INDEX]`
+
+* By default, only open tasks are shown, with the earliest due date first and the tasks without a due date last. With `all/`, completed tasks are shown as well.
+* `st/INDEX` limits the list to the tasks of one student, including the tasks about that student's lessons.
+* Each row shows the status, the text, the due date, the student, and what the task is about (the student, or the lesson as it now reads, with its current status).
+* The task numbers stay **fixed until the next `task list`**: completing or deleting a task does not renumber the others.
+
+Examples:
+* `task list` shows the open tasks.
+* `task list all/ st/2` shows every task, open or done, of the 2nd student.
+
+### Editing a task: `task edit`
+
+Changes the text, and optionally the due date, of a task.
+
+Format: `task edit INDEX desc/TEXT [due/DATE|due/-]`
+
+* `INDEX` is the task number from the last `task list`.
+* `desc/` is always needed. Leave out `due/` to keep the due date, give a date (today or later) to change it, or write `due/-` to remove it.
+* Whether a task is done, and what it is about, do not change.
+
+Examples:
+* `task edit 1 desc/Call parent again due/-` changes the text of task 1 and removes its due date.
+
+### Completing a task: `task done`
+
+Marks a task as done. It stays in the history, which `task list all/` shows.
+
+Format: `task done INDEX`
+
+* `INDEX` is the task number from the last `task list`. A task that is already done answers `That task is already done.`
+
+Examples:
+* `task done 1`
+
+### Deleting a task: `task delete`
+
+Deletes a task for good.
+
+Format: `task delete INDEX [confirm]`
+
+* `INDEX` is the task number from the last `task list`.
+* Without `confirm`, TutorFlow only asks you to repeat the command with `confirm` and deletes nothing.
+* If the task was already deleted, TutorFlow says `That task was deleted. Run 'task list' to refresh.`
+
+Examples:
+* `task delete 1` asks for confirmation, and `task delete 1 confirm` then deletes task 1.
+
 ### Recording a payment: `pay`
 
 Records money received from a student and shows the updated outstanding balance or credit.
@@ -471,7 +540,7 @@ Format: `clear confirm`
 * Clearing data that is already empty works and does nothing.
 
 Examples:
-* `clear` shows `This deletes ALL students, lessons, homework and charge/payment records. Type 'clear confirm' to proceed.`
+* `clear` shows `This deletes ALL students, lessons, homework, follow-up tasks and charge/payment records. Type 'clear confirm' to proceed.`
 * `clear confirm` deletes everything.
 
 ### Exiting the program: `exit`
@@ -559,6 +628,8 @@ Action     | Format, Examples
 **Lesson cancel** | `lesson cancel INDEX [r/REASON]`<br> e.g., `lesson cancel 1 r/Student unwell`
 **Lesson done** | `lesson done INDEX [n/NOTES]`<br> e.g., `lesson done 1 n/Covered quadratic roots`
 **Lesson missed** | `lesson missed INDEX`<br> e.g., `lesson missed 1`
+* A student with no lessons and no [follow-up tasks](#adding-a-follow-up-task-task-add) is deleted immediately.
+* Deleting a student also deletes **all of their lessons and follow-up tasks**, and this cannot be undone. If the student has any lessons or tasks, TutorFlow does not delete anything yet. It shows the student's name, phone number, number of lessons and tasks and, if there are any, a warning about upcoming lessons, and asks you to repeat the command with `confirm`.
 
 
 ## Student continuity in v1.4 alpha
@@ -628,7 +699,8 @@ Numbers are session-local, so display a new list after restarting.
   new work. Use `student list archived/` then `hw list st/INDEX` to inspect their full history.
 * `view INDEX` includes outstanding homework; `today` and the startup dashboard include overdue
   homework. These summaries do not change the numbered homework selection.
-* Homework deletion requires `confirm` when feedback exists. Student deletion reports linked
+* Homework deletion requires `confirm` when feedback or linked follow-up tasks exist, because
+  deleting the homework also deletes its tasks. Student deletion reports linked
   homework and upcoming outstanding homework counts and requires confirmation. Confirmed student
   deletion removes its homework and feedback; `clear confirm` removes all homework as well.
 * A failed save retains the change and the same numbered selection in this session. Fix the write
@@ -644,9 +716,9 @@ v1.4 writes `data/tutorflow-v14.json`. If this file is absent, it reads legacy
 `data/addressbook.json`, assigns stable internal student and lesson identifiers, and saves
 an initial v1.4 copy. The legacy file remains untouched so an older application cannot erase
 v1.4 fields. If both files exist, the v1.4 file takes precedence. Keep both in your backup.
-This finance alpha writes schema 16 and accepts unversioned legacy files plus schemas 14 through 16.
-Older files without homework or a ledger start with empty records for those features. Older builds
-refuse schema 16, protecting charges and payments from being dropped when saving.
+This alpha writes schema 17 and accepts unversioned legacy files plus schemas 14 through 17.
+Older files without homework, a ledger or follow-up tasks start with empty records for those features. Older builds
+refuse schema 17, protecting follow-up tasks (and any charges and payments) from being dropped when saving.
 An unsupported schema version stops startup and leaves the original file in place. Open that data
 with a compatible TutorFlow build, or restore a backup made by your installed build. An older alpha
 cannot open data saved by a newer alpha that added data fields. Invalid files use the recovery flow

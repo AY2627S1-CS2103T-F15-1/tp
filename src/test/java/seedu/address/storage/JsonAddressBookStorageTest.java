@@ -14,6 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.UUID;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -24,6 +25,7 @@ import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.testutil.PersonBuilder;
+import seedu.address.testutil.TaskBuilder;
 
 public class JsonAddressBookStorageTest {
     private static final Path TEST_DATA_FOLDER = Paths.get("src", "test", "data", "JsonAddressBookStorageTest");
@@ -129,6 +131,43 @@ public class JsonAddressBookStorageTest {
         assertThrows(DataLoadingException.class, () -> new JsonAddressBookStorage(file).readAddressBook());
 
         assertEquals(invalidJson, Files.readString(file));
+    }
+
+    @Test
+    public void readAddressBook_taskWithAnExistingStudent_loadsTheTask() throws Exception {
+        Path file = testFolder.resolve("tasks.json");
+        AddressBook original = getTypicalAddressBook();
+        original.addTask(new TaskBuilder().withId("t").withStudent(ALICE).build());
+        new JsonAddressBookStorage(file).saveAddressBook(original);
+
+        AddressBook read = new AddressBook(new JsonAddressBookStorage(file).readAddressBook().get());
+
+        assertEquals(original, read);
+        assertTrue(read.getTaskList().get(0).isAbout(ALICE));
+    }
+
+    @Test
+    public void readAddressBook_orphanTaskInDataFile_isSkippedAndTheFileStillLoads() throws Exception {
+        Path file = testFolder.resolve("orphan.json");
+        AddressBook original = getTypicalAddressBook();
+        original.addTask(new TaskBuilder().withId("t").withStudent(ALICE).build());
+        new JsonAddressBookStorage(file).saveAddressBook(original);
+
+        // the tasks are the last list in the file, so the last use of Alice's id is the one in her task
+        String json = Files.readString(file);
+        String aliceId = ALICE.getId().toString();
+        int inTask = json.lastIndexOf(aliceId);
+        assertTrue(inTask > json.indexOf(aliceId));
+        String orphanJson = json.substring(0, inTask) + UUID.randomUUID() + json.substring(inTask + aliceId.length());
+        Files.writeString(file, orphanJson);
+
+        // one stale task no longer makes the app set aside the whole data file
+        AddressBook read = new AddressBook(new JsonAddressBookStorage(file).readAddressBook().get());
+
+        assertTrue(read.getTaskList().isEmpty());
+        assertEquals(getTypicalAddressBook().getPersonList(), read.getPersonList());
+        assertEquals(orphanJson, Files.readString(file));
+        assertFalse(Files.exists(testFolder.resolve("orphan.json.corrupt")));
     }
 
     @Test
