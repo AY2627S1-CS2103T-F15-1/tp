@@ -16,7 +16,7 @@ public class TravelCommandParser implements Parser<TravelCommand> {
         arguments.verifyNoEmptyValuesFor(PREFIX_BUFFER);
         String value = arguments.getValue(PREFIX_BUFFER).orElseThrow();
         if (!value.matches("[0-9]+")) {
-            throw new ParseException(TravelCommand.MESSAGE_USAGE);
+            throw new ParseException(TravelGap.MESSAGE_CONSTRAINTS);
         }
         try {
             int minutes = Integer.parseInt(value);
@@ -24,8 +24,8 @@ public class TravelCommandParser implements Parser<TravelCommand> {
                 return new TravelCommand(minutes);
             }
         } catch (NumberFormatException e) {
-            throw new ParseException(TravelCommand.MESSAGE_USAGE);
+            throw new ParseException(TravelGap.MESSAGE_CONSTRAINTS);
         }
-        throw new ParseException(TravelCommand.MESSAGE_USAGE);
+        throw new ParseException(TravelGap.MESSAGE_CONSTRAINTS);
     }
 }

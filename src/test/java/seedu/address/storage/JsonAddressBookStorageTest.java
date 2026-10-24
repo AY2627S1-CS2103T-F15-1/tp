@@ -14,14 +14,18 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.UUID;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.testutil.PersonBuilder;
+import seedu.address.testutil.TaskBuilder;
 
 public class JsonAddressBookStorageTest {
     private static final Path TEST_DATA_FOLDER = Paths.get("src", "test", "data", "JsonAddressBookStorageTest");
@@ -84,6 +88,42 @@ public class JsonAddressBookStorageTest {
         assertInvalidJsonIsRejected("{\"persons\":[{\"subjects\":[null]}]}");
     }
 
+    @Test
+    public void isAccessFailure_separatesAFileThatCannotBeOpenedFromInvalidContent() throws Exception {
+        Path folder = testFolder.resolve("a-folder.json");
+        Files.createDirectory(folder);
+
+        Executable readFolder = () -> new JsonAddressBookStorage(folder).readAddressBook();
+
+        DataLoadingException unopened = Assertions.assertThrows(DataLoadingException.class, readFolder);
+
+        assertTrue(JsonAddressBookStorage.isAccessFailure(unopened));
+        for (String content : new String[] {"null", "{ not json", "", "[]", "{\"persons\":[null]}",
+            "{\"schemaVersion\":99}"}) {
+            Path file = testFolder.resolve("content.json");
+            Files.writeString(file, content);
+            Executable readFile = () -> new JsonAddressBookStorage(file).readAddressBook();
+            DataLoadingException invalid = Assertions.assertThrows(DataLoadingException.class, readFile);
+            assertFalse(JsonAddressBookStorage.isAccessFailure(invalid), "content: " + content);
+        }
+    }
+
+    @Test
+    public void saveAddressBook_afterTheFileCouldNotBeOpened_refusesAndLeavesItAlone() throws Exception {
+        Path folder = testFolder.resolve("a-folder.json");
+        Files.createDirectory(folder);
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(folder);
+        assertThrows(DataLoadingException.class, storage::readAddressBook);
+
+        Executable save = () -> storage.saveAddressBook(new AddressBook());
+
+        IOException refused = Assertions.assertThrows(IOException.class, save);
+
+        assertEquals(String.format(DataFileRecovery.MESSAGE_NOT_OPENED_SAVE, folder), refused.getMessage());
+        assertTrue(Files.isDirectory(folder));
+        assertFalse(Files.exists(testFolder.resolve("a-folder.json.corrupt")));
+    }
+
     private void assertInvalidJsonIsRejected(String invalidJson) throws Exception {
         Path file = testFolder.resolve("invalid.json");
         Files.writeString(file, invalidJson);
@@ -91,6 +131,43 @@ public class JsonAddressBookStorageTest {
         assertThrows(DataLoadingException.class, () -> new JsonAddressBookStorage(file).readAddressBook());
 
         assertEquals(invalidJson, Files.readString(file));
+    }
+
+    @Test
+    public void readAddressBook_taskWithAnExistingStudent_loadsTheTask() throws Exception {
+        Path file = testFolder.resolve("tasks.json");
+        AddressBook original = getTypicalAddressBook();
+        original.addTask(new TaskBuilder().withId("t").withStudent(ALICE).build());
+        new JsonAddressBookStorage(file).saveAddressBook(original);
+
+        AddressBook read = new AddressBook(new JsonAddressBookStorage(file).readAddressBook().get());
+
+        assertEquals(original, read);
+        assertTrue(read.getTaskList().get(0).isAbout(ALICE));
+    }
+
+    @Test
+    public void readAddressBook_orphanTaskInDataFile_isSkippedAndTheFileStillLoads() throws Exception {
+        Path file = testFolder.resolve("orphan.json");
+        AddressBook original = getTypicalAddressBook();
+        original.addTask(new TaskBuilder().withId("t").withStudent(ALICE).build());
+        new JsonAddressBookStorage(file).saveAddressBook(original);
+
+        // the tasks are the last list in the file, so the last use of Alice's id is the one in her task
+        String json = Files.readString(file);
+        String aliceId = ALICE.getId().toString();
+        int inTask = json.lastIndexOf(aliceId);
+        assertTrue(inTask > json.indexOf(aliceId));
+        String orphanJson = json.substring(0, inTask) + UUID.randomUUID() + json.substring(inTask + aliceId.length());
+        Files.writeString(file, orphanJson);
+
+        // one stale task no longer makes the app set aside the whole data file
+        AddressBook read = new AddressBook(new JsonAddressBookStorage(file).readAddressBook().get());
+
+        assertTrue(read.getTaskList().isEmpty());
+        assertEquals(getTypicalAddressBook().getPersonList(), read.getPersonList());
+        assertEquals(orphanJson, Files.readString(file));
+        assertFalse(Files.exists(testFolder.resolve("orphan.json.corrupt")));
     }
 
     @Test

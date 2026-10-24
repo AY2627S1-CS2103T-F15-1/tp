@@ -11,7 +11,8 @@ public class LessonSeriesCancelCommandParser implements Parser<LessonSeriesCance
     public LessonSeriesCancelCommand parse(String args) throws ParseException {
         String[] words = args.strip().split("\\s+");
         if (words.length != 3 || !words[0].equals("cancel") || !words[2].equals("confirm")) {
-            throw new ParseException(LessonSeriesCancelCommand.MESSAGE_USAGE);
+            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT,
+                    LessonSeriesCancelCommand.MESSAGE_USAGE));
         }
         try {
             return new LessonSeriesCancelCommand(ParserUtil.parseIndex(words[1]));

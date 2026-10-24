@@ -3,12 +3,14 @@ package seedu.address.logic.parser;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -40,6 +42,12 @@ public class ParserUtil {
             + MAX_SUBJECTS_PER_STUDENT + " subjects.";
     public static final String MESSAGE_FLAG_TAKES_NO_VALUE = "The '%1$s' flag does not take a value.";
 
+    private static final String KEYWORD_TODAY = "today";
+    private static final String KEYWORD_TOMORROW = "tmr";
+    /** The word "s/o" ("son of"), which a name may contain although {@code s/} is the subject prefix. */
+    private static final Pattern SON_OF = Pattern.compile("(?<=\\s)s/o(?=\\s|$)");
+    private static final char SON_OF_MASK = '\uE000';
+
     /**
      * Parses {@code oneBasedIndex} into an {@code Index} and returns it. Leading and trailing whitespaces will be
      * trimmed.
@@ -51,6 +59,28 @@ public class ParserUtil {
             throw new ParseException(MESSAGE_INVALID_INDEX);
         }
         return Index.fromOneBased(Integer.parseInt(trimmedIndex));
+    }
+
+    /**
+     * Parses {@code oneBasedIndex} as {@link #parseIndex(String)} does, but reports an invalid index as an invalid
+     * command format that shows {@code usage}, as every command that takes an index does.
+     *
+     * @throws ParseException if the specified index is invalid (not a non-zero unsigned integer).
+     */
+    public static Index parseIndex(String oneBasedIndex, String usage) throws ParseException {
+        try {
+            return parseIndex(oneBasedIndex);
+        } catch (ParseException pe) {
+            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, usage), pe);
+        }
+    }
+
+    /**
+     * Returns the error for a command whose arguments are malformed: the invalid-format line followed by
+     * {@code usage}, as required for every known command.
+     */
+    public static ParseException invalidFormat(String usage) {
+        return new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, usage));
     }
 
     /**
@@ -188,6 +218,25 @@ public class ParserUtil {
      * @throws ParseException if the given {@code date} is invalid.
      */
     public static LessonDate parseDate(String date) throws ParseException {
+        return parseDate(date, LocalDate.now());
+    }
+
+    /**
+     * Parses a {@code String date} into a {@code LessonDate}, resolving the keywords {@code today} and {@code tmr}
+     * (in any letter case) against {@code today}. Leading and trailing whitespaces will be trimmed.
+     *
+     * @throws ParseException if the given {@code date} is invalid.
+     */
+    public static LessonDate parseDate(String date, LocalDate today) throws ParseException {
+        requireNonNull(date);
+        requireNonNull(today);
+        String keyword = date.strip();
+        if (keyword.equalsIgnoreCase(KEYWORD_TODAY)) {
+            return new LessonDate(today.toString());
+        }
+        if (keyword.equalsIgnoreCase(KEYWORD_TOMORROW)) {
+            return new LessonDate(today.plusDays(1).toString());
+        }
         return parseValue(date, LessonDate::isValidDate, LessonDate.MESSAGE_CONSTRAINTS, LessonDate::new);
     }
 
@@ -278,6 +327,20 @@ public class ParserUtil {
      */
     public static void requirePrefixesPresent(ArgumentMultimap argMultimap, String usage, Prefix... prefixes)
             throws ParseException {
+        requirePrefixesFound(argMultimap, usage, prefixes);
+        if (!argMultimap.getPreamble().isEmpty()) {
+            throw invalidFormat(usage);
+        }
+    }
+
+    /**
+     * Checks that every prefix in {@code prefixes} is present, and names each one that is not.
+     *
+     * @param usage the usage message of the command, shown with the error.
+     * @throws ParseException if a prefix is missing.
+     */
+    public static void requirePrefixesFound(ArgumentMultimap argMultimap, String usage, Prefix... prefixes)
+            throws ParseException {
         String missing = Stream.of(prefixes)
                 .filter(prefix -> argMultimap.getValue(prefix).isEmpty())
                 .map(Prefix::toString)
@@ -285,13 +348,24 @@ public class ParserUtil {
         if (!missing.isEmpty()) {
             throw new ParseException(String.format(MESSAGE_MISSING_PARAMETERS, missing, usage));
         }
-        if (!argMultimap.getPreamble().isEmpty()) {
-            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, usage));
-        }
+    }
+
+    /**
+     * Returns {@code arguments} with every stand-alone {@code s/o} hidden from the tokenizer, so that a name such as
+     * {@code Priya s/o Kumar} can be typed as written. Pass the values of the fields that may contain it through
+     * {@link #unmaskSonOf(String)}.
+     */
+    public static String maskSonOf(String arguments) {
+        return SON_OF.matcher(arguments).replaceAll("s" + SON_OF_MASK + "o");
+    }
+
+    /** Returns {@code value} with every {@code s/o} hidden by {@link #maskSonOf(String)} written out again. */
+    public static String unmaskSonOf(String value) {
+        return value.replace(SON_OF_MASK, '/');
     }
 
     /** Rejects non-printable text before trimming or whitespace normalization hides it. */
-    private static void requirePrintable(String value, String constraints) throws ParseException {
+    static void requirePrintable(String value, String constraints) throws ParseException {
         if (value.codePoints().anyMatch(character -> Character.isISOControl(character)
                 || character == '\u2028' || character == '\u2029')) {
             throw new ParseException(constraints);

@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.testutil.Assert.assertThrows;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.model.Model;
@@ -26,8 +28,10 @@ public class HelpCommandTest {
 
         assertTrue(message.startsWith(HelpCommand.MESSAGE_ALL_COMMANDS));
         for (String command : new String[] {"add", "edit", "delete", "list", "find", "view", "sort", "remark",
+            "lesson repeat",
             "lesson add", "lesson list", "lesson move", "lesson cancel", "lesson done", "lesson missed",
-            "lesson series cancel", "travel", "agenda", "today", "clear", "help", "exit"}) {
+            "lesson series cancel", "travel", "agenda", "today", "task add", "task list", "task edit",
+            "task done", "task delete", "clear", "help", "exit"}) {
             assertTrue(message.contains("\n  " + command + " "), command + " is missing from the list");
         }
         assertTrue(message.contains("Schedules a lesson"));
@@ -52,6 +56,7 @@ public class HelpCommandTest {
         assertHelpUsage(SortCommand.MESSAGE_USAGE, "sort");
         assertHelpUsage(RemarkCommand.MESSAGE_USAGE, "remark");
         assertHelpUsage(LessonAddCommand.MESSAGE_USAGE, "lesson add");
+        assertHelpUsage(LessonRepeatCommand.MESSAGE_USAGE, "lesson repeat");
         assertHelpUsage(LessonListCommand.MESSAGE_USAGE, "lesson list");
         assertHelpUsage(LessonMoveCommand.MESSAGE_USAGE, "lesson move");
         assertHelpUsage(LessonCancelCommand.MESSAGE_USAGE, "lesson cancel");
@@ -61,9 +66,27 @@ public class HelpCommandTest {
         assertHelpUsage(TravelCommand.MESSAGE_USAGE, "travel");
         assertHelpUsage(AgendaCommand.MESSAGE_USAGE, "agenda");
         assertHelpUsage(TodayCommand.MESSAGE_USAGE, "today");
+        assertHelpUsage(TaskAddCommand.MESSAGE_USAGE, "task add");
+        assertHelpUsage(TaskListCommand.MESSAGE_USAGE, "task list");
+        assertHelpUsage(TaskEditCommand.MESSAGE_USAGE, "task edit");
+        assertHelpUsage(TaskDoneCommand.MESSAGE_USAGE, "task done");
+        assertHelpUsage(TaskDeleteCommand.MESSAGE_USAGE, "task delete");
         assertHelpUsage(ClearCommand.MESSAGE_USAGE, "clear");
         assertHelpUsage(HelpCommand.MESSAGE_USAGE, "help");
         assertHelpUsage(ExitCommand.MESSAGE_USAGE, "exit");
+    }
+
+    @Test
+    public void execute_everyListedCommand_showsAnExampleBeyondItsUsageLine() throws Exception {
+        List<String> names = helpFor("").lines().filter(line -> line.startsWith("  "))
+                .map(line -> line.substring(2).split("  ", 2)[0].trim()).toList();
+
+        assertTrue(names.size() > 25, "the command list was not read: " + names);
+        for (String name : names) {
+            String help = helpFor(name);
+            assertTrue(help.contains("Example"), "help " + name + " has no example:\n" + help);
+            assertTrue(help.lines().count() >= 3, "help " + name + " is only a usage line:\n" + help);
+        }
     }
 
     @Test

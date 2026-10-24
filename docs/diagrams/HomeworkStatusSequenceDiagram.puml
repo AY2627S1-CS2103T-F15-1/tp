@@ -1,0 +1,105 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+
+box Logic LOGIC_COLOR_T1
+participant ":LogicManager" as LogicManager LOGIC_COLOR
+participant ":AddressBookParser" as AddressBookParser LOGIC_COLOR
+participant ":HomeworkCommandParser" as HomeworkCommandParser LOGIC_COLOR
+participant "s:HomeworkStatusCommand" as HomeworkStatusCommand LOGIC_COLOR
+participant "<<class>>\nHomeworkCommandSupport" as HomeworkCommandSupport LOGIC_COLOR
+end box
+
+box Model MODEL_COLOR_T1
+participant "<<enum>>\nHomeworkStatus" as HomeworkStatus MODEL_COLOR
+participant "m:Model" as Model MODEL_COLOR
+participant ":AddressBook" as AddressBook MODEL_COLOR
+participant "target:Homework" as Homework MODEL_COLOR
+end box
+
+box Storage STORAGE_COLOR_T1
+participant ":Storage" as Storage STORAGE_COLOR
+end box
+
+[-> LogicManager : execute("hw status 2 s/submitted")
+activate LogicManager
+
+LogicManager -> AddressBookParser : parseCommand("hw status 2 s/submitted")
+activate AddressBookParser
+
+AddressBookParser -> HomeworkCommandParser : parse(" status 2 s/submitted")
+activate HomeworkCommandParser
+
+HomeworkCommandParser -> HomeworkStatus : fromText("submitted")
+activate HomeworkStatus
+HomeworkStatus --> HomeworkCommandParser : SUBMITTED
+deactivate HomeworkStatus
+
+create HomeworkStatusCommand
+HomeworkCommandParser -> HomeworkStatusCommand : HomeworkStatusCommand(2, SUBMITTED)
+activate HomeworkStatusCommand
+HomeworkStatusCommand --> HomeworkCommandParser
+deactivate HomeworkStatusCommand
+
+HomeworkCommandParser --> AddressBookParser : s
+deactivate HomeworkCommandParser
+AddressBookParser --> LogicManager : s
+deactivate AddressBookParser
+
+LogicManager -> HomeworkStatusCommand : execute(m)
+activate HomeworkStatusCommand
+
+HomeworkStatusCommand -> HomeworkCommandSupport : target(m, 2)
+activate HomeworkCommandSupport
+
+HomeworkCommandSupport -> Model : getDisplayedHomework()
+activate Model
+Model --> HomeworkCommandSupport : rows shown by the last 'hw list'
+deactivate Model
+
+note right of HomeworkCommandSupport
+  The number selects a row of the
+  snapshot, and the row is then found
+  again in the address book by its id.
+end note
+
+HomeworkCommandSupport -> Model : getAddressBook()
+activate Model
+Model --> HomeworkCommandSupport : addressBook
+deactivate Model
+
+HomeworkCommandSupport -> AddressBook : getHomeworkList()
+activate AddressBook
+AddressBook --> HomeworkCommandSupport : homework, by id
+deactivate AddressBook
+
+HomeworkCommandSupport --> HomeworkStatusCommand : target
+deactivate HomeworkCommandSupport
+
+HomeworkStatusCommand -> Homework : withStatus(SUBMITTED)
+activate Homework
+Homework --> HomeworkStatusCommand : updated
+deactivate Homework
+
+HomeworkStatusCommand -> Model : setHomework(target, updated)
+activate Model
+
+Model -> AddressBook : setHomework(target, updated)
+activate AddressBook
+AddressBook --> Model
+deactivate AddressBook
+
+Model --> HomeworkStatusCommand
+deactivate Model
+
+HomeworkStatusCommand --> LogicManager : r
+deactivate HomeworkStatusCommand
+
+LogicManager -> Storage : saveAddressBook(addressBook)
+activate Storage
+Storage --> LogicManager
+deactivate Storage
+
+[<-- LogicManager : r
+deactivate LogicManager
+@enduml

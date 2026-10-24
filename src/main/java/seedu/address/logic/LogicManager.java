@@ -2,8 +2,10 @@ package seedu.address.logic;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Logger;
 
 import javafx.collections.ObservableList;
@@ -38,6 +40,7 @@ public class LogicManager implements Logic {
     private final Storage storage;
     private final AddressBookParser addressBookParser;
     private final String startupWarning;
+    private final Clock clock;
     private boolean dirty;
 
     /**
@@ -45,6 +48,11 @@ public class LogicManager implements Logic {
      */
     public LogicManager(Model model, Storage storage) {
         this(model, storage, "");
+    }
+
+    /** Shares a fixed date source with parsers and commands for deterministic workflow tests. */
+    public LogicManager(Model model, Storage storage, Clock clock) {
+        this(model, storage, "", false, clock);
     }
 
     /**
@@ -57,8 +65,14 @@ public class LogicManager implements Logic {
 
     /** Creates logic with an optional pending migration save. */
     public LogicManager(Model model, Storage storage, String startupWarning, boolean requiresInitialSave) {
+        this(model, storage, startupWarning, requiresInitialSave, Clock.systemDefaultZone());
+    }
+
+    /** Creates logic with explicit migration state and a shared date source. */
+    public LogicManager(Model model, Storage storage, String startupWarning, boolean requiresInitialSave, Clock clock) {
         this.model = model;
         this.storage = storage;
+        this.clock = Objects.requireNonNull(clock);
         String warning = startupWarning;
         if (requiresInitialSave) {
             dirty = true;
@@ -69,7 +83,7 @@ public class LogicManager implements Logic {
             }
         }
         this.startupWarning = warning;
-        addressBookParser = new AddressBookParser();
+        addressBookParser = new AddressBookParser(clock);
     }
 
     @Override
@@ -107,7 +121,7 @@ public class LogicManager implements Logic {
             try {
                 saveChanges();
             } catch (CommandException e) {
-                throw new CommandException(e.getMessage() + numbering, e);
+                throw new CommandException(e.getMessage() + numbering + "\n" + UNSAVED_WARNING, e);
             }
         }
         if (dirty) {
@@ -137,11 +151,15 @@ public class LogicManager implements Logic {
             storage.saveAddressBook(model.getAddressBook());
             dirty = false;
         } catch (AccessDeniedException e) {
-            throw new CommandException(String.format(FILE_OPS_PERMISSION_ERROR_FORMAT, e.getMessage()), e);
+            throw new CommandException(String.format(FILE_OPS_PERMISSION_ERROR_FORMAT, describe(e)), e);
         } catch (IOException ioe) {
-            throw new CommandException(String.format(FILE_OPS_ERROR_FORMAT, ioe.getMessage()), ioe);
+            throw new CommandException(String.format(FILE_OPS_ERROR_FORMAT, describe(ioe)), ioe);
         }
+    }
 
+    /** Returns the reason a write failed, naming the kind of failure if the exception gives no message. */
+    private static String describe(IOException e) {
+        return e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
     }
 
     @Override
@@ -151,7 +169,7 @@ public class LogicManager implements Logic {
 
     @Override
     public String getDashboard() {
-        return new TodayCommand(LocalDate.now()).execute(model).getFeedbackToUser();
+        return new TodayCommand(LocalDate.now(clock)).execute(model).getFeedbackToUser();
     }
 
     @Override

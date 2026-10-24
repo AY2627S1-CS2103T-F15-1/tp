@@ -13,24 +13,28 @@ import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
 import seedu.address.model.Model;
+import seedu.address.model.finance.Ledger;
+import seedu.address.model.homework.HomeworkQueries;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonDuration;
 import seedu.address.model.lesson.LessonStatus;
 
 /**
- * Shows what a day requires: the lessons that take place on it, and the past lessons that are still waiting to be
- * marked completed. It only reads the lessons, so the displayed lesson list is left unchanged.
+ * Shows what a day requires: the lessons that take place on it, the past lessons that are still waiting to be
+ * marked completed, the overdue homework and the students who owe money. It only reads the data, so the displayed
+ * lesson list is left unchanged.
  */
 public class TodayCommand extends Command {
 
     public static final String COMMAND_WORD = "today";
 
-    public static final String MESSAGE_USAGE = COMMAND_WORD + ": Shows today's lessons and the past lessons that are "
-            + "not yet marked completed.\n"
+    public static final String MESSAGE_USAGE = COMMAND_WORD + ": Shows what today requires: today's lessons, "
+            + "earlier lessons that are not yet marked completed, overdue homework and the students who owe money.\n"
             + "Example: " + COMMAND_WORD;
 
     public static final String MESSAGE_TODAY_HEADER = "TODAY'S LESSONS (%1$d, %2$s)";
     public static final String MESSAGE_AWAITING_NOTES_HEADER = "LESSONS AWAITING NOTES (%1$d)";
+    public static final String MESSAGE_DUES_HEADER = "DUES";
     public static final String MESSAGE_NO_LESSONS_TODAY = "  No lessons today.";
     public static final String MESSAGE_ALL_RECORDED = "  All past lessons are recorded.";
     public static final String MESSAGE_NOT_COMPLETED = "not yet marked completed";
@@ -72,7 +76,9 @@ public class TodayCommand extends Command {
         return new CommandResult(DATE_FORMAT.format(today)
                 + "\n\n" + formatLessonsToday(model, lessonsToday)
                 + LessonCommandUtil.getTravelWarnings(model, lesson -> lesson.getDate().value.equals(today), "  ")
-                + "\n\n" + formatLessonsAwaitingNotes(lessonsAwaitingNotes));
+                + "\n\n" + formatLessonsAwaitingNotes(lessonsAwaitingNotes)
+                + "\n\n" + HomeworkQueries.summary(model.getAddressBook(), null, true, today)
+                + "\n\n" + formatDues(model));
     }
 
     private static String formatLessonsToday(Model model, List<Lesson> lessons) {
@@ -105,6 +111,12 @@ public class TodayCommand extends Command {
                         PAST_DAY_FORMAT.format(lesson.getDate().value), lesson.getStudentName(),
                         lesson.getSubject(), MESSAGE_NOT_COMPLETED))
                 .collect(Collectors.joining());
+    }
+
+    private String formatDues(Model model) {
+        // The ledger starts the list with the heading only when somebody owes money, but an empty section keeps it
+        String dues = Ledger.formatDues(model.getAddressBook(), today);
+        return dues.startsWith(MESSAGE_DUES_HEADER + "\n") ? dues : MESSAGE_DUES_HEADER + "\n" + dues;
     }
 
     @Override

@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.TravelCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.lesson.TravelGap;
 
 public class TravelCommandParserTest {
     @Test
@@ -20,12 +21,12 @@ public class TravelCommandParserTest {
     }
 
     @Test
-    public void parse_invalidBuffer_rejectedWithUsage() {
+    public void parse_invalidBuffer_rejectedWithConstraints() {
         TravelCommandParser parser = new TravelCommandParser();
         for (String args : new String[]{"buffer/-1", "buffer/181", "buffer/1.5", "buffer/abc",
             "buffer/999999999999999999999999", "buffer/30 confirm"}) {
             ParseException error = assertThrows(ParseException.class, () -> parser.parse(args));
-            assertEquals(TravelCommand.MESSAGE_USAGE, error.getMessage());
+            assertEquals(TravelGap.MESSAGE_CONSTRAINTS, error.getMessage());
         }
     }
 
@@ -38,6 +39,8 @@ public class TravelCommandParserTest {
         assertError("buffer/30 buffer/40", Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_BUFFER));
         assertError("buffer/ buffer/40", Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_BUFFER));
         assertError("unexpected buffer/30", "Invalid command format!\n" + TravelCommand.MESSAGE_USAGE);
+        assertError("5 buffer/10", "Invalid command format!\n" + TravelCommand.MESSAGE_USAGE);
+        assertError("foo buffer/10", "Invalid command format!\n" + TravelCommand.MESSAGE_USAGE);
     }
 
     private static void assertError(String args, String expected) {

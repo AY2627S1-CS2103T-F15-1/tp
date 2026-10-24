@@ -6,6 +6,8 @@ import static seedu.address.storage.JsonAdaptedLesson.MISSING_FIELD_MESSAGE_FORM
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalLessons.ALICE_MATH;
 
+import java.util.UUID;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.exceptions.IllegalValueException;
@@ -213,4 +215,37 @@ public class JsonAdaptedLessonTest {
         assertThrows(IllegalValueException.class, LessonStatus.MESSAGE_CONSTRAINTS, lesson::toModelType);
     }
 
+    @Test
+    public void toModelType_levelAndSeries_roundTrip() throws Exception {
+        UUID series = UUID.randomUUID();
+        Lesson lesson = new LessonBuilder(ALICE_MATH).withAcademicLevel("S3").withSeriesId(series).build();
+
+        Lesson restored = JsonUtil.fromJsonString(JsonUtil.toJsonString(new JsonAdaptedLesson(lesson)),
+                JsonAdaptedLesson.class).toModelType();
+
+        assertEquals(lesson, restored);
+        assertEquals("S3", restored.getAcademicLevel().get().value);
+        assertEquals(series, restored.getSeriesId().get());
+    }
+
+    @Test
+    public void toModelType_lessonSavedBeforeSeries_hasNoSeries() throws Exception {
+        JsonAdaptedLesson lesson = new JsonAdaptedLesson(VALID_NAME, VALID_PHONE, VALID_SUBJECT, VALID_DATE,
+                VALID_TIME, VALID_DURATION, VALID_VENUE, VALID_STATUS, null, null);
+
+        assertTrue(lesson.toModelType().getSeriesId().isEmpty());
+    }
+
+    @Test
+    public void toModelType_invalidOrBlankSeriesId_throwsIllegalValueExceptionWithSeriesMessage() throws Exception {
+        UUID series = UUID.randomUUID();
+        Lesson lesson = new LessonBuilder(ALICE_MATH).withSeriesId(series).build();
+        String json = JsonUtil.toJsonString(new JsonAdaptedLesson(lesson));
+
+        for (String invalid : new String[] {"series-1", "  ", "", " " + series}) {
+            String edited = json.replace("\"" + series + "\"", "\"" + invalid + "\"");
+            assertThrows(IllegalValueException.class, JsonAdaptedLesson.INVALID_SERIES_ID_MESSAGE, () ->
+                    JsonUtil.fromJsonString(edited, JsonAdaptedLesson.class).toModelType());
+        }
+    }
 }

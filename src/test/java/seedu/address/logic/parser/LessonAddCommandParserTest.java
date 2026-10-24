@@ -4,6 +4,8 @@ import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailur
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 
+import java.time.LocalDate;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.Messages;
@@ -73,5 +75,35 @@ public class LessonAddCommandParserTest {
     public void parse_repeatedField_failure() {
         assertParseFailure(parser, REQUIRED_FIELDS + " t/17:30",
                 Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_TIME));
+    }
+
+    @Test
+    public void parse_pastFlag_success() {
+        LessonAddCommand expected = new LessonAddCommand(INDEX_FIRST_PERSON, null, new LessonDate("2026-12-22"),
+                new LessonTime("16:30"), new LessonDuration(LessonDuration.DEFAULT_MINUTES), null, true);
+
+        assertParseSuccess(parser, REQUIRED_FIELDS + " past/", expected);
+    }
+
+    @Test
+    public void parse_pastFlagWithValueOrRepeated_failure() {
+        assertParseFailure(parser, REQUIRED_FIELDS + " past/yes",
+                String.format(ParserUtil.MESSAGE_FLAG_TAKES_NO_VALUE, "past/"));
+        assertParseFailure(parser, REQUIRED_FIELDS + " past/ past/",
+                Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_PAST));
+    }
+
+    @Test
+    public void parse_todayAndTmrKeywords_success() {
+        LocalDate today = LocalDate.now();
+        LessonAddCommand todayCommand = new LessonAddCommand(INDEX_FIRST_PERSON, null,
+                new LessonDate(today.toString()), new LessonTime("16:30"),
+                new LessonDuration(LessonDuration.DEFAULT_MINUTES), null);
+        LessonAddCommand tmrCommand = new LessonAddCommand(INDEX_FIRST_PERSON, null,
+                new LessonDate(today.plusDays(1).toString()), new LessonTime("16:30"),
+                new LessonDuration(LessonDuration.DEFAULT_MINUTES), null);
+
+        assertParseSuccess(parser, " st/1 d/today t/16:30", todayCommand);
+        assertParseSuccess(parser, " st/1 d/TMR t/16:30", tmrCommand);
     }
 }

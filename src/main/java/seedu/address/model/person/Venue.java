@@ -29,10 +29,10 @@ public class Venue {
     }
 
     /** Constructs a checked new or grandfathered stored venue. */
-    private Venue(String venue, boolean stored) {
+    private Venue(String venue, boolean isStored) {
         requireNonNull(venue);
         String normalized = normalize(venue);
-        checkArgument(stored ? isValidStoredVenue(venue) : isValidVenue(venue), MESSAGE_CONSTRAINTS);
+        checkArgument(isStored ? isValidStoredVenue(venue) : isValidVenue(venue), MESSAGE_CONSTRAINTS);
         value = normalized;
     }
 

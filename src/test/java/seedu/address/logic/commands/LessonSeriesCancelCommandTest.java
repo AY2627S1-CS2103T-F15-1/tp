@@ -18,8 +18,10 @@ import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.AddressBook;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
+import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonStatus;
 import seedu.address.model.person.Venue;
@@ -59,7 +61,7 @@ public class LessonSeriesCancelCommandTest {
         Lesson completed = occurrence(8, "12:00").complete("History");
         Lesson missed = occurrence(9, "12:00").miss();
         Lesson cancelled = occurrence(10, "12:00").cancel("Already cancelled");
-        Lesson unrelated = occurrence(11, "12:00").withSeriesId("another-series");
+        Lesson unrelated = occurrence(11, "12:00").withSeries(java.util.UUID.randomUUID());
         List<Lesson> originals = List.of(past, startedToday, exactlyNow, moved, completed, missed, cancelled,
                 unrelated);
         originals.forEach(model::addLesson);
@@ -123,6 +125,28 @@ public class LessonSeriesCancelCommandTest {
     }
 
     @Test
+    public void execute_oneOccurrence_usesSingularMessage() throws Exception {
+        ModelManager model = model();
+        model.addLesson(occurrence(1, "12:00"));
+        assertEquals("Cancelled 1 series occurrence.",
+                new LessonSeriesCancelCommand(Index.fromOneBased(1), CLOCK).execute(model).getFeedbackToUser());
+    }
+
+    @Test
+    public void execute_lastOccurrenceCharged_preservesWholeSeriesAndLedger() {
+        ModelManager model = model();
+        List<Lesson> originals = List.of(occurrence(1, "12:00"), occurrence(8, "12:00"));
+        originals.forEach(model::addLesson);
+        model.addLedgerEntry(LedgerEntry.charge(ALICE, originals.getLast()));
+        AddressBook before = new AddressBook(model.getAddressBook());
+        CommandException error = assertThrows(CommandException.class, () ->
+                new LessonSeriesCancelCommand(Index.fromOneBased(1), CLOCK).execute(model));
+        assertEquals(LessonCommandUtil.MESSAGE_CHARGED_LESSON, error.getMessage());
+        assertEquals(before, model.getAddressBook());
+        assertEquals(originals, model.getFilteredLessonList());
+    }
+
+    @Test
     public void parse_requiresExactConfirmationAndValidIndex() throws Exception {
         AddressBookParser parser = new AddressBookParser();
         assertEquals(new LessonSeriesCancelCommand(Index.fromOneBased(2)),
@@ -131,8 +155,13 @@ public class LessonSeriesCancelCommandTest {
                 "cancel 1 confirm now", "cancel confirm 1", "cancel abc confirm", "1 confirm", "", "end 1 confirm")) {
             assertThrows(ParseException.class, () -> parser.parseCommand("lesson series " + suffix));
         }
-        assertEquals(LessonSeriesCancelCommand.MESSAGE_USAGE, assertThrows(ParseException.class, ()
-                -> parser.parseCommand("lesson series cancel 1")).getMessage());
+        assertEquals("Invalid command format!\n" + LessonSeriesCancelCommand.MESSAGE_USAGE,
+                assertThrows(ParseException.class, () -> parser.parseCommand("lesson series cancel 1")).getMessage());
+        for (String command : List.of("lesson series", "lesson series cancel confirm",
+                "lesson series cancel 1 CONFIRM", "lesson series cancel 1 confirm extra")) {
+            assertEquals("Invalid command format!\n" + LessonSeriesCancelCommand.MESSAGE_USAGE,
+                    assertThrows(ParseException.class, () -> parser.parseCommand(command)).getMessage());
+        }
         for (String index : List.of("0", "-1", "abc", "1.5", "99999999999999999999")) {
             assertEquals("Invalid command format!\n" + LessonSeriesCancelCommand.MESSAGE_USAGE,
                     assertThrows(ParseException.class, ()
@@ -148,6 +177,6 @@ public class LessonSeriesCancelCommandTest {
 
     private static Lesson occurrence(int days, String time) {
         return new LessonBuilder().withStudent(ALICE).withDate(TODAY.plusDays(days)).withTime(time).build()
-                .snapshotStudent(ALICE).withSeriesId("weekly-series");
+                .snapshotStudent(ALICE).withSeries(java.util.UUID.fromString("00000000-0000-0000-0000-000000000001"));
     }
 }

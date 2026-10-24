@@ -10,6 +10,8 @@ import static seedu.address.testutil.TypicalPersons.ALICE;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Predicate;
 
 import org.junit.jupiter.api.Test;
@@ -22,8 +24,10 @@ import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.ReadOnlyUserPrefs;
+import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
+import seedu.address.model.task.Task;
 import seedu.address.testutil.PersonBuilder;
 
 public class AddCommandTest {
@@ -116,7 +120,43 @@ public class AddCommandTest {
     private class ModelStub implements Model {
         @Override
         public void setTravelBuffer(int minutes) {
+            throw new AssertionError("Unexpected travel operation");
+        }
+
+        @Override
+        public java.util.Optional<seedu.address.model.finance.LedgerEntry> chargeLesson(Lesson target,
+                Lesson completedLesson) {
             throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
+        public void addLedgerEntry(seedu.address.model.finance.LedgerEntry entry) {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
+        public void addHomework(Homework homework) {
+            throw new AssertionError("Unexpected homework operation");
+        }
+
+        @Override
+        public void setHomework(Homework target, Homework replacement) {
+            throw new AssertionError("Unexpected homework operation");
+        }
+
+        @Override
+        public void deleteHomework(Homework homework) {
+            throw new AssertionError("Unexpected homework operation");
+        }
+
+        @Override
+        public java.util.List<Homework> getDisplayedHomework() {
+            throw new AssertionError("Unexpected homework operation");
+        }
+
+        @Override
+        public void showHomework(java.util.List<Homework> homework) {
+            throw new AssertionError("Unexpected homework operation");
         }
 
         @Override
@@ -211,6 +251,36 @@ public class AddCommandTest {
 
         @Override
         public void updateFilteredPersonList(Predicate<Person> predicate) {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
+        public void addTask(Task task) {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
+        public Optional<Task> findTask(UUID id) {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
+        public void setTask(Task target, Task editedTask) {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
+        public void deleteTask(Task target) {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
+        public List<Task> getShownTasks() {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
+        public void setShownTasks(List<Task> tasks) {
             throw new AssertionError("This method should not be called.");
         }
     }

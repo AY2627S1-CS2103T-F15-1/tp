@@ -24,9 +24,11 @@ import seedu.address.testutil.PersonBuilder;
 
 public class LessonTest {
 
+    private static final java.util.UUID SERIES = java.util.UUID.fromString("00000000-0000-0000-0000-0000000000a1");
+
     @Test
     public void seriesIdentity_retainedAcrossEveryLessonUpdate() {
-        Lesson original = ALICE_MATH.snapshotStudent(ALICE).withSeriesId("weekly-series").prepare("Bring textbook");
+        Lesson original = ALICE_MATH.snapshotStudent(ALICE).withSeries(SERIES).prepare("Bring textbook");
         for (Lesson changed : java.util.List.of(original.cancel("Unwell"), original.complete("Covered algebra"),
                 original.miss(), original.prepare("Bring worksheets"), original.withStudent(BENSON),
                 original.snapshotStudent(ALICE), original.reschedule(original.getDate(), new LessonTime("09:00"),
@@ -35,10 +37,9 @@ public class LessonTest {
             assertEquals(original.getSeriesId(), changed.getSeriesId());
             assertEquals(original.getAcademicLevel(), changed.getAcademicLevel());
         }
-        assertThrows(IllegalArgumentException.class, () -> original.withSeriesId(" "));
-        assertThrows(NullPointerException.class, () -> original.withSeriesId(null));
+        assertThrows(NullPointerException.class, () -> original.withSeries(null));
         assertThrows(IllegalArgumentException.class, () -> original.prepare(" "));
-        assertFalse(original.equals(original.withSeriesId("another-series")));
+        assertFalse(original.equals(original.withSeries(java.util.UUID.randomUUID())));
         assertFalse(original.equals(original.prepare("Different preparation")));
         Person promoted = new PersonBuilder(ALICE).withLevel("P2").build();
         Lesson laterLevel = original.snapshotStudent(promoted);
@@ -429,5 +430,30 @@ public class LessonTest {
         assertTrue(Lesson.CHRONOLOGICAL.compare(ALICE_MATH, sameDayLater) < 0);
         assertTrue(Lesson.CHRONOLOGICAL.compare(ALICE_MATH, sameSlotOtherStudent) < 0);
         assertEquals(0, Lesson.CHRONOLOGICAL.compare(ALICE_MATH, ALICE_MATH));
+    }
+
+    @Test
+    public void levelAndSeries_defaultToEmptyAndAreKeptByEveryCopy() {
+        assertTrue(ALICE_MATH.getAcademicLevel().isEmpty());
+        assertTrue(ALICE_MATH.getSeriesId().isEmpty());
+
+        Lesson booked = new LessonBuilder(ALICE_MATH).withAcademicLevel("S3").withSeriesId(SERIES).build();
+        assertEquals("S3", booked.cancel("Unwell").getAcademicLevel().get().value);
+        assertEquals(SERIES, booked.cancel("Unwell").getSeriesId().get());
+        assertEquals(SERIES, booked.complete("Notes").getSeriesId().get());
+        assertEquals(SERIES, booked.miss().getSeriesId().get());
+        assertEquals("S3", booked.reschedule(booked.getDate(), booked.getTime(), booked.getDuration(), null)
+                .getAcademicLevel().get().value);
+    }
+
+    @Test
+    public void equals_differentLevelOrSeries_notEqualButSameLesson() {
+        Lesson withLevel = new LessonBuilder(ALICE_MATH).withAcademicLevel("S3").build();
+        Lesson withSeries = new LessonBuilder(ALICE_MATH).withSeriesId(SERIES).build();
+
+        assertFalse(ALICE_MATH.equals(withLevel));
+        assertFalse(ALICE_MATH.equals(withSeries));
+        assertTrue(ALICE_MATH.isSameLesson(withLevel)); // a series member is still the same slot
+        assertTrue(ALICE_MATH.isDuplicateOf(withSeries));
     }
 }

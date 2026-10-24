@@ -90,9 +90,10 @@ public class AgendaCommand extends Command {
                     .append(")");
             week.append(lessonsOfDay.isEmpty() ? "\n" + MESSAGE_EMPTY_DAY
                     : formatLessons(model, lessons, day));
+            week.append(LessonCommandUtil.getTravelWarnings(model,
+                    lesson -> lesson.getDate().value.equals(currentDay)));
         }
-        return week + LessonCommandUtil.getTravelWarnings(model, lesson -> !lesson.getDate().value.isBefore(first)
-                && !lesson.getDate().value.isAfter(last));
+        return week.toString();
     }
 
     /**

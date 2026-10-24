@@ -6,6 +6,7 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.ToStringBuilder;
@@ -17,7 +18,8 @@ import seedu.address.model.lesson.Lesson;
 /** Cancels every not-yet-started scheduled occurrence of a series as one model update. */
 public class LessonSeriesCancelCommand extends Command {
     public static final String MESSAGE_USAGE = "lesson series cancel LESSON_INDEX confirm\n"
-            + "Cancels all scheduled occurrences of that series starting now or later; retains past history.";
+            + "Cancels all scheduled occurrences of that series starting now or later; retains past history.\n"
+            + "Example: lesson series cancel 3 confirm";
     public static final String MESSAGE_NOT_SERIES = "That lesson is not part of a recurring series.";
     public static final String MESSAGE_NONE = "This series has no scheduled occurrences starting now or later.";
 
@@ -39,7 +41,7 @@ public class LessonSeriesCancelCommand extends Command {
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
         Lesson target = LessonCommandUtil.getLesson(model, index);
-        String seriesId = target.getSeriesId().orElseThrow(() -> new CommandException(MESSAGE_NOT_SERIES));
+        UUID seriesId = target.getSeriesId().orElseThrow(() -> new CommandException(MESSAGE_NOT_SERIES));
         LocalDateTime now = LocalDateTime.now(clock);
         List<Lesson> affected = model.getAddressBook().getLessonList().stream()
                 .filter(lesson -> lesson.getSeriesId().filter(seriesId::equals).isPresent())
@@ -49,6 +51,10 @@ public class LessonSeriesCancelCommand extends Command {
         if (affected.isEmpty()) {
             throw new CommandException(MESSAGE_NONE);
         }
+        // Validate the entire series before mutating even the replacement, preserving billed history atomically.
+        for (Lesson lesson : affected) {
+            LessonCommandUtil.requireNotCharged(model, lesson);
+        }
 
         // Prepare the complete result first: an error cannot leave a partially cancelled series in the model.
         AddressBook updated = new AddressBook(model.getAddressBook());
@@ -56,7 +62,8 @@ public class LessonSeriesCancelCommand extends Command {
             updated.setLesson(lesson, lesson.cancel("Series cancelled"));
         }
         model.setAddressBook(updated);
-        return new CommandResult("Cancelled " + affected.size() + " series occurrences.");
+        return new CommandResult(affected.size() == 1 ? "Cancelled 1 series occurrence."
+                : "Cancelled " + affected.size() + " series occurrences.");
     }
 
     @Override

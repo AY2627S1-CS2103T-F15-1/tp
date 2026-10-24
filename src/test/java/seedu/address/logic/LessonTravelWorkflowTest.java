@@ -145,9 +145,11 @@ public class LessonTravelWorkflowTest {
 
     @Test
     public void execute_seriesIdentitySurvivesEditsAndRestartAndCanBeCancelled() throws Exception {
-        Lesson original = lesson("10:00").withSeriesId("series-1").prepare("Bring worksheets");
+        Lesson original = lesson("10:00")
+                .withSeries(java.util.UUID.fromString("00000000-0000-0000-0000-000000000001"))
+                .prepare("Bring worksheets");
         Lesson future = new LessonBuilder().withStudent(ALICE).withDate(today.plusDays(7)).withTime("12:00").build()
-                .snapshotStudent(ALICE).withSeriesId("series-1");
+                .snapshotStudent(ALICE).withSeries(java.util.UUID.fromString("00000000-0000-0000-0000-000000000001"));
         model.addLesson(original);
         model.addLesson(future);
         logic.execute("travel buffer/45");
@@ -158,7 +160,7 @@ public class LessonTravelWorkflowTest {
         ReadOnlyAddressBook loaded = storage.readAddressBook().orElseThrow();
         Lesson moved = loaded.getLessonList().get(1);
         assertEquals(future.getId(), moved.getId());
-        assertEquals("series-1", moved.getSeriesId().orElseThrow());
+        assertEquals(original.getSeriesId(), moved.getSeriesId());
         assertEquals(future.getAcademicLevel(), moved.getAcademicLevel());
         assertEquals("Bring worksheets", loaded.getLessonList().getFirst().getPreparation().orElseThrow());
         String result = restored.execute("lesson series cancel 1 confirm").getFeedbackToUser();
@@ -247,11 +249,44 @@ public class LessonTravelWorkflowTest {
     }
 
     @Test
+    public void execute_repeatWarnsForEveryAffectedJourneyAndSeriesSurvivesRestart() throws Exception {
+        LocalDate first = today.plusDays(1);
+        for (LocalDate date : List.of(first, first.plusWeeks(1))) {
+            for (String booking : List.of("t/10:00 dur/60 v/Home", "t/12:20 dur/60 v/School",
+                    "t/15:00 dur/60 v/Park", "t/16:10 dur/60 v/Library")) {
+                logic.execute("lesson add st/1 s/Math d/" + date + " " + booking);
+            }
+        }
+        String result = logic.execute("lesson repeat st/1 s/Math d/" + first
+                + " t/11:10 dur/60 v/Cafe count/2").getFeedbackToUser();
+        assertEquals(4, result.split("Travel warning:", -1).length - 1, result);
+        assertTrue(result.contains("at Home -> Alice Pauline at Cafe"));
+        assertTrue(result.contains("at Cafe -> Alice Pauline at School"));
+        assertFalse(result.contains("at Park"));
+
+        ModelManager restoredModel = new ModelManager(storage.readAddressBook().orElseThrow(), new UserPrefs());
+        List<Lesson> series = restoredModel.getAddressBook().getLessonList().stream()
+                .filter(lesson -> lesson.getSeriesId().isPresent()).toList();
+        assertEquals(2, series.size());
+        assertEquals(series.getFirst().getSeriesId(), series.getLast().getSeriesId());
+        LogicManager restored = logic(restoredModel, storage);
+        restored.execute("agenda d/" + first);
+        restored.execute("lesson series cancel 2 confirm");
+        ReadOnlyAddressBook saved = storage.readAddressBook().orElseThrow();
+        assertEquals(2, saved.getLessonList().stream().filter(Lesson::isCancelled).count());
+        for (Lesson original : series) {
+            Lesson cancelled = saved.getLessonList().stream()
+                    .filter(lesson -> lesson.getId().equals(original.getId())).findFirst().orElseThrow();
+            assertEquals(original.getSeriesId(), cancelled.getSeriesId());
+        }
+    }
+
+    @Test
     public void execute_seriesCancelRemovesUpcomingOccurrences_refreshesNumbersExactlyOnce() throws Exception {
         model.addLesson(new LessonBuilder().withStudent(ALICE).withDate(today.plusDays(1)).withTime("10:00")
-                .build().withSeriesId("series-1"));
+                .build().withSeries(java.util.UUID.fromString("00000000-0000-0000-0000-000000000001")));
         model.addLesson(new LessonBuilder().withStudent(ALICE).withDate(today.plusDays(2)).withTime("10:00")
-                .build().withSeriesId("series-1"));
+                .build().withSeries(java.util.UUID.fromString("00000000-0000-0000-0000-000000000001")));
         logic.execute("lesson list st/1");
         String result = logic.execute("lesson series cancel 1 confirm").getFeedbackToUser();
         assertNumberingOnce(result);

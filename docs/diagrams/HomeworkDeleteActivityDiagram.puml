@@ -1,0 +1,41 @@
+@startuml
+skin rose
+skinparam ActivityFontSize 15
+skinparam ArrowFontSize 12
+
+start
+:User executes "hw delete INDEX [confirm]";
+
+if (Arguments are INDEX and an optional 'confirm'?) then ([no])
+    :Show the invalid command format message;
+    stop
+else ([yes])
+endif
+
+if (INDEX is within the rows of the last 'hw list'?) then ([no])
+    :Show "Invalid homework index. Run 'hw list'
+    to display homework first.";
+    stop
+else ([yes])
+endif
+
+if (Homework with the same id still exists?) then ([no])
+    :Show "That homework was deleted.
+    Run 'hw list' to refresh.";
+    stop
+else ([yes])
+endif
+
+if (Homework has feedback or linked tasks, and 'confirm' is missing?) then ([yes])
+    :Show the confirmation prompt
+    (mentions the tasks that would be deleted);
+    note right: Nothing is deleted.
+    stop
+else ([no])
+endif
+
+:Delete the homework;
+:Save the address book;
+:Show "Deleted homework INDEX: DESCRIPTION";
+stop
+@enduml

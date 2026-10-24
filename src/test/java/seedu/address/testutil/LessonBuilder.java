@@ -1,12 +1,14 @@
 package seedu.address.testutil;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonDate;
 import seedu.address.model.lesson.LessonDuration;
 import seedu.address.model.lesson.LessonStatus;
 import seedu.address.model.lesson.LessonTime;
+import seedu.address.model.person.Level;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
@@ -35,6 +37,11 @@ public class LessonBuilder {
     private LessonStatus status;
     private String notes;
     private String cancelReason;
+    private Level academicLevel;
+    private UUID seriesId;
+    private UUID id = UUID.randomUUID();
+    private UUID studentId;
+    private String preparation;
 
     /**
      * Creates a {@code LessonBuilder} with the default details: a scheduled lesson without a venue, notes or
@@ -54,6 +61,9 @@ public class LessonBuilder {
      * Initializes the LessonBuilder with the data of {@code lessonToCopy}.
      */
     public LessonBuilder(Lesson lessonToCopy) {
+        id = lessonToCopy.getId();
+        studentId = lessonToCopy.getStudentId().orElse(null);
+        preparation = lessonToCopy.getPreparation().orElse(null);
         studentName = lessonToCopy.getStudentName();
         studentPhone = lessonToCopy.getStudentPhone();
         subject = lessonToCopy.getSubject();
@@ -64,6 +74,8 @@ public class LessonBuilder {
         status = lessonToCopy.getStatus();
         notes = lessonToCopy.getNotes().orElse(null);
         cancelReason = lessonToCopy.getCancelReason().orElse(null);
+        academicLevel = lessonToCopy.getAcademicLevel().orElse(null);
+        seriesId = lessonToCopy.getSeriesId().orElse(null);
     }
 
     /**
@@ -156,10 +168,32 @@ public class LessonBuilder {
     }
 
     /**
+     * Sets the academic level recorded when the {@code Lesson} that we are building was booked.
+     */
+    public LessonBuilder withAcademicLevel(String academicLevel) {
+        this.academicLevel = new Level(academicLevel);
+        return this;
+    }
+
+    /**
+     * Sets the series id of the {@code Lesson} that we are building.
+     */
+    public LessonBuilder withSeriesId(UUID seriesId) {
+        this.seriesId = seriesId;
+        return this;
+    }
+
+    /** Sets the lesson ID for tests that create a distinct record from a copied lesson. */
+    public LessonBuilder withId(UUID id) {
+        this.id = id;
+        return this;
+    }
+
+    /**
      * Returns the {@code Lesson} that we have built.
      */
     public Lesson build() {
-        return new Lesson(studentName, studentPhone, subject, date, time, duration, venue, status, notes,
-                cancelReason);
+        return new Lesson(id, studentId, academicLevel, preparation, seriesId, studentName, studentPhone,
+                subject, date, time, duration, venue, status, notes, cancelReason);
     }
 }

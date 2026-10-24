@@ -1,0 +1,100 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+
+box Logic LOGIC_COLOR_T1
+participant ":LogicManager" as LogicManager LOGIC_COLOR
+participant ":AddressBookParser" as AddressBookParser LOGIC_COLOR
+participant ":ArchiveCommandParser" as ArchiveCommandParser LOGIC_COLOR
+participant "a:ArchiveCommand" as ArchiveCommand LOGIC_COLOR
+participant "<<class>>\nLessonCommandUtil" as LessonCommandUtil LOGIC_COLOR
+end box
+
+box Model MODEL_COLOR_T1
+participant "m:Model" as Model MODEL_COLOR
+participant "student:Person" as Person MODEL_COLOR
+participant ":AddressBook" as AddressBook MODEL_COLOR
+end box
+
+box Storage STORAGE_COLOR_T1
+participant ":Storage" as Storage STORAGE_COLOR
+end box
+
+[-> LogicManager : execute("archive 1")
+activate LogicManager
+
+LogicManager -> AddressBookParser : parseCommand("archive 1")
+activate AddressBookParser
+
+create ArchiveCommandParser
+AddressBookParser -> ArchiveCommandParser : ArchiveCommandParser(true)
+activate ArchiveCommandParser
+ArchiveCommandParser --> AddressBookParser
+deactivate ArchiveCommandParser
+
+AddressBookParser -> ArchiveCommandParser : parse(" 1")
+activate ArchiveCommandParser
+
+create ArchiveCommand
+ArchiveCommandParser -> ArchiveCommand : ArchiveCommand(1, true)
+activate ArchiveCommand
+ArchiveCommand --> ArchiveCommandParser
+deactivate ArchiveCommand
+
+ArchiveCommandParser --> AddressBookParser : a
+deactivate ArchiveCommandParser
+AddressBookParser --> LogicManager : a
+deactivate AddressBookParser
+
+LogicManager -> ArchiveCommand : execute(m)
+activate ArchiveCommand
+
+ArchiveCommand -> LessonCommandUtil : getStudent(m, 1)
+activate LessonCommandUtil
+
+LessonCommandUtil -> Model : getFilteredPersonList()
+activate Model
+Model --> LessonCommandUtil : displayed students
+deactivate Model
+
+LessonCommandUtil --> ArchiveCommand : student
+deactivate LessonCommandUtil
+
+ArchiveCommand -> Person : isArchived()
+activate Person
+Person --> ArchiveCommand : false
+deactivate Person
+
+ArchiveCommand -> Person : withArchived(true)
+activate Person
+Person --> ArchiveCommand : archived
+deactivate Person
+
+ArchiveCommand -> Model : setPerson(student, archived)
+activate Model
+
+Model -> AddressBook : setPerson(student, archived)
+activate AddressBook
+AddressBook --> Model
+deactivate AddressBook
+
+note right of Model
+  The displayed student list hides
+  archived students, so the archived
+  student leaves it at once.
+end note
+
+Model --> ArchiveCommand
+deactivate Model
+
+ArchiveCommand --> LogicManager : r
+deactivate ArchiveCommand
+
+LogicManager -> Storage : saveAddressBook(addressBook)
+activate Storage
+Storage --> LogicManager
+deactivate Storage
+
+[<-- LogicManager : r
+deactivate LogicManager
+@enduml

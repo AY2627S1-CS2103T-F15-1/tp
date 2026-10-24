@@ -13,16 +13,26 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import seedu.address.commons.exceptions.DataLoadingException;
+import seedu.address.commons.exceptions.UnsupportedSchemaException;
+import seedu.address.commons.util.JsonUtil;
 import seedu.address.logic.LogicManager;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
+import seedu.address.testutil.TaskBuilder;
 import seedu.address.testutil.TypicalPersons;
 
 public class VersionedStorageTest {
+    /** The schema written by the build before follow-up tasks were added. */
+    private static final int VERSION_BEFORE_TASKS = 16;
+
     @TempDir
     private Path directory;
 
@@ -59,6 +69,61 @@ public class VersionedStorageTest {
         assertEquals(restored.getPersonList().getFirst().getId(),
                 restored.getLessonList().getFirst().getStudentId().orElseThrow());
     }
+    @Test
+    public void startup_schema16FileWithoutTasks_loadsWithNoTasks() throws Exception {
+        Path current = directory.resolve("tutorflow-v14.json");
+        AddressBook book = TypicalPersons.getTypicalAddressBook();
+        ObjectNode root = (ObjectNode) new ObjectMapper()
+                .readTree(JsonUtil.toJsonString(new JsonSerializableAddressBook(book)));
+        root.remove("tasks");
+        root.put("schemaVersion", VERSION_BEFORE_TASKS);
+        Files.writeString(current, root.toString());
+
+        VersionedAddressBookStorage data = new VersionedAddressBookStorage(current,
+                directory.resolve("addressbook.json"));
+        ReadOnlyAddressBook loaded = data.readAddressBook().orElseThrow();
+
+        assertTrue(loaded.getTaskList().isEmpty());
+        assertEquals(book.getPersonList(), loaded.getPersonList());
+        assertFalse(data.requiresInitialSave());
+    }
+
+    @Test
+    public void save_withTasks_writesSchema17AndABuildThatStopsAt16WouldRefuseIt() throws Exception {
+        Path current = directory.resolve("tutorflow-v14.json");
+        AddressBook book = TypicalPersons.getTypicalAddressBook();
+        book.addTask(new TaskBuilder().build());
+        new JsonAddressBookStorage(current).saveAddressBook(book);
+
+        JsonNode saved = new ObjectMapper().readTree(Files.readString(current));
+        int savedVersion = saved.get("schemaVersion").intValue();
+
+        assertEquals(VERSION_BEFORE_TASKS + 1, StorageSchema.CURRENT_VERSION);
+        assertEquals(StorageSchema.CURRENT_VERSION, savedVersion);
+        assertEquals(1, saved.get("tasks").size());
+        // A v16 build accepts only versions up to 16 (StorageSchema.requireSupported), so it refuses this file
+        // instead of loading it without the tasks and then erasing them on its next save.
+        assertTrue(savedVersion > VERSION_BEFORE_TASKS);
+        assertEquals(book, new VersionedAddressBookStorage(current, directory.resolve("addressbook.json"))
+                .readAddressBook().orElseThrow());
+    }
+
+    @Test
+    public void startup_schemaNewerThanThisBuild_isRefusedAndTheFileIsLeftUnchanged() throws Exception {
+        Path current = directory.resolve("tutorflow-v14.json");
+        new JsonAddressBookStorage(current).saveAddressBook(TypicalPersons.getTypicalAddressBook());
+        String newer = Files.readString(current).replace("\"schemaVersion\" : " + StorageSchema.CURRENT_VERSION,
+                "\"schemaVersion\" : " + (StorageSchema.CURRENT_VERSION + 1));
+        Files.writeString(current, newer);
+
+        VersionedAddressBookStorage data = new VersionedAddressBookStorage(current,
+                directory.resolve("addressbook.json"));
+        DataLoadingException failure = assertThrows(DataLoadingException.class, data::readAddressBook);
+
+        assertTrue(failure.getCause() instanceof UnsupportedSchemaException);
+        assertEquals(newer, Files.readString(current));
+    }
+
     @Test
     public void startup_failedMigration_retainsDirtyStateAndRetriesBeforeExit() throws Exception {
         Path current = directory.resolve("tutorflow-v14.json");
@@ -146,6 +211,56 @@ public class VersionedStorageTest {
         assertEquals(legacy, data.getReadSource());
         assertFalse(Files.exists(current));
         assertEquals("broken legacy bytes", Files.readString(legacy));
+    }
+
+    @Test
+    public void startup_legacySourceThatCannotBeOpened_isNeverSetAsideAndNothingIsSaved() throws Exception {
+        Path current = directory.resolve("tutorflow-v14.json");
+        Path legacy = directory.resolve("addressbook.json");
+        Files.createDirectory(legacy); // cannot be read as a file, as a valid file that another program holds
+        VersionedAddressBookStorage data = new VersionedAddressBookStorage(current, legacy);
+
+        DataLoadingException failure = assertThrows(DataLoadingException.class, data::readAddressBook);
+        IOException refused = assertThrows(IOException.class, () -> data.saveAddressBook(new AddressBook()));
+
+        assertTrue(JsonAddressBookStorage.isAccessFailure(failure));
+        assertEquals(String.format(DataFileRecovery.MESSAGE_NOT_OPENED_SAVE, legacy), refused.getMessage());
+        assertTrue(Files.isDirectory(legacy), "the source stays where it is");
+        assertFalse(Files.exists(directory.resolve("addressbook.json.corrupt")), "it is not set aside");
+        assertFalse(Files.exists(current), "no data file is written beside it");
+    }
+
+    @Test
+    public void startup_legacySourceThatCouldNotBeOpenedBefore_isMigratedOnTheNextStart() throws Exception {
+        Path current = directory.resolve("tutorflow-v14.json");
+        Path legacy = directory.resolve("addressbook.json");
+        Files.createDirectory(legacy);
+        assertThrows(DataLoadingException.class, () -> new VersionedAddressBookStorage(current, legacy)
+                .readAddressBook());
+        Files.delete(legacy);
+        Files.writeString(legacy, """
+                {"persons": [{"name":"Alice Pauline","phone":"94351253","level":"S3",
+                  "subjects":["Math"],"rate":"50"}], "lessons": []}
+                """);
+
+        VersionedAddressBookStorage next = new VersionedAddressBookStorage(current, legacy);
+
+        assertEquals(1, next.readAddressBook().orElseThrow().getPersonList().size());
+        assertTrue(next.requiresInitialSave());
+    }
+
+    @Test
+    public void startup_currentFileThatCannotBeOpened_isNeverSetAsideAndNothingIsSaved() throws Exception {
+        Path current = directory.resolve("tutorflow-v14.json");
+        Files.createDirectory(current);
+        VersionedAddressBookStorage data = new VersionedAddressBookStorage(current, directory.resolve("legacy.json"));
+
+        DataLoadingException failure = assertThrows(DataLoadingException.class, data::readAddressBook);
+
+        assertTrue(JsonAddressBookStorage.isAccessFailure(failure));
+        assertThrows(IOException.class, () -> data.saveAddressBook(new AddressBook()));
+        assertTrue(Files.isDirectory(current));
+        assertFalse(Files.exists(directory.resolve("tutorflow-v14.json.corrupt")));
     }
 
     @Test

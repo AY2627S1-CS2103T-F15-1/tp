@@ -3,6 +3,9 @@ package seedu.address.logic.parser;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ALL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_STUDENT;
 
+import java.time.Clock;
+import java.util.Objects;
+
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.LessonListCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -11,6 +14,17 @@ import seedu.address.logic.parser.exceptions.ParseException;
  * Parses input arguments and creates a new LessonListCommand object
  */
 public class LessonListCommandParser implements Parser<LessonListCommand> {
+    private final Clock clock;
+
+    /** Uses the local system date. */
+    public LessonListCommandParser() {
+        this(Clock.systemDefaultZone());
+    }
+
+    /** Uses an explicit date source for the upcoming lesson filter. */
+    public LessonListCommandParser(Clock clock) {
+        this.clock = Objects.requireNonNull(clock);
+    }
 
     /**
      * Parses the given {@code String} of arguments in the context of the LessonListCommand
@@ -24,7 +38,7 @@ public class LessonListCommandParser implements Parser<LessonListCommand> {
         argMultimap.verifyNoEmptyValuesFor(PREFIX_STUDENT);
 
         Index studentIndex = ParserUtil.parseIndex(argMultimap.getValue(PREFIX_STUDENT).get());
-        return new LessonListCommand(studentIndex, ParserUtil.parseFlag(argMultimap, PREFIX_ALL));
+        return new LessonListCommand(studentIndex, ParserUtil.parseFlag(argMultimap, PREFIX_ALL), clock);
     }
 
 }

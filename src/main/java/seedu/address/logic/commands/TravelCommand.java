@@ -10,7 +10,8 @@ import seedu.address.model.lesson.TravelGap;
 public class TravelCommand extends Command {
     public static final String COMMAND_WORD = "travel";
     public static final String MESSAGE_USAGE = "travel buffer/MINUTES (0-180, default 30).\n"
-            + "Warns for different physical venues; does not block bookings or calculate routes.";
+            + "Warns for different physical venues; does not block bookings or calculate routes.\n"
+            + "Example: travel buffer/30";
 
     private final int minutes;
 

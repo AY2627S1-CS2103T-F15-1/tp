@@ -62,7 +62,7 @@ public class IdentityContinuityTest {
     public void deserialize_unsupportedVersionOrDuplicateIds_rejectsData() throws Exception {
         AddressBook book = TypicalPersons.getTypicalAddressBook();
         String json = JsonUtil.toJsonString(new JsonSerializableAddressBook(book));
-        String future = json.replace("\"schemaVersion\" : 14", "\"schemaVersion\" : 99");
+        String future = json.replace("\"schemaVersion\" : " + StorageSchema.CURRENT_VERSION, "\"schemaVersion\" : 99");
         assertNotEquals(json, future);
         assertThrows(IllegalValueException.class, () ->
                  JsonUtil.fromJsonString(future, JsonSerializableAddressBook.class).toModelType());

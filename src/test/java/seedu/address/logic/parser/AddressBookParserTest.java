@@ -27,9 +27,15 @@ import seedu.address.logic.commands.LessonDoneCommand;
 import seedu.address.logic.commands.LessonListCommand;
 import seedu.address.logic.commands.LessonMissedCommand;
 import seedu.address.logic.commands.LessonMoveCommand;
+import seedu.address.logic.commands.LessonRepeatCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.RemarkCommand;
 import seedu.address.logic.commands.SortCommand;
+import seedu.address.logic.commands.TaskAddCommand;
+import seedu.address.logic.commands.TaskDeleteCommand;
+import seedu.address.logic.commands.TaskDoneCommand;
+import seedu.address.logic.commands.TaskEditCommand;
+import seedu.address.logic.commands.TaskListCommand;
 import seedu.address.logic.commands.TodayCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -43,6 +49,15 @@ import seedu.address.testutil.PersonUtil;
 public class AddressBookParserTest {
 
     private final AddressBookParser parser = new AddressBookParser();
+
+    @Test
+    public void parseCommand_taskCommands_routedToTaskParser() throws Exception {
+        assertTrue(parser.parseCommand("task add st/1 desc/Call parent") instanceof TaskAddCommand);
+        assertTrue(parser.parseCommand("task list all/") instanceof TaskListCommand);
+        assertTrue(parser.parseCommand("task edit 1 desc/x") instanceof TaskEditCommand);
+        assertTrue(parser.parseCommand("task done 1") instanceof TaskDoneCommand);
+        assertTrue(parser.parseCommand("task delete 1 confirm") instanceof TaskDeleteCommand);
+    }
 
     @Test
     public void parseCommand_add() throws Exception {
@@ -179,5 +194,11 @@ public class AddressBookParserTest {
     @Test
     public void parseCommand_unknownCommand_throwsParseException() {
         assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () -> parser.parseCommand("unknownCommand"));
+    }
+
+    @Test
+    public void parseCommand_lessonRepeat_routedToLessonParser() throws Exception {
+        assertTrue(parser.parseCommand("lesson repeat st/1 d/2026-12-22 t/16:30 count/4")
+                instanceof LessonRepeatCommand);
     }
 }

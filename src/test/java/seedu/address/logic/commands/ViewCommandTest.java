@@ -11,6 +11,7 @@ import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BENSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -23,6 +24,8 @@ import seedu.address.logic.Messages;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.finance.LedgerEntry;
+import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonStatus;
 import seedu.address.testutil.LessonBuilder;
@@ -31,6 +34,11 @@ import seedu.address.testutil.PersonBuilder;
 public class ViewCommandTest {
 
     private static final LocalDate TODAY = LocalDate.of(2030, 1, 10);
+
+    /** The lines of the overview of {@code ALICE} that come before its first section. */
+    private static final String ALICE_DETAILS = "Viewing: Alice Pauline\n"
+            + "Level S3 \u00b7 Math \u00b7 $50.00/hour\n"
+            + "Phone: 94351253 \u00b7 Email: alice@example.com \u00b7 Venue: 123, Jurong West Ave 6, #08-111\n\n";
 
     private Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
 
@@ -42,20 +50,77 @@ public class ViewCommandTest {
 
     @Test
     public void execute_studentWithoutLessons_showsDetailsAndEmptyStates() throws Exception {
-        String[] lines = view(INDEX_FIRST_PERSON).split("\n");
+        assertEquals(ALICE_DETAILS
+                + "NEXT LESSON\n  No upcoming lessons.\n\n"
+                + "RECENT LESSON NOTES\n  No lesson notes yet.\n\n"
+                + "LESSON HISTORY\n  0 completed \u00b7 0 cancelled \u00b7 0 missed\n\n"
+                + "BALANCE\nOUTSTANDING $0.00\n\n"
+                + "OUTSTANDING HOMEWORK (0)\n  No outstanding homework.", view(INDEX_FIRST_PERSON));
+    }
 
-        assertEquals("Viewing: Alice Pauline", lines[0]);
-        assertEquals("Level S3 \u00b7 Math \u00b7 $50.00/hour", lines[1]);
-        assertEquals("Phone: 94351253 \u00b7 Email: alice@example.com \u00b7 Venue: 123, Jurong West Ave 6, #08-111",
-                lines[2]);
-        assertEquals("", lines[3]);
-        assertEquals(ViewCommand.HEADING_NEXT_LESSON, lines[4]);
-        assertEquals(ViewCommand.MESSAGE_NO_UPCOMING_LESSON, lines[5]);
-        assertEquals(ViewCommand.HEADING_RECENT_NOTES, lines[7]);
-        assertEquals(ViewCommand.MESSAGE_NO_NOTES, lines[8]);
-        assertEquals(ViewCommand.HEADING_LESSON_HISTORY, lines[10]);
-        assertEquals("  0 completed \u00b7 0 cancelled \u00b7 0 missed", lines[11]);
-        assertEquals(12, lines.length);
+    @Test
+    public void execute_studentWhoOwesMoney_showsEverySection() throws Exception {
+        Lesson charged = new LessonBuilder().withStudent(ALICE).withDate(TODAY.minusDays(2)).withTime("10:00")
+                .withDuration(30).withStatus(LessonStatus.COMPLETED)
+                .withNotes("Covered quadratic equations and factorising").build();
+        addLessons(charged, new LessonBuilder().withStudent(ALICE).withDate(TODAY).withTime("10:00")
+                .withDuration(60).withVenue("Blk 512 Bishan St 13").build());
+        // half an hour at $50.00/hour
+        model.addLedgerEntry(LedgerEntry.charge(ALICE, charged));
+        model.addHomework(Homework.assign(ALICE.getId(), "Algebra Q1-10", TODAY.plusDays(1)));
+
+        assertEquals(ALICE_DETAILS
+                + "NEXT LESSON\n  Thu 10 Jan 2030, 10:00-11:00 \u00b7 Math \u00b7 Blk 512 Bishan St 13\n\n"
+                + "RECENT LESSON NOTES\n  Tue 08 Jan 2030  Covered quadratic equations and factorising\n\n"
+                + "LESSON HISTORY\n  1 completed \u00b7 0 cancelled \u00b7 0 missed\n\n"
+                + "BALANCE\nOUTSTANDING $25.00\n\n"
+                + "OUTSTANDING HOMEWORK (1)\n  Alice Pauline Algebra Q1-10 due 2030-01-11 assigned",
+                view(INDEX_FIRST_PERSON));
+    }
+
+    @Test
+    public void execute_studentWhoPaidInAdvance_showsTheCredit() throws Exception {
+        model.addLedgerEntry(LedgerEntry.payment(ALICE, new BigDecimal("74.50"), TODAY));
+
+        assertEquals(ALICE_DETAILS
+                + "NEXT LESSON\n  No upcoming lessons.\n\n"
+                + "RECENT LESSON NOTES\n  No lesson notes yet.\n\n"
+                + "LESSON HISTORY\n  0 completed \u00b7 0 cancelled \u00b7 0 missed\n\n"
+                + "BALANCE\nIN CREDIT $74.50\n\n"
+                + "OUTSTANDING HOMEWORK (0)\n  No outstanding homework.", view(INDEX_FIRST_PERSON));
+    }
+
+    @Test
+    public void execute_studentWhoPaidExactlyWhatWasCharged_showsNothingOutstanding() throws Exception {
+        Lesson charged = new LessonBuilder().withStudent(ALICE).withDate(TODAY.minusDays(2)).withDuration(30)
+                .withStatus(LessonStatus.COMPLETED).build();
+        addLessons(charged);
+        model.addLedgerEntry(LedgerEntry.charge(ALICE, charged));
+        model.addLedgerEntry(LedgerEntry.payment(ALICE, new BigDecimal("25.00"), TODAY));
+
+        assertEquals(ALICE_DETAILS
+                + "NEXT LESSON\n  No upcoming lessons.\n\n"
+                + "RECENT LESSON NOTES\n  No lesson notes yet.\n\n"
+                + "LESSON HISTORY\n  1 completed \u00b7 0 cancelled \u00b7 0 missed\n\n"
+                + "BALANCE\nOUTSTANDING $0.00\n\n"
+                + "OUTSTANDING HOMEWORK (0)\n  No outstanding homework.", view(INDEX_FIRST_PERSON));
+    }
+
+    @Test
+    public void execute_onlyAnotherStudentOwesMoney_showsEachStudentsOwnBalance() throws Exception {
+        Lesson charged = new LessonBuilder().withStudent(BENSON).withDate(TODAY.minusDays(2)).withDuration(60)
+                .withStatus(LessonStatus.COMPLETED).build();
+        addLessons(charged);
+        // an hour at $62.50/hour
+        model.addLedgerEntry(LedgerEntry.charge(BENSON, charged));
+
+        String[] aliceLines = view(INDEX_FIRST_PERSON).split("\n");
+        String[] bensonLines = view(INDEX_SECOND_PERSON).split("\n");
+
+        assertEquals(ViewCommand.HEADING_BALANCE, aliceLines[13]);
+        assertEquals("OUTSTANDING $0.00", aliceLines[14]);
+        assertEquals(ViewCommand.HEADING_BALANCE, bensonLines[13]);
+        assertEquals("OUTSTANDING $62.50", bensonLines[14]);
     }
 
     @Test
@@ -140,7 +205,8 @@ public class ViewCommandTest {
 
         String[] lines = view(INDEX_FIRST_PERSON).split("\n");
 
-        assertEquals("  2 completed \u00b7 1 cancelled \u00b7 2 missed", lines[lines.length - 1]);
+        assertEquals(ViewCommand.HEADING_LESSON_HISTORY, lines[11]);
+        assertEquals("  2 completed \u00b7 1 cancelled \u00b7 2 missed", lines[12]);
     }
 
     @Test
@@ -163,7 +229,10 @@ public class ViewCommandTest {
 
     @Test
     public void execute_anyStudent_leavesTheModelUnchanged() throws Exception {
-        addLessons(lesson(TODAY.plusDays(1), "16:30"));
+        Lesson charged = completed(TODAY.minusDays(1), "Notes");
+        addLessons(lesson(TODAY.plusDays(1), "16:30"), charged);
+        model.addLedgerEntry(LedgerEntry.charge(ALICE, charged));
+        model.addLedgerEntry(LedgerEntry.payment(ALICE, BigDecimal.TEN, TODAY));
         Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
         List<Lesson> displayedLessons = List.copyOf(model.getFilteredLessonList());
 

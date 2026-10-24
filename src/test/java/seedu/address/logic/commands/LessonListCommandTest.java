@@ -126,4 +126,15 @@ public class LessonListCommandTest {
             model.addLesson(lesson);
         }
     }
+
+    @Test
+    public void execute_lessonWithRecordedLevel_showsLevelAtBooking() throws Exception {
+        Lesson booked = new LessonBuilder().withStudent(ALICE).withDate(LocalDate.now().plusDays(3))
+                .withAcademicLevel("S3").build();
+        addLessons(booked);
+
+        String message = new LessonListCommand(INDEX_FIRST_PERSON, false).execute(model).getFeedbackToUser();
+
+        assertTrue(message.endsWith("  [Level at booking: S3]  scheduled"));
+    }
 }

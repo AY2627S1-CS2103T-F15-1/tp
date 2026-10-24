@@ -3,8 +3,11 @@ package seedu.address.model;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
 
@@ -13,8 +16,11 @@ import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
+import seedu.address.model.finance.LedgerEntry;
+import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
+import seedu.address.model.task.Task;
 
 /**
  * Represents the in-memory model of the address book data.
@@ -27,6 +33,8 @@ public class ModelManager implements Model {
     private final FilteredList<Person> filteredPersons;
     private final FilteredList<Lesson> filteredLessons;
     private final SortedList<Lesson> sortedLessons;
+    private List<Task> shownTasks = new ArrayList<>();
+    private List<Homework> displayedHomework = List.of();
 
     /**
      * Initializes a ModelManager with the given addressBook and userPrefs.
@@ -113,7 +121,44 @@ public class ModelManager implements Model {
         addressBook.sortPersons(comparator);
     }
 
+    @Override
+    public void addHomework(Homework homework) {
+        addressBook.addHomework(homework);
+    }
+
+    @Override
+    public void setHomework(Homework target, Homework replacement) {
+        addressBook.setHomework(target, replacement);
+    }
+
+    @Override
+    public void deleteHomework(Homework homework) {
+        addressBook.removeHomework(homework);
+    }
+
+    @Override
+    public List<Homework> getDisplayedHomework() {
+        return displayedHomework;
+    }
+
+    @Override
+    public void showHomework(List<Homework> homework) {
+        displayedHomework = List.copyOf(homework);
+    }
+
     //=========== Lessons ====================================================================================
+
+    @Override
+    public void addLedgerEntry(LedgerEntry entry) {
+        requireNonNull(entry);
+        addressBook.addLedgerEntry(entry);
+    }
+
+    @Override
+    public Optional<LedgerEntry> chargeLesson(Lesson target, Lesson completedLesson) {
+        requireAllNonNull(target, completedLesson);
+        return addressBook.chargeLesson(target, completedLesson);
+    }
 
     @Override
     public boolean hasLesson(Lesson lesson) {
@@ -196,4 +241,41 @@ public class ModelManager implements Model {
                 && filteredLessons.equals(otherModelManager.filteredLessons);
     }
 
+    //=========== Tasks ======================================================================================
+
+    @Override
+    public void addTask(Task task) {
+        requireNonNull(task);
+        addressBook.addTask(task);
+        logger.fine("Added task");
+    }
+
+    @Override
+    public Optional<Task> findTask(UUID id) {
+        requireNonNull(id);
+        return addressBook.findTask(id);
+    }
+
+    @Override
+    public void setTask(Task target, Task editedTask) {
+        requireAllNonNull(target, editedTask);
+        addressBook.setTask(target, editedTask);
+    }
+
+    @Override
+    public void deleteTask(Task target) {
+        requireNonNull(target);
+        addressBook.removeTask(target);
+    }
+
+    @Override
+    public List<Task> getShownTasks() {
+        return List.copyOf(shownTasks);
+    }
+
+    @Override
+    public void setShownTasks(List<Task> tasks) {
+        requireNonNull(tasks);
+        shownTasks = new ArrayList<>(tasks);
+    }
 }

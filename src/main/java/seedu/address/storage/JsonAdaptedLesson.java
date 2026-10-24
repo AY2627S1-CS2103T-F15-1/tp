@@ -25,6 +25,7 @@ import seedu.address.model.person.Venue;
 class JsonAdaptedLesson {
 
     public static final String MISSING_FIELD_MESSAGE_FORMAT = "Lesson's %s field is missing!";
+    public static final String INVALID_SERIES_ID_MESSAGE = "Lesson's seriesId is not a valid ID.";
 
     private String id;
     private String studentId;
@@ -74,7 +75,7 @@ class JsonAdaptedLesson {
         studentId = source.getStudentId().map(UUID::toString).orElse(null);
         academicLevel = source.getAcademicLevel().map(level -> level.value).orElse(null);
         preparation = source.getPreparation().orElse(null);
-        seriesId = source.getSeriesId().orElse(null);
+        seriesId = source.getSeriesId().map(UUID::toString).orElse(null);
         studentName = source.getStudentName().fullName;
         studentPhone = source.getStudentPhone().value;
         subject = source.getSubject().value;
@@ -122,14 +123,33 @@ class JsonAdaptedLesson {
             throw new IllegalValueException(Lesson.MESSAGE_REASON_CONSTRAINTS);
         }
 
+        final UUID modelSeriesId = parseSeriesId();
+
         try {
             return new Lesson(id == null ? UUID.randomUUID() : UUID.fromString(id),
                     studentId == null ? null : UUID.fromString(studentId),
                     academicLevel == null ? null : new Level(academicLevel), preparation,
+                    modelSeriesId,
                     modelStudentName, modelStudentPhone, modelSubject, modelDate, modelTime, modelDuration,
-                    modelVenue, modelStatus, notes, cancelReason, seriesId);
+                    modelVenue, modelStatus, notes, cancelReason);
         } catch (IllegalArgumentException e) {
-            throw new IllegalValueException("Invalid lesson ID, historical level, preparation notes, or series ID.");
+            throw new IllegalValueException("Invalid lesson ID, historical level, or preparation notes.");
+        }
+    }
+
+    /**
+     * Returns the series id of the lesson, or null if it is not part of a series.
+     *
+     * @throws IllegalValueException if the series id is present but is not a valid UUID, which includes a blank one.
+     */
+    private UUID parseSeriesId() throws IllegalValueException {
+        if (seriesId == null) {
+            return null;
+        }
+        try {
+            return UUID.fromString(seriesId);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalValueException(INVALID_SERIES_ID_MESSAGE);
         }
     }
 
