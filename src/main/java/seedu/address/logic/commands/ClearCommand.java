@@ -47,7 +47,7 @@ public class ClearCommand extends Command {
         if (!isConfirmed) {
             return new CommandResult(MESSAGE_CONFIRMATION);
         }
-        model.setAddressBook(new AddressBook());
+        model.clearAddressBook();
         return new CommandResult(MESSAGE_SUCCESS);
     }
 

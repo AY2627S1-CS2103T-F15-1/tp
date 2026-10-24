@@ -43,6 +43,11 @@ public interface Model {
      */
     void setAddressBook(ReadOnlyAddressBook addressBook);
 
+    /**
+     * Clears address book data.
+     */
+    void clearAddressBook();
+
     /** Returns the AddressBook */
     ReadOnlyAddressBook getAddressBook();
 
@@ -128,6 +133,7 @@ public interface Model {
      * @throws NullPointerException if {@code predicate} is null.
      */
     void updateFilteredLessonList(Predicate<Lesson> predicate);
+
     /** Adds an assignment belonging to a known student. */
     void addHomework(Homework homework);
 
@@ -142,4 +148,9 @@ public interface Model {
 
     /** Replaces the numbered selection only when a new list is explicitly displayed. */
     void showHomework(List<Homework> homework);
+
+    /**
+     * Undoes the latest destructive action during this session, if any.
+     */
+    DestructiveActionType undoDestructiveAction();
 }
