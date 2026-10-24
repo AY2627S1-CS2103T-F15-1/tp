@@ -63,6 +63,22 @@ public class AddressBookTest {
     }
 
     @Test
+    public void resetData_invalidTravelBuffer_preservesExistingState() {
+        addressBook.addPerson(ALICE);
+        addressBook.addLesson(ALICE_MATH);
+        addressBook.setTravelBuffer(45);
+        AddressBook before = new AddressBook(addressBook);
+        AddressBook invalid = new AddressBook() {
+            @Override
+            public int getTravelBuffer() {
+                return 181;
+            }
+        };
+        assertThrows(IllegalArgumentException.class, () -> addressBook.resetData(invalid));
+        assertEquals(before, addressBook);
+    }
+
+    @Test
     public void resetData_null_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> addressBook.resetData(null));
     }
