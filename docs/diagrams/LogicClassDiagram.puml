@@ -7,10 +7,16 @@ skinparam classBackgroundColor LOGIC_COLOR
 package Logic as LogicPackage {
 
 package "Parser Classes" as ParserClasses{
+Class PaymentCommandParser
+Class BalanceCommandParser
 }
 Class XYZCommand
 Class CommandResult
 Class "{abstract}\nCommand" as Command
+Class PaymentCommand
+Class BalanceCommand
+Class DuesCommand
+Class LessonDoneCommand
 
 
 Class "<<interface>>\nLogic" as Logic
@@ -19,6 +25,8 @@ Class LogicManager
 
 package Model {
 Class HiddenModel #FFFFFF
+Class Ledger
+Class LedgerEntry
 }
 
 package Storage {
@@ -32,6 +40,10 @@ LogicManager -right->"1" ParserClasses
 ParserClasses ..> XYZCommand : <<create>>
 
 XYZCommand -up-|> Command
+PaymentCommand -up-|> Command
+BalanceCommand -up-|> Command
+DuesCommand -up-|> Command
+LessonDoneCommand -up-|> Command
 LogicManager .left.> Command : <<call>>
 
 LogicManager --> Model
@@ -39,6 +51,18 @@ LogicManager --> Storage
 Storage --[hidden] Model
 Command .[hidden]up.> Storage
 Command .right.> Model
+PaymentCommand ..> Model
+BalanceCommand ..> Model
+DuesCommand ..> Model
+LessonDoneCommand ..> Model
+PaymentCommandParser ..> PaymentCommand : <<create>>
+BalanceCommandParser ..> BalanceCommand : <<create>>
+AddressBookParser ..> DuesCommand : <<create>>
+PaymentCommand ..> Ledger : records payment\nand reads balance
+BalanceCommand ..> Ledger : reads balance
+DuesCommand ..> Ledger : formats dues
+LessonDoneCommand ..> LedgerEntry : reports charge
+PaymentCommand ..> LedgerEntry : creates payment
 note right of XYZCommand: XYZCommand = AddCommand, \nFindCommand, etc
 
 Logic ..> CommandResult

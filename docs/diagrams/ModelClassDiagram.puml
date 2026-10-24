@@ -30,6 +30,12 @@ Class LessonTime
 Class LessonDuration
 Class LessonStatus
 
+package Finance {
+Class LedgerEntry
+Class Ledger
+Class Due
+}
+
 Class I #FFFFFF
 }
 
@@ -47,6 +53,7 @@ UserPrefs .up.|> ReadOnlyUserPrefs
 
 AddressBook *--> "1" UniquePersonList
 AddressBook *--> "1" UniqueLessonList
+AddressBook *--> "0..*" LedgerEntry : records
 UniquePersonList --> "~* all" Person
 Person *--> Name
 Person *--> Phone
@@ -64,6 +71,28 @@ Lesson *--> LessonDuration
 Lesson *--> LessonStatus
 Lesson *--> "0..1" Venue
 Lesson ..> Person : refers to its\nstudent by name\nand phone
+
+LedgerEntry ..> Person : studentId
+LedgerEntry ..> Lesson : optional lessonId\n(charges only)
+Ledger ..> ReadOnlyAddressBook : reads records
+Ledger ..> LedgerEntry : calculates from
+Due --> Person : student
+Ledger ..> Due : returns
+
+note right of LedgerEntry
+  Immutable financial event:
+  id, studentId, optional lessonId,
+  kind, positive amount, date,
+  optional notes
+  CHARGE entries reference a lesson;
+  PAYMENT entries do not.
+end note
+
+note right of Ledger
+  balance = charges - payments
+  dues allocates payments FIFO
+  and returns positive unpaid rows.
+end note
 
 Person -[hidden]up--> I
 UniquePersonList -[hidden]right-> I

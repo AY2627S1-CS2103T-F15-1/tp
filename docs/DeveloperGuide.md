@@ -128,6 +128,7 @@ The `Model` component,
 
 * stores the address book data i.e., all `Person` objects, each of which represents a student with a name, phone number, level, subjects and rate, and optionally an email, a venue and a remark (the `Person` objects are contained in a `UniquePersonList` object). Two `Person` objects are the same student if they have the same phone number and the same name, ignoring case.
 * stores the `Lesson` objects, each of which is a lesson with a student, a subject, a date, a start time, a duration, a status and optionally a venue (the `Lesson` objects are contained in a `UniqueLessonList` object). A `Lesson` refers to its student by the student's name and phone number, which together identify a `Person`. Deleting a student deletes their lessons, and editing the name or phone number of a student keeps their lessons attached.
+* stores immutable `LedgerEntry` records for lesson charges and student payments. Each record refers to a permanent student UUID and, for charges only, a lesson UUID. `Ledger` derives balances and unpaid dues from those records; those calculations do not mutate the ledger.
 * stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
 * stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
 * does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
@@ -459,6 +460,11 @@ rejects future dates. Notes are optional 1–200 printable one-line characters a
 adapter; absent notes in existing finance files default to null. Missing JSON fields are named in errors.
 The response confirms the amount, student, date and updated balance. Payment list/reverse, manual charge,
 and running account statements are follow-up increments; no success message points to unavailable commands.
+
+The following sequence diagram shows the `pay st/1 amt/50.00` flow, including the ledger update,
+updated balance, and save performed by `LogicManager`:
+
+<puml src="diagrams/PaymentSequenceDiagram.puml" alt="Sequence diagram for recording a student payment and saving the updated ledger" />
 
 Integration follow-ups before full alpha sign-off:
 * Finance: introduce reversal records and a schema migration before implementing payment/charge reversal.
