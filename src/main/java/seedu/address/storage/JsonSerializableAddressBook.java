@@ -19,6 +19,7 @@ import seedu.address.model.AddressBook;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.lesson.Lesson;
+import seedu.address.model.lesson.TravelGap;
 import seedu.address.model.person.Person;
 import seedu.address.model.task.Task;
 
@@ -39,6 +40,7 @@ class JsonSerializableAddressBook {
     private static final Logger logger = LogsCenter.getLogger(JsonSerializableAddressBook.class);
 
     private Integer schemaVersion;
+    private Integer travelBuffer;
 
     private final List<JsonAdaptedPerson> persons = new ArrayList<>();
     private final List<JsonAdaptedLesson> lessons = new ArrayList<>();
@@ -97,6 +99,7 @@ class JsonSerializableAddressBook {
      */
     public JsonSerializableAddressBook(ReadOnlyAddressBook source) {
         schemaVersion = StorageSchema.CURRENT_VERSION;
+        travelBuffer = source.getTravelBuffer();
         source.getLedgerEntries().stream().map(JsonAdaptedLedgerEntry::new).forEach(ledgerEntries::add);
         source.getHomeworkList().stream().map(JsonAdaptedHomework::new).forEach(homework::add);
         persons.addAll(source.getPersonList().stream().map(JsonAdaptedPerson::new).collect(Collectors.toList()));
@@ -118,6 +121,12 @@ class JsonSerializableAddressBook {
         Set<UUID> studentIds = new HashSet<>();
         Set<UUID> lessonIds = new HashSet<>();
         AddressBook addressBook = new AddressBook();
+        if (travelBuffer != null) {
+            if (!TravelGap.isValidBuffer(travelBuffer)) {
+                throw new IllegalValueException(TravelGap.MESSAGE_CONSTRAINTS);
+            }
+            addressBook.setTravelBuffer(travelBuffer);
+        }
         for (JsonAdaptedPerson jsonAdaptedPerson : persons) {
             if (jsonAdaptedPerson == null) {
                 throw new IllegalValueException("Persons list contains a null student.");

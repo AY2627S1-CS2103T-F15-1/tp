@@ -68,8 +68,11 @@ public class HelpCommand extends Command {
                             + "Example: lesson prep 1 n/Bring the mock paper"),
             new CommandHelp("lesson move", "Reschedules a lesson", LessonMoveCommand.MESSAGE_USAGE),
             new CommandHelp("lesson cancel", "Cancels a lesson", LessonCancelCommand.MESSAGE_USAGE),
+            new CommandHelp("lesson series cancel", "Cancels future occurrences of a series",
+                    LessonSeriesCancelCommand.MESSAGE_USAGE),
             new CommandHelp("lesson done", "Completes a lesson and records notes", LessonDoneCommand.MESSAGE_USAGE),
             new CommandHelp("lesson missed", "Marks a lesson as missed (no-show)", LessonMissedCommand.MESSAGE_USAGE),
+            new CommandHelp("travel", "Sets the minimum travel gap between venues", TravelCommand.MESSAGE_USAGE),
             new CommandHelp("hw add", "Assigns homework", HomeworkAddCommand.MESSAGE_USAGE,
                     "Parameters: STUDENT_INDEX of an active student; DESCRIPTION is 1-200 characters; DATE is today "
                             + "or later, up to a year ahead.\nExample: hw add st/1 desc/Algebra Q1-10 due/tmr"),

@@ -27,6 +27,27 @@ public class LessonTest {
     private static final java.util.UUID SERIES = java.util.UUID.fromString("00000000-0000-0000-0000-0000000000a1");
 
     @Test
+    public void seriesIdentity_retainedAcrossEveryLessonUpdate() {
+        Lesson original = ALICE_MATH.snapshotStudent(ALICE).withSeries(SERIES).prepare("Bring textbook");
+        for (Lesson changed : java.util.List.of(original.cancel("Unwell"), original.complete("Covered algebra"),
+                original.miss(), original.prepare("Bring worksheets"), original.withStudent(BENSON),
+                original.snapshotStudent(ALICE), original.reschedule(original.getDate(), new LessonTime("09:00"),
+                        original.getDuration(), null))) {
+            assertEquals(original.getId(), changed.getId());
+            assertEquals(original.getSeriesId(), changed.getSeriesId());
+            assertEquals(original.getAcademicLevel(), changed.getAcademicLevel());
+        }
+        assertThrows(NullPointerException.class, () -> original.withSeries(null));
+        assertThrows(IllegalArgumentException.class, () -> original.prepare(" "));
+        assertFalse(original.equals(original.withSeries(java.util.UUID.randomUUID())));
+        assertFalse(original.equals(original.prepare("Different preparation")));
+        Person promoted = new PersonBuilder(ALICE).withLevel("P2").build();
+        Lesson laterLevel = original.snapshotStudent(promoted);
+        assertFalse(original.equals(laterLevel));
+        assertEquals(original.getSeriesId(), laterLevel.getSeriesId());
+    }
+
+    @Test
     public void isValidNotes() {
         assertTrue(Lesson.isValidNotes("Covered algebra; revise x² + 2x + 1."));
         assertTrue(Lesson.isValidNotes("a".repeat(Lesson.MAX_NOTES_LENGTH)));

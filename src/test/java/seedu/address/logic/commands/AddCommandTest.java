@@ -119,6 +119,11 @@ public class AddCommandTest {
      */
     private class ModelStub implements Model {
         @Override
+        public void setTravelBuffer(int minutes) {
+            throw new AssertionError("Unexpected travel operation");
+        }
+
+        @Override
         public java.util.Optional<seedu.address.model.finance.LedgerEntry> chargeLesson(Lesson target,
                 Lesson completedLesson) {
             throw new AssertionError("This method should not be called.");

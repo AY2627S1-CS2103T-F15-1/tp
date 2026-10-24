@@ -165,7 +165,8 @@ public class LessonRepeatCommand extends Command {
                 : String.format(MESSAGE_SUCCESS_EVERY, count, everyWeeks);
         String shown = isRenumbered(shownBefore, model.getFilteredLessonList())
                 ? MESSAGE_NUMBERS_CHANGED : MESSAGE_NOT_DISPLAYED;
-        return new CommandResult(summary + "\n" + String.format(shown, studentIndex.getOneBased()) + warnings);
+        return new CommandResult(summary + "\n" + String.format(shown, studentIndex.getOneBased()) + warnings
+                + LessonCommandUtil.getTravelWarningsForLessons(model, series));
     }
 
     /**

@@ -46,6 +46,39 @@ public class AddressBookTest {
     }
 
     @Test
+    public void travelBuffer_validatedCopiedAndComparedAsPartOfState() {
+        AddressBook legacy = new AddressBook(new AddressBookStub(List.of()));
+        assertEquals(30, legacy.getTravelBuffer());
+        addressBook.setTravelBuffer(180);
+        assertFalse(addressBook.equals(legacy));
+        AddressBook copy = new AddressBook(addressBook);
+        assertEquals(addressBook, copy);
+        assertEquals(addressBook.hashCode(), copy.hashCode());
+        assertThrows(IllegalArgumentException.class, () -> addressBook.setTravelBuffer(-1));
+        assertThrows(IllegalArgumentException.class, () -> addressBook.setTravelBuffer(181));
+        assertEquals(180, addressBook.getTravelBuffer());
+        copy.setTravelBuffer(0);
+        assertFalse(addressBook.equals(copy));
+        assertEquals(180, addressBook.getTravelBuffer());
+    }
+
+    @Test
+    public void resetData_invalidTravelBuffer_preservesExistingState() {
+        addressBook.addPerson(ALICE);
+        addressBook.addLesson(ALICE_MATH);
+        addressBook.setTravelBuffer(45);
+        AddressBook before = new AddressBook(addressBook);
+        AddressBook invalid = new AddressBook() {
+            @Override
+            public int getTravelBuffer() {
+                return 181;
+            }
+        };
+        assertThrows(IllegalArgumentException.class, () -> addressBook.resetData(invalid));
+        assertEquals(before, addressBook);
+    }
+
+    @Test
     public void resetData_null_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> addressBook.resetData(null));
     }
