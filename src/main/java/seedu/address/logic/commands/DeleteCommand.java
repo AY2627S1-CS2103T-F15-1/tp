@@ -42,8 +42,7 @@ public class DeleteCommand extends Command {
     public static final String MESSAGE_CONFIRMATION = "%1$s (phone: %2$s) has %3$d lesson(s). "
             + "These will all be deleted.\n%4$sType '" + COMMAND_WORD + " %5$d " + CONFIRM_KEYWORD + "' to proceed.";
     public static final String MESSAGE_UPCOMING_WARNING = "Warning: this student has %1$d upcoming lesson(s).\n";
-    public static final String MESSAGE_FINANCE_WARNING = "\nThis also deletes %1$d financial event(s).\n"
-            + "Balance: %2$s.";
+    public static final String MESSAGE_BALANCE = "\nBalance: %1$s.";
     public static final String MESSAGE_ARCHIVE_ADVICE =
             "\nUse 'archive INDEX' to retain these obligations and all history instead.";
 
@@ -100,28 +99,30 @@ public class DeleteCommand extends Command {
      */
     private String getConfirmationPreview(Person student, LinkedRecords records) {
         String preview = getConfirmationPrompt(student, records.lessons());
-        if (records.hasHomework()) {
+        if (records.hasHomework() || records.financialEvents() > 0) {
             preview += "\n" + describeHistory(records);
         }
         if (records.hasTasks()) {
             preview += "\nThis also deletes " + records.tasks().size() + " task(s).";
         }
         if (records.financialEvents() > 0) {
-            preview += String.format(MESSAGE_FINANCE_WARNING, records.financialEvents(),
-                    Ledger.describeBalance(records.balance()));
+            preview += String.format(MESSAGE_BALANCE, Ledger.describeBalance(records.balance()));
         }
         return records.hasHomework() || records.financialEvents() > 0 ? preview + MESSAGE_ARCHIVE_ADVICE : preview;
     }
 
     /**
-     * Returns the line that counts the homework that would be deleted. Feedback is mentioned only when there is
-     * some, because it is the part of the history that took thought to write.
+     * Returns the line that counts the homework and financial events that would be deleted, in the form the
+     * specification gives: "This also deletes 0 homework item(s), including 0 upcoming homework item(s), and 1
+     * financial event(s)." Feedback is mentioned only when there is some, because it is the part of the history
+     * that took thought to write.
      */
     private static String describeHistory(LinkedRecords records) {
         long upcoming = records.homework().stream().filter(Homework::isOutstanding)
                 .filter(item -> !item.getDueDate().isBefore(LocalDate.now())).count();
         String line = "This also deletes " + records.homework().size() + " homework item(s), including " + upcoming
-                + " upcoming homework item(s).";
+                + " upcoming homework item(s)"
+                + (records.financialEvents() > 0 ? ", and " + records.financialEvents() + " financial event(s)." : ".");
         long withFeedback = records.homework().stream().filter(item -> item.getFeedback().isPresent()).count();
         return withFeedback == 0
                 ? line
