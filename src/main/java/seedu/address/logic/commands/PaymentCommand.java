@@ -22,10 +22,13 @@ import seedu.address.model.person.Person;
 public class PaymentCommand extends Command {
     public static final String COMMAND_WORD = "pay";
     public static final String MESSAGE_USAGE = "pay: Records a payment from a student in the displayed list.\n"
-            + "Parameters: st/STUDENT_INDEX amt/AMOUNT [d/DATE] [n/NOTES]\nExample: pay st/1 amt/50.00";
+            + "Parameters: st/STUDENT_INDEX amt/AMOUNT [d/DATE] [n/NOTES]\nExample: pay st/1 amt/50.00\n"
+            + "To list or correct payments: pay list [st/STUDENT_INDEX], pay reverse PAYMENT_INDEX";
     public static final String MESSAGE_AMOUNT_CONSTRAINTS =
             "Amount must be greater than 0 with at most 2 decimal places.";
     public static final String MESSAGE_FUTURE_DATE = "Payment dates cannot be in the future.";
+    public static final String MESSAGE_INDICES_NOTE =
+            "Payment indices stay as last shown; run 'pay list' to refresh.";
 
     private final Index studentIndex;
     private final BigDecimal amount;
@@ -74,7 +77,8 @@ public class PaymentCommand extends Command {
         }
         BigDecimal balance = Ledger.balance(model.getAddressBook(), student);
         return new CommandResult("Payment of " + Ledger.format(amount) + " recorded for " + student.getName()
-                + " on " + paymentDate + ".\nBalance: " + Ledger.describeBalance(balance) + ".");
+                + " on " + paymentDate + ".\nBalance: " + Ledger.describeBalance(balance) + ".\n"
+                + MESSAGE_INDICES_NOTE);
     }
 
     @Override

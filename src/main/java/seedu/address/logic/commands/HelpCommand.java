@@ -59,6 +59,8 @@ public class HelpCommand extends Command {
             new CommandHelp("payment", "Alias for pay using the earlier a/ amount prefix",
                     PaymentCommand.MESSAGE_USAGE),
             new CommandHelp("dues", "Lists all students who owe money", DuesCommand.MESSAGE_USAGE),
+            new CommandHelp("pay list", "Lists recorded payments and numbers them", PaymentListCommand.MESSAGE_USAGE),
+            new CommandHelp("pay reverse", "Reverses a wrongly entered payment", PaymentReverseCommand.MESSAGE_USAGE),
             new CommandHelp("sort", "Sorts students by name", SortCommand.MESSAGE_USAGE),
             new CommandHelp("remark", "Sets a student's remark", RemarkCommand.MESSAGE_USAGE),
             new CommandHelp("lesson add", "Schedules a lesson", LessonAddCommand.MESSAGE_USAGE),
