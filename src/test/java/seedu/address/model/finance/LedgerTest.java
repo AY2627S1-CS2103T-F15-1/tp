@@ -283,6 +283,78 @@ public class LedgerTest {
                 + "\n  Alice (archived) $40.00 oldest unpaid 1 day", Ledger.formatDues(book, DAY));
     }
 
+    @Test
+    public void reversal_cancelsTheEntryButKeepsItInTheHistory() {
+        AddressBook book = new AddressBook();
+        book.addPerson(alice);
+        LedgerEntry charge = charge(book, alice, "100.00", DAY);
+        book.addLedgerEntry(charge);
+        LedgerEntry payment = LedgerEntry.payment(alice, new BigDecimal("30.00"), DAY);
+        book.addLedgerEntry(payment);
+
+        book.addLedgerEntry(LedgerEntry.reversalOf(payment, DAY));
+        assertEquals(new BigDecimal("100.00"), Ledger.balance(book, alice));
+        assertTrue(Ledger.isReversed(book, payment));
+        assertEquals(charge.date(), Ledger.dues(book, DAY).getFirst().oldestUnpaidDate());
+
+        book.addLedgerEntry(LedgerEntry.reversalOf(charge, DAY));
+        assertEquals(Ledger.ZERO, Ledger.balance(book, alice));
+        assertTrue(Ledger.dues(book, DAY).isEmpty());
+        assertTrue(Ledger.activeCharge(book, charge.lessonId()).isEmpty());
+        assertEquals(4, book.getLedgerEntries().size());
+    }
+
+    @Test
+    public void reversedCharge_canBeChargedAgainButNotTwice() {
+        AddressBook book = new AddressBook();
+        book.addPerson(alice);
+        LedgerEntry first = charge(book, alice, "100.00", DAY);
+        book.addLedgerEntry(first);
+        Lesson lesson = book.getLessonList().getFirst();
+        LedgerEntry duplicate = LedgerEntry.charge(alice, lesson, BigDecimal.TEN);
+        assertThrows(IllegalArgumentException.class, () -> book.addLedgerEntry(duplicate));
+
+        book.addLedgerEntry(LedgerEntry.reversalOf(first, DAY));
+        book.addLedgerEntry(duplicate);
+        assertEquals(BigDecimal.TEN.setScale(2), Ledger.balance(book, alice));
+        assertSame(duplicate, Ledger.activeCharge(book, lesson.getId()).orElseThrow());
+    }
+
+    @Test
+    public void invalidReversals_rejected() {
+        AddressBook book = new AddressBook();
+        book.addPerson(alice);
+        book.addPerson(bob);
+        LedgerEntry charge = charge(book, alice, "100.00", DAY);
+        book.addLedgerEntry(charge);
+        LedgerEntry payment = LedgerEntry.payment(alice, BigDecimal.TEN, DAY);
+        book.addLedgerEntry(payment);
+        LedgerEntry reversal = LedgerEntry.reversalOf(payment, DAY);
+        book.addLedgerEntry(reversal);
+
+        assertThrows(IllegalArgumentException.class, () -> LedgerEntry.reversalOf(reversal, DAY));
+        // already reversed
+        assertThrows(IllegalArgumentException.class, () -> book.addLedgerEntry(LedgerEntry.reversalOf(payment, DAY)));
+        // nothing to reverse
+        assertThrows(IllegalArgumentException.class, () -> book.addLedgerEntry(new LedgerEntry(UUID.randomUUID(),
+                alice.getId(), null, LedgerEntry.Kind.PAYMENT_REVERSAL, BigDecimal.TEN, DAY, null,
+                UUID.randomUUID())));
+        // wrong kind, student or amount
+        assertThrows(IllegalArgumentException.class, () -> book.addLedgerEntry(new LedgerEntry(UUID.randomUUID(),
+                alice.getId(), null, LedgerEntry.Kind.PAYMENT_REVERSAL, BigDecimal.TEN, DAY, null, charge.id())));
+        assertThrows(IllegalArgumentException.class, () -> book.addLedgerEntry(new LedgerEntry(UUID.randomUUID(),
+                bob.getId(), charge.lessonId(), LedgerEntry.Kind.CHARGE_REVERSAL, new BigDecimal("100.00"), DAY,
+                null, charge.id())));
+        assertThrows(IllegalArgumentException.class, () -> book.addLedgerEntry(new LedgerEntry(UUID.randomUUID(),
+                alice.getId(), charge.lessonId(), LedgerEntry.Kind.CHARGE_REVERSAL, BigDecimal.ONE, DAY, null,
+                charge.id())));
+        // a reversal names what it reverses, and nothing else does
+        assertThrows(IllegalArgumentException.class, () -> new LedgerEntry(UUID.randomUUID(), alice.getId(), null,
+                LedgerEntry.Kind.PAYMENT_REVERSAL, BigDecimal.TEN, DAY));
+        assertThrows(IllegalArgumentException.class, () -> new LedgerEntry(UUID.randomUUID(), alice.getId(), null,
+                LedgerEntry.Kind.PAYMENT, BigDecimal.TEN, DAY, null, payment.id()));
+    }
+
     private static LedgerEntry charge(AddressBook book, Person student, String amount, LocalDate date) {
         Lesson lesson = new LessonBuilder().withStudent(student).withDate(date)
                 .withTime(student.getName().fullName.equals("Bob") ? "14:00" : "10:00").build();
