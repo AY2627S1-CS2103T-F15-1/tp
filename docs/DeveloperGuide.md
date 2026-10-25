@@ -499,7 +499,7 @@ rather than scanning the growing list once per entry. Other domains keep their e
 `removeLesson` refuses to delete a billed lesson, including detached equal-value lookup, so a saved
 charge cannot point at a deleted lesson. Student deletion still cascades all of that student's history.
 
-`Ledger.balance(book, student)` adds charges and payment reversals and subtracts payments and charge reversals, returning a negative value for credit. `Ledger.activeCharge(book, lessonId)` returns the charge of a lesson that no reversal cancels; the lesson move/cancel guard and the one-charge-per-lesson rule use it. `ChargeCommand` records a manual charge or a reversal. The first charge of a lesson keeps the lesson's UUID as its entry ID, so a charge raised again after a reversal gets a random ID.
+`Ledger.balance(book, student)` adds charges and payment reversals and subtracts payments and charge reversals, returning a negative value for credit. `Ledger.activeCharge(book, lessonId)` returns the charge of a lesson that no reversal cancels; the lesson move/cancel guard and the one-charge-per-lesson rule use it. `ChargeCommand` records a manual charge or a reversal. `PaymentListCommand` lists `PAYMENT` entries oldest first, and stores them with `Model#setShownPayments`; `PaymentReverseCommand` takes its index from that stored list (like `task list` and the task commands), so the numbers stay fixed until the next `pay list`. It refuses a payment that is gone from the ledger or that `Ledger.isReversed` finds already cancelled, and otherwise adds `LedgerEntry.reversalOf(payment, today)`. `PayCommandParser` routes `pay list` and `pay reverse` to their parsers and everything else to `PaymentCommandParser`. The first charge of a lesson keeps the lesson's UUID as its entry ID, so a charge raised again after a reversal gets a random ID.
 `Ledger.describeBalance(amount)` shares the `OUTSTANDING $X.XX` / `IN CREDIT $X.XX` labels.
 `Ledger.dues(book, today)` returns immutable `Due(student, amount, oldestUnpaidDate)` rows, oldest first,
 breaking ties by name then phone. Payments cover charges FIFO by charge date, including partial payments
@@ -529,8 +529,6 @@ updated balance, and save performed by `LogicManager`:
 <puml src="diagrams/PaymentSequenceDiagram.puml" alt="Sequence diagram for recording a student payment and saving the updated ledger" />
 
 Integration follow-ups before full alpha sign-off:
-* Finance: introduce reversal records and a schema migration before implementing payment/charge reversal.
-  A charge currently uses the lesson UUID, so recharging after reversal requires a new event identity design.
 * Finance: implement the running account statement in specification section 4.29.
 * Lesson move/cancel and series cancellation (#142): check active charges before changing a billed lesson.
   Preserve lesson and series UUIDs across every copy operation.
