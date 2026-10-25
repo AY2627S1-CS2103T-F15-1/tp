@@ -15,6 +15,7 @@ import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.AgendaCommand;
 import seedu.address.logic.commands.ArchiveCommand;
 import seedu.address.logic.commands.BalanceCommand;
+import seedu.address.logic.commands.ChargeCommand;
 import seedu.address.logic.commands.ClearCommand;
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.DeleteCommand;
@@ -81,6 +82,7 @@ public class AddressBookParser {
 
         return switch (commandWord) {
             case BalanceCommand.COMMAND_WORD -> new BalanceCommandParser().parse(arguments);
+            case ChargeCommand.COMMAND_WORD -> new ChargeCommandParser(clock).parse(arguments);
             case PaymentCommand.COMMAND_WORD -> new PaymentCommandParser(clock).parse(arguments);
             case DuesCommand.COMMAND_WORD -> {
                 requireNoArguments(commandWord, arguments);
