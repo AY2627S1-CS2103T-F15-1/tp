@@ -54,8 +54,6 @@ public class HelpCommand extends Command {
             new CommandHelp("balance", "Shows a student's outstanding balance or credit", BalanceCommand.MESSAGE_USAGE),
             new CommandHelp("pay", "Records a student's payment with optional date and notes",
                     PaymentCommand.MESSAGE_USAGE),
-            new CommandHelp("payment", "Alias for pay using the earlier a/ amount prefix",
-                    PaymentCommand.MESSAGE_USAGE),
             new CommandHelp("dues", "Lists all students who owe money", DuesCommand.MESSAGE_USAGE),
             new CommandHelp("sort", "Sorts students by name", SortCommand.MESSAGE_USAGE),
             new CommandHelp("remark", "Sets a student's remark", RemarkCommand.MESSAGE_USAGE),
