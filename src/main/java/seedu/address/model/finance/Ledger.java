@@ -7,6 +7,8 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.person.Person;
@@ -25,8 +27,24 @@ public final class Ledger {
         requireNonNull(book);
         requireNonNull(student);
         return book.getLedgerEntries().stream().filter(entry -> entry.isWith(student))
-                .map(entry -> entry.kind() == LedgerEntry.Kind.CHARGE ? entry.amount() : entry.amount().negate())
+                .map(entry -> entry.kind().increasesBalance() ? entry.amount() : entry.amount().negate())
                 .reduce(ZERO, BigDecimal::add);
+    }
+
+    /** Returns whether a later reversal in {@code book} cancels {@code entry}. */
+    public static boolean isReversed(ReadOnlyAddressBook book, LedgerEntry entry) {
+        requireNonNull(book);
+        requireNonNull(entry);
+        return book.getLedgerEntries().stream().anyMatch(other -> entry.id().equals(other.reverses()));
+    }
+
+    /** Returns the charge of a lesson that has not been reversed. A lesson has at most one. */
+    public static Optional<LedgerEntry> activeCharge(ReadOnlyAddressBook book, UUID lessonId) {
+        requireNonNull(book);
+        requireNonNull(lessonId);
+        return book.getLedgerEntries().stream()
+                .filter(entry -> entry.kind() == LedgerEntry.Kind.CHARGE && lessonId.equals(entry.lessonId()))
+                .filter(entry -> !isReversed(book, entry)).findFirst();
     }
 
     /** Returns all debtors, including archived and filtered students, using the system date. */
@@ -50,8 +68,10 @@ public final class Ledger {
         assert balance(book, student).signum() > 0 : "Only debtors have an oldest unpaid charge";
         List<LedgerEntry> entries = book.getLedgerEntries().stream().filter(entry -> entry.isWith(student)).toList();
         BigDecimal payments = entries.stream().filter(entry -> entry.kind() == LedgerEntry.Kind.PAYMENT)
+                .filter(entry -> !isReversed(book, entry))
                 .map(LedgerEntry::amount).reduce(ZERO, BigDecimal::add);
         List<LedgerEntry> charges = entries.stream().filter(entry -> entry.kind() == LedgerEntry.Kind.CHARGE)
+                .filter(entry -> !isReversed(book, entry))
                 .sorted(Comparator.comparing(LedgerEntry::date).thenComparing(LedgerEntry::id)).toList();
         for (LedgerEntry charge : charges) {
             if (payments.compareTo(charge.amount()) < 0) {
