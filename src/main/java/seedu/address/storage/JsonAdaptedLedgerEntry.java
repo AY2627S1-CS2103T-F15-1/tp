@@ -20,11 +20,18 @@ class JsonAdaptedLedgerEntry {
     private final String amount;
     private final String date;
     private final String notes;
+    private final String reverses;
 
     /** Restores records saved before payment notes were added. */
     public JsonAdaptedLedgerEntry(String id, String studentId, String lessonId, String kind,
             String amount, String date) {
-        this(id, studentId, lessonId, kind, amount, date, null);
+        this(id, studentId, lessonId, kind, amount, date, null, null);
+    }
+
+    /** Restores records saved before reversals were added. */
+    public JsonAdaptedLedgerEntry(String id, String studentId, String lessonId, String kind,
+            String amount, String date, String notes) {
+        this(id, studentId, lessonId, kind, amount, date, notes, null);
     }
 
     /** Restores the persisted fields, defaulting absent notes to null for older records. */
@@ -32,7 +39,7 @@ class JsonAdaptedLedgerEntry {
     public JsonAdaptedLedgerEntry(@JsonProperty("id") String id, @JsonProperty("studentId") String studentId,
             @JsonProperty("lessonId") String lessonId, @JsonProperty("kind") String kind,
             @JsonProperty("amount") String amount, @JsonProperty("date") String date,
-            @JsonProperty("notes") String notes) {
+            @JsonProperty("notes") String notes, @JsonProperty("reverses") String reverses) {
         this.id = id;
         this.studentId = studentId;
         this.lessonId = lessonId;
@@ -40,12 +47,14 @@ class JsonAdaptedLedgerEntry {
         this.amount = amount;
         this.date = date;
         this.notes = notes;
+        this.reverses = reverses;
     }
 
     public JsonAdaptedLedgerEntry(LedgerEntry entry) {
         this(entry.id().toString(), entry.studentId().toString(),
                 entry.lessonId() == null ? null : entry.lessonId().toString(),
-                entry.kind().name(), entry.amount().toPlainString(), entry.date().toString(), entry.notes());
+                entry.kind().name(), entry.amount().toPlainString(), entry.date().toString(), entry.notes(),
+                entry.reverses() == null ? null : entry.reverses().toString());
     }
 
     /** Validates every field before restoring a financial record. */
@@ -55,13 +64,17 @@ class JsonAdaptedLedgerEntry {
         requireField(kind, "kind");
         requireField(amount, "amount");
         requireField(date, "date");
-        if ("CHARGE".equals(kind)) {
+        if ("CHARGE".equals(kind) || "CHARGE_REVERSAL".equals(kind)) {
             requireField(lessonId, "lessonId");
+        }
+        if ("CHARGE_REVERSAL".equals(kind) || "PAYMENT_REVERSAL".equals(kind)) {
+            requireField(reverses, "reverses");
         }
         try {
             return new LedgerEntry(UUID.fromString(id), UUID.fromString(studentId),
                     lessonId == null ? null : UUID.fromString(lessonId),
-                    LedgerEntry.Kind.valueOf(kind), new BigDecimal(amount), LocalDate.parse(date), notes);
+                    LedgerEntry.Kind.valueOf(kind), new BigDecimal(amount), LocalDate.parse(date), notes,
+                    reverses == null ? null : UUID.fromString(reverses));
         } catch (IllegalArgumentException | DateTimeException e) {
             throw new IllegalValueException("Invalid ledger entry: " + e.getMessage());
         }
