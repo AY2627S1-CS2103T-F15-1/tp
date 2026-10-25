@@ -112,6 +112,20 @@ public class HelpCommandTest {
     }
 
     @Test
+    public void execute_everyListedCommand_isARealCommand() throws Exception {
+        seedu.address.logic.parser.AddressBookParser parser = new seedu.address.logic.parser.AddressBookParser();
+        for (String line : helpFor("").lines().filter(l -> l.startsWith("  ")).toList()) {
+            String word = line.strip().split(" {2,}")[0];
+            try {
+                parser.parseCommand(word);
+            } catch (seedu.address.logic.parser.exceptions.ParseException e) {
+                assertFalse(e.getMessage().equals(seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND),
+                        "help lists '" + word + "' but the parser does not know it");
+            }
+        }
+    }
+
+    @Test
     public void equals() {
         HelpCommand command = new HelpCommand("add");
 
