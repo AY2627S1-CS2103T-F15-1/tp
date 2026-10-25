@@ -68,7 +68,8 @@ public class PaymentCommandTest {
         CommandResult result = payment(INDEX_FIRST_PERSON, new BigDecimal("25.50")).execute(model);
 
         assertEquals("Payment of $25.50 recorded for " + ALICE.getName() + " on " + TODAY
-                + ".\nBalance: OUTSTANDING $74.50.", result.getFeedbackToUser());
+                + ".\nBalance: OUTSTANDING $74.50.\n" + PaymentCommand.MESSAGE_INDICES_NOTE,
+                result.getFeedbackToUser());
         assertEquals(new BigDecimal("74.50"), Ledger.balance(model.getAddressBook(), ALICE));
         assertEquals(LedgerEntry.Kind.PAYMENT, model.getAddressBook().getLedgerEntries().getLast().kind());
         assertEquals(2, model.getAddressBook().getLedgerEntries().size());
@@ -79,7 +80,7 @@ public class PaymentCommandTest {
         Model model = new ModelManager();
         model.addPerson(ALICE);
         CommandResult result = payment(INDEX_FIRST_PERSON, BigDecimal.TEN).execute(model);
-        assertTrue(result.getFeedbackToUser().endsWith("IN CREDIT $10.00."));
+        assertTrue(result.getFeedbackToUser().contains("IN CREDIT $10.00."));
         assertEquals(new BigDecimal("-10.00"), Ledger.balance(model.getAddressBook(), ALICE));
     }
 
