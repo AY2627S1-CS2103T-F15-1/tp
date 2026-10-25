@@ -11,7 +11,7 @@ import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
-import seedu.address.model.finance.LedgerEntry;
+import seedu.address.model.finance.Ledger;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonDate;
 import seedu.address.model.lesson.LessonDuration;
@@ -66,12 +66,9 @@ final class LessonCommandUtil {
         return shownLessons.get(lessonIndex.getZeroBased());
     }
 
-    /** Prevents changing a lesson once its charge has been recorded. */
+    /** Prevents changing a lesson while it has an active charge; reversing the charge lifts the restriction. */
     static void requireNotCharged(Model model, Lesson lesson) throws CommandException {
-        boolean isCharged = model.getAddressBook().getLedgerEntries().stream()
-                .anyMatch(entry -> entry.kind() == LedgerEntry.Kind.CHARGE
-                        && lesson.getId().equals(entry.lessonId()));
-        if (isCharged) {
+        if (Ledger.activeCharge(model.getAddressBook(), lesson.getId()).isPresent()) {
             throw new CommandException(MESSAGE_CHARGED_LESSON);
         }
     }

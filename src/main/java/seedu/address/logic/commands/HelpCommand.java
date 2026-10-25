@@ -52,6 +52,8 @@ public class HelpCommand extends Command {
             new CommandHelp("find", "Finds students by name", FindCommand.MESSAGE_USAGE),
             new CommandHelp("view", "Shows a student's overview", ViewCommand.MESSAGE_USAGE),
             new CommandHelp("balance", "Shows a student's outstanding balance or credit", BalanceCommand.MESSAGE_USAGE),
+            new CommandHelp("charge", "Charges a completed or missed lesson", ChargeCommand.MESSAGE_USAGE),
+            new CommandHelp("charge reverse", "Reverses the charge of a lesson", ChargeCommand.MESSAGE_USAGE),
             new CommandHelp("pay", "Records a student's payment with optional date and notes",
                     PaymentCommand.MESSAGE_USAGE),
             new CommandHelp("payment", "Alias for pay using the earlier a/ amount prefix",
