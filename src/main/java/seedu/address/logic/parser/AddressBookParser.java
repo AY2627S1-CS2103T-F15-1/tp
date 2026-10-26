@@ -30,6 +30,7 @@ import seedu.address.logic.commands.RemarkCommand;
 import seedu.address.logic.commands.SaveCommand;
 import seedu.address.logic.commands.SortCommand;
 import seedu.address.logic.commands.TodayCommand;
+import seedu.address.logic.commands.TravelCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 
@@ -116,6 +117,7 @@ public class AddressBookParser {
             }
             case LessonCommandParser.COMMAND_WORD -> new LessonCommandParser(clock).parse(arguments);
             case TaskCommandParser.COMMAND_WORD -> new TaskCommandParser(clock).parse(arguments);
+            case TravelCommand.COMMAND_WORD -> new TravelCommandParser().parse(arguments);
             case ExitCommand.COMMAND_WORD -> {
                 requireNoArguments(commandWord, arguments);
                 yield new ExitCommand();

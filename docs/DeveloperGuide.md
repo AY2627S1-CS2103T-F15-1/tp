@@ -167,11 +167,25 @@ Diagram source: [LessonMoveSequenceDiagram.puml](diagrams/LessonMoveSequenceDiag
 
 How the pieces fit together:
 
-* **Lesson indices.** `Model#getFilteredLessonList()` returns the lessons that `agenda` or `lesson list` last chose, sorted by date, then start time, then student name. `agenda` and `lesson list` number the lessons they show in that order, and `lesson move` and `lesson cancel` take the same number, so the number a tutor sees is always the one that the next command acts on. `lesson add` resets the filter so that every lesson is shown.
+* **Lesson indices.** `Model#getFilteredLessonList()` returns the lessons that `agenda` or `lesson list` last chose, sorted by date, then start time, then student name. Lesson mutations retain the active filter. `LogicManager` compares the displayed identities and rows before and after a mutation and appends the refreshed numbered list when those rows change. Commands do not append a second list; `lesson add` marks its already-formatted list with `CommandResult#withDisplayedLessons`, so the central handler can reuse it. This prevents both stale numbers and duplicate numbering messages.
 * **Overlaps.** `Lesson#overlaps(Lesson)` is true when both lessons are scheduled, are on the same date, and each starts before the other ends. It compares minutes since the start of the day, so back-to-back lessons are not an overlap and a lesson that ends at midnight can still be compared. `Model#getConflictingLessons(Lesson)` returns the other lessons that overlap a lesson, and `lesson add` and `lesson move` append the result to their message as a warning. `agenda` marks every lesson that has at least one overlap.
 * **Cancelling.** `Lesson#cancel(String)` returns a copy with the status `CANCELLED` and the reason. The lesson is kept, so it stays in the agenda for billing, but it is no longer scheduled and so it never overlaps.
 * **Immutability.** `Lesson` is immutable. `lesson move` and `lesson cancel` build a changed copy and ask the model to replace the old lesson with it, in the same way that `edit` replaces a `Person`.
 * **Defaults to type less.** `lesson add` takes the subject from the student when the student has only one, uses 60 minutes if no duration is given, and uses the student's venue if no venue is given.
+
+#### Travel buffers and series cancellation
+
+`travel buffer/MINUTES` updates the buffer through `Model#setTravelBuffer`. The value belongs to the `AddressBook`, so snapshots, resets and JSON saves include it. Missing values in older files default to 30; invalid stored values reject the file rather than silently altering the setting.
+
+`TravelGap#find` sorts scheduled lessons chronologically and scans groups sharing a date and start time. It retains the latest preceding end and its tied lessons, so a short lesson nested inside a longer lesson cannot produce a misleading departure time. It uses minutes since midnight, avoiding wraparound at 00:00. Different dates and non-scheduled lessons are excluded. The command layer formats the returned gaps with the shared `MESSAGE_TRAVEL_WARNING`, including both student names, without changing lesson filters or blocking bookings. `AgendaCommand`, `TodayCommand`, `LessonAddCommand` and `LessonMoveCommand` use the same calculation. Add and move report only journeys into or out of the changed lesson; agenda and today restrict destinations to their displayed dates. Today's warnings use the same two-space indentation as its lesson rows.
+
+`lesson series cancel LESSON_INDEX confirm` requires exact confirmation before resolving the occurrence in the displayed list. The optional UUID returned by `Lesson#getSeriesId` identifies its series independently of dates, and is retained by rescheduling, status updates, preparation updates and student edits. The command selects only scheduled occurrences whose date and time are not before its injected clock, builds all cancellations in an `AddressBook` copy, then replaces the model data once. The cancellation reason is `Series cancelled`; historical records and permanent IDs are retained. The series ID is an optional JSON field, so older lessons still load without being assigned to an invented series.
+
+`LessonRepeatCommand` creates one UUID and attaches it to every occurrence using `Lesson#withSeries(UUID)`. `Lesson#getSeriesId` returns that optional UUID; `JsonAdaptedLesson` uses the same optional `seriesId` JSON field as recurring bookings. After adding the series, the command reports each travel gap involving a new occurrence once, including journeys into and out of it. Weekly agenda warnings are formatted inside the day loop, immediately after that day's lesson rows.
+
+Move, single cancellation and series cancellation use `LessonCommandUtil#requireNotCharged` to retain billed history. Series cancellation validates every affected occurrence before building its replacement, so a charge on even the last eligible occurrence leaves all bookings and ledger records unchanged. Cancellation is a status change and is outside the deletion/clear operations specified for undo in section 4.36. It is not undoable. PR #143 was closed without merging, and current master has no undo implementation or model reset hook; a future undo implementation must invalidate its snapshot after a successful travel-buffer change and preserve it after a rejected change.
+
+`TravelGapTest`, `TravelCommandParserTest`, `LessonSeriesCancelCommandTest` and `LessonTravelWorkflowTest` cover buffer boundaries, venue exceptions, latest-end selection, moved occurrences, confirmation, filtered numbering, failed-save retries and JSON restarts.
 
 #### Design considerations
 
@@ -223,7 +237,7 @@ The sequence diagram below shows `execute("lesson repeat st/1 d/2026-10-29 t/16:
 
 **Dates.** `LessonCommandUtil` holds the date and subject checks that `lesson add`, `lesson repeat` and `lesson move` share: `requireNotInPast`, `requireNotAfterToday`, `requireNotTooFarPast`, `requireNearFuture` and `chooseSubject`. The date checks have a version that takes a `Clock`, and `LessonAddCommand` and `LessonRepeatCommand` have a constructor that takes one, in the same way as `LessonDoneCommand`, so that the boundaries (today, two years ahead and two years back) can be tested with a fixed date. With `past/`, a date after today is rejected, so that `past/` cannot create a scheduled lesson that `lesson done` would refuse.
 
-**Not yet done.** The spec also asks for travel warnings on each occurrence. They depend on the travel-time feature and are not part of this change.
+**Travel warnings.** After scheduling, the shared travel-gap calculation reports journeys into or out of the new occurrences without blocking them. It excludes unrelated journeys and emits each affected journey once.
 
 `LessonRepeatCommandTest`, `LessonRepeatCommandParserTest` and `SeriesIntegrationTest` cover the series rules, the all-or-nothing behaviour, moving and cancelling an occurrence, and saving and reloading a series.
 
@@ -532,8 +546,7 @@ Integration follow-ups before full alpha sign-off:
 * Finance: introduce reversal records and a schema migration before implementing payment/charge reversal.
   A charge currently uses the lesson UUID, so recharging after reversal requires a new event identity design.
 * Finance: implement the running account statement in specification section 4.29.
-* Lesson move/cancel and series cancellation (#142): check active charges before changing a billed lesson.
-  Preserve lesson and series UUIDs across every copy operation.
+Move, cancellation and series cancellation already reject changes to billed lessons and preserve lesson and series UUIDs. Series cancellation checks the whole batch before replacing the address book.
 
 `LogicManager(Model, Storage, Clock)` passes a shared date source to the finance and relevant lesson
 parsers/commands. Interactive constructors default to the system clock. Finance workflow tests use a

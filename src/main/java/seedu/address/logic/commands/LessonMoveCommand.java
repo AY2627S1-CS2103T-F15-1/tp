@@ -85,7 +85,8 @@ public class LessonMoveCommand extends Command {
 
         return new CommandResult(String.format(MESSAGE_SUCCESS, target.getStudentName(), target.getSubject(),
                 Messages.formatSlot(target), Messages.formatSlot(moved))
-                + LessonCommandUtil.getOverlapWarning(model, moved));
+                + LessonCommandUtil.getOverlapWarning(model, moved)
+                + LessonCommandUtil.getTravelWarningsForLesson(model, moved));
     }
 
     private static void requireMovable(Lesson lesson) throws CommandException {
