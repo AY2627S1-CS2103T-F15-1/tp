@@ -15,17 +15,13 @@ public class TravelCommandParser implements Parser<TravelCommand> {
         arguments.verifyNoDuplicatePrefixesFor(PREFIX_BUFFER);
         arguments.verifyNoEmptyValuesFor(PREFIX_BUFFER);
         String value = arguments.getValue(PREFIX_BUFFER).orElseThrow();
-        if (!value.matches("[0-9]+")) {
-            throw new ParseException(TravelGap.MESSAGE_CONSTRAINTS);
-        }
-        try {
+        // Section 4.16 answers any buffer outside 0-180 with the usage text, so a non-number or overflow does too.
+        if (value.matches("[0-9]{1,3}")) {
             int minutes = Integer.parseInt(value);
             if (TravelGap.isValidBuffer(minutes)) {
                 return new TravelCommand(minutes);
             }
-        } catch (NumberFormatException e) {
-            throw new ParseException(TravelGap.MESSAGE_CONSTRAINTS);
         }
-        throw new ParseException(TravelGap.MESSAGE_CONSTRAINTS);
+        throw new ParseException(TravelCommand.MESSAGE_USAGE);
     }
 }

@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.TravelCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
-import seedu.address.model.lesson.TravelGap;
 
 public class TravelCommandParserTest {
     @Test
@@ -21,12 +20,12 @@ public class TravelCommandParserTest {
     }
 
     @Test
-    public void parse_invalidBuffer_rejectedWithConstraints() {
+    public void parse_invalidBuffer_rejectedWithUsage() {
         TravelCommandParser parser = new TravelCommandParser();
         for (String args : new String[]{"buffer/-1", "buffer/181", "buffer/1.5", "buffer/abc",
-            "buffer/999999999999999999999999", "buffer/30 confirm"}) {
+            "buffer/200", "buffer/999999999999999999999999", "buffer/30 confirm"}) {
             ParseException error = assertThrows(ParseException.class, () -> parser.parse(args));
-            assertEquals(TravelGap.MESSAGE_CONSTRAINTS, error.getMessage());
+            assertEquals(TravelCommand.MESSAGE_USAGE, error.getMessage());
         }
     }
 

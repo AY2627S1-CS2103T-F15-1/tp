@@ -282,7 +282,8 @@ public class FinanceIntegrationTest {
         logic.execute("edit 1 r/0");
         logic.execute("lesson add st/1 d/" + TODAY + " t/10:00");
         String result = logic.execute("lesson done 1").getFeedbackToUser();
-        assertTrue(result.contains("No automatic charge: The lesson fee is $0.00."));
+        assertTrue(result.contains("No automatic charge: This student's rate is $0.00. Specify an amount with amt/ "
+                + "if you want to charge for this lesson. Use charge with an amount."), result);
         assertTrue(model.getAddressBook().getLedgerEntries().isEmpty());
         assertEquals(Ledger.ZERO, Ledger.balance(storage.readAddressBook().orElseThrow(), alice));
     }
