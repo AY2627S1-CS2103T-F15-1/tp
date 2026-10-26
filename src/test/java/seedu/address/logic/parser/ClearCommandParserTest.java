@@ -22,6 +22,7 @@ public class ClearCommandParserTest {
     public void parse_confirm_returnsConfirmedClearCommand() {
         assertParseSuccess(parser, " confirm", new ClearCommand(true));
         assertParseSuccess(parser, "  confirm  ", new ClearCommand(true));
+        assertParseSuccess(parser, " CONFIRM", new ClearCommand(true)); // the keyword does not depend on letter case
     }
 
     @Test
@@ -30,6 +31,5 @@ public class ClearCommandParserTest {
 
         assertParseFailure(parser, " 3", expected);
         assertParseFailure(parser, " confirm now", expected);
-        assertParseFailure(parser, " CONFIRM", expected); // keywords are case-sensitive
     }
 }

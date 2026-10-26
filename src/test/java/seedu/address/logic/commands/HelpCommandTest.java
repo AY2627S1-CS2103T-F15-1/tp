@@ -97,6 +97,12 @@ public class HelpCommandTest {
     }
 
     @Test
+    public void execute_commandNameInAnyCase_stillFindsCommand() throws Exception {
+        assertHelpUsage(LessonAddCommand.MESSAGE_USAGE, "LESSON Add");
+        assertTrue(helpFor("LESSON").startsWith(String.format(HelpCommand.MESSAGE_COMMANDS_STARTING_WITH, "LESSON")));
+    }
+
+    @Test
     public void execute_partialCommandName_listsMatchingSubCommands() throws Exception {
         String message = helpFor("lesson");
 
@@ -109,8 +115,7 @@ public class HelpCommandTest {
     @Test
     public void execute_unknownCommandName_throwsCommandException() {
         assertCommandFailure(new HelpCommand("foo"), model, String.format(HelpCommand.MESSAGE_NO_HELP, "foo"));
-        // case matters, as it does for every command
-        assertCommandFailure(new HelpCommand("ADD"), model, String.format(HelpCommand.MESSAGE_NO_HELP, "ADD"));
+        assertCommandFailure(new HelpCommand("ADDD"), model, String.format(HelpCommand.MESSAGE_NO_HELP, "ADDD"));
         // a prefix of a command word is not a command
         assertCommandFailure(new HelpCommand("les"), model, String.format(HelpCommand.MESSAGE_NO_HELP, "les"));
     }

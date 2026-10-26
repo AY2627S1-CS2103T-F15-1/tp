@@ -10,7 +10,8 @@ public class LessonSeriesCancelCommandParser implements Parser<LessonSeriesCance
     @Override
     public LessonSeriesCancelCommand parse(String args) throws ParseException {
         String[] words = args.strip().split("\\s+");
-        if (words.length != 3 || !words[0].equals("cancel") || !words[2].equals("confirm")) {
+        if (words.length != 3 || !words[0].equalsIgnoreCase("cancel")
+                || !words[2].equalsIgnoreCase("confirm")) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT,
                     LessonSeriesCancelCommand.MESSAGE_USAGE));
         }

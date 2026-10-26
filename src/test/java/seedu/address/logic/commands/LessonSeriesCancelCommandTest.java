@@ -151,14 +151,16 @@ public class LessonSeriesCancelCommandTest {
         AddressBookParser parser = new AddressBookParser();
         assertEquals(new LessonSeriesCancelCommand(Index.fromOneBased(2)),
                 parser.parseCommand("lesson series cancel 2 confirm"));
-        for (String suffix : List.of("cancel 1", "cancel 1 Confirm", "cancel 0 confirm", "cancel -1 confirm",
+        assertEquals(new LessonSeriesCancelCommand(Index.fromOneBased(2)),
+                parser.parseCommand("LESSON Series CANCEL 2 Confirm")); // letter case does not matter
+        for (String suffix : List.of("cancel 1", "cancel 0 confirm", "cancel -1 confirm",
                 "cancel 1 confirm now", "cancel confirm 1", "cancel abc confirm", "1 confirm", "", "end 1 confirm")) {
             assertThrows(ParseException.class, () -> parser.parseCommand("lesson series " + suffix));
         }
         assertEquals("Invalid command format!\n" + LessonSeriesCancelCommand.MESSAGE_USAGE,
                 assertThrows(ParseException.class, () -> parser.parseCommand("lesson series cancel 1")).getMessage());
         for (String command : List.of("lesson series", "lesson series cancel confirm",
-                "lesson series cancel 1 CONFIRM", "lesson series cancel 1 confirm extra")) {
+                "lesson series cancel 1 confirm extra")) {
             assertEquals("Invalid command format!\n" + LessonSeriesCancelCommand.MESSAGE_USAGE,
                     assertThrows(ParseException.class, () -> parser.parseCommand(command)).getMessage());
         }

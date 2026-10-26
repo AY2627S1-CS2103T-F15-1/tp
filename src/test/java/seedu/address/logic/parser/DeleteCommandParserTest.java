@@ -29,6 +29,7 @@ public class DeleteCommandParserTest {
     public void parse_validArgsWithConfirm_returnsConfirmedDeleteCommand() {
         assertParseSuccess(parser, "1 confirm", new DeleteCommand(INDEX_FIRST_PERSON, true));
         assertParseSuccess(parser, "  1   confirm  ", new DeleteCommand(INDEX_FIRST_PERSON, true));
+        assertParseSuccess(parser, "1 CONFIRM", new DeleteCommand(INDEX_FIRST_PERSON, true)); // any letter case
     }
 
     @Test
@@ -38,8 +39,7 @@ public class DeleteCommandParserTest {
         assertParseFailure(parser, "", expectedMessage);
         // confirm without an index
         assertParseFailure(parser, "confirm", expectedMessage);
-        // the keyword is case-sensitive and nothing else is accepted after the index
-        assertParseFailure(parser, "1 CONFIRM", expectedMessage);
+        // nothing else is accepted after the index
         assertParseFailure(parser, "1 yes", expectedMessage);
         assertParseFailure(parser, "1 confirm confirm", expectedMessage);
         assertParseFailure(parser, "0 confirm", expectedMessage);
