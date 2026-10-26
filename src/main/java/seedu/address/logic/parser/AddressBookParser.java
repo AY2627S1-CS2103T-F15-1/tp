@@ -1,14 +1,12 @@
 package seedu.address.logic.parser;
 
-import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.commands.AddCommand;
@@ -18,7 +16,6 @@ import seedu.address.logic.commands.BalanceCommand;
 import seedu.address.logic.commands.ClearCommand;
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.DeleteCommand;
-import seedu.address.logic.commands.DemoCommand;
 import seedu.address.logic.commands.DuesCommand;
 import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.ExitCommand;
@@ -40,11 +37,8 @@ import seedu.address.logic.parser.exceptions.ParseException;
 public class AddressBookParser {
 
     public static final String MESSAGE_TAKES_NO_PARAMETERS = "The '%1$s' command takes no parameters.";
+    public static final String MESSAGE_NOT_PRINTABLE = "Commands must contain printable text on one line.";
 
-    /**
-     * Used for initial separation of command word and args.
-     */
-    private static final Pattern BASIC_COMMAND_FORMAT = Pattern.compile("(?<commandWord>\\S+)(?<arguments>.*)");
     private static final Logger logger = LogsCenter.getLogger(AddressBookParser.class);
     private final Clock clock;
 
@@ -66,14 +60,14 @@ public class AddressBookParser {
      * @throws ParseException if the user input does not conform to the expected format
      */
     public Command parseCommand(String userInput) throws ParseException {
-        validatePrintableInput(userInput);
-        final Matcher matcher = BASIC_COMMAND_FORMAT.matcher(userInput.trim());
-        if (!matcher.matches()) {
-            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, HelpCommand.MESSAGE_USAGE));
+        ParserUtil.requirePrintable(userInput, MESSAGE_NOT_PRINTABLE);
+        final Optional<CommandInput> input = CommandInput.split(userInput);
+        if (input.isEmpty()) {
+            throw ParserUtil.invalidFormat(HelpCommand.MESSAGE_USAGE);
         }
 
-        final String commandWord = matcher.group("commandWord");
-        final String arguments = matcher.group("arguments");
+        final String commandWord = input.get().getWord();
+        final String arguments = input.get().getArguments();
 
         // Note to developers: Change LOG_LEVEL in LogsCenter to enable lower level (i.e., FINE, FINER and lower)
         // log messages such as the one below.
@@ -91,14 +85,9 @@ public class AddressBookParser {
                 requireNoArguments(commandWord, arguments);
                 yield new SaveCommand();
             }
-            case "demo" -> {
-                if (!arguments.isBlank() && !arguments.strip().equals("confirm")) {
-                    throw new ParseException("Usage: demo [confirm]");
-                }
-                yield new DemoCommand(arguments.strip().equals("confirm"));
-            }
-            case "hw" -> new HomeworkCommandParser(clock).parse(arguments);
-            case "student" -> new StudentCommandParser().parse(arguments);
+            case DemoCommandParser.COMMAND_WORD -> new DemoCommandParser().parse(arguments);
+            case HomeworkCommandParser.COMMAND_WORD -> new HomeworkCommandParser(clock).parse(arguments);
+            case StudentCommandParser.COMMAND_WORD -> new StudentCommandParser().parse(arguments);
             case ArchiveCommand.COMMAND_WORD_ARCHIVE -> new ArchiveCommandParser(true).parse(arguments);
             case ArchiveCommand.COMMAND_WORD_RESTORE -> new ArchiveCommandParser(false).parse(arguments);
             case AddCommand.COMMAND_WORD -> new AddCommandParser().parse(arguments);
@@ -128,14 +117,6 @@ public class AddressBookParser {
                 throw new ParseException(MESSAGE_UNKNOWN_COMMAND);
             }
         };
-    }
-
-    /** Rejects control characters before trimming can conceal invalid values. */
-    private static void validatePrintableInput(String input) throws ParseException {
-        if (input.codePoints().anyMatch(character -> Character.isISOControl(character)
-                || character == '\u2028' || character == '\u2029')) {
-            throw new ParseException("Commands must contain printable text on one line.");
-        }
     }
 
     /**
