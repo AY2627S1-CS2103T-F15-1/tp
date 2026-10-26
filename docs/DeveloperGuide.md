@@ -207,6 +207,22 @@ Move, single cancellation and series cancellation use `LessonCommandUtil#require
     * Pros: No overlaps can exist.
     * Cons: This is overzealous validation and has no workaround.
 
+### Reading dates
+
+Every date typed by the user is read by `ParserUtil.parseDate`, which resolves `today` and `tmr` against the injected clock and gives anything else to the `LessonDate` constructor. `LessonDate` hands the text to `FlexibleDateParser`, which splits it into three parts with the same separator (`/`, `-`, `.` or a space) between them and reads the parts as day, month and year, or as year, month and day. The month is one or two digits or an English month name, and the year is four digits or two digits for 2000 to 2099. Dates saved in the data file are always `YYYY-MM-DD`, written by `LessonDate#toStorageString`.
+
+A date with a four-digit year has one reading. When the first and the last part have at most two digits, as in `26-12-22`, there can be two readings, and `FlexibleDateParser` takes the one nearer to `today`, which `ParserUtil.parseDate` passes in from the clock. Readings that are equally near are settled in favour of the day first.
+
+#### Design considerations
+
+**Alternative 1 (current choice):** accept both orders and pick the nearer reading of an ambiguous date.
+* Pros: the tutor can type the order they like, and a date that is meant for a lesson in the next two years is read as that date in practice. Parsing needs no new parameter except today's date, which commands already hold.
+* Cons: the reading of an ambiguous date depends on the date of the computer, which the User Guide says and every reply shows in full.
+
+**Alternative 2:** refuse a date that can be read two ways, as `9/10` is refused.
+* Pros: never misreads a date.
+* Cons: the two-digit forms that the user asked for, such as `26-12-22`, would almost always be refused, because most two-digit dates in the next few years are ambiguous.
+
 ### Lesson completion and teaching notes
 
 `lesson done INDEX [n/NOTES]` is routed through `LessonCommandParser` to `LessonDoneCommandParser`. The parser validates the lesson index, rejects repeated `n/` prefixes and uses `ParserUtil#parseNotes` to normalise and validate optional notes. `Lesson` validates notes again at the model boundary, and `JsonAdaptedLesson` rejects invalid saved notes with an `IllegalValueException`.
@@ -531,7 +547,7 @@ with shared wording, including `(archived)` and the singular `1 day`.
 
 `PaymentCommandParser` parses `pay st/INDEX amt/AMOUNT [d/DATE] [n/NOTES]`, requiring a positive decimal
 amount with at most two fractional digits and no currency symbol. Dates use the shared `ParserUtil.parseDate`
-rules (ISO, D/M/YYYY and today/tmr resolved against the injected clock); the command
+rules (day first or year first with several separators, numeric or named months, and today/tmr resolved against the injected clock); the command
 rejects future dates. Notes are optional 1–200 printable one-line characters and persist in the JSON
 adapter; absent notes in existing finance files default to null. Missing JSON fields are named in errors.
 The response confirms the amount, student, date and updated balance. Payment list/reverse, manual charge,
@@ -1042,6 +1058,18 @@ testers are expected to do more *exploratory* testing.
    1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
       Expected: Similar to previous.
 
+
+### Writing dates
+
+1. Different ways of writing a date
+
+   1. Prerequisites: At least one student in the list.
+
+   1. Test case: `lesson add st/1 d/22-Dec-26 t/16:30`, then `lesson add st/1 d/2026/12/23 t/16:30`, then `lesson add st/1 d/24 December 2026 t/16:30`<br>
+      Expected: Lessons are scheduled on 22, 23 and 24 December 2026, each shown in full in the reply.
+
+   1. Test case: `lesson add st/1 d/12/22/2026 t/16:30`, then `lesson add st/1 d/30/02/2026 t/16:30`<br>
+      Expected: Both rejected with the message that explains how a date is written.
 
 ### Lessons
 
