@@ -186,6 +186,7 @@ Format: `remark INDEX r/REMARK`
 
 * Sets the remark of the student at the specified `INDEX`, which is the index number shown in the displayed student list and **must be a positive integer** 1, 2, 3, ...
 * The new remark replaces the old one. Writing `r/` with nothing after it removes the remark.
+* Surrounding spaces are removed and repeated spaces inside the remark are collapsed into one, as for other free text.
 * A remark is shown in the student's card and in [`view`](#viewing-a-students-overview-view).
 
 Examples:
@@ -283,7 +284,7 @@ Format: `agenda [d/DATE] [week/]`
 * Each line shows the lesson number, the time, the student, the subject, the venue, and the status if the lesson is not simply scheduled. Lessons that overlap another lesson are marked `⚠ overlaps`.
 * Cancelled lessons are listed but are not counted in the number of lessons and the total time.
 * The lesson numbers are the ones that `lesson move`, `lesson cancel`, `lesson done` and `lesson missed` take, so run `agenda` or `lesson list` first and then use the number you see.
-* Lessons are numbered in time order, so moving a lesson to another time can change its number, and the numbers of others. Run `agenda` or `lesson list` again before you use a number a second time. The result of `lesson move` and `lesson cancel` names the lesson that was changed, so you can check that it was the right one.
+* Lessons are numbered in time order. If moving, cancelling, completing or marking a lesson missed changes the displayed numbers, the result includes `Lesson numbers have changed. Current lesson list:` and the refreshed list. Use those new numbers for your next command. Running `agenda` or `lesson list` again also refreshes the list.
 * A day without lessons is not an error: it shows `No lessons on Tue 22 Dec 2026.`
 
 Examples:
@@ -369,6 +370,41 @@ Format: `lesson cancel INDEX [r/REASON]`
 Examples:
 * `lesson cancel 1` Cancels the 1st lesson.
 * `lesson cancel 3 r/Student unwell` Cancels the 3rd lesson and records the reason.
+
+### Cancelling future occurrences of a series: `lesson series cancel`
+
+Ends a recurring series without erasing its history.
+
+Format: `lesson series cancel LESSON_INDEX confirm`
+
+* Select the displayed number of any occurrence belonging to the series, even a past occurrence.
+* `confirm` is required, in lower case. Without it, no lesson is changed.
+* All scheduled occurrences starting now or later are cancelled together, including occurrences moved to another date or time. Occurrences that have started, or are already completed, missed or cancelled, remain unchanged.
+* Each affected lesson keeps its identity and booking details, with the reason `Series cancelled`. No record is deleted.
+* A lesson not linked to a recurring series is rejected. A series with no eligible occurrences is also rejected without changing data.
+* Select an existing occurrence of the series. This command cancels existing recurring bookings; it does not create them.
+* If any affected occurrence has a recorded charge, nothing is cancelled. Billed history is retained.
+* Cancellation is a status change, not a deletion, and is not undoable. `confirm` is required because the change affects multiple bookings. The current build does not provide an `undo` command.
+* Success is `Cancelled N series occurrences.` (or `Cancelled 1 series occurrence.` for a single occurrence).
+
+Example: `lesson list st/1 all/`, then `lesson series cancel 3 confirm` cancels the eligible occurrences of the series containing the 3rd displayed lesson.
+
+### Setting travel warnings: `travel`
+
+Sets one offline buffer for journeys between lessons at different physical venues. Warnings never block a booking and do not calculate routes or actual journey times.
+
+Format: `travel buffer/MINUTES`
+
+* `MINUTES` must be a whole number from 0 to 180, inclusive. The default is 30 minutes; 0 disables travel warnings. The setting is saved and restored on reopening TutorFlow.
+* Each scheduled lesson is compared with earlier scheduled lessons on the same date. The gap starts when the **latest-ending** earlier lesson ends, not necessarily the lesson that started most recently.
+* A gap shorter than the buffer produces a warning naming both students, the venues, destination date and time, available minutes and required buffer. For example: `Travel warning: Tan Wei Ming at Bishan -> Priya Kumar at Clementi (Sat 24 Oct 2026 11:10): 10 min available; 30 min required.` Back-to-back lessons at different venues have a zero-minute gap and can therefore trigger a travel warning without overlapping.
+* There is no travel warning for overlapping lessons, an unnamed venue, `Online` (ignoring case), or the same venue ignoring case. If several preceding lessons finish together, the first at a different physical venue is used.
+* After `lesson add`, `lesson repeat` and `lesson move`, warnings cover journeys into or out of the added or moved lessons, not unrelated journeys on those dates. Warnings also appear below each day's relevant lessons in `agenda` and below today's lessons in `today`, and when you change the buffer. Changing the buffer does not change the currently displayed lesson numbers.
+
+Examples:
+
+* `travel buffer/10` sets a ten-minute buffer and reports insufficient gaps.
+* `travel buffer/0` disables travel warnings; overlap warnings still work.
 
 ### Completing a lesson and recording notes: `lesson done`
 
@@ -626,6 +662,8 @@ Action     | Format, Examples
 **Lesson list** | `lesson list st/STUDENT_INDEX [all/]`<br> e.g., `lesson list st/1 all/`
 **Lesson move** | `lesson move INDEX [d/DATE] [t/TIME] [dur/MINUTES] [v/VENUE]`<br> e.g., `lesson move 1 d/2026-12-24 t/17:00`
 **Lesson cancel** | `lesson cancel INDEX [r/REASON]`<br> e.g., `lesson cancel 1 r/Student unwell`
+**Lesson series cancel** | `lesson series cancel LESSON_INDEX confirm`<br> e.g., `lesson series cancel 3 confirm`
+**Travel** | `travel buffer/MINUTES`<br> e.g., `travel buffer/30`
 **Lesson done** | `lesson done INDEX [n/NOTES]`<br> e.g., `lesson done 1 n/Covered quadratic roots`
 **Lesson missed** | `lesson missed INDEX`<br> e.g., `lesson missed 1`
 * A student with no lessons and no [follow-up tasks](#adding-a-follow-up-task-task-add) is deleted immediately.

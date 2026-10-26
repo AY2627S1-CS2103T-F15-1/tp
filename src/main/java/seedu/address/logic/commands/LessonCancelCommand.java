@@ -53,13 +53,14 @@ public class LessonCancelCommand extends Command {
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
         Lesson target = LessonCommandUtil.getLesson(model, lessonIndex);
-        LessonCommandUtil.requireNotCharged(model, target);
+        // A completed lesson is always charged, so the status has to be checked first to give the right reason
         if (target.getStatus() == LessonStatus.CANCELLED) {
             throw new CommandException(MESSAGE_ALREADY_CANCELLED);
         }
         if (target.getStatus() == LessonStatus.COMPLETED) {
             throw new CommandException(MESSAGE_COMPLETED_LESSON);
         }
+        LessonCommandUtil.requireNotCharged(model, target);
 
         model.setLesson(target, target.cancel(reason));
         logger.fine("Cancelled lesson");

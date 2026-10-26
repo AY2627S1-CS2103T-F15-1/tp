@@ -86,6 +86,11 @@ public class ModelManager implements Model {
     }
 
     @Override
+    public void setTravelBuffer(int minutes) {
+        addressBook.setTravelBuffer(minutes);
+    }
+
+    @Override
     public boolean hasPerson(Person person) {
         requireNonNull(person);
         return addressBook.hasPerson(person);

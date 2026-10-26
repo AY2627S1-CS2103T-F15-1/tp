@@ -51,6 +51,7 @@ public class LessonCommandParser implements Parser<Command> {
             case "repeat" -> new LessonRepeatCommandParser().parse(arguments);
             case "move" -> new LessonMoveCommandParser().parse(arguments);
             case "cancel" -> new LessonCancelCommandParser().parse(arguments);
+            case "series" -> new LessonSeriesCancelCommandParser().parse(arguments);
             case "done" -> new LessonDoneCommandParser(clock).parse(arguments);
             case "missed" -> new LessonMissedCommandParser().parse(arguments);
             default -> throw new ParseException(MESSAGE_UNKNOWN_COMMAND);
@@ -61,5 +62,7 @@ public class LessonCommandParser implements Parser<Command> {
         return "Lesson commands: " + COMMAND_WORD + " add, " + COMMAND_WORD + " repeat, " + COMMAND_WORD + " list, "
                 + COMMAND_WORD + " move, " + COMMAND_WORD + " cancel, " + COMMAND_WORD + " done, " + COMMAND_WORD
                 + " missed, " + COMMAND_WORD + " prep";
+        return "Lesson commands: lesson add, lesson repeat, lesson list, lesson move, lesson cancel, "
+                + "lesson series cancel, lesson done, lesson missed";
     }
 }

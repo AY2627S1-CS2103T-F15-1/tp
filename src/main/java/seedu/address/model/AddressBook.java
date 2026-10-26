@@ -23,6 +23,7 @@ import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonStatus;
+import seedu.address.model.lesson.TravelGap;
 import seedu.address.model.lesson.UniqueLessonList;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.UniquePersonList;
@@ -42,6 +43,7 @@ public class AddressBook implements ReadOnlyAddressBook {
 
     private final UniquePersonList persons = new UniquePersonList();
     private final UniqueLessonList lessons = new UniqueLessonList();
+    private int travelBuffer = TravelGap.DEFAULT_BUFFER;
     private final ObservableList<Task> tasks = FXCollections.observableArrayList();
     private final ObservableList<Task> unmodifiableTasks = FXCollections.unmodifiableObservableList(tasks);
     private final ObservableList<LedgerEntry> ledgerEntries = FXCollections.observableArrayList();
@@ -111,6 +113,9 @@ public class AddressBook implements ReadOnlyAddressBook {
         // Copy and validate everything first, so that a rejected replacement leaves this address book unchanged
         List<LedgerEntry> replacementEntries = List.copyOf(newData.getLedgerEntries());
         List<Task> replacementTasks = List.copyOf(newData.getTaskList());
+        if (!TravelGap.isValidBuffer(newData.getTravelBuffer())) {
+            throw new IllegalArgumentException(TravelGap.MESSAGE_CONSTRAINTS);
+        }
         validateLedgerEntries(newData.getPersonList(), newData.getLessonList(), replacementEntries);
         validateTasks(replacementTasks);
         setPersons(newData.getPersonList());
@@ -118,6 +123,20 @@ public class AddressBook implements ReadOnlyAddressBook {
         ledgerEntries.setAll(replacementEntries);
         tasks.setAll(replacementTasks);
         homework.setAll(newData.getHomeworkList());
+        setTravelBuffer(newData.getTravelBuffer());
+    }
+
+    @Override
+    public int getTravelBuffer() {
+        return travelBuffer;
+    }
+
+    /** Sets the minimum gap for journeys between physical venues. */
+    public void setTravelBuffer(int minutes) {
+        if (!TravelGap.isValidBuffer(minutes)) {
+            throw new IllegalArgumentException(TravelGap.MESSAGE_CONSTRAINTS);
+        }
+        travelBuffer = minutes;
     }
 
     //// person-level operations
@@ -487,11 +506,12 @@ public class AddressBook implements ReadOnlyAddressBook {
                 && lessons.equals(otherAddressBook.lessons)
                 && homework.equals(otherAddressBook.homework)
                 && ledgerEntries.equals(otherAddressBook.ledgerEntries)
-                && tasks.equals(otherAddressBook.tasks);
+                && tasks.equals(otherAddressBook.tasks)
+                && travelBuffer == otherAddressBook.travelBuffer;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(persons, lessons, homework, ledgerEntries, tasks);
+        return Objects.hash(persons, lessons, homework, ledgerEntries, tasks, travelBuffer);
     }
 }

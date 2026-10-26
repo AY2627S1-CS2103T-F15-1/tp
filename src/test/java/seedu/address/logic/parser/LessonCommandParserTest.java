@@ -52,6 +52,8 @@ public class LessonCommandParserTest {
         assertParseFailure(parser, "  ", String.format(MESSAGE_INVALID_COMMAND_FORMAT,
                 "Lesson commands: lesson add, lesson repeat, lesson list, lesson move, lesson cancel, lesson done, "
                         + "lesson missed, lesson prep"));
+                "Lesson commands: lesson add, lesson repeat, lesson list, lesson move, lesson cancel, "
+                        + "lesson series cancel, lesson done, lesson missed"));
     }
 
     @Test
