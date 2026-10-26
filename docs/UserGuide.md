@@ -284,7 +284,7 @@ Format: `agenda [d/DATE] [week/]`
 * Each line shows the lesson number, the time, the student, the subject, the venue, and the status if the lesson is not simply scheduled. Lessons that overlap another lesson are marked `⚠ overlaps`.
 * Cancelled lessons are listed but are not counted in the number of lessons and the total time.
 * The lesson numbers are the ones that `lesson move`, `lesson cancel`, `lesson done` and `lesson missed` take, so run `agenda` or `lesson list` first and then use the number you see.
-* Lessons are numbered in time order. If moving, cancelling, completing or marking a lesson missed changes the displayed numbers, the result includes `Lesson numbers have changed. Current lesson list:` and the refreshed list. Use those new numbers for your next command. Running `agenda` or `lesson list` again also refreshes the list.
+* Lessons are numbered in time order. If moving, cancelling, completing or marking a lesson missed changes the displayed numbers, the result includes `Lesson numbers have changed. Current lesson list:` and the refreshed list. If every lesson keeps its number, for example when a lesson only changes its time or is cancelled but stays in the list, the numbers are not shown again. Use those new numbers for your next command. Running `agenda` or `lesson list` again also refreshes the list.
 * A day without lessons is not an error: it shows `No lessons on Tue 22 Dec 2026.`
 
 Examples:

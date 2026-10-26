@@ -165,7 +165,8 @@ public class LessonTravelWorkflowTest {
         assertEquals("Bring worksheets", loaded.getLessonList().getFirst().getPreparation().orElseThrow());
         String result = restored.execute("lesson series cancel 1 confirm").getFeedbackToUser();
         assertTrue(result.startsWith("Cancelled "));
-        assertNumberingOnce(result);
+        // An all/ list keeps cancelled lessons in place, so no number changes and no new numbering is shown
+        assertFalse(result.contains("Lesson numbers have changed"), result);
         assertTrue(storage.readAddressBook().orElseThrow().getLessonList().get(1).isCancelled());
         assertEquals(45, storage.readAddressBook().orElseThrow().getTravelBuffer());
     }

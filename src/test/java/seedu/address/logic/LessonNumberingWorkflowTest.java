@@ -1,6 +1,7 @@
 package seedu.address.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -19,6 +20,8 @@ import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
 
 public class LessonNumberingWorkflowTest {
+    private static final String NUMBERS_CHANGED = "Lesson numbers have changed";
+
     @TempDir
     private Path directory;
 
@@ -90,4 +93,50 @@ public class LessonNumberingWorkflowTest {
         assertTrue(failingLogic.hasUnsavedChanges());
     }
 
+    @Test
+    public void move_lessonKeepsItsNumber_doesNotSayNumbersChanged() throws Exception {
+        LogicManager logic = logicWithTwoLessons();
+        String result = logic.execute("lesson move 1 t/10:30").getFeedbackToUser();
+        assertFalse(result.contains(NUMBERS_CHANGED), result);
+        logic.execute("lesson prep 1 n/For Alice");
+        assertEquals("For Alice", model.getFilteredLessonList().getFirst().getPreparation().orElseThrow());
+        assertEquals("Alice", model.getFilteredLessonList().getFirst().getStudentName().fullName);
+    }
+
+    @Test
+    public void move_pastTheNextLesson_saysNumbersChanged() throws Exception {
+        LogicManager logic = logicWithTwoLessons();
+        String result = logic.execute("lesson move 1 t/13:00").getFeedbackToUser();
+        assertTrue(result.contains(NUMBERS_CHANGED), result);
+        assertTrue(result.contains("1. Bob"), result);
+        assertTrue(result.contains("2. Alice"), result);
+    }
+
+    @Test
+    public void cancel_lessonStaysInTheAgenda_doesNotSayNumbersChanged() throws Exception {
+        LogicManager logic = logicWithTwoLessons();
+        String result = logic.execute("lesson cancel 2").getFeedbackToUser();
+        assertFalse(result.contains(NUMBERS_CHANGED), result);
+        assertEquals(2, model.getFilteredLessonList().size());
+    }
+
+    @Test
+    public void rename_lessonKeepsItsNumber_doesNotSayNumbersChanged() throws Exception {
+        LogicManager logic = logicWithTwoLessons();
+        String result = logic.execute("student edit 1 n/Amy").getFeedbackToUser();
+        assertFalse(result.contains(NUMBERS_CHANGED), result);
+        assertEquals("Amy", model.getFilteredLessonList().getFirst().getStudentName().fullName);
+    }
+
+    /** Returns a logic whose agenda shows Alice's lesson at 10:00 as 1 and Bob's at 12:00 as 2. */
+    private LogicManager logicWithTwoLessons() throws Exception {
+        LogicManager logic = logic();
+        String date = LocalDate.now().plusDays(1).toString();
+        logic.execute("student add n/Alice p/91234567 l/P1 s/Math r/50");
+        logic.execute("student add n/Bob p/92345678 l/P2 s/Math r/60");
+        logic.execute("lesson add st/1 d/" + date + " t/10:00");
+        logic.execute("lesson add st/2 d/" + date + " t/12:00");
+        logic.execute("agenda d/" + date);
+        return logic;
+    }
 }
