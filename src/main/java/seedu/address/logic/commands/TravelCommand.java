@@ -27,7 +27,7 @@ public class TravelCommand extends Command {
     public CommandResult execute(Model model) {
         requireNonNull(model);
         model.setTravelBuffer(minutes);
-        return new CommandResult("Travel buffer set to " + minutes + " minutes."
+        return new CommandResult("Travel buffer set to " + minutes + (minutes == 1 ? " minute." : " minutes.")
                 + LessonCommandUtil.getTravelWarnings(model, lesson -> true));
     }
 
