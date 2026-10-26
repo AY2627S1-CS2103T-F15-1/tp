@@ -60,6 +60,6 @@ public class LessonCommandParser implements Parser<Command> {
     private static String getUsage() {
         return "Lesson commands: " + COMMAND_WORD + " add, " + COMMAND_WORD + " repeat, " + COMMAND_WORD + " list, "
                 + COMMAND_WORD + " move, " + COMMAND_WORD + " cancel, " + COMMAND_WORD + " done, " + COMMAND_WORD
-                + " missed";
+                + " missed, " + COMMAND_WORD + " prep";
     }
 }
