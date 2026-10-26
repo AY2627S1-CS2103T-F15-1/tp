@@ -1,6 +1,5 @@
 package seedu.address.model;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -12,6 +11,7 @@ import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.StudentOrder;
 import seedu.address.model.task.Task;
 
 /**
@@ -82,10 +82,10 @@ public interface Model {
     void setPerson(Person target, Person editedPerson);
 
     /**
-     * Sorts the persons in the address book using the given {@code comparator}.
-     * Persons that compare as equal keep their relative order.
+     * Sorts the persons in the address book in {@code order}, and keeps them in that order when persons are added or
+     * edited later. Persons that compare as equal keep their relative order.
      */
-    void sortPersons(Comparator<Person> comparator);
+    void sortPersons(StudentOrder order);
 
     /** Returns an unmodifiable view of the filtered person list */
     ObservableList<Person> getFilteredPersonList();
