@@ -22,12 +22,8 @@ public class HomeworkDeleteCommand extends Command {
             + "Remaining shown indices are unchanged; run 'hw list' to refresh.";
     public static final String MESSAGE_CONFIRM_FEEDBACK = "This homework has feedback recorded: %1$s. "
             + "Type 'hw delete %2$d confirm' to delete it anyway. Nothing is deleted.";
-    public static final String MESSAGE_CONFIRM_TASKS = "This homework has %3$d linked task(s): %1$s. "
-            + "Deleting it also deletes those tasks. "
-            + "Type 'hw delete %2$d confirm' to delete it anyway. Nothing is deleted.";
-    public static final String MESSAGE_CONFIRM_FEEDBACK_AND_TASKS = "This homework has feedback recorded "
-            + "and %3$d linked task(s): %1$s. Deleting it also deletes those tasks. "
-            + "Type 'hw delete %2$d confirm' to delete it anyway. Nothing is deleted.";
+    public static final String MESSAGE_CONFIRM_TASKS = "This deletes homework '%1$s', any feedback, and %3$d "
+            + "linked task(s). Type 'hw delete %2$d confirm' to proceed.";
 
     private static final Logger logger = LogsCenter.getLogger(HomeworkDeleteCommand.class);
 
@@ -53,8 +49,7 @@ public class HomeworkDeleteCommand extends Command {
             long linkedTasks = model.getAddressBook().getTaskList().stream()
                     .filter(task -> task.isAbout(target)).count();
             if (hasFeedback || linkedTasks > 0) {
-                String template = !hasFeedback ? MESSAGE_CONFIRM_TASKS
-                        : linkedTasks == 0 ? MESSAGE_CONFIRM_FEEDBACK : MESSAGE_CONFIRM_FEEDBACK_AND_TASKS;
+                String template = linkedTasks > 0 ? MESSAGE_CONFIRM_TASKS : MESSAGE_CONFIRM_FEEDBACK;
                 return new CommandResult(String.format(template, target.getDescription(), index.getOneBased(),
                         linkedTasks));
             }
