@@ -14,7 +14,7 @@
 ## **Acknowledgements**
 
 * This project is based on the [AddressBook-Level3](https://github.com/se-edu/addressbook-level3) project created by the [SE-EDU initiative](https://se-education.org). The architecture, the command and parser design and the testing approach are adapted from it.
-* Libraries used: [JavaFX](https://openjfx.io/) (user interface), [Jackson](https://github.com/FasterXML/jackson) (JSON storage), [JUnit5](https://github.com/junit-team/junit5) (testing), [Checkstyle](https://checkstyle.sourceforge.io/) and [JaCoCo](https://www.jacoco.org/jacoco/) (code quality and coverage).
+* Libraries used: [JavaFX](https://openjfx.io/) (user interface), [Jackson](https://github.com/FasterXML/jackson) (JSON storage), [commonmark-java](https://github.com/commonmark/commonmark-java) (showing the bundled User Guide in the Help window), [JUnit5](https://github.com/junit-team/junit5) (testing), [Monocle](https://github.com/TestFX/Monocle) (running the user interface tests without a screen), [Checkstyle](https://checkstyle.sourceforge.io/) and [JaCoCo](https://www.jacoco.org/jacoco/) (code quality and coverage).
 * Documentation is built with [MarkBind](https://markbind.org/) and the diagrams are drawn with [PlantUML](https://plantuml.com/).
 
 --------------------------------------------------------------------------------------------------------------------
@@ -485,10 +485,6 @@ The following activity diagram summarizes what happens when a user executes a ne
   * Cons: We must ensure that the implementation of each individual command is correct.
 
 
---------------------------------------------------------------------------------------------------------------------
-
-## **Documentation, logging, testing, dev-ops**
-
 ### Student balances and dues
 
 `LedgerEntry` is immutable and records its UUID, permanent student UUID, optional lesson UUID, kind,
@@ -559,6 +555,10 @@ records and prompts even when they only have payment records and no lessons. Cle
 `JsonAdaptedLedgerEntry` and the optional `ledgerEntries` collection in `JsonSerializableAddressBook` persist every
 record. Loading validates IDs, amounts and student references. Older files load an empty ledger: completed lessons
 are not billed retroactively, because their historical rate and payment state are unknown.
+
+--------------------------------------------------------------------------------------------------------------------
+
+## **Documentation, logging, testing, dev-ops**
 
 * [Documentation guide](Documentation.md)
 * [Testing guide](Testing.md)
@@ -1016,31 +1016,46 @@ testers are expected to do more *exploratory* testing.
 
    1. Download the JAR file and copy it into an empty folder.
 
-   1. Double-click the JAR file.<br>
-      Expected: The GUI opens empty with welcome and demo instructions. The window size may not be optimal.
+   1. Open a terminal in that folder, check with `java -version` that Java 25 is used, and run `java -jar tutorflow.jar`.<br>
+      Expected: The GUI opens with no students. The result box shows the welcome message and suggests `demo`. The window size may not be optimal.
 
 1. Saving window preferences
 
    1. Resize the window to an optimal size. Move the window to a different location. Close the window.
 
-   1. Relaunch the app by double-clicking the JAR file.<br>
+   1. Relaunch the app with `java -jar tutorflow.jar`.<br>
        Expected: The most recent window size and location are retained.
 
 
-### Deleting a person
+### Deleting a student
 
-1. Deleting a person while all persons are being shown
+1. Deleting a student who has no lessons, homework, tasks or payments
 
-   1. Prerequisites: List all persons using the `list` command, with multiple persons in the list.
+   1. Prerequisites: Use `list`, with multiple students in the list. The 1st student has no linked records.
 
    1. Test case: `delete 1`<br>
-      Expected: The first contact is deleted from the list. The status message shows the deleted contact's details.
+      Expected: The 1st student is deleted at once and disappears from the list. The result box shows `Deleted student:` and the student's details.
+
+1. Deleting a student who has lessons
+
+   1. Prerequisites: Use `list`. Schedule a future lesson for the 1st student, such as `lesson add st/1 d/tmr t/16:00`.
+
+   1. Test case: `delete 1`<br>
+      Expected: Nothing is deleted. The result box shows the student's name and phone number, the number of lessons, a warning about the upcoming lesson, and `Type 'delete 1 confirm' to proceed.`
+
+   1. Test case: `delete 1 confirm`<br>
+      Expected: The student and their lessons are deleted. `agenda d/DATE` for the lesson's date no longer shows the lesson.
+
+1. Incorrect delete commands
 
    1. Test case: `delete 0`<br>
-      Expected: No person is deleted. The status message shows error details.
+      Expected: No student is deleted. The result box shows `Invalid command format!` and the usage of `delete`.
 
-   1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
-      Expected: Similar to previous.
+   1. Test case: `delete x`, where x is larger than the list size<br>
+      Expected: No student is deleted. The result box says that no student has that number and how many items the list has.
+
+   1. Other incorrect delete commands to try: `delete`, `delete 1 yes`<br>
+      Expected: Similar to `delete 0`.
 
 
 ### Lessons
