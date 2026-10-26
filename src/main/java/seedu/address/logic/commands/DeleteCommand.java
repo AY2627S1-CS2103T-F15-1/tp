@@ -33,7 +33,7 @@ public class DeleteCommand extends Command {
             + ": Deletes the student identified by the index number used in the displayed student list.\n"
             + "Parameters: INDEX (must be a positive integer) [" + CONFIRM_KEYWORD + "]\n"
             + "Example: " + COMMAND_WORD + " 1\n"
-            + "A student who has lessons, homework or tasks is only deleted if you add '" + CONFIRM_KEYWORD + "', "
+            + "Linked lessons, homework, tasks, and financial history require '" + CONFIRM_KEYWORD + "', "
             + "e.g. " + COMMAND_WORD + " 1 " + CONFIRM_KEYWORD;
 
     public static final String MESSAGE_DELETE_PERSON_SUCCESS = "Deleted student: %1$s";

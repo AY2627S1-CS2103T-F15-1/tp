@@ -37,6 +37,12 @@ public class DeleteCommandTest {
     private Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
 
     @Test
+    public void messageUsage_endsWithTheSpecifiedConfirmationLine() {
+        assertTrue(DeleteCommand.MESSAGE_USAGE.endsWith("Linked lessons, homework, tasks, and financial history "
+                + "require 'confirm', e.g. delete 1 confirm"));
+    }
+
+    @Test
     public void execute_validIndexUnfilteredList_success() {
         Person personToDelete = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
         DeleteCommand deleteCommand = new DeleteCommand(INDEX_FIRST_PERSON);
