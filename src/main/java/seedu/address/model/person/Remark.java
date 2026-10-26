@@ -5,6 +5,8 @@ import static java.util.Objects.requireNonNull;
 /**
  * Represents a Person's remark in the address book.
  * Guarantees: immutable; is never null.
+ * Leading and trailing whitespace is removed and runs of whitespace inside the remark are collapsed into one space,
+ * as for the other free-text values. An empty remark means that the student has none.
  */
 public class Remark {
 
@@ -17,7 +19,7 @@ public class Remark {
      */
     public Remark(String remark) {
         requireNonNull(remark);
-        value = remark;
+        value = remark.strip().replaceAll("\\s+", " ");
     }
 
     @Override

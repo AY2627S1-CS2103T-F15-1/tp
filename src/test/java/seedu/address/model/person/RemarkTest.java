@@ -16,6 +16,13 @@ public class RemarkTest {
     }
 
     @Test
+    public void constructor_extraWhitespace_isCollapsedAndTrimmed() {
+        assertEquals("Likes swimming a lot", new Remark("  Likes   swimming \t a  lot ").value);
+        assertEquals(new Remark("Likes baseball"), new Remark("Likes    baseball"));
+        assertEquals("", new Remark("   ").value);
+    }
+
+    @Test
     public void toStringMethod() {
         assertEquals("Likes baseball", new Remark("Likes baseball").toString());
     }
