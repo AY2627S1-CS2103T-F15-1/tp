@@ -3,6 +3,8 @@ package seedu.address.ui;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Region;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.exceptions.CommandException;
@@ -17,6 +19,7 @@ public class CommandBox extends UiPart<Region> {
     private static final String FXML = "CommandBox.fxml";
 
     private final CommandExecutor commandExecutor;
+    private final CommandHistory history = new CommandHistory();
 
     @FXML
     private TextField commandTextField;
@@ -29,6 +32,26 @@ public class CommandBox extends UiPart<Region> {
         this.commandExecutor = commandExecutor;
         // calls #setStyleToDefault() whenever there is a change to the text of the command box.
         commandTextField.textProperty().addListener((unused1, unused2, unused3) -> setStyleToDefault());
+        commandTextField.addEventFilter(KeyEvent.KEY_PRESSED, this::handleHistoryKey);
+    }
+
+    /**
+     * Shows an earlier command when Up is pressed and a later one when Down is pressed, as a shell does.
+     */
+    private void handleHistoryKey(KeyEvent event) {
+        if (event.getCode() == KeyCode.UP) {
+            history.previous(commandTextField.getText()).ifPresent(this::showInTextField);
+            event.consume();
+        } else if (event.getCode() == KeyCode.DOWN) {
+            history.next().ifPresent(this::showInTextField);
+            event.consume();
+        }
+    }
+
+    /** Puts {@code text} in the command box with the caret at its end, ready to be run or edited. */
+    private void showInTextField(String text) {
+        commandTextField.setText(text);
+        commandTextField.positionCaret(text.length());
     }
 
     /**
@@ -41,10 +64,13 @@ public class CommandBox extends UiPart<Region> {
             return;
         }
 
+        history.record(commandText);
         try {
             commandExecutor.execute(commandText);
             commandTextField.setText("");
         } catch (CommandException | ParseException e) {
+            // The command stays in the box so that the user can correct it instead of typing it again
+            commandTextField.positionCaret(commandText.length());
             setStyleToIndicateCommandFailure();
         }
     }
