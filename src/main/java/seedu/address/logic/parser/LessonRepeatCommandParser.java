@@ -46,7 +46,8 @@ public class LessonRepeatCommandParser implements Parser<LessonRepeatCommand> {
         argMultimap.verifyNoEmptyValuesFor(PREFIX_STUDENT, PREFIX_SUBJECT, PREFIX_DATE, PREFIX_TIME,
                 PREFIX_DURATION, PREFIX_VENUE, PREFIX_COUNT, PREFIX_EVERY);
 
-        Index studentIndex = ParserUtil.parseIndex(argMultimap.getValue(PREFIX_STUDENT).get());
+        Index studentIndex = ParserUtil.parseIndex(argMultimap.getValue(PREFIX_STUDENT).get(),
+                LessonRepeatCommand.MESSAGE_USAGE);
         Subject subject = ParserUtil.parseOptional(argMultimap, PREFIX_SUBJECT, ParserUtil::parseSubject);
         Venue venue = ParserUtil.parseOptional(argMultimap, PREFIX_VENUE, ParserUtil::parseVenue);
         LessonDuration duration = Objects.requireNonNullElse(

@@ -13,7 +13,7 @@ public class LessonPrepCommandParser implements Parser<LessonPrepCommand> {
         ArgumentMultimap values = ArgumentTokenizer.tokenize(args, PREFIX_NOTES);
         values.verifyNoDuplicatePrefixesFor(PREFIX_NOTES);
         values.verifyNoEmptyValuesFor(PREFIX_NOTES);
-        Index index = ParserUtil.parseIndex(values.getPreamble());
+        Index index = ParserUtil.parseIndex(values.getPreamble(), LessonPrepCommand.MESSAGE_USAGE);
         String notes = values.getValue(PREFIX_NOTES)
                 .orElseThrow(() -> new ParseException(LessonPrepCommand.MESSAGE_USAGE));
         return new LessonPrepCommand(index, ParserUtil.parseNotes(notes));

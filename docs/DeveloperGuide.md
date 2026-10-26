@@ -119,6 +119,7 @@ How the parsing works:
 * All `XYZCommandParser` classes, such as `AddCommandParser` and `DeleteCommandParser`, implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
 * Arguments are parsed by each `XYZCommandParser`, not by `AddressBookParser`, because the prefixes, required fields and error messages differ between commands. Logic that more than one parser needs lives in shared classes instead of being copied:
   * `ArgumentTokenizer`, `ArgumentMultimap` and `ParserUtil` split and validate prefixed values, and all prefixes are defined once in `CliSyntax`.
+  * An index that is not a positive whole number is reported as `Invalid command format!` with the command's usage. A parser gets this by calling `ParserUtil.parseIndex(value, usage)`.
   * `CommandInput` splits the first word from the rest of an input. `AddressBookParser` uses it for the command word, and `SubCommandParser` uses it for the sub-command word of `lesson` and `task`. `SubCommandParser` is given one `Parser` per sub-command word, so adding a sub-command means registering one more parser.
   * `ConfirmableIndex` parses an index with an optional `confirm` keyword and is used by `delete`, `task delete` and `hw delete`.
 
