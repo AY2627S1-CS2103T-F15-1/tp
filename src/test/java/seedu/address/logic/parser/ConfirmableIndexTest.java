@@ -52,6 +52,13 @@ public class ConfirmableIndexTest {
     }
 
     @Test
+    public void parse_unicodeWhitespaceBetween_isSplit() throws Exception {
+        ConfirmableIndex target = ConfirmableIndex.parse("2\u3000confirm", KEYWORD, USAGE);
+        assertEquals(INDEX_SECOND_PERSON, target.getIndex());
+        assertTrue(target.isConfirmed());
+    }
+
+    @Test
     public void deleteCommands_unicodeWhitespaceAround_behaveLikeAscii() throws Exception {
         AddressBookParser parser = new AddressBookParser();
         for (String space : new String[]{"\u2003", "\u3000", "\u2009", "\u1680"}) {

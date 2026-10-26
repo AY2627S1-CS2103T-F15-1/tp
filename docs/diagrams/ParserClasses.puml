@@ -33,6 +33,7 @@ XYZCommandParser .up.|> Parser
 SubCommandParser .up.|> Parser
 SubCommandParser ..> CommandInput
 SubCommandParser ..> Parser : dispatches to
+XYZCommandParser ..> SubCommandParser
 XYZCommandParser ..> ConfirmableIndex
 ConfirmableIndex ..> ParserUtil
 XYZCommandParser ..> ArgumentMultimap

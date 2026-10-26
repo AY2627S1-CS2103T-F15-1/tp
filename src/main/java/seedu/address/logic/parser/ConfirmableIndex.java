@@ -27,7 +27,7 @@ public final class ConfirmableIndex {
     public static ConfirmableIndex parse(String args, String confirmKeyword, String usage) throws ParseException {
         requireNonNull(args);
         requireNonNull(confirmKeyword);
-        String[] words = args.strip().split("\\s+");
+        String[] words = args.strip().split("(?U)\\s+");
         boolean isConfirmed = words.length == 2 && words[1].equals(confirmKeyword);
         if (words.length > 2 || words.length == 2 && !isConfirmed) {
             throw ParserUtil.invalidFormat(usage);

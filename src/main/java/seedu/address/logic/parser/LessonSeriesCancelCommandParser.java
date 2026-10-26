@@ -14,11 +14,7 @@ public class LessonSeriesCancelCommandParser implements Parser<LessonSeriesCance
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT,
                     LessonSeriesCancelCommand.MESSAGE_USAGE));
         }
-        try {
-            return new LessonSeriesCancelCommand(ParserUtil.parseIndex(words[1]));
-        } catch (ParseException e) {
-            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT,
-                    LessonSeriesCancelCommand.MESSAGE_USAGE), e);
-        }
+        return new LessonSeriesCancelCommand(
+                ParserUtil.parseIndex(words[1], LessonSeriesCancelCommand.MESSAGE_USAGE));
     }
 }
