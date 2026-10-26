@@ -9,6 +9,9 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.logic.commands.DeleteCommand;
+import seedu.address.logic.commands.HomeworkDeleteCommand;
+import seedu.address.logic.commands.TaskDeleteCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 
 public class ConfirmableIndexTest {
@@ -38,6 +41,31 @@ public class ConfirmableIndexTest {
             ParseException exception = assertThrows(ParseException.class, () ->
                     ConfirmableIndex.parse(args, KEYWORD, USAGE), args);
             assertEquals(expectedMessage, exception.getMessage(), args);
+        }
+    }
+
+    @Test
+    public void parse_unicodeWhitespaceAround_isStripped() throws Exception {
+        ConfirmableIndex target = ConfirmableIndex.parse("\u20032\u3000", KEYWORD, USAGE);
+        assertEquals(INDEX_SECOND_PERSON, target.getIndex());
+        assertFalse(target.isConfirmed());
+    }
+
+    @Test
+    public void deleteCommands_unicodeWhitespaceAround_behaveLikeAscii() throws Exception {
+        AddressBookParser parser = new AddressBookParser();
+        for (String space : new String[]{"\u2003", "\u3000", "\u2009", "\u1680"}) {
+            assertEquals(new DeleteCommand(INDEX_SECOND_PERSON, false), parser.parseCommand("delete 2" + space));
+            assertEquals(new DeleteCommand(INDEX_SECOND_PERSON, true),
+                    parser.parseCommand("delete 2 confirm" + space));
+            assertEquals(new TaskDeleteCommand(INDEX_SECOND_PERSON, false),
+                    parser.parseCommand("task delete 2" + space));
+            assertEquals(new TaskDeleteCommand(INDEX_SECOND_PERSON, true),
+                    parser.parseCommand("task delete 2 confirm" + space));
+            assertEquals(new HomeworkDeleteCommand(INDEX_SECOND_PERSON, false),
+                    parser.parseCommand("hw delete 2" + space));
+            assertEquals(new HomeworkDeleteCommand(INDEX_SECOND_PERSON, true),
+                    parser.parseCommand("hw delete 2 confirm" + space));
         }
     }
 }
