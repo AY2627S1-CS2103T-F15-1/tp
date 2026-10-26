@@ -73,8 +73,9 @@ public class LessonMoveCommand extends Command {
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
         Lesson target = LessonCommandUtil.getLesson(model, lessonIndex);
-        LessonCommandUtil.requireNotCharged(model, target);
+        // A completed lesson is always charged, so the status has to be checked first to give the right reason
         requireMovable(target);
+        LessonCommandUtil.requireNotCharged(model, target);
         Lesson moved = createMovedLesson(target);
 
         if (!moved.isSameLesson(target) && model.hasLesson(moved)) {
