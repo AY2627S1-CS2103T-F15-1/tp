@@ -64,6 +64,19 @@ public class PaymentCommandParserTest {
     }
 
     @Test
+    public void parse_amountAboveMaximum_rejected() {
+        for (String amount : new String[]{"1000000", "1000000.00", "100000000.50", "99999999999999999999"}) {
+            assertParseFailure(parser, " st/1 amt/" + amount, PaymentCommand.MESSAGE_AMOUNT_TOO_LARGE);
+        }
+    }
+
+    @Test
+    public void parse_maximumAmount_accepted() {
+        assertParseSuccess(parser, " st/1 amt/999999.99",
+                new PaymentCommand(INDEX_FIRST_PERSON, new BigDecimal("999999.99"), null, null, CLOCK));
+    }
+
+    @Test
     public void parse_optionalDatesAndNotes_acceptsSpecifiedFormatsAndTrimsNotes() {
         PaymentCommand expected = new PaymentCommand(INDEX_FIRST_PERSON, BigDecimal.TEN,
                 LocalDate.of(2026, 10, 18), "PayNow ref 4471", CLOCK);

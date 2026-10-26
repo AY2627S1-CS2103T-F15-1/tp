@@ -39,7 +39,7 @@ public class PaymentCommandTest {
     public void constructor_invalidArguments_rejected() {
         assertThrows(NullPointerException.class, () -> payment(null, BigDecimal.TEN));
         assertThrows(NullPointerException.class, () -> payment(INDEX_FIRST_PERSON, null));
-        for (String amount : new String[]{"0", "-1", "1.001"}) {
+        for (String amount : new String[]{"0", "-1", "1.001", "1000000", "99999999999999999999"}) {
             assertThrows(IllegalArgumentException.class, () -> payment(INDEX_FIRST_PERSON,
                     new BigDecimal(amount)));
         }

@@ -25,6 +25,13 @@ public class PaymentCommand extends Command {
             + "Parameters: st/STUDENT_INDEX amt/AMOUNT [d/DATE] [n/NOTES]\nExample: pay st/1 amt/50.00";
     public static final String MESSAGE_AMOUNT_CONSTRAINTS =
             "Amount must be greater than 0 with at most 2 decimal places.";
+    /**
+     * The largest single payment. It is far above any real fee (a lesson costs at most $79,999.92 at the highest
+     * rate and longest duration), so it only stops a mistyped amount from becoming a huge credit.
+     */
+    public static final BigDecimal MAX_AMOUNT = new BigDecimal("999999.99");
+    public static final String MESSAGE_AMOUNT_TOO_LARGE =
+            "Amount must be at most 999999.99. Check the amount for extra digits.";
     public static final String MESSAGE_FUTURE_DATE = "Payment dates cannot be in the future.";
 
     private final Index studentIndex;
@@ -43,6 +50,9 @@ public class PaymentCommand extends Command {
         requireAllNonNull(studentIndex, amount, clock);
         if (amount.signum() <= 0 || amount.scale() > 2) {
             throw new IllegalArgumentException(MESSAGE_AMOUNT_CONSTRAINTS);
+        }
+        if (amount.compareTo(MAX_AMOUNT) > 0) {
+            throw new IllegalArgumentException(MESSAGE_AMOUNT_TOO_LARGE);
         }
         this.studentIndex = studentIndex;
         this.amount = amount.setScale(2);
