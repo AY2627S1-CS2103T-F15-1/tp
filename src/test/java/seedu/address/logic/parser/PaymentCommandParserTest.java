@@ -51,7 +51,8 @@ public class PaymentCommandParserTest {
     @Test
     public void parse_invalidIndex_rejected() {
         for (String index : new String[]{"0", "-1", "1.5", "abc", "2147483648"}) {
-            assertParseFailure(parser, " st/" + index + " amt/50", ParserUtil.MESSAGE_INVALID_INDEX);
+            assertParseFailure(parser, " st/" + index + " amt/50",
+                    String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, PaymentCommand.MESSAGE_USAGE));
         }
     }
 

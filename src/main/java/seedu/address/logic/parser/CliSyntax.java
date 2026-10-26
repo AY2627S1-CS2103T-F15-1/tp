@@ -32,5 +32,9 @@ public class CliSyntax {
     public static final Prefix PREFIX_PAST = new Prefix("past/");
     public static final Prefix PREFIX_COUNT = new Prefix("count/");
     public static final Prefix PREFIX_EVERY = new Prefix("every/");
+    public static final Prefix PREFIX_STATUS = new Prefix("s/");
+    public static final Prefix PREFIX_FEEDBACK = new Prefix("f/");
+    public static final Prefix PREFIX_OVERDUE = new Prefix("overdue/");
+    public static final Prefix PREFIX_OUTSTANDING = new Prefix("outstanding/");
 
 }

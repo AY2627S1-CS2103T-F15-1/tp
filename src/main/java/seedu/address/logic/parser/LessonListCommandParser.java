@@ -37,7 +37,8 @@ public class LessonListCommandParser implements Parser<LessonListCommand> {
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_STUDENT);
         argMultimap.verifyNoEmptyValuesFor(PREFIX_STUDENT);
 
-        Index studentIndex = ParserUtil.parseIndex(argMultimap.getValue(PREFIX_STUDENT).get());
+        Index studentIndex = ParserUtil.parseIndex(argMultimap.getValue(PREFIX_STUDENT).get(),
+                LessonListCommand.MESSAGE_USAGE);
         return new LessonListCommand(studentIndex, ParserUtil.parseFlag(argMultimap, PREFIX_ALL), clock);
     }
 
