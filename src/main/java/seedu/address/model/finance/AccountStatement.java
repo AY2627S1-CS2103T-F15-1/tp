@@ -35,10 +35,13 @@ public final class AccountStatement {
         BigDecimal charged = Ledger.ZERO;
         BigDecimal paid = Ledger.ZERO;
         for (LedgerEntry entry : entries) {
-            boolean isCharge = entry.kind() == LedgerEntry.Kind.CHARGE;
-            running = isCharge ? running.add(entry.amount()) : running.subtract(entry.amount());
-            charged = isCharge ? charged.add(entry.amount()) : charged;
-            paid = isCharge ? paid : paid.add(entry.amount());
+            BigDecimal signed = entry.kind().increasesBalance() ? entry.amount() : entry.amount().negate();
+            running = running.add(signed);
+            if (entry.kind().refersToLesson()) {
+                charged = charged.add(signed);
+            } else {
+                paid = paid.subtract(signed);
+            }
             statement.append('\n').append(entry.date()).append(' ').append(describe(book, entry))
                     .append(" bal ").append(formatRunning(running));
         }
@@ -47,8 +50,14 @@ public final class AccountStatement {
                 .append(" (after reversals) · ").append(Ledger.describeBalance(running)).toString();
     }
 
-    /** Names the kind of entry and its signed amount: charges add to the balance and payments take from it. */
+    /**
+     * Names the kind of entry and its signed amount: charges and payment reversals add to the balance, while payments
+     * take from it. A reversal names the kind and date of the entry it cancels.
+     */
     private static String describe(ReadOnlyAddressBook book, LedgerEntry entry) {
+        if (entry.kind().isReversal()) {
+            return describeReversal(book, entry);
+        }
         if (entry.kind() == LedgerEntry.Kind.PAYMENT) {
             return "payment -" + Ledger.format(entry.amount());
         }
@@ -56,6 +65,13 @@ public final class AccountStatement {
                 .filter(candidate -> candidate.getId().equals(entry.lessonId())).findFirst();
         return "charge " + lesson.map(found -> found.getSubject() + " lesson").orElse("lesson") + " "
                 + Ledger.format(entry.amount());
+    }
+
+    private static String describeReversal(ReadOnlyAddressBook book, LedgerEntry reversal) {
+        String what = reversal.kind() == LedgerEntry.Kind.CHARGE_REVERSAL ? "charge" : "payment";
+        String original = book.getLedgerEntries().stream().filter(entry -> entry.id().equals(reversal.reverses()))
+                .findFirst().map(entry -> " (" + entry.date() + ")").orElse("");
+        return "reversal of " + what + original + " " + Ledger.format(reversal.amount());
     }
 
     /** A balance that has gone negative is credit, which is never shown as a negative number. */

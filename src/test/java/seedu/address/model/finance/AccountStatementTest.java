@@ -64,6 +64,38 @@ public class AccountStatementTest {
                 AccountStatement.format(book, bob));
     }
 
+    @Test
+    public void format_reversedPayment_matchesSpecificationExample() {
+        AddressBook book = new AddressBook();
+        book.addPerson(bob);
+        book.addLedgerEntry(chargeFor(book, bob, "Chemistry", DAY));
+        LedgerEntry payment = LedgerEntry.payment(bob, new BigDecimal("90"), DAY.plusDays(2));
+        book.addLedgerEntry(payment);
+        book.addLedgerEntry(LedgerEntry.reversalOf(payment, DAY.plusDays(2)));
+
+        assertEquals("Account — Lee Bob\n"
+                + "2026-10-17 charge Chemistry lesson $90.00 bal $90.00\n"
+                + "2026-10-19 payment -$90.00 bal $0.00\n"
+                + "2026-10-19 reversal of payment (2026-10-19) $90.00 bal $90.00\n"
+                + "Total charged $90.00 · total paid $0.00 (after reversals) · OUTSTANDING $90.00",
+                AccountStatement.format(book, bob));
+    }
+
+    @Test
+    public void format_reversedCharge_takesChargeOutOfTotalsAndShowsOriginalDate() {
+        AddressBook book = new AddressBook();
+        book.addPerson(bob);
+        LedgerEntry charge = chargeFor(book, bob, "Chemistry", DAY);
+        book.addLedgerEntry(charge);
+        book.addLedgerEntry(LedgerEntry.reversalOf(charge, DAY.plusDays(1)));
+
+        assertEquals("Account — Lee Bob\n"
+                + "2026-10-17 charge Chemistry lesson $90.00 bal $90.00\n"
+                + "2026-10-18 reversal of charge (2026-10-17) $90.00 bal $0.00\n"
+                + "Total charged $0.00 · total paid $0.00 (after reversals) · OUTSTANDING $0.00",
+                AccountStatement.format(book, bob));
+    }
+
     private static LedgerEntry chargeFor(AddressBook book, Person student, String subject, LocalDate date) {
         Lesson lesson = new LessonBuilder().withStudent(student).withSubject(subject).withDuration(60)
                 .withDate(date).build();
