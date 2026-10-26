@@ -186,6 +186,7 @@ Format: `remark INDEX r/REMARK`
 
 * Sets the remark of the student at the specified `INDEX`, which is the index number shown in the displayed student list and **must be a positive integer** 1, 2, 3, ...
 * The new remark replaces the old one. Writing `r/` with nothing after it removes the remark.
+* Surrounding spaces are removed and repeated spaces inside the remark are collapsed into one, as for other free text.
 * A remark is shown in the student's card and in [`view`](#viewing-a-students-overview-view).
 
 Examples:
