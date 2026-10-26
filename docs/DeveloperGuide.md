@@ -511,8 +511,10 @@ and adds the header above the up-to-date message. `view` shows `describeBalance`
 BALANCE. Credit from one account never reduces another student's debt. Queries include archived/filtered
 students and never mutate data.
 
-`BalanceCommand` parses `balance st/INDEX` and reports the displayed student's current summary;
-running account statements from alpha §4.29 are deliberately deferred. `DuesCommand` reports all debtors
+`BalanceCommand` parses `balance st/INDEX` and shows the displayed student's account as alpha §4.29 specifies.
+`AccountStatement.format` lists the student's ledger entries in date order, keeping the recorded order within a
+day, with a running balance on each row and a closing line of totals. It reads the ledger and lessons and never
+mutates them. `DuesCommand` reports all debtors
 with shared wording, including `(archived)` and the singular `1 day`.
 
 `PaymentCommandParser` parses `pay st/INDEX amt/AMOUNT [d/DATE] [n/NOTES]`, requiring a positive decimal

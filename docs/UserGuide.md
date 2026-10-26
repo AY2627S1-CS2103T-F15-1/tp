@@ -502,19 +502,26 @@ Balance: OUTSTANDING $30.00.
 
 ### Viewing a student's balance: `balance`
 
-Shows the current amount owed by a student, without displaying transaction history. This increment deliberately provides a balance summary; the full running account statement in the alpha specification is follow-up work.
+Shows a student's account: every charge and payment in date order with a running balance, and the total owed or in credit.
 
 Format: `balance st/INDEX`
 
 * `INDEX` is the positive student number in the displayed student list. After `find`, it refers to that filtered list.
-* Charges increase the balance and payments reduce it. Debt is shown as `OUTSTANDING $X.XX`; an overpayment is shown as `IN CREDIT $X.XX`.
+* Charges increase the balance and payments reduce it. Events on the same day keep the order in which they were recorded. The last line gives the total charged, the total paid and the balance. Debt is shown as `OUTSTANDING $X.XX`; an overpayment is shown as `IN CREDIT $X.XX`, and a running balance that has gone into credit is shown the same way instead of as a negative number.
+* A student with no charges or payments shows `No charges or payments recorded for NAME.`
 * The first time a lesson is completed with `lesson done`, TutorFlow records the student's current hourly rate × the lesson duration in minutes ÷ 60, rounded to cents using HALF_UP, as one charge. For example, $60/hour for 90 minutes costs $90.00. Updating the notes later does not charge again. Changing the student's rate does not change earlier charges.
 * Scheduled, cancelled and missed lessons do not create charges. A missed lesson creates a charge only if subsequently completed.
 * Existing completed lessons in older data files are not charged retroactively. Accounts start with no financial records when the file has no ledger.
 * Charges and payments use permanent student identifiers, so editing the student’s name or phone retains their balance.
 * Charges and payments are saved with the rest of the data. Use `pay st/INDEX amt/AMOUNT` to record money received.
 
-Example: `balance st/1` shows the balance of the first displayed student.
+Example: `balance st/1` shows the account of the first displayed student:
+```text
+Account — Lee Bob
+2026-10-17 charge Chemistry lesson $90.00 bal $90.00
+2026-10-19 payment -$50.00 bal $40.00
+Total charged $90.00 · total paid $50.00 (after reversals) · OUTSTANDING $40.00
+```
 
 ### Viewing all outstanding balances: `dues`
 
