@@ -647,12 +647,14 @@ Action     | Format, Examples
 **Delete** | `delete INDEX [confirm]`<br> e.g., `delete 3`, `delete 3 confirm`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [l/LEVEL] [s/SUBJECT]... [r/RATE] [v/VENUE]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
-**List**   | `list`
+**List**   | `list [l/LEVEL] [s/SUBJECT] [archived/\|all/]`<br> e.g., `list`, `list l/S3 s/Math`, `list archived/`
 **View**   | `view INDEX`<br> e.g., `view 1`
 **Balance** | `balance st/INDEX`<br> e.g., `balance st/1`
 **Payment** | `pay st/STUDENT_INDEX amt/AMOUNT [d/DATE] [n/NOTES]`<br> e.g., `pay st/1 amt/50`
 **Dues** | `dues`
 **Sort**   | `sort [asc\|desc]`<br> e.g., `sort desc`
+**Archive / Restore** | `archive INDEX`, `restore INDEX`<br> e.g., `archive 3`, `list archived/` then `restore 1`
+**Student aliases** | `student add\|edit\|delete\|find\|view\|list\|archive\|restore ...` (with the same arguments)<br> e.g., `student list l/S3`
 **Remark** | `remark INDEX r/REMARK`<br> e.g., `remark 1 r/Prefers morning lessons`
 **Help**   | `help [COMMAND]`<br> e.g., `help`, `help lesson add`
 **Lesson add** | `lesson add st/STUDENT_INDEX [s/SUBJECT] d/DATE t/TIME [dur/MINUTES] [v/VENUE] [past/]`<br> e.g., `lesson add st/1 s/Math d/2026-12-22 t/16:30 dur/90`, `lesson add st/1 d/tmr t/16:30`, `lesson add st/1 d/2026-10-12 t/16:30 past/`
@@ -666,8 +668,21 @@ Action     | Format, Examples
 **Travel** | `travel buffer/MINUTES`<br> e.g., `travel buffer/30`
 **Lesson done** | `lesson done INDEX [n/NOTES]`<br> e.g., `lesson done 1 n/Covered quadratic roots`
 **Lesson missed** | `lesson missed INDEX`<br> e.g., `lesson missed 1`
-* A student with no lessons and no [follow-up tasks](#adding-a-follow-up-task-task-add) is deleted immediately.
-* Deleting a student also deletes **all of their lessons and follow-up tasks**, and this cannot be undone. If the student has any lessons or tasks, TutorFlow does not delete anything yet. It shows the student's name, phone number, number of lessons and tasks and, if there are any, a warning about upcoming lessons, and asks you to repeat the command with `confirm`.
+**Lesson prep** | `lesson prep INDEX n/NOTES`<br> e.g., `lesson prep 1 n/Bring the mock paper`
+**Homework add** | `hw add st/STUDENT_INDEX desc/DESCRIPTION due/DATE`<br> e.g., `hw add st/1 desc/Algebra Q1-10 due/tmr`
+**Homework list** | `hw list [st/STUDENT_INDEX] [overdue/\|outstanding/]`<br> e.g., `hw list`, `hw list st/1 overdue/`
+**Homework edit** | `hw edit INDEX [desc/DESCRIPTION] [due/DATE]`<br> e.g., `hw edit 1 due/2026-10-21`
+**Homework status** | `hw status INDEX s/assigned\|submitted\|reviewed`<br> e.g., `hw status 1 s/submitted`
+**Homework feedback** | `hw feedback INDEX f/FEEDBACK`<br> e.g., `hw feedback 1 f/Revisit negative indices`
+**Homework delete** | `hw delete INDEX [confirm]`<br> e.g., `hw delete 2`, `hw delete 2 confirm`
+**Task add** | `task add st/INDEX\|lesson/INDEX\|hw/INDEX desc/TEXT [due/DATE]`<br> e.g., `task add st/1 desc/Call parent due/tmr`
+**Task list** | `task list [all/] [st/INDEX]`<br> e.g., `task list`, `task list all/`, `task list st/1`
+**Task edit** | `task edit INDEX desc/TEXT [due/DATE\|due/-]`<br> e.g., `task edit 1 desc/Call parent again due/-`
+**Task done** | `task done INDEX`<br> e.g., `task done 1`
+**Task delete** | `task delete INDEX [confirm]`<br> e.g., `task delete 1`, `task delete 1 confirm`
+**Demo** | `demo [confirm]`<br> e.g., `demo`, `demo confirm`
+**Save** | `save`
+**Exit** | `exit`
 
 
 ## Student continuity in v1.4 alpha

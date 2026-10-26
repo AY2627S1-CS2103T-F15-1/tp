@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.testutil.Assert.assertThrows;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -124,6 +126,20 @@ public class HelpCommandTest {
                 assertFalse(e.getMessage().equals(seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND),
                         "help lists '" + word + "' but the parser does not know it");
             }
+        }
+    }
+
+    @Test
+    public void execute_everyListedCommand_hasARowInTheUserGuideSummary() throws Exception {
+        String guide = Files.readString(Path.of("docs", "UserGuide.md"));
+        String summary = guide.substring(guide.indexOf("## Command summary"));
+        List<String> names = helpFor("").lines().filter(line -> line.startsWith("  "))
+                .map(line -> line.substring(2).split("  ", 2)[0].trim()).toList();
+
+        assertTrue(names.size() > 25, "the command list was not read: " + names);
+        for (String name : names) {
+            assertTrue(summary.contains("`" + name + " ") || summary.contains("`" + name + "`"),
+                    "the UG command summary has no row for '" + name + "'");
         }
     }
 
