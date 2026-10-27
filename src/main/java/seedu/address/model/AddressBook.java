@@ -231,12 +231,10 @@ public class AddressBook implements ReadOnlyAddressBook {
         // A lesson that was already billed by hand (for example a missed lesson) is completed without a second charge
         boolean alreadyBilled = Ledger.activeCharge(this, replacement.getId()).isPresent();
         if (!alreadyBilled && LedgerEntry.lessonFee(student, replacement).signum() > 0) {
+            // The automatic charge reuses the lesson's id as its entry id. Only this method creates it, and it
+            // completes the lesson, so a scheduled or missed lesson cannot already have an entry with that id.
+            // validateLedgerEntry still rejects a duplicate id if hand-edited data ever contains one.
             charge = LedgerEntry.charge(student, replacement);
-            // The automatic charge reuses the lesson's id as its own entry id, so an entry with that id means the
-            // lesson was charged and reversed before and a fresh id is needed
-            if (ledgerEntries.stream().anyMatch(existing -> existing.id().equals(replacement.getId()))) {
-                charge = LedgerEntry.charge(student, replacement, charge.amount());
-            }
             validateLedgerEntry(charge);
         }
         lessons.setLesson(target, replacement);

@@ -179,6 +179,23 @@ public class LedgerTest {
     }
 
     @Test
+    public void dues_reversedChargesAndPaymentsAreIgnored_whenFindingTheOldestUnpaidDate() {
+        AddressBook book = new AddressBook();
+        book.addPerson(alice);
+        LedgerEntry oldCharge = charge(book, alice, "40", DAY.minusDays(10));
+        book.addLedgerEntry(oldCharge);
+        book.addLedgerEntry(charge(book, alice, "60", DAY.minusDays(2)));
+        LedgerEntry payment = LedgerEntry.payment(alice, new BigDecimal("40"), DAY.minusDays(1));
+        book.addLedgerEntry(payment);
+        book.addLedgerEntry(LedgerEntry.reversalOf(oldCharge, DAY));
+        book.addLedgerEntry(LedgerEntry.reversalOf(payment, DAY));
+
+        // Only the $60 charge is left, and nothing has paid for it
+        assertEquals(List.of(new Ledger.Due(alice, new BigDecimal("60.00"), DAY.minusDays(2))),
+                Ledger.dues(book, DAY));
+    }
+
+    @Test
     public void dues_paymentsClearOldestChargesFirst_andIncludeArchivedStudents() {
         AddressBook book = new AddressBook();
         Person archivedBob = bob.withArchived(true);
