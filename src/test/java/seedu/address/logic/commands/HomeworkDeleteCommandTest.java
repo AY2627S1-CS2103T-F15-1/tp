@@ -19,6 +19,7 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.homework.HomeworkStatus;
+import seedu.address.model.task.Task;
 import seedu.address.testutil.AddressBookBuilder;
 import seedu.address.testutil.HomeworkBuilder;
 
@@ -70,6 +71,65 @@ public class HomeworkDeleteCommandTest {
         assertEquals("Deleted homework 1: Algebra Q1-10. Remaining shown indices are unchanged; "
                 + "run 'hw list' to refresh.", message);
         assertTrue(model.getAddressBook().getHomeworkList().isEmpty());
+    }
+
+    @Test
+    public void execute_withLinkedTaskUnconfirmed_asksAndDeletesNothing() throws Exception {
+        Homework item = new HomeworkBuilder(ALICE).build();
+        showWith(item);
+        model.addTask(Task.create("Mark it", null, ALICE, item));
+
+        String message = new HomeworkDeleteCommand(INDEX_FIRST_PERSON, false).execute(model).getFeedbackToUser();
+
+        assertEquals("This deletes homework 'Algebra Q1-10', any feedback, and 1 linked task(s). "
+                + "Type 'hw delete 1 confirm' to proceed.", message);
+        assertEquals(1, model.getAddressBook().getHomeworkList().size());
+        assertEquals(1, model.getAddressBook().getTaskList().size());
+    }
+
+    @Test
+    public void execute_withFeedbackAndTasksUnconfirmed_usesTheTaskMessage() throws Exception {
+        Homework item = new HomeworkBuilder(ALICE).withStatus(HomeworkStatus.SUBMITTED).withFeedback("Keep").build();
+        showWith(item);
+        model.addTask(Task.create("Mark it", null, ALICE, item));
+        model.addTask(Task.create("Call parent", null, ALICE, item));
+
+        String message = new HomeworkDeleteCommand(INDEX_FIRST_PERSON, false).execute(model).getFeedbackToUser();
+
+        assertEquals("This deletes homework 'Algebra Q1-10', any feedback, and 2 linked task(s). "
+                + "Type 'hw delete 1 confirm' to proceed.", message);
+        assertEquals(1, model.getAddressBook().getHomeworkList().size());
+        assertEquals(2, model.getAddressBook().getTaskList().size());
+    }
+
+    @Test
+    public void execute_withLinkedTaskConfirmed_deletesHomeworkAndItsTasksOnly() throws Exception {
+        Homework item = new HomeworkBuilder(ALICE).build();
+        showWith(item);
+        Task linked = Task.create("Mark it", null, ALICE, item);
+        Task other = Task.create("Call parent", null, ALICE);
+        model.addTask(linked);
+        model.addTask(other);
+
+        String message = new HomeworkDeleteCommand(INDEX_FIRST_PERSON, true).execute(model).getFeedbackToUser();
+
+        assertEquals("Deleted homework 1: Algebra Q1-10. Remaining shown indices are unchanged; "
+                + "run 'hw list' to refresh.", message);
+        assertTrue(model.getAddressBook().getHomeworkList().isEmpty());
+        assertEquals(List.of(other), List.copyOf(model.getAddressBook().getTaskList()));
+    }
+
+    @Test
+    public void execute_taskAboutAnotherItem_doesNotNeedConfirmation() throws Exception {
+        Homework first = new HomeworkBuilder(ALICE).withDescription("First").build();
+        Homework second = new HomeworkBuilder(ALICE).withDescription("Second").build();
+        showWith(first, second);
+        model.addTask(Task.create("Mark second", null, ALICE, second));
+
+        String message = new HomeworkDeleteCommand(INDEX_FIRST_PERSON, false).execute(model).getFeedbackToUser();
+
+        assertTrue(message.startsWith("Deleted homework 1: First."), message);
+        assertEquals(1, model.getAddressBook().getTaskList().size());
     }
 
     @Test

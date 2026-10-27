@@ -24,7 +24,9 @@ import seedu.address.model.homework.Homework;
 import seedu.address.model.homework.HomeworkStatus;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
+import seedu.address.model.task.Task;
 import seedu.address.testutil.LessonBuilder;
+import seedu.address.testutil.TaskBuilder;
 
 /**
  * Contains integration tests (interaction with the Model) and unit tests for
@@ -33,6 +35,12 @@ import seedu.address.testutil.LessonBuilder;
 public class DeleteCommandTest {
 
     private Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
+
+    @Test
+    public void messageUsage_endsWithTheSpecifiedConfirmationLine() {
+        assertTrue(DeleteCommand.MESSAGE_USAGE.endsWith("Linked lessons, homework, tasks, and financial history "
+                + "require 'confirm', e.g. delete 1 confirm"));
+    }
 
     @Test
     public void execute_validIndexUnfilteredList_success() {
@@ -238,5 +246,57 @@ public class DeleteCommandTest {
         model.updateFilteredPersonList(p -> false);
 
         assertTrue(model.getFilteredPersonList().isEmpty());
+    }
+
+    @Test
+    public void execute_studentWithOnlyTasksNotConfirmed_asksForConfirmationCountingTasks() {
+        Person student = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        model.addTask(new TaskBuilder().withId("a").withStudent(student).build());
+        model.addTask(new TaskBuilder().withId("b").withStudent(student).build());
+        Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
+
+        String expectedMessage = String.format(DeleteCommand.MESSAGE_CONFIRMATION, student.getName(),
+                student.getPhone(), 0, "", INDEX_FIRST_PERSON.getOneBased())
+                + "\nThis also deletes 2 task(s).";
+
+        assertCommandSuccess(new DeleteCommand(INDEX_FIRST_PERSON), model, expectedMessage, expectedModel);
+        assertTrue(model.getFilteredPersonList().contains(student));
+        assertEquals(2, model.getAddressBook().getTaskList().size());
+    }
+
+    @Test
+    public void execute_studentWithTasksConfirmed_deletesStudentLessonsAndTasks() {
+        Person student = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Person other = model.getFilteredPersonList().get(INDEX_SECOND_PERSON.getZeroBased());
+        model.addLesson(new LessonBuilder().withStudent(student).withDate(LocalDate.now().plusDays(3)).build());
+        model.addTask(new TaskBuilder().withId("a").withStudent(student).build());
+        Task otherTask = new TaskBuilder().withId("b").withStudent(other).build();
+        model.addTask(otherTask);
+
+        assertCommandSuccess(new DeleteCommand(INDEX_FIRST_PERSON, true), model,
+                "Deleted student: " + Messages.format(student) + ", along with 1 lesson(s) and 1 task(s).",
+                expectedAfterDeleting(student));
+        assertEquals(java.util.List.of(otherTask), model.getAddressBook().getTaskList());
+    }
+
+    @Test
+    public void execute_studentWithLessonHomeworkAndTasksConfirmed_namesEveryKindOfRecord() {
+        Person student = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        model.addLesson(new LessonBuilder().withStudent(student).withDate(LocalDate.now().plusDays(3)).build());
+        model.addHomework(Homework.assign(student.getId(), "Practice set", LocalDate.now().plusDays(1)));
+        model.addTask(new TaskBuilder().withId("a").withStudent(student).build());
+        model.addTask(new TaskBuilder().withId("b").withStudent(student).build());
+
+        assertCommandSuccess(new DeleteCommand(INDEX_FIRST_PERSON, true), model,
+                "Deleted student: " + Messages.format(student)
+                        + ", along with 1 lesson(s), 1 homework item(s) and 2 task(s).",
+                expectedAfterDeleting(student));
+        assertTrue(model.getAddressBook().getTaskList().isEmpty());
+    }
+
+    private Model expectedAfterDeleting(Person student) {
+        Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
+        expectedModel.deletePerson(student);
+        return expectedModel;
     }
 }

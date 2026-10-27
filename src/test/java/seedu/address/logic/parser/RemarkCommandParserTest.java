@@ -1,5 +1,6 @@
 package seedu.address.logic.parser;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.commands.CommandTestUtil.PREAMBLE_NON_EMPTY;
 import static seedu.address.logic.commands.CommandTestUtil.PREAMBLE_WHITESPACE;
@@ -7,10 +8,14 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_REMARK;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
+import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.commands.RemarkCommand;
+import seedu.address.model.Model;
+import seedu.address.model.ModelManager;
+import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Remark;
 
 public class RemarkCommandParserTest {
@@ -34,6 +39,16 @@ public class RemarkCommandParserTest {
         assertParseSuccess(parser,
                 INDEX_FIRST_PERSON.getOneBased() + " " + PREFIX_REMARK,
                 new RemarkCommand(INDEX_FIRST_PERSON, new Remark("")));
+    }
+
+    @Test
+    public void parse_repeatedSpacesInRemark_storedWithSingleSpaces() throws Exception {
+        Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
+
+        parser.parse(INDEX_FIRST_PERSON.getOneBased() + " " + PREFIX_REMARK + "Likes   swimming  a lot")
+                .execute(model);
+
+        assertEquals("Likes swimming a lot", model.getFilteredPersonList().get(0).getRemark().value);
     }
 
     @Test

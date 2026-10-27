@@ -54,8 +54,6 @@ public class HelpCommand extends Command {
             new CommandHelp("balance", "Shows a student's outstanding balance or credit", BalanceCommand.MESSAGE_USAGE),
             new CommandHelp("pay", "Records a student's payment with optional date and notes",
                     PaymentCommand.MESSAGE_USAGE),
-            new CommandHelp("payment", "Alias for pay using the earlier a/ amount prefix",
-                    PaymentCommand.MESSAGE_USAGE),
             new CommandHelp("dues", "Lists all students who owe money", DuesCommand.MESSAGE_USAGE),
             new CommandHelp("sort", "Sorts students by name", SortCommand.MESSAGE_USAGE),
             new CommandHelp("remark", "Sets a student's remark", RemarkCommand.MESSAGE_USAGE),
@@ -68,8 +66,11 @@ public class HelpCommand extends Command {
                             + "Example: lesson prep 1 n/Bring the mock paper"),
             new CommandHelp("lesson move", "Reschedules a lesson", LessonMoveCommand.MESSAGE_USAGE),
             new CommandHelp("lesson cancel", "Cancels a lesson", LessonCancelCommand.MESSAGE_USAGE),
+            new CommandHelp("lesson series cancel", "Cancels future occurrences of a series",
+                    LessonSeriesCancelCommand.MESSAGE_USAGE),
             new CommandHelp("lesson done", "Completes a lesson and records notes", LessonDoneCommand.MESSAGE_USAGE),
             new CommandHelp("lesson missed", "Marks a lesson as missed (no-show)", LessonMissedCommand.MESSAGE_USAGE),
+            new CommandHelp("travel", "Sets the minimum travel gap between venues", TravelCommand.MESSAGE_USAGE),
             new CommandHelp("hw add", "Assigns homework", HomeworkAddCommand.MESSAGE_USAGE,
                     "Parameters: STUDENT_INDEX of an active student; DESCRIPTION is 1-200 characters; DATE is today "
                             + "or later, up to a year ahead.\nExample: hw add st/1 desc/Algebra Q1-10 due/tmr"),
@@ -89,12 +90,19 @@ public class HelpCommand extends Command {
                     "Parameters: INDEX from the last hw list; FEEDBACK is 1-1000 characters. The homework must be "
                             + "submitted or reviewed, and new feedback replaces the old.\n"
                             + "Example: hw feedback 1 f/Sign errors throughout Q8-12"),
-            new CommandHelp("hw delete", "Deletes homework with feedback protection",
+            new CommandHelp("hw delete", "Deletes homework, after confirmation if it has feedback or tasks",
                     HomeworkDeleteCommand.MESSAGE_USAGE,
-                    "Parameters: INDEX from the last hw list; confirm is needed when the homework has feedback.\n"
+                    "Parameters: INDEX from the last hw list; confirm is needed when the homework has feedback "
+                            + "or follow-up tasks, which are deleted with it.\n"
                             + "Example: hw delete 2 confirm"),
             new CommandHelp("agenda", "Shows the lessons of a day or a week", AgendaCommand.MESSAGE_USAGE),
             new CommandHelp("today", "Shows today's lessons, overdue homework and dues", TodayCommand.MESSAGE_USAGE),
+            new CommandHelp("task add", "Adds a follow-up task to a student, lesson or homework item",
+                    TaskAddCommand.MESSAGE_USAGE),
+            new CommandHelp("task list", "Lists the open tasks", TaskListCommand.MESSAGE_USAGE),
+            new CommandHelp("task edit", "Changes a task's text or due date", TaskEditCommand.MESSAGE_USAGE),
+            new CommandHelp("task done", "Marks a task as done", TaskDoneCommand.MESSAGE_USAGE),
+            new CommandHelp("task delete", "Deletes a task, after confirmation", TaskDeleteCommand.MESSAGE_USAGE),
             new CommandHelp("clear", "Deletes all data, after confirmation", ClearCommand.MESSAGE_USAGE),
             new CommandHelp("save", "Retries saving unsaved changes", SaveCommand.MESSAGE_USAGE, "Example: save"),
             new CommandHelp("help", "Shows this list, or how to use one command", MESSAGE_USAGE),

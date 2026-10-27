@@ -3,9 +3,10 @@ package seedu.address.model;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
-import java.util.Comparator;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
 
@@ -18,6 +19,8 @@ import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.StudentOrder;
+import seedu.address.model.task.Task;
 
 /**
  * Represents the in-memory model of the address book data.
@@ -30,6 +33,7 @@ public class ModelManager implements Model {
     private final FilteredList<Person> filteredPersons;
     private final FilteredList<Lesson> filteredLessons;
     private final SortedList<Lesson> sortedLessons;
+    private List<Task> shownTasks = new ArrayList<>();
     private List<Homework> displayedHomework = List.of();
 
     private DestructiveActionType lastDestructiveAction = DestructiveActionType.NONE;
@@ -92,6 +96,11 @@ public class ModelManager implements Model {
     }
 
     @Override
+    public void setTravelBuffer(int minutes) {
+        addressBook.setTravelBuffer(minutes);
+    }
+
+    @Override
     public boolean hasPerson(Person person) {
         requireNonNull(person);
         return addressBook.hasPerson(person);
@@ -118,10 +127,10 @@ public class ModelManager implements Model {
     }
 
     @Override
-    public void sortPersons(Comparator<Person> comparator) {
-        requireNonNull(comparator);
+    public void sortPersons(StudentOrder order) {
+        requireNonNull(order);
 
-        addressBook.sortPersons(comparator);
+        addressBook.sortPersons(order);
     }
 
     @Override
@@ -267,4 +276,41 @@ public class ModelManager implements Model {
                 && filteredLessons.equals(otherModelManager.filteredLessons);
     }
 
+    //=========== Tasks ======================================================================================
+
+    @Override
+    public void addTask(Task task) {
+        requireNonNull(task);
+        addressBook.addTask(task);
+        logger.fine("Added task");
+    }
+
+    @Override
+    public Optional<Task> findTask(UUID id) {
+        requireNonNull(id);
+        return addressBook.findTask(id);
+    }
+
+    @Override
+    public void setTask(Task target, Task editedTask) {
+        requireAllNonNull(target, editedTask);
+        addressBook.setTask(target, editedTask);
+    }
+
+    @Override
+    public void deleteTask(Task target) {
+        requireNonNull(target);
+        addressBook.removeTask(target);
+    }
+
+    @Override
+    public List<Task> getShownTasks() {
+        return List.copyOf(shownTasks);
+    }
+
+    @Override
+    public void setShownTasks(List<Task> tasks) {
+        requireNonNull(tasks);
+        shownTasks = new ArrayList<>(tasks);
+    }
 }

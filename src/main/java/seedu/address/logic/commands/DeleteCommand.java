@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -16,11 +17,12 @@ import seedu.address.model.finance.Ledger;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
+import seedu.address.model.task.Task;
 
 /**
  * Deletes a student identified using the index shown in the displayed student list.
- * A student with lessons or homework requires confirmation, because deleting a student also deletes all of those
- * records and this cannot be undone.
+ * A student with lessons, homework or follow-up tasks requires confirmation, because deleting a student also
+ * deletes all of those records and this cannot be undone.
  */
 public class DeleteCommand extends Command {
 
@@ -31,7 +33,7 @@ public class DeleteCommand extends Command {
             + ": Deletes the student identified by the index number used in the displayed student list.\n"
             + "Parameters: INDEX (must be a positive integer) [" + CONFIRM_KEYWORD + "]\n"
             + "Example: " + COMMAND_WORD + " 1\n"
-            + "A student who has lessons or homework is only deleted if you add '" + CONFIRM_KEYWORD + "', "
+            + "Linked lessons, homework, tasks, and financial history require '" + CONFIRM_KEYWORD + "', "
             + "e.g. " + COMMAND_WORD + " 1 " + CONFIRM_KEYWORD;
 
     public static final String MESSAGE_DELETE_PERSON_SUCCESS = "Deleted student: %1$s";
@@ -58,7 +60,7 @@ public class DeleteCommand extends Command {
 
     /**
      * Creates a {@code DeleteCommand} that deletes the student at {@code targetIndex}.
-     * A student who has lessons or homework is only deleted if {@code isConfirmed} is true.
+     * A student who has lessons, homework or tasks is only deleted if {@code isConfirmed} is true.
      */
     public DeleteCommand(Index targetIndex, boolean isConfirmed) {
         requireNonNull(targetIndex);
@@ -93,12 +95,16 @@ public class DeleteCommand extends Command {
 
     /**
      * Returns what deleting {@code student} would delete along with them, and how to confirm. A student with
-     * homework also gets its count and the advice to archive instead.
+     * homework also gets its count and the advice to archive instead, and a student with follow-up tasks gets
+     * the count of those tasks.
      */
     private String getConfirmationPreview(Person student, LinkedRecords records) {
         String preview = getConfirmationPrompt(student, records.lessons());
         if (records.hasHomework()) {
             preview += "\n" + describeHistory(records);
+        }
+        if (records.hasTasks()) {
+            preview += "\nThis also deletes " + records.tasks().size() + " task(s).";
         }
         if (records.financialEvents() > 0) {
             preview += String.format(MESSAGE_FINANCE_WARNING, records.financialEvents(),
@@ -124,30 +130,39 @@ public class DeleteCommand extends Command {
 
     /** Returns what was deleted along with {@code student}, listing every kind of record that was present. */
     private static String getSuccessMessage(Person student, LinkedRecords records) {
-        if (records.financialEvents() > 0) {
-            return "Deleted student: " + Messages.format(student) + ", along with " + records.lessons().size()
-                    + " lesson(s), " + records.homework().size() + " homework item(s) and "
-                    + records.financialEvents() + " financial event(s).";
-        }
-        if (!records.hasHomework()) {
+        if (!records.hasHomework() && !records.hasTasks() && records.financialEvents() == 0) {
             return String.format(MESSAGE_DELETE_PERSON_WITH_LESSONS_SUCCESS, Messages.format(student),
                     records.lessons().size());
         }
-        return "Deleted student: " + Messages.format(student) + ", along with " + records.lessons().size()
-                + " lesson(s) and " + records.homework().size() + " homework item(s).";
+        List<String> parts = new ArrayList<>();
+        parts.add(records.lessons().size() + " lesson(s)");
+        if (records.hasHomework() || records.financialEvents() > 0) {
+            parts.add(records.homework().size() + " homework item(s)");
+        }
+        if (records.hasTasks()) {
+            parts.add(records.tasks().size() + " task(s)");
+        }
+        if (records.financialEvents() > 0) {
+            parts.add(records.financialEvents() + " financial event(s)");
+        }
+        String last = parts.remove(parts.size() - 1);
+        String linked = parts.isEmpty() ? last : String.join(", ", parts) + " and " + last;
+        return "Deleted student: " + Messages.format(student) + ", along with " + linked + ".";
     }
 
     /** The records that are deleted together with a student. */
-    private record LinkedRecords(List<Lesson> lessons, List<Homework> homework,
+    private record LinkedRecords(List<Lesson> lessons, List<Homework> homework, List<Task> tasks,
             long financialEvents, BigDecimal balance) {
         static LinkedRecords of(Model model, Person student) {
             List<Lesson> lessons = model.getAddressBook().getLessonList().stream()
                     .filter(lesson -> lesson.isWith(student)).toList();
             List<Homework> homework = model.getAddressBook().getHomeworkList().stream()
                     .filter(item -> item.getStudentId().equals(student.getId())).toList();
+            List<Task> tasks = model.getAddressBook().getTaskList().stream()
+                    .filter(task -> task.isAbout(student)).toList();
             long financialEvents = model.getAddressBook().getLedgerEntries().stream()
                     .filter(entry -> entry.isWith(student)).count();
-            return new LinkedRecords(lessons, homework, financialEvents,
+            return new LinkedRecords(lessons, homework, tasks, financialEvents,
                     Ledger.balance(model.getAddressBook(), student));
         }
 
@@ -155,8 +170,12 @@ public class DeleteCommand extends Command {
             return !homework.isEmpty();
         }
 
+        boolean hasTasks() {
+            return !tasks.isEmpty();
+        }
+
         boolean isEmpty() {
-            return lessons.isEmpty() && homework.isEmpty() && financialEvents == 0;
+            return lessons.isEmpty() && homework.isEmpty() && tasks.isEmpty() && financialEvents == 0;
         }
     }
 

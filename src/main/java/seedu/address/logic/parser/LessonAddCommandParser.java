@@ -51,7 +51,8 @@ public class LessonAddCommandParser implements Parser<LessonAddCommand> {
         argMultimap.verifyNoEmptyValuesFor(PREFIX_STUDENT, PREFIX_SUBJECT, PREFIX_DATE, PREFIX_TIME,
                 PREFIX_DURATION, PREFIX_VENUE);
 
-        Index studentIndex = ParserUtil.parseIndex(argMultimap.getValue(PREFIX_STUDENT).get());
+        Index studentIndex = ParserUtil.parseIndex(argMultimap.getValue(PREFIX_STUDENT).get(),
+                LessonAddCommand.MESSAGE_USAGE);
 
         // The subject, duration and venue are optional, and stay null when they are not given
         Subject subject = ParserUtil.parseOptional(argMultimap, PREFIX_SUBJECT, ParserUtil::parseSubject);

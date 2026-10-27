@@ -75,7 +75,8 @@ public class AgendaCommand extends Command {
             return new CommandResult(String.format(MESSAGE_NO_LESSONS_ON_DAY, DAY_FORMAT.format(date)));
         }
         return new CommandResult(String.format(MESSAGE_DAY_HEADER, DAY_FORMAT.format(date), summarise(lessons))
-                + formatLessons(model, lessons, date));
+                + formatLessons(model, lessons, date)
+                + LessonCommandUtil.getTravelWarnings(model, lesson -> lesson.getDate().value.equals(date)));
     }
 
     private static String formatWeek(Model model, LocalDate first, LocalDate last, List<Lesson> lessons) {
@@ -89,6 +90,8 @@ public class AgendaCommand extends Command {
                     .append(")");
             week.append(lessonsOfDay.isEmpty() ? "\n" + MESSAGE_EMPTY_DAY
                     : formatLessons(model, lessons, day));
+            week.append(LessonCommandUtil.getTravelWarnings(model,
+                    lesson -> lesson.getDate().value.equals(currentDay)));
         }
         return week.toString();
     }

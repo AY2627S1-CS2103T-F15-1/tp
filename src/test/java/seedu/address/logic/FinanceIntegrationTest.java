@@ -20,6 +20,8 @@ import org.junit.jupiter.api.io.TempDir;
 import seedu.address.logic.commands.BalanceCommand;
 import seedu.address.logic.commands.DuesCommand;
 import seedu.address.logic.commands.HelpCommand;
+import seedu.address.logic.commands.LessonCancelCommand;
+import seedu.address.logic.commands.LessonMoveCommand;
 import seedu.address.logic.commands.PaymentCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -116,6 +118,17 @@ public class FinanceIntegrationTest {
         assertTrue(dues.contains("$130.00 total"));
         assertEquals(1, model.getFilteredPersonList().size());
         assertThrows(CommandException.class, () -> logic.execute("balance st/2"));
+    }
+
+    @Test
+    public void completedLesson_moveAndCancelNameTheStatusEvenThoughItIsBilled() throws Exception {
+        logic.execute("lesson add st/1 d/" + TODAY + " t/10:00");
+        logic.execute("lesson done 1");
+
+        String completedMove = LessonMoveCommand.MESSAGE_COMPLETED_LESSON;
+        assertThrows(CommandException.class, completedMove, () -> logic.execute("lesson move 1 t/11:00"));
+        String completedCancel = LessonCancelCommand.MESSAGE_COMPLETED_LESSON;
+        assertThrows(CommandException.class, completedCancel, () -> logic.execute("lesson cancel 1"));
     }
 
     @Test
@@ -269,7 +282,8 @@ public class FinanceIntegrationTest {
         logic.execute("edit 1 r/0");
         logic.execute("lesson add st/1 d/" + TODAY + " t/10:00");
         String result = logic.execute("lesson done 1").getFeedbackToUser();
-        assertTrue(result.contains("No automatic charge: The lesson fee is $0.00."));
+        assertTrue(result.contains("No automatic charge: This student's rate is $0.00. Specify an amount with amt/ "
+                + "if you want to charge for this lesson. Use charge with an amount."), result);
         assertTrue(model.getAddressBook().getLedgerEntries().isEmpty());
         assertEquals(Ledger.ZERO, Ledger.balance(storage.readAddressBook().orElseThrow(), alice));
     }

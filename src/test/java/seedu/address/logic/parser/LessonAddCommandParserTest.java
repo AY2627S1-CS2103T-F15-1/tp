@@ -63,7 +63,8 @@ public class LessonAddCommandParserTest {
 
     @Test
     public void parse_invalidValues_failure() {
-        assertParseFailure(parser, " st/0 d/2026-12-22 t/16:30", ParserUtil.MESSAGE_INVALID_INDEX);
+        assertParseFailure(parser, " st/0 d/2026-12-22 t/16:30",
+                String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, USAGE));
         assertParseFailure(parser, " st/1 d/22-12 t/16:30", LessonDate.MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, " st/1 d/2026-12-22 t/4pm-ish", LessonTime.MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, REQUIRED_FIELDS + " dur/20", LessonDuration.MESSAGE_CONSTRAINTS);

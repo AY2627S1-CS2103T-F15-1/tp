@@ -123,10 +123,19 @@ public class LessonMoveCommandTest {
     }
 
     @Test
-    public void execute_chargedLesson_throwsCommandException() {
+    public void execute_chargedCompletedLesson_reportsCompletedNotBilled() {
         Lesson completed = lesson.complete(null);
         model.addLesson(completed);
         model.addLedgerEntry(LedgerEntry.charge(ALICE, completed));
+
+        assertCommandFailure(new LessonMoveCommand(INDEX_FIRST_PERSON, NEW_DATE, null, null, null), model,
+                LessonMoveCommand.MESSAGE_COMPLETED_LESSON);
+    }
+
+    @Test
+    public void execute_chargedScheduledLesson_throwsCommandException() {
+        model.addLesson(lesson);
+        model.addLedgerEntry(LedgerEntry.charge(ALICE, lesson));
 
         assertCommandFailure(new LessonMoveCommand(INDEX_FIRST_PERSON, NEW_DATE, null, null, null), model,
                 LessonCommandUtil.MESSAGE_CHARGED_LESSON);

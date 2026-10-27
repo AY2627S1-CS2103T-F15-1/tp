@@ -108,7 +108,8 @@ public class LessonRepeatCommandParserTest {
     public void parse_invalidLessonFields_failure() {
         assertParseFailure(parser, " st/1 d/22-12 t/16:30 count/4", LessonDate.MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, " st/1 d/2026-12-22 t/25:00 count/4", LessonTime.MESSAGE_CONSTRAINTS);
-        assertParseFailure(parser, " st/0 d/2026-12-22 t/16:30 count/4", ParserUtil.MESSAGE_INVALID_INDEX);
+        assertParseFailure(parser, " st/0 d/2026-12-22 t/16:30 count/4",
+                String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, USAGE));
     }
 
     @Test

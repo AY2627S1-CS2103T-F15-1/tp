@@ -1,8 +1,8 @@
 package seedu.address.model;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Predicate;
 
 import javafx.collections.ObservableList;
@@ -11,6 +11,8 @@ import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.StudentOrder;
+import seedu.address.model.task.Task;
 
 /**
  * The API of the Model component.
@@ -48,6 +50,9 @@ public interface Model {
      */
     void clearAddressBook();
 
+    /** Sets the persistent minimum gap between lessons at different physical venues. */
+    void setTravelBuffer(int minutes);
+
     /** Returns the AddressBook */
     ReadOnlyAddressBook getAddressBook();
 
@@ -82,10 +87,10 @@ public interface Model {
     void setPerson(Person target, Person editedPerson);
 
     /**
-     * Sorts the persons in the address book using the given {@code comparator}.
-     * Persons that compare as equal keep their relative order.
+     * Sorts the persons in the address book in {@code order}, and keeps them in that order when persons are added or
+     * edited later. Persons that compare as equal keep their relative order.
      */
-    void sortPersons(Comparator<Person> comparator);
+    void sortPersons(StudentOrder order);
 
     /** Returns an unmodifiable view of the filtered person list */
     ObservableList<Person> getFilteredPersonList();
@@ -134,6 +139,42 @@ public interface Model {
      */
     void updateFilteredLessonList(Predicate<Lesson> predicate);
 
+<<<<<<< HEAD
+=======
+    /**
+     * Adds the given task. No task with the same id may exist.
+     */
+    void addTask(Task task);
+
+    /**
+     * Returns the task with the given {@code id}, or empty if it does not exist (any more).
+     */
+    Optional<Task> findTask(UUID id);
+
+    /**
+     * Replaces the given task {@code target} with {@code editedTask}, which keeps the id of {@code target}.
+     * {@code target} must exist in the address book.
+     */
+    void setTask(Task target, Task editedTask);
+
+    /**
+     * Deletes the given task.
+     * The task must exist in the address book.
+     */
+    void deleteTask(Task target);
+
+    /**
+     * Returns the tasks as the last {@code task list} showed them. The task commands take their indices from this
+     * list, which stays unchanged until the next {@code task list}, so that earlier numbers keep their meaning.
+     */
+    List<Task> getShownTasks();
+
+    /**
+     * Replaces the tasks that the task commands take their indices from with a copy of {@code tasks}.
+     */
+    void setShownTasks(List<Task> tasks);
+
+>>>>>>> origin/master
     /** Adds an assignment belonging to a known student. */
     void addHomework(Homework homework);
 
