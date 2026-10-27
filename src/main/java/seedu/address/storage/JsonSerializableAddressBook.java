@@ -21,6 +21,7 @@ import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.TravelGap;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.StudentOrder;
 import seedu.address.model.task.Task;
 
 /**
@@ -34,6 +35,8 @@ class JsonSerializableAddressBook {
     public static final String MESSAGE_DUPLICATE_TASK = "Tasks list contains tasks with the same id.";
     public static final String MESSAGE_STALE_TASK_SKIPPED =
             "Skipped a task whose student, lesson or homework is not in the data.";
+    public static final String MESSAGE_INVALID_STUDENT_ORDER =
+            "The student order must be ASCENDING or DESCENDING.";
     public static final String MESSAGE_LESSON_WITHOUT_STUDENT =
             "Lessons list contains a lesson whose student is not in the persons list.";
 
@@ -41,6 +44,7 @@ class JsonSerializableAddressBook {
 
     private Integer schemaVersion;
     private Integer travelBuffer;
+    private String studentOrder; // null in files saved before sort kept its order, or never sorted
 
     private final List<JsonAdaptedPerson> persons = new ArrayList<>();
     private final List<JsonAdaptedLesson> lessons = new ArrayList<>();
@@ -100,6 +104,7 @@ class JsonSerializableAddressBook {
     public JsonSerializableAddressBook(ReadOnlyAddressBook source) {
         schemaVersion = StorageSchema.CURRENT_VERSION;
         travelBuffer = source.getTravelBuffer();
+        studentOrder = source.getStudentOrder().map(StudentOrder::name).orElse(null);
         source.getLedgerEntries().stream().map(JsonAdaptedLedgerEntry::new).forEach(ledgerEntries::add);
         source.getHomeworkList().stream().map(JsonAdaptedHomework::new).forEach(homework::add);
         persons.addAll(source.getPersonList().stream().map(JsonAdaptedPerson::new).collect(Collectors.toList()));
@@ -139,6 +144,9 @@ class JsonSerializableAddressBook {
                 throw new IllegalValueException("Duplicate student ID.");
             }
             addressBook.addPerson(person);
+        }
+        if (studentOrder != null) {
+            addressBook.sortPersons(toStudentOrder(studentOrder));
         }
         for (JsonAdaptedLesson jsonAdaptedLesson : lessons) {
             if (jsonAdaptedLesson == null) {
@@ -224,4 +232,11 @@ class JsonSerializableAddressBook {
         }
     }
 
+    private static StudentOrder toStudentOrder(String value) throws IllegalValueException {
+        try {
+            return StudentOrder.valueOf(value);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalValueException(MESSAGE_INVALID_STUDENT_ORDER);
+        }
+    }
 }

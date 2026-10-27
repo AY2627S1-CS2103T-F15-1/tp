@@ -4,7 +4,6 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -20,6 +19,7 @@ import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.StudentOrder;
 import seedu.address.model.task.Task;
 
 /**
@@ -115,10 +115,10 @@ public class ModelManager implements Model {
     }
 
     @Override
-    public void sortPersons(Comparator<Person> comparator) {
-        requireNonNull(comparator);
+    public void sortPersons(StudentOrder order) {
+        requireNonNull(order);
 
-        addressBook.sortPersons(comparator);
+        addressBook.sortPersons(order);
     }
 
     @Override

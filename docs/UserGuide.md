@@ -219,7 +219,8 @@ Format: `sort [asc|desc]`
 
 * `asc` sorts from A to Z and `desc` sorts from Z to A. If no order is given, `asc` is used.
 * All students are shown after sorting, even if the list was filtered by an earlier `find` command.
-* The new order is saved, so the students stay in this order the next time you open the app.
+* TutorFlow keeps this order. A student you add later, or whose name you change, takes their place in it, so the list stays sorted.
+* The order is saved, so it is still used the next time you open the app. Until you first use `sort`, new students are added at the end of the list.
 
 Examples:
 * `sort` sorts all students from A to Z.
