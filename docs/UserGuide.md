@@ -514,7 +514,8 @@ Format to take a charge back: `charge reverse l/LESSON_INDEX`
 * A lesson has at most one active charge. A second one gives `That lesson already has a charge of $75.50.`
 * If the student's rate is $0 and you give no `amt/`, TutorFlow asks you to specify an amount.
 * A charge is never deleted. `charge reverse` adds an opposite entry dated today, so the account shows both the charge and its correction. After a reversal the lesson can be charged again, for example with a different amount. If the student has already paid, the reversal can leave them in credit.
-* While a lesson has an active charge it cannot be moved or cancelled. Reverse the charge first.
+* While a lesson has an active charge it cannot be moved or cancelled. TutorFlow says `Reverse the active charge with 'charge reverse l/INDEX' before cancelling or rescheduling this lesson.`
+* A missed lesson that you billed with `charge` can still be completed with `lesson done` to correct a wrong "missed". It becomes completed and is not charged a second time.
 * `charge reverse` on a lesson without an active charge gives `That lesson has no active charge; it may already have been reversed.`
 
 Examples:

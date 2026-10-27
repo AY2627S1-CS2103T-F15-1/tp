@@ -228,10 +228,13 @@ public class AddressBook implements ReadOnlyAddressBook {
         Person student = persons.asUnmodifiableObservableList().stream().filter(replacement::isWith)
                 .findFirst().orElseThrow(() -> new IllegalArgumentException("Lesson student does not exist."));
         LedgerEntry charge = null;
-        if (LedgerEntry.lessonFee(student, replacement).signum() > 0) {
+        // A lesson that was already billed by hand (for example a missed lesson) is completed without a second charge
+        boolean alreadyBilled = Ledger.activeCharge(this, replacement.getId()).isPresent();
+        if (!alreadyBilled && LedgerEntry.lessonFee(student, replacement).signum() > 0) {
             charge = LedgerEntry.charge(student, replacement);
+            // The automatic charge reuses the lesson's id as its own entry id, so an entry with that id means the
+            // lesson was charged and reversed before and a fresh id is needed
             if (ledgerEntries.stream().anyMatch(existing -> existing.id().equals(replacement.getId()))) {
-                // The lesson was charged and reversed before, so the first charge already holds the lesson's id
                 charge = LedgerEntry.charge(student, replacement, charge.amount());
             }
             validateLedgerEntry(charge);

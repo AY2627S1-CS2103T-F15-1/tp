@@ -32,8 +32,8 @@ final class LessonCommandUtil {
     static final String MESSAGE_SUBJECT_REQUIRED = "%1$s takes more than one subject (%2$s). "
             + "Specify one with " + PREFIX_SUBJECT + "SUBJECT.";
     static final String MESSAGE_DUPLICATE_LESSON = "This exact lesson already exists.";
-    static final String MESSAGE_CHARGED_LESSON = "Cannot change a billed lesson. "
-            + "Its financial history must be retained.";
+    static final String MESSAGE_CHARGED_LESSON = "Reverse the active charge with "
+            + "'charge reverse l/INDEX' before cancelling or rescheduling this lesson.";
     static final String MESSAGE_OVERLAP_WARNING = "\nWarning: this overlaps with %1$s";
 
     private static final int MAX_YEARS_AHEAD = 2;

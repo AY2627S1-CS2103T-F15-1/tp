@@ -237,7 +237,8 @@ public class LedgerTest {
         LedgerEntry charge = book.chargeLesson(lesson, lesson.complete(null)).orElseThrow();
         assertEquals(charge, book.getLedgerEntries().getFirst());
         assertEquals(new BigDecimal("75.00"), charge.amount());
-        assertThrows(IllegalArgumentException.class, () -> book.chargeLesson(lesson, lesson.complete(null)));
+        // A lesson that already has an active charge is completed without a second one
+        assertTrue(book.chargeLesson(lesson, lesson.complete(null)).isEmpty());
         assertEquals(1, book.getLedgerEntries().size());
     }
 
