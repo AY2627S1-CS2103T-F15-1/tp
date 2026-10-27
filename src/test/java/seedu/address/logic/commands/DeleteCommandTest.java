@@ -153,7 +153,8 @@ public class DeleteCommandTest {
         String preview = assertDoesNotThrow(() -> new DeleteCommand(INDEX_FIRST_PERSON).execute(model))
                 .getFeedbackToUser();
 
-        assertTrue(preview.contains("This also deletes 2 homework item(s), including 2 upcoming homework item(s)."),
+        assertTrue(preview.contains("This also deletes 2 homework item(s), including 2 upcoming homework item(s), "
+                + "and 0 financial event(s)."),
                 preview);
         assertTrue(preview.contains("Recorded feedback on 1 homework item(s) will be deleted."), preview);
         assertTrue(model.getFilteredPersonList().contains(person));
@@ -185,8 +186,32 @@ public class DeleteCommandTest {
         String preview = assertDoesNotThrow(() -> new DeleteCommand(INDEX_FIRST_PERSON).execute(model))
                 .getFeedbackToUser();
 
-        assertTrue(preview.contains("This also deletes 1 homework item(s), including 1 upcoming homework item(s), "
-                + "and 1 financial event(s)."), preview);
+        String expected = String.format(DeleteCommand.MESSAGE_CONFIRMATION, person.getName(), person.getPhone(), 0,
+                "", 1)
+                + "\nThis also deletes 1 homework item(s), including 1 upcoming homework item(s), "
+                + "and 1 financial event(s)."
+                + "\nBalance: IN CREDIT $10.00."
+                + "\nUse 'archive INDEX' to retain these obligations and all history instead.";
+        assertEquals(expected, preview);
+    }
+
+    @Test
+    public void execute_studentWithTasksAndFinancialHistory_taskLineComesBeforeBalance() {
+        Person person = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        model.addTask(new TaskBuilder().withId("a").withStudent(person).build());
+        model.addLedgerEntry(LedgerEntry.payment(person, new BigDecimal("10.00"), LocalDate.now()));
+
+        String preview = assertDoesNotThrow(() -> new DeleteCommand(INDEX_FIRST_PERSON).execute(model))
+                .getFeedbackToUser();
+
+        String expected = String.format(DeleteCommand.MESSAGE_CONFIRMATION, person.getName(), person.getPhone(), 0,
+                "", 1)
+                + "\nThis also deletes 0 homework item(s), including 0 upcoming homework item(s), "
+                + "and 1 financial event(s)."
+                + "\nThis also deletes 1 task(s)."
+                + "\nBalance: IN CREDIT $10.00."
+                + "\nUse 'archive INDEX' to retain these obligations and all history instead.";
+        assertEquals(expected, preview);
     }
 
     @Test
@@ -199,7 +224,8 @@ public class DeleteCommandTest {
 
         String expected = String.format(DeleteCommand.MESSAGE_CONFIRMATION, person.getName(), person.getPhone(), 0,
                 "", 1)
-                + "\nThis also deletes 1 homework item(s), including 1 upcoming homework item(s)."
+                + "\nThis also deletes 1 homework item(s), including 1 upcoming homework item(s), "
+                + "and 0 financial event(s)."
                 + "\nUse 'archive INDEX' to retain these obligations and all history instead.";
         assertEquals(expected, preview);
     }

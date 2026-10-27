@@ -21,8 +21,8 @@ import seedu.address.model.task.Task;
 
 /**
  * Deletes a student identified using the index shown in the displayed student list.
- * A student with lessons, homework or follow-up tasks requires confirmation, because deleting a student also
- * deletes all of those records and this cannot be undone.
+ * A student with lessons, homework, follow-up tasks or financial events requires confirmation, because deleting
+ * a student also deletes all of those records and this cannot be undone.
  */
 public class DeleteCommand extends Command {
 
@@ -94,8 +94,9 @@ public class DeleteCommand extends Command {
 
     /**
      * Returns what deleting {@code student} would delete along with them, and how to confirm. A student with
-     * homework also gets its count and the advice to archive instead, and a student with follow-up tasks gets
-     * the count of those tasks.
+     * homework or financial events also gets one sentence counting both, the balance (when there are financial
+     * events) and the advice to archive instead. A student with follow-up tasks also gets a separate line with
+     * the count of those tasks, placed before the balance.
      */
     private String getConfirmationPreview(Person student, LinkedRecords records) {
         String preview = getConfirmationPrompt(student, records.lessons());
@@ -114,15 +115,15 @@ public class DeleteCommand extends Command {
     /**
      * Returns the line that counts the homework and financial events that would be deleted, in the form the
      * specification gives: "This also deletes 0 homework item(s), including 0 upcoming homework item(s), and 1
-     * financial event(s)." Feedback is mentioned only when there is some, because it is the part of the history
-     * that took thought to write.
+     * financial event(s)." The financial count is always given, even when it is 0.
+     * Feedback is mentioned only when there is some, because it is the part of the history that took thought to
+     * write.
      */
     private static String describeHistory(LinkedRecords records) {
         long upcoming = records.homework().stream().filter(Homework::isOutstanding)
                 .filter(item -> !item.getDueDate().isBefore(LocalDate.now())).count();
         String line = "This also deletes " + records.homework().size() + " homework item(s), including " + upcoming
-                + " upcoming homework item(s)"
-                + (records.financialEvents() > 0 ? ", and " + records.financialEvents() + " financial event(s)." : ".");
+                + " upcoming homework item(s), and " + records.financialEvents() + " financial event(s).";
         long withFeedback = records.homework().stream().filter(item -> item.getFeedback().isPresent()).count();
         return withFeedback == 0
                 ? line
