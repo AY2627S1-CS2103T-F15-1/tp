@@ -13,7 +13,7 @@ import seedu.address.logic.parser.exceptions.ParseException;
 /** Every command that takes a date accepts the same ways of writing it. */
 public class DateFormatsInCommandsTest {
 
-    private static final String[] OTHER_WAYS = {"22/12/2026", "22-12-26", "26-12-22", "22 Dec 2026", "2026/Dec/22"};
+    private static final String[] OTHER_WAYS = {"22/12/2026", "22-12-26", "22 Dec 26", "22 Dec 2026", "2026/Dec/22"};
 
     private final AddressBookParser parser = new AddressBookParser(
             Clock.fixed(Instant.parse("2026-10-26T04:00:00Z"), ZoneId.of("Asia/Singapore")));

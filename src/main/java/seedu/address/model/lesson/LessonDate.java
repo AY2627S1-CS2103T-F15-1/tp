@@ -34,18 +34,8 @@ public class LessonDate {
      * @param date A valid date string.
      */
     public LessonDate(String date) {
-        this(date, LocalDate.now());
-    }
-
-    /**
-     * Constructs a {@code LessonDate}, using {@code today} to settle a date that can be read in two ways.
-     *
-     * @param date A valid date string.
-     */
-    public LessonDate(String date, LocalDate today) {
         requireNonNull(date);
-        requireNonNull(today);
-        value = FlexibleDateParser.parse(date, today)
+        value = FlexibleDateParser.parse(date)
                 .orElseThrow(() -> new IllegalArgumentException(MESSAGE_CONSTRAINTS));
     }
 
@@ -54,7 +44,7 @@ public class LessonDate {
      */
     public static boolean isValidDate(String test) {
         requireNonNull(test);
-        return FlexibleDateParser.parse(test, LocalDate.now()).isPresent();
+        return FlexibleDateParser.parse(test).isPresent();
     }
 
     /**

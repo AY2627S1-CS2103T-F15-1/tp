@@ -238,7 +238,7 @@ public class ParserUtil {
             return new LessonDate(today.plusDays(1).toString());
         }
         return parseValue(date, LessonDate::isValidDate, LessonDate.MESSAGE_CONSTRAINTS,
-                text -> new LessonDate(text, today));
+                LessonDate::new);
     }
 
     /**

@@ -10,18 +10,17 @@ import org.junit.jupiter.api.Test;
 
 public class FlexibleDateParserTest {
 
-    private static final LocalDate TODAY = LocalDate.of(2026, 10, 26);
     private static final LocalDate DEC_22_2026 = LocalDate.of(2026, 12, 22);
 
     private static void assertDates(LocalDate expected, String... inputs) {
         for (String input : inputs) {
-            assertEquals(Optional.of(expected), FlexibleDateParser.parse(input, TODAY), input);
+            assertEquals(Optional.of(expected), FlexibleDateParser.parse(input), input);
         }
     }
 
     private static void assertNotDates(String... inputs) {
         for (String input : inputs) {
-            assertEquals(Optional.empty(), FlexibleDateParser.parse(input, TODAY), input);
+            assertEquals(Optional.empty(), FlexibleDateParser.parse(input), input);
         }
     }
 
@@ -47,28 +46,15 @@ public class FlexibleDateParserTest {
     }
 
     @Test
-    public void parse_twoDigitYearBeforeTheDay_isInThe2000s() {
-        assertDates(DEC_22_2026, "26-12-22", "26/12/22", "26.12.22", "26-Dec-22", "26 DEC 22");
-        assertDates(LocalDate.of(2027, 1, 31), "27-01-31", "27/Jan/31");
-    }
-
-    @Test
-    public void parse_twoDigitsEitherWay_readsTheDateNearerToToday() {
-        // 05/10/26 is 5 October 2026 or 26 October 2005 and the first is the nearer
+    public void parse_twoDigitsEitherWay_readsTheDayFirst() {
+        // 05/10/26 could also be 26 October 2005, and 26-12-22 could also be 22 December 2026
         assertDates(LocalDate.of(2026, 10, 5), "05/10/26", "5-10-26", "05.10.26");
-        // 12-10-26 is 12 October 2026 or 26 October 2012
-        assertDates(LocalDate.of(2026, 10, 12), "12-10-26");
-        // 26-12-22 is 22 December 2026 or 26 December 2022
-        assertDates(DEC_22_2026, "26-12-22");
-        assertEquals(Optional.of(LocalDate.of(2022, 12, 26)),
-                FlexibleDateParser.parse("26-12-22", LocalDate.of(2022, 10, 1)));
-    }
-
-    @Test
-    public void parse_twoDigitsEitherWayAtTheSameDistance_readsTheDayFirst() {
-        // 01-01-02 is 1 January 2002 or 2 January 2001, and 3 July 2001 is as far from the one as from the other
-        assertEquals(Optional.of(LocalDate.of(2002, 1, 1)),
-                FlexibleDateParser.parse("01-01-02", LocalDate.of(2001, 7, 3)));
+        assertDates(LocalDate.of(2022, 12, 26), "26-12-22", "26/12/22", "26.12.22", "26-Dec-22", "26 DEC 22");
+        // Day-first dates that the reading nearer to today would have moved, a year early and without an error
+        assertDates(LocalDate.of(2027, 11, 26), "26/11/27");
+        assertDates(LocalDate.of(2026, 11, 27), "27/11/26");
+        assertDates(LocalDate.of(2027, 12, 26), "26 Dec 27");
+        assertDates(LocalDate.of(2025, 10, 26), "26/10/25");
     }
 
     @Test
@@ -99,8 +85,7 @@ public class FlexibleDateParserTest {
     }
 
     @Test
-    public void parse_nullArguments_throwNullPointerException() {
-        assertThrows(NullPointerException.class, () -> FlexibleDateParser.parse(null, TODAY));
-        assertThrows(NullPointerException.class, () -> FlexibleDateParser.parse("22/12/2026", null));
+    public void parse_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> FlexibleDateParser.parse(null));
     }
 }

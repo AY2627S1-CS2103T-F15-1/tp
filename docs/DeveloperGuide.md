@@ -218,17 +218,21 @@ Move, single cancellation and series cancellation use `LessonCommandUtil#require
 
 Every date typed by the user is read by `ParserUtil.parseDate`, which resolves `today` and `tmr` against the injected clock and gives anything else to the `LessonDate` constructor. `LessonDate` hands the text to `FlexibleDateParser`, which splits it into three parts with the same separator (`/`, `-`, `.` or a space) between them and reads the parts as day, month and year, or as year, month and day. The month is one or two digits or an English month name, and the year is four digits or two digits for 2000 to 2099. Dates saved in the data file are always `YYYY-MM-DD`, written by `LessonDate#toStorageString`.
 
-A date with a four-digit year has one reading. When the first and the last part have at most two digits, as in `26-12-22`, there can be two readings, and `FlexibleDateParser` takes the one nearer to `today`, which `ParserUtil.parseDate` passes in from the clock. Readings that are equally near are settled in favour of the day first.
+A date with a four-digit year has one reading. When the first and the last part both have at most two digits, as in `26-12-22`, `FlexibleDateParser` reads the day first (26 December 2022). It reads the year first only if the day-first reading is not a real date, as in `35-12-31`. The reading never depends on today's date.
 
 #### Design considerations
 
-**Alternative 1 (current choice):** accept both orders and pick the nearer reading of an ambiguous date.
-* Pros: the tutor can type the order they like, and a date that is meant for a lesson in the next two years is read as that date in practice. Parsing needs no new parameter except today's date, which commands already hold.
-* Cons: the reading of an ambiguous date depends on the date of the computer, which the User Guide says and every reply shows in full.
+**Alternative 1 (current choice):** read a date that can be read two ways with the day first.
+* Pros: one rule, matching how dates are usually written in Singapore, and the same text always means the same date.
+* Cons: a two-digit year can only come first when the day-first reading is impossible, so `26-12-22` is 26 December 2022. The User Guide says to write a year-first date with four digits.
 
-**Alternative 2:** refuse a date that can be read two ways, as `9/10` is refused.
+**Alternative 2:** take the reading nearer to today.
+* Pros: `26-12-22` typed in 2026 is 22 December 2026.
+* Cons: it misreads ordinary day-first dates without an error. Typed on 28 October 2026, `26/11/27` became 27 November 2026, and `26 Dec 27` became 27 December 2026, a year early.
+
+**Alternative 3:** refuse a date that can be read two ways, as `9/10` is refused.
 * Pros: never misreads a date.
-* Cons: the two-digit forms that the user asked for, such as `26-12-22`, would almost always be refused, because most two-digit dates in the next few years are ambiguous.
+* Cons: most two-digit dates in the next few years would be refused, because they can be read both ways.
 
 ### Lesson completion and teaching notes
 

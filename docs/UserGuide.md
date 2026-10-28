@@ -90,11 +90,11 @@ Every date parameter, such as `d/` in `lesson add`, `agenda` and `pay`, `due/` i
 |---------------|---------|
 | `2026-12-22`, `2026/12/22`, `2026.12.22`, `2026 Dec 22` | 22 December 2026, year first |
 | `22/12/2026`, `22-12-2026`, `22.12.2026`, `22 December 2026` | 22 December 2026, day first |
-| `22/12/26`, `22-Dec-26`, `26-12-22`, `26/Dec/22` | 22 December 2026, with a two-digit year |
+| `22/12/26`, `22-Dec-26`, `22 Dec 26`, `22.12.26` | 22 December 2026, with a two-digit year |
 
 <box type="warning" seamless>
 
-**Two readings:** with a two-digit year, a date such as `05/10/26` could be 5 October 2026 or 26 October 2005. TutorFlow takes the reading that is nearer to today's date, and if both are equally near, the one with the day first. Every command that takes a date shows the date in full in its reply, such as `Tue 22 Dec 2026`, so check it there. When in doubt, write the year with four digits.
+**Two-digit years come last:** a date such as `05/10/26` is read with the day first, as 5 October 2026, never as 26 October 2005. The year is read first only when the day-first reading is not a real date, such as `35-12-31`. To write the year first, use four digits, such as `2026-12-22`. Every command that takes a date shows the date in full in its reply, such as `Tue 22 Dec 2026`, so check it there.
 </box>
 
 ### Viewing help: `help`
