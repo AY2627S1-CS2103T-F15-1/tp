@@ -34,6 +34,7 @@ public class ModelManager implements Model {
     private final FilteredList<Lesson> filteredLessons;
     private final SortedList<Lesson> sortedLessons;
     private List<Task> shownTasks = new ArrayList<>();
+    private List<LedgerEntry> shownPayments = List.of();
     private List<Homework> displayedHomework = List.of();
 
     /**
@@ -286,5 +287,16 @@ public class ModelManager implements Model {
     public void setShownTasks(List<Task> tasks) {
         requireNonNull(tasks);
         shownTasks = new ArrayList<>(tasks);
+    }
+
+    @Override
+    public List<LedgerEntry> getShownPayments() {
+        return shownPayments;
+    }
+
+    @Override
+    public void setShownPayments(List<LedgerEntry> payments) {
+        requireNonNull(payments);
+        shownPayments = List.copyOf(payments);
     }
 }

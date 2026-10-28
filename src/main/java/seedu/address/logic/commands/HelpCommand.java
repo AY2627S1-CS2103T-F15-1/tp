@@ -3,6 +3,7 @@ package seedu.address.logic.commands;
 import static java.util.Objects.requireNonNull;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -52,9 +53,13 @@ public class HelpCommand extends Command {
             new CommandHelp("find", "Finds students by name", FindCommand.MESSAGE_USAGE),
             new CommandHelp("view", "Shows a student's overview", ViewCommand.MESSAGE_USAGE),
             new CommandHelp("balance", "Shows a student's outstanding balance or credit", BalanceCommand.MESSAGE_USAGE),
+            new CommandHelp("charge", "Charges a completed or missed lesson", ChargeCommand.MESSAGE_USAGE),
+            new CommandHelp("charge reverse", "Reverses the charge of a lesson", ChargeCommand.MESSAGE_USAGE),
             new CommandHelp("pay", "Records a student's payment with optional date and notes",
                     PaymentCommand.MESSAGE_USAGE),
             new CommandHelp("dues", "Lists all students who owe money", DuesCommand.MESSAGE_USAGE),
+            new CommandHelp("pay list", "Lists recorded payments and numbers them", PaymentListCommand.MESSAGE_USAGE),
+            new CommandHelp("pay reverse", "Reverses a wrongly entered payment", PaymentReverseCommand.MESSAGE_USAGE),
             new CommandHelp("sort", "Sorts students by name", SortCommand.MESSAGE_USAGE),
             new CommandHelp("remark", "Sets a student's remark", RemarkCommand.MESSAGE_USAGE),
             new CommandHelp("lesson add", "Schedules a lesson", LessonAddCommand.MESSAGE_USAGE),
@@ -134,7 +139,8 @@ public class HelpCommand extends Command {
             return new CommandResult(MESSAGE_ALL_COMMANDS + format(COMMANDS));
         }
 
-        String lookup = commandName.startsWith("student ") ? commandName.substring("student ".length()) : commandName;
+        String typed = commandName.toLowerCase(Locale.ROOT);
+        String lookup = typed.startsWith("student ") ? typed.substring("student ".length()) : typed;
         Optional<CommandHelp> exactMatch = COMMANDS.stream()
                 .filter(command -> command.name.equals(lookup)).findFirst();
         if (exactMatch.isPresent()) {
@@ -143,7 +149,7 @@ public class HelpCommand extends Command {
 
         // A word such as "lesson" is not a command on its own, so show the commands that start with it
         List<CommandHelp> matches = COMMANDS.stream()
-                .filter(command -> command.name.startsWith(commandName + " ")).collect(Collectors.toList());
+                .filter(command -> command.name.startsWith(typed + " ")).collect(Collectors.toList());
         if (matches.isEmpty()) {
             throw new CommandException(String.format(MESSAGE_NO_HELP, commandName));
         }

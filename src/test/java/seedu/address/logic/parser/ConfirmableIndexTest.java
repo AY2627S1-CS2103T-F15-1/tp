@@ -29,6 +29,7 @@ public class ConfirmableIndexTest {
     @Test
     public void parse_indexWithKeyword_isConfirmed() throws Exception {
         ConfirmableIndex target = ConfirmableIndex.parse("2   confirm", KEYWORD, USAGE);
+        assertTrue(ConfirmableIndex.parse("2 CONFIRM", KEYWORD, USAGE).isConfirmed()); // any letter case
         assertEquals(INDEX_SECOND_PERSON, target.getIndex());
         assertTrue(target.isConfirmed());
     }
@@ -36,7 +37,7 @@ public class ConfirmableIndexTest {
     @Test
     public void parse_anythingElse_showsUsage() {
         String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, USAGE);
-        for (String args : new String[] {"", "a", "0", "confirm", "2 CONFIRM", "2 yes", "2 confirm confirm",
+        for (String args : new String[] {"", "a", "0", "confirm", "2 yes", "2 confirm confirm",
             "2 3"}) {
             ParseException exception = assertThrows(ParseException.class, () ->
                     ConfirmableIndex.parse(args, KEYWORD, USAGE), args);

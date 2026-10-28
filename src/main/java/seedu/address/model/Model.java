@@ -172,6 +172,15 @@ public interface Model {
      */
     void setShownTasks(List<Task> tasks);
 
+    /**
+     * Returns the payments as the last {@code pay list} showed them. {@code pay reverse} takes its index from this
+     * list, which stays unchanged until the next {@code pay list}, even after payments are added or reversed.
+     */
+    List<LedgerEntry> getShownPayments();
+
+    /** Replaces the payments that {@code pay reverse} takes its indices from with a copy of {@code payments}. */
+    void setShownPayments(List<LedgerEntry> payments);
+
     /** Adds an assignment belonging to a known student. */
     void addHomework(Homework homework);
 

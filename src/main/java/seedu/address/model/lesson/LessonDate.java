@@ -4,29 +4,25 @@ import static java.util.Objects.requireNonNull;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
-import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 
 /**
  * Represents the date of a lesson in TutorFlow.
  * Guarantees: immutable; is valid as declared in {@link #isValidDate(String)}
  *
- * <p>Accepts dates in {@code YYYY-MM-DD} and {@code DD/MM/YYYY} format. Impossible dates such as
+ * <p>Accepts the day-month-year and year-month-day orders described in {@link FlexibleDateParser}, such as
+ * {@code 2026-12-22}, {@code 22/12/2026}, {@code 22-12-26} and {@code 22 Dec 2026}. Impossible dates such as
  * 2026-02-30 are rejected rather than moved to a nearby valid date.
  */
 public class LessonDate {
 
     public static final String MESSAGE_CONSTRAINTS =
-            "Dates must be in YYYY-MM-DD or DD/MM/YYYY format, e.g. 2026-09-22.";
+            "Dates must be a real day written as year-month-day or day-month-year, "
+                    + "e.g. 2026-09-22, 22/09/2026 or 22 Sep 2026.";
 
     private static final DateTimeFormatter STORAGE_FORMAT =
             DateTimeFormatter.ofPattern("uuuu-MM-dd").withResolverStyle(ResolverStyle.STRICT);
-    private static final List<DateTimeFormatter> INPUT_FORMATS = List.of(
-            STORAGE_FORMAT,
-            DateTimeFormatter.ofPattern("d/M/uuuu").withResolverStyle(ResolverStyle.STRICT));
     private static final DateTimeFormatter DISPLAY_FORMAT =
             DateTimeFormatter.ofPattern("EEE dd MMM uuuu", Locale.ENGLISH);
 
@@ -39,7 +35,8 @@ public class LessonDate {
      */
     public LessonDate(String date) {
         requireNonNull(date);
-        value = parseDate(date).orElseThrow(() -> new IllegalArgumentException(MESSAGE_CONSTRAINTS));
+        value = FlexibleDateParser.parse(date)
+                .orElseThrow(() -> new IllegalArgumentException(MESSAGE_CONSTRAINTS));
     }
 
     /**
@@ -47,20 +44,7 @@ public class LessonDate {
      */
     public static boolean isValidDate(String test) {
         requireNonNull(test);
-        return parseDate(test).isPresent();
-    }
-
-    private static Optional<LocalDate> parseDate(String text) {
-        String trimmed = text.strip();
-        for (DateTimeFormatter format : INPUT_FORMATS) {
-            try {
-                return Optional.of(LocalDate.parse(trimmed, format));
-            } catch (DateTimeParseException e) {
-                // Not in this format, so try the next one
-                continue;
-            }
-        }
-        return Optional.empty();
+        return FlexibleDateParser.parse(test).isPresent();
     }
 
     /**

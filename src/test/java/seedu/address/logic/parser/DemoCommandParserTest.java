@@ -25,10 +25,15 @@ public class DemoCommandParserTest {
     }
 
     @Test
+    public void parse_confirmInAnyCase_loadsSampleData() throws Exception {
+        assertTrue(execute(parser.parse(" CONFIRM")).startsWith("Sample students loaded."));
+        assertTrue(execute(parser.parse(" Confirm")).startsWith("Sample students loaded."));
+    }
+
+    @Test
     public void parse_otherArguments_throwsParseException() {
         assertParseFailure(parser, " now", DemoCommandParser.MESSAGE_USAGE);
         assertParseFailure(parser, " confirm now", DemoCommandParser.MESSAGE_USAGE);
-        assertParseFailure(parser, " CONFIRM", DemoCommandParser.MESSAGE_USAGE);
     }
 
     private static String execute(Command command) throws CommandException {

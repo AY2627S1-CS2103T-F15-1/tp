@@ -36,6 +36,8 @@ public class LessonDoneCommand extends Command {
     public static final String MESSAGE_CANCELLED_LESSON = "Cannot complete a cancelled lesson.";
     public static final String MESSAGE_NO_CHARGE =
             "No automatic charge: The lesson fee is $0.00. No charge was recorded.";
+    public static final String MESSAGE_ALREADY_BILLED =
+            "No automatic charge: This lesson was already charged. No second charge was recorded.";
     public static final String MESSAGE_NO_CHARGE_ZERO_RATE =
             "No automatic charge: This student's rate is $0.00. Specify an amount with amt/ if you want to charge "
                     + "for this lesson. Use charge with an amount.";
@@ -94,8 +96,11 @@ public class LessonDoneCommand extends Command {
         String message = target.getStatus() == LessonStatus.COMPLETED ? MESSAGE_UPDATED_NOTES : MESSAGE_SUCCESS;
         String feedback = String.format(message, Messages.format(target));
         if (target.getStatus() != LessonStatus.COMPLETED) {
+            String noChargeMessage = Ledger.activeCharge(model.getAddressBook(), target.getId()).isPresent()
+                    ? MESSAGE_ALREADY_BILLED
+                    : isZeroRate ? MESSAGE_NO_CHARGE_ZERO_RATE : MESSAGE_NO_CHARGE;
             String chargeMessage = charge.map(entry -> "Charge of " + Ledger.format(entry.amount()) + " recorded.")
-                    .orElse(isZeroRate ? MESSAGE_NO_CHARGE_ZERO_RATE : MESSAGE_NO_CHARGE);
+                    .orElse(noChargeMessage);
             feedback += "\n" + chargeMessage;
         }
         return new CommandResult(feedback);

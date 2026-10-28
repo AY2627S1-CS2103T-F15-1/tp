@@ -28,7 +28,7 @@ public final class ConfirmableIndex {
         requireNonNull(args);
         requireNonNull(confirmKeyword);
         String[] words = args.strip().split("(?U)\\s+");
-        boolean isConfirmed = words.length == 2 && words[1].equals(confirmKeyword);
+        boolean isConfirmed = words.length == 2 && words[1].equalsIgnoreCase(confirmKeyword);
         if (words.length > 2 || words.length == 2 && !isConfirmed) {
             throw ParserUtil.invalidFormat(usage);
         }

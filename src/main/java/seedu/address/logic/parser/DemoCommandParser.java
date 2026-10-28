@@ -20,7 +20,7 @@ public class DemoCommandParser implements Parser<DemoCommand> {
     @Override
     public DemoCommand parse(String args) throws ParseException {
         String trimmedArgs = args.strip();
-        boolean isConfirmed = trimmedArgs.equals(CONFIRM_KEYWORD);
+        boolean isConfirmed = trimmedArgs.equalsIgnoreCase(CONFIRM_KEYWORD);
         if (!trimmedArgs.isEmpty() && !isConfirmed) {
             throw new ParseException(MESSAGE_USAGE);
         }

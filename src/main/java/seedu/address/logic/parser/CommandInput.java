@@ -2,6 +2,7 @@ package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,9 +32,11 @@ final class CommandInput {
         if (!matcher.matches()) {
             return Optional.empty();
         }
-        return Optional.of(new CommandInput(matcher.group("word"), matcher.group("arguments")));
+        String word = matcher.group("word").toLowerCase(Locale.ROOT);
+        return Optional.of(new CommandInput(word, matcher.group("arguments")));
     }
 
+    /** Returns the first word in lower case, because command words do not depend on letter case. */
     String getWord() {
         return word;
     }
