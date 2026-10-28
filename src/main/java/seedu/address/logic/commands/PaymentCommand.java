@@ -26,12 +26,12 @@ public class PaymentCommand extends Command {
     public static final String MESSAGE_AMOUNT_CONSTRAINTS =
             "Amount must be greater than 0 with at most 2 decimal places.";
     /**
-     * The largest single payment. It is far above any real fee (a lesson costs at most $79,999.92 at the highest
-     * rate and longest duration), so it only stops a mistyped amount from becoming a huge credit.
+     * A payment of at least this amount is still recorded, but the reply asks the user to check it, because a
+     * single payment this large is more likely to be a mistyped amount with extra digits than a real one.
      */
-    public static final BigDecimal MAX_AMOUNT = new BigDecimal("999999.99");
-    public static final String MESSAGE_AMOUNT_TOO_LARGE =
-            "Amount must be at most 999999.99. Check the amount for extra digits.";
+    public static final BigDecimal LARGE_AMOUNT = new BigDecimal("10000.00");
+    public static final String MESSAGE_LARGE_AMOUNT =
+            "Warning: %1$s is an unusually large payment. Check that the amount has no extra digits.";
     public static final String MESSAGE_FUTURE_DATE = "Payment dates cannot be in the future.";
 
     private final Index studentIndex;
@@ -50,9 +50,6 @@ public class PaymentCommand extends Command {
         requireAllNonNull(studentIndex, amount, clock);
         if (amount.signum() <= 0 || amount.scale() > 2) {
             throw new IllegalArgumentException(MESSAGE_AMOUNT_CONSTRAINTS);
-        }
-        if (amount.compareTo(MAX_AMOUNT) > 0) {
-            throw new IllegalArgumentException(MESSAGE_AMOUNT_TOO_LARGE);
         }
         this.studentIndex = studentIndex;
         this.amount = amount.setScale(2);
@@ -83,8 +80,12 @@ public class PaymentCommand extends Command {
             throw new CommandException(e.getMessage(), e);
         }
         BigDecimal balance = Ledger.balance(model.getAddressBook(), student);
-        return new CommandResult("Payment of " + Ledger.format(amount) + " recorded for " + student.getName()
-                + " on " + paymentDate + ".\nBalance: " + Ledger.describeBalance(balance) + ".");
+        String feedback = "Payment of " + Ledger.format(amount) + " recorded for " + student.getName()
+                + " on " + paymentDate + ".\nBalance: " + Ledger.describeBalance(balance) + ".";
+        if (amount.compareTo(LARGE_AMOUNT) >= 0) {
+            feedback += "\n" + String.format(MESSAGE_LARGE_AMOUNT, Ledger.format(amount));
+        }
+        return new CommandResult(feedback);
     }
 
     @Override

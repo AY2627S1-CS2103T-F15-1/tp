@@ -46,9 +46,6 @@ public class PaymentCommandParser implements Parser<PaymentCommand> {
         if (amount.signum() <= 0) {
             throw new ParseException(PaymentCommand.MESSAGE_AMOUNT_CONSTRAINTS);
         }
-        if (amount.compareTo(PaymentCommand.MAX_AMOUNT) > 0) {
-            throw new ParseException(PaymentCommand.MESSAGE_AMOUNT_TOO_LARGE);
-        }
         LocalDate date = ParserUtil.parseOptional(arguments, PREFIX_DATE,
                 value -> ParserUtil.parseDate(value, LocalDate.now(clock)).value);
         String notes = arguments.getValue(PREFIX_NOTES).map(value -> value.strip().replaceAll(" {2,}", " "))

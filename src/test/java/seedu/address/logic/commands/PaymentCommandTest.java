@@ -39,7 +39,7 @@ public class PaymentCommandTest {
     public void constructor_invalidArguments_rejected() {
         assertThrows(NullPointerException.class, () -> payment(null, BigDecimal.TEN));
         assertThrows(NullPointerException.class, () -> payment(INDEX_FIRST_PERSON, null));
-        for (String amount : new String[]{"0", "-1", "1.001", "1000000", "99999999999999999999"}) {
+        for (String amount : new String[]{"0", "-1", "1.001"}) {
             assertThrows(IllegalArgumentException.class, () -> payment(INDEX_FIRST_PERSON,
                     new BigDecimal(amount)));
         }
@@ -81,6 +81,35 @@ public class PaymentCommandTest {
         CommandResult result = payment(INDEX_FIRST_PERSON, BigDecimal.TEN).execute(model);
         assertTrue(result.getFeedbackToUser().endsWith("IN CREDIT $10.00."));
         assertEquals(new BigDecimal("-10.00"), Ledger.balance(model.getAddressBook(), ALICE));
+    }
+
+    @Test
+    public void execute_largeAmount_recordedWithWarning() throws Exception {
+        Model model = new ModelManager();
+        model.addPerson(ALICE);
+
+        CommandResult result = payment(INDEX_FIRST_PERSON, new BigDecimal("100000000.50")).execute(model);
+
+        assertEquals("Payment of $100000000.50 recorded for " + ALICE.getName() + " on " + TODAY
+                + ".\nBalance: IN CREDIT $100000000.50.\n"
+                + String.format(PaymentCommand.MESSAGE_LARGE_AMOUNT, "$100000000.50"), result.getFeedbackToUser());
+        assertEquals(new BigDecimal("-100000000.50"), Ledger.balance(model.getAddressBook(), ALICE));
+    }
+
+    @Test
+    public void execute_amountAtWarningThreshold_warnsOnlyFromThreshold() throws Exception {
+        Model model = new ModelManager();
+        model.addPerson(ALICE);
+
+        String justBelow = payment(INDEX_FIRST_PERSON, new BigDecimal("9999.99")).execute(model)
+                .getFeedbackToUser();
+        String atThreshold = payment(INDEX_FIRST_PERSON, PaymentCommand.LARGE_AMOUNT).execute(model)
+                .getFeedbackToUser();
+
+        assertFalse(justBelow.contains("Warning"), justBelow);
+        assertTrue(atThreshold.endsWith(String.format(PaymentCommand.MESSAGE_LARGE_AMOUNT, "$10000.00")),
+                atThreshold);
+        assertEquals(2, model.getAddressBook().getLedgerEntries().size());
     }
 
     @Test
