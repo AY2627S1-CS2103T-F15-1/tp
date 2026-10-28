@@ -10,6 +10,7 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -20,6 +21,7 @@ import seedu.address.logic.Messages;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.task.Task;
@@ -140,10 +142,52 @@ public class TaskAddCommandTest {
     }
 
     @Test
-    public void execute_paymentLink_isNotAvailableUntilPaymentsCanBeListed() {
+    public void execute_paymentLink_addsTaskAboutThatPaymentAndItsStudent() throws Exception {
+        LedgerEntry payment = LedgerEntry.payment(ALICE, new BigDecimal("25.00"),
+                LocalDate.now().minusDays(1), "PayNow");
+        model.addLedgerEntry(payment);
+        model.setShownPayments(List.of(payment));
+
+        new TaskAddCommand(null, null, null, INDEX_FIRST_PERSON, "Remind about fees", null).execute(model);
+
+        Task task = model.getAddressBook().getTaskList().get(0);
+        assertEquals(payment.id(), task.getPaymentId().orElseThrow());
+        assertEquals(ALICE.getId(), task.getStudentId());
+        assertTrue(task.getLessonId().isEmpty());
+        assertTrue(task.getHomeworkId().isEmpty());
+    }
+
+    @Test
+    public void execute_paymentLinkWithoutAListOrOutOfRange_explainsToListFirst() {
         assertCommandFailure(new TaskAddCommand(null, null, null, INDEX_FIRST_PERSON, "x", null), model,
-                "Invalid payment index. Run 'pay list' first.");
-        assertTrue(model.getAddressBook().getTaskList().isEmpty());
+                TaskAddCommand.MESSAGE_INVALID_PAYMENT_INDEX);
+        LedgerEntry payment = LedgerEntry.payment(ALICE, BigDecimal.TEN, LocalDate.now());
+        model.addLedgerEntry(payment);
+        model.setShownPayments(List.of(payment));
+        assertCommandFailure(new TaskAddCommand(null, null, null, INDEX_SECOND_PERSON, "x", null), model,
+                TaskAddCommand.MESSAGE_INVALID_PAYMENT_INDEX);
+    }
+
+    @Test
+    public void execute_paymentDeletedSinceTheList_reportsItAsDeleted() {
+        LedgerEntry payment = LedgerEntry.payment(ALICE, BigDecimal.TEN, LocalDate.now());
+        model.addLedgerEntry(payment);
+        model.setShownPayments(List.of(payment));
+        model.deletePerson(ALICE);
+        model.addPerson(ALICE);
+
+        assertCommandFailure(new TaskAddCommand(null, null, null, INDEX_FIRST_PERSON, "x", null), model,
+                TaskAddCommand.MESSAGE_PAYMENT_DELETED);
+    }
+
+    @Test
+    public void execute_shownEntryIsNotAPayment_reportsAnInvalidPaymentIndex() {
+        LedgerEntry charge = LedgerEntry.charge(ALICE, new seedu.address.testutil.LessonBuilder()
+                .withStudent(ALICE).withDate(LocalDate.now()).build(), BigDecimal.TEN);
+        model.setShownPayments(List.of(charge));
+
+        assertCommandFailure(new TaskAddCommand(null, null, null, INDEX_FIRST_PERSON, "x", null), model,
+                TaskAddCommand.MESSAGE_INVALID_PAYMENT_INDEX);
     }
 
     @Test

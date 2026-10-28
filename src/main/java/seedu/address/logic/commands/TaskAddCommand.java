@@ -9,6 +9,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_PAYMENT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_STUDENT;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Objects;
 import java.util.logging.Logger;
 
@@ -18,16 +19,15 @@ import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.TaskCommandParser;
 import seedu.address.model.Model;
+import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
 import seedu.address.model.task.Task;
 
 /**
- * Adds a follow-up task about a student, a lesson or a homework item that is shown (user story 31).
- * Exactly one link is given. A task about a student, a lesson or a homework item is linked by the permanent id of
- * that record. A link to a payment is accepted so that the command already has its final format, but there is no
- * numbered payment list to point at yet.
+ * Adds a follow-up task about a student, a lesson, a homework item or a payment (user story 31). Exactly one link
+ * is given. A task about a lesson, a homework item or a payment is linked by the permanent id of that record.
  */
 public class TaskAddCommand extends Command {
 
@@ -39,16 +39,18 @@ public class TaskAddCommand extends Command {
 
     public static final String MESSAGE_USAGE = FORMAT + " (choose exactly one link; use hw list or pay list "
             + "before those indices)\n"
-            + COMMAND_WORD + ": Adds a follow-up task about a student, a lesson or a homework item. "
+            + COMMAND_WORD + ": Adds a follow-up task about a student, a lesson, a homework item or a payment. "
             + PREFIX_STUDENT + " takes a number from the student list, " + PREFIX_LESSON
             + " a number from the last agenda or lesson list, " + PREFIX_HOMEWORK + " a number from the last "
-            + "hw list. The description is 1-200 characters.\n"
+            + "hw list, and " + PREFIX_PAYMENT + " a number from the last pay list. The description is "
+            + "1-200 characters.\n"
             + "Example: " + COMMAND_WORD + " " + PREFIX_STUDENT + "1 " + PREFIX_DESCRIPTION + "Call parent "
             + PREFIX_DUE + "2026-12-01";
 
     public static final String MESSAGE_SUCCESS = "Added task: %1$s. Run 'task list' to display its index.";
     public static final String MESSAGE_HOMEWORK_WITHOUT_STUDENT = "The student of that homework no longer exists.";
     public static final String MESSAGE_INVALID_PAYMENT_INDEX = "Invalid payment index. Run 'pay list' first.";
+    public static final String MESSAGE_PAYMENT_DELETED = "That payment was deleted. Run 'pay list' to refresh.";
 
     private static final Logger logger = LogsCenter.getLogger(TaskAddCommand.class);
 
@@ -112,7 +114,23 @@ public class TaskAddCommand extends Command {
                     .orElseThrow(() -> new CommandException(MESSAGE_HOMEWORK_WITHOUT_STUDENT));
             return Task.create(description, due, student, homework);
         }
-        // Payments cannot be listed yet, so no number can point at one
+        if (paymentIndex != null) {
+            List<LedgerEntry> shownPayments = model.getShownPayments();
+            if (paymentIndex.getZeroBased() >= shownPayments.size()) {
+                throw new CommandException(MESSAGE_INVALID_PAYMENT_INDEX);
+            }
+            LedgerEntry shownPayment = shownPayments.get(paymentIndex.getZeroBased());
+            if (shownPayment.kind() != LedgerEntry.Kind.PAYMENT) {
+                throw new CommandException(MESSAGE_INVALID_PAYMENT_INDEX);
+            }
+            LedgerEntry payment = model.getAddressBook().getLedgerEntries().stream()
+                    .filter(entry -> entry.id().equals(shownPayment.id())).findFirst()
+                    .orElseThrow(() -> new CommandException(MESSAGE_PAYMENT_DELETED));
+            Person student = model.getAddressBook().getPersonList().stream()
+                    .filter(person -> person.getId().equals(payment.studentId())).findFirst()
+                    .orElseThrow(() -> new CommandException(MESSAGE_PAYMENT_DELETED));
+            return Task.create(description, due, student, payment);
+        }
         throw new CommandException(MESSAGE_INVALID_PAYMENT_INDEX);
     }
 
