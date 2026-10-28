@@ -139,13 +139,53 @@ Format: `add n/NAME p/PHONE_NUMBER l/LEVEL s/SUBJECT... r/RATE [e/EMAIL] [v/VENU
 
 Examples:
 * `add n/John Doe p/98765432 l/S4 s/Math r/50`
-* `add n/Betsy Crowe p/1234567 l/J1 s/Physics s/Chemistry r/62.50 e/betsycrowe@example.com v/Blk 123 Bishan St 13`
+* `add n/Betsy Crowe p/98761234 l/J1 s/Physics s/Chemistry r/62.50 e/betsycrowe@example.com v/Blk 123 Bishan St 13`
 
-### Listing all students: `list`
+### Listing students: `list`
 
-Shows a list of all students in TutorFlow.
+Shows the students in TutorFlow. Archived students are hidden unless you ask for them.
 
-Format: `list`
+Format: `list [l/LEVEL] [s/SUBJECT] [archived/|all/]`
+
+* With no parameters, shows every active student and replies `Listed active students.`
+* `l/LEVEL` shows only the students at that level, and `s/SUBJECT` only those who take that subject. Neither is case-sensitive. With both, a student must match both. A filtered list replies with the count, such as `Listed 2 matching student(s).`
+* `archived/` shows only [archived](#archiving-a-student-archive) students, and `all/` shows active and archived students together. Use at most one of them, with nothing after the `/`.
+* The students are numbered again, and other commands use the new numbers.
+* `student list` works the same way.
+
+Examples:
+* `list` Shows all active students.
+* `list l/S3 s/Math` Shows the active S3 students who take Math.
+* `list archived/` Shows only the archived students, for example before you [restore](#restoring-an-archived-student-restore) one.
+
+### Archiving a student: `archive`
+
+Takes a student who has stopped lessons out of the active list, while their lessons and payment history stay available.
+
+Format: `archive INDEX`
+
+* `INDEX` is the number in the displayed student list.
+* The student no longer appears in `list`. `list archived/`, `list all/` and `find` still show them, with `(archived)` after their name on the student card, and `view` shows `Viewing: NAME (archived)`.
+* Their lessons, homework, charges and payments are kept, and so are their upcoming lessons in the agenda. If they owe money, `dues` still lists them, marked `(archived)`.
+* An archived student cannot be given a new lesson, weekly series or homework. TutorFlow asks you to restore them first.
+* Archiving a student who is already archived gives `This student is already archived.`
+* `student archive INDEX` works the same way.
+
+Examples:
+* `archive 3` Archives the 3rd student and replies, for example, `Archived: Chen Hao. Lessons and history are retained. The student list has refreshed.`
+
+### Restoring an archived student: `restore`
+
+Brings an archived student back to the active list.
+
+Format: `restore INDEX`
+
+* First show the archived students with `list archived/` or `list all/`, then use the number shown there.
+* Restoring a student who is already active gives `This student is already active. Use student list archived/ before restoring.`
+* `student restore INDEX` works the same way.
+
+Examples:
+* `list archived/`, then `restore 1` Restores the first archived student, for example `Restored: Amy Tan. Lessons and history are retained. The student list has refreshed.`
 
 ### Editing a student: `edit`
 
@@ -790,15 +830,9 @@ Action     | Format, Examples
 The existing student commands remain available. You can also write `student add`, `student edit`,
 `student delete`, `student find`, `student view`, and `student list` with the same arguments.
 
-* `student list [l/LEVEL] [s/SUBJECT] [archived/|all/]` combines level and subject filters with AND.
-  The default is active students. `archived/` shows only archived students; `all/` includes both.
-  The two flags cannot be combined and take no values.
-* `archive INDEX` (or `student archive INDEX`) hides a student from active lists while retaining
-  lessons and upcoming agenda commitments. An archived student cannot receive new lessons.
-  In a list that includes archived students, such as `student list all/`, their card shows
-  `(archived)` after the name.
-* `student list archived/` followed by `restore INDEX` restores a student. All student commands
-  use the currently visible student numbers; the student panel refreshes after changes.
+* [`list`](#listing-students-list), [`archive`](#archiving-a-student-archive) and
+  [`restore`](#restoring-an-archived-student-restore) have their own sections above. All student
+  commands use the currently visible student numbers; the student panel refreshes after changes.
 * `lesson prep INDEX n/NOTES` records 1-1000 printable characters of preparation. It neither
   completes the lesson nor changes teaching notes. Preparation appears in `lesson list` and
   in the next-lesson section of `view`.
