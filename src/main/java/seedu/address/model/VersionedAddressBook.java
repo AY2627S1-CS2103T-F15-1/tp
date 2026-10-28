@@ -1,7 +1,5 @@
 package seedu.address.model;
 
-import static java.util.Objects.requireNonNull;
-
 import java.util.List;
 
 import seedu.address.model.finance.LedgerEntry;
@@ -39,9 +37,9 @@ public class VersionedAddressBook extends AddressBook {
         if (lastDestructiveAction == DestructiveActionType.NONE) {
             return lastDestructiveAction;
         }
-        this.resetData(this.lastState);
         DestructiveActionType type = lastDestructiveAction;
-        resetDestructiveAction();
+        // also resets destructive action
+        this.resetData(this.lastState);
         return type;
     }
 
