@@ -1,5 +1,7 @@
 package seedu.address.storage;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -100,8 +102,7 @@ class JsonAdaptedLesson {
                 Phone.MESSAGE_CONSTRAINTS, Phone::fromStored);
         final Subject modelSubject = convert("subject", subject, Subject::isValidSubject,
                 Subject.MESSAGE_CONSTRAINTS, Subject::new);
-        final LessonDate modelDate = convert("date", date, LessonDate::isValidDate,
-                LessonDate.MESSAGE_CONSTRAINTS, LessonDate::new);
+        final LessonDate modelDate = parseStoredDate();
         final LessonTime modelTime = convert("time", time, LessonTime::isValidTime,
                 LessonTime.MESSAGE_CONSTRAINTS, LessonTime::new);
         final LessonDuration modelDuration = convert("duration", duration, LessonDuration::isValidDuration,
@@ -134,6 +135,23 @@ class JsonAdaptedLesson {
                     modelVenue, modelStatus, notes, cancelReason);
         } catch (IllegalArgumentException e) {
             throw new IllegalValueException("Invalid lesson ID, historical level, or preparation notes.");
+        }
+    }
+
+    /**
+     * Reads a saved date strictly as {@code YYYY-MM-DD}. User input is flexible, but a stored value must not be
+     * reinterpreted differently according to the date on which the file is opened.
+     *
+     * @throws IllegalValueException if the date is missing or not in the storage format.
+     */
+    private LessonDate parseStoredDate() throws IllegalValueException {
+        if (date == null) {
+            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, "date"));
+        }
+        try {
+            return new LessonDate(LocalDate.parse(date).toString());
+        } catch (DateTimeParseException e) {
+            throw new IllegalValueException(LessonDate.MESSAGE_CONSTRAINTS);
         }
     }
 
