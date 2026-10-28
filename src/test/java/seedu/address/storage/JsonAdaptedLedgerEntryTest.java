@@ -67,6 +67,38 @@ public class JsonAdaptedLedgerEntryTest {
     }
 
     @Test
+    public void reversal_roundTripsThroughJsonAndKeepsTheBalance() throws Exception {
+        Lesson lesson = new LessonBuilder().withStudent(ALICE).build();
+        AddressBook book = new AddressBook();
+        book.addPerson(ALICE);
+        book.addLesson(lesson);
+        LedgerEntry charge = LedgerEntry.charge(ALICE, lesson);
+        book.addLedgerEntry(charge);
+        LedgerEntry reversal = LedgerEntry.reversalOf(charge, LocalDate.of(2026, 10, 19));
+        book.addLedgerEntry(reversal);
+        LedgerEntry again = LedgerEntry.charge(ALICE, lesson, new BigDecimal("40.00"));
+        book.addLedgerEntry(again);
+
+        String json = JsonUtil.toJsonString(new JsonSerializableAddressBook(book));
+        AddressBook restored = JsonUtil.fromJsonString(json, JsonSerializableAddressBook.class).toModelType();
+
+        assertEquals(List.of(charge, reversal, again), List.copyOf(restored.getLedgerEntries()));
+        assertEquals(charge.id(), restored.getLedgerEntries().get(1).reverses());
+    }
+
+    @Test
+    public void toModelType_reversalWithoutTargetOrWithUnknownTarget_rejected() {
+        String id = UUID.randomUUID().toString();
+        assertThrows(IllegalValueException.class, "Ledger entry field 'reverses' is missing.", () ->
+                new JsonAdaptedLedgerEntry(id, ALICE.getId().toString(), null, "PAYMENT_REVERSAL", "10.00",
+                        "2026-10-19").toModelType());
+        JsonAdaptedLedgerEntry orphan = new JsonAdaptedLedgerEntry(id, ALICE.getId().toString(), null,
+                "PAYMENT_REVERSAL", "10.00", "2026-10-19", null, UUID.randomUUID().toString());
+        assertThrows(IllegalValueException.class, () -> new JsonSerializableAddressBook(
+                List.of(new JsonAdaptedPerson(ALICE)), List.of(), List.of(), List.of(orphan)).toModelType());
+    }
+
+    @Test
     public void toModelType_legacyFileWithoutLedger_startsWithNoDebt() throws Exception {
         assertTrue(new JsonSerializableAddressBook(List.of(new JsonAdaptedPerson(ALICE)), List.of())
                 .toModelType().getLedgerEntries().isEmpty());

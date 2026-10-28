@@ -527,7 +527,7 @@ Format: `pay st/STUDENT_INDEX amt/AMOUNT [d/DATE] [n/NOTES]`
 * Each prefix can appear once, in any order. Both `st/` and `amt/` are required. Empty or repeated fields are rejected.
 * Payments are saved automatically. Partial payments reduce the amount owed; excess payments and advance payments are accepted as credit. Archived students can receive payments.
 * Every invocation records another payment. If saving fails after a payment is applied, fix the save problem and use `save` to retry; repeating `pay` would record a second payment.
-* Payment listing, manual charging and reversals are follow-up features and are not available in this increment.
+* Payment listing and payment reversals are follow-up features and are not available in this increment. A lesson charge can be corrected with [`charge reverse`](#charging-a-lesson-charge).
 
 Examples:
 * `pay st/1 amt/20` records $20 received from the first displayed student today.
@@ -537,6 +537,35 @@ Example output:
 ```text
 Payment of $20.00 recorded for Alice on 2026-10-19.
 Balance: OUTSTANDING $30.00.
+```
+
+### Charging a lesson: `charge`
+
+Records what a lesson cost by hand, or takes a charge back. TutorFlow normally charges a lesson by itself when you complete it with `lesson done`. `charge` is for the cases that does not cover: billing a missed lesson, an agreed discount, or a lesson of a student whose rate is $0.
+
+Format: `charge l/LESSON_INDEX [amt/AMOUNT]`
+
+Format to take a charge back: `charge reverse l/LESSON_INDEX`
+
+* `LESSON_INDEX` is the lesson number from the current `agenda` or `lesson list`, not the student number.
+* Without `amt/`, the charge is the student's current hourly rate × the lesson duration ÷ 60, rounded to cents. `AMOUNT` must be greater than zero with at most two decimal places.
+* Only a completed or missed lesson can be charged. A cancelled lesson gives `Cannot charge a cancelled lesson.`, and a lesson that is still scheduled gives `Cannot charge a lesson scheduled for Thu 22 Oct 2026.`
+* A lesson has at most one active charge. A second one gives `That lesson already has a charge of $75.50.`
+* If the student's rate is $0 and you give no `amt/`, TutorFlow asks you to specify an amount.
+* A charge is never deleted. `charge reverse` adds an opposite entry dated today, so the account shows both the charge and its correction. After a reversal the lesson can be charged again, for example with a different amount. If the student has already paid, the reversal can leave them in credit.
+* While a lesson has an active charge it cannot be moved or cancelled. TutorFlow says `Reverse the active charge with 'charge reverse l/INDEX' before cancelling or rescheduling this lesson.`
+* A missed lesson that you billed with `charge` can still be completed with `lesson done` to correct a wrong "missed". It becomes completed and is not charged a second time.
+* `charge reverse` on a lesson without an active charge gives `That lesson has no active charge; it may already have been reversed.`
+
+Examples:
+* `charge l/1` charges lesson 1 at the student's rate.
+* `charge l/1 amt/50` charges $50 for lesson 1.
+* `charge reverse l/1` takes back the charge of lesson 1.
+
+Example output:
+```text
+Charge of $75.50 recorded for Priya Kumar — Math, Sun 18 Oct 2026.
+Charge of $75.50 reversed for Priya Kumar.
 ```
 
 ### Viewing a student's balance: `balance`
@@ -653,6 +682,7 @@ Action     | Format, Examples
 **List**   | `list [l/LEVEL] [s/SUBJECT] [archived/\|all/]`<br> e.g., `list`, `list l/S3 s/Math`, `list archived/`
 **View**   | `view INDEX`<br> e.g., `view 1`
 **Balance** | `balance st/INDEX`<br> e.g., `balance st/1`
+**Charge** | `charge l/LESSON_INDEX [amt/AMOUNT]`, `charge reverse l/LESSON_INDEX`<br> e.g., `charge l/1`, `charge l/1 amt/50`, `charge reverse l/1`
 **Payment** | `pay st/STUDENT_INDEX amt/AMOUNT [d/DATE] [n/NOTES]`<br> e.g., `pay st/1 amt/50`
 **Dues** | `dues`
 **Sort**   | `sort [asc\|desc]`<br> e.g., `sort desc`

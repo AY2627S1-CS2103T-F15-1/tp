@@ -24,6 +24,7 @@ public class CliSyntax {
     public static final Prefix PREFIX_DESCRIPTION = new Prefix("desc/");
     public static final Prefix PREFIX_DUE = new Prefix("due/");
     public static final Prefix PREFIX_LESSON = new Prefix("lesson/");
+    public static final Prefix PREFIX_LESSON_INDEX = new Prefix("l/");
     public static final Prefix PREFIX_HOMEWORK = new Prefix("hw/");
     public static final Prefix PREFIX_PAYMENT = new Prefix("pay/");
     public static final Prefix PREFIX_WEEK = new Prefix("week/");

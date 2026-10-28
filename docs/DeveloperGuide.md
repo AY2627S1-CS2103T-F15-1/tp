@@ -133,7 +133,7 @@ The `Model` component,
 
 * stores the address book data i.e., all `Person` objects, each of which represents a student with a name, phone number, level, subjects and rate, and optionally an email, a venue and a remark (the `Person` objects are contained in a `UniquePersonList` object). Two `Person` objects are the same student if they have the same phone number and the same name, ignoring case.
 * stores the `Lesson` objects, each of which is a lesson with a student, a subject, a date, a start time, a duration, a status and optionally a venue (the `Lesson` objects are contained in a `UniqueLessonList` object). A `Lesson` refers to its student by the student's name and phone number, which together identify a `Person`. Deleting a student deletes their lessons, and editing the name or phone number of a student keeps their lessons attached.
-* stores immutable `LedgerEntry` records for lesson charges and student payments. Each record refers to a permanent student UUID and, for charges only, a lesson UUID. `Ledger` derives balances and unpaid dues from those records; those calculations do not mutate the ledger.
+* stores immutable `LedgerEntry` records for lesson charges, student payments and the reversals of either. Each record refers to a permanent student UUID and, for charges and charge reversals, a lesson UUID; a reversal also refers to the entry it cancels. `Ledger` derives balances and unpaid dues from those records; those calculations do not mutate the ledger.
 * stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
 * stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
 * does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
@@ -493,9 +493,9 @@ The following activity diagram summarizes what happens when a user executes a ne
 ### Student balances and dues
 
 `LedgerEntry` is immutable and records its UUID, permanent student UUID, optional lesson UUID, kind,
-positive exact `BigDecimal` amount and date. Charges require a lesson UUID; payments have none.
+positive exact `BigDecimal` amount, date and notes. There are four kinds. `CHARGE` and `CHARGE_REVERSAL` require a lesson UUID; `PAYMENT` and `PAYMENT_REVERSAL` have none. A reversal also records the UUID of the entry it cancels (`reverses`), has the same student, lesson and amount as that entry, and can be added only once per entry. Entries are never deleted: `charge reverse` adds a `CHARGE_REVERSAL`.
 `AddressBook` owns the unmodifiable list and validates student/lesson references, unique entry IDs,
-and at most one charge per lesson. Profile edits never rewrite financial records. Copy/reset,
+and at most one active (not reversed) charge per lesson. Profile edits never rewrite financial records. Copy/reset,
 equality, student deletion, clear, and the real JSON snapshot include both finance and homework.
 
 `LessonDoneCommand` explicitly calls `Model.chargeLesson(target, completedLesson)` on first completion.
@@ -505,7 +505,7 @@ This operation validates the charge, replaces the lesson and records the charge 
 use `setLesson`, so note corrections do not bill again. Fees use the current hourly rate × duration
 in minutes ÷ 60, rounded once with `RoundingMode.HALF_UP`, and retain the permanent lesson UUID.
 The command translates model validation failures to `CommandException` and gives an accurate zero-fee
-message without directing users to a manual charge command that is not implemented yet.
+message; `charge l/INDEX amt/AMOUNT` can then bill the lesson by hand.
 
 Ledger copy/reset and JSON restoration validate records in one pass using student/lesson maps and
 sets of entry IDs and charged lesson IDs. The ledger validation cost is O(students + lessons + entries),
@@ -514,7 +514,7 @@ rather than scanning the growing list once per entry. Other domains keep their e
 `removeLesson` refuses to delete a billed lesson, including detached equal-value lookup, so a saved
 charge cannot point at a deleted lesson. Student deletion still cascades all of that student's history.
 
-`Ledger.balance(book, student)` adds charges and subtracts payments, returning a negative value for credit.
+`Ledger.balance(book, student)` adds charges and payment reversals and subtracts payments and charge reversals, returning a negative value for credit. `Ledger.activeCharge(book, lessonId)` returns the charge of a lesson that no reversal cancels; the lesson move/cancel guard and the one-charge-per-lesson rule use it. `ChargeCommand` records a manual charge or a reversal. The automatic charge raised by `lesson done` keeps the lesson's UUID as its entry ID, so a charge raised again after a reversal gets a random ID; a charge made with `charge` always gets a random ID. `AddressBook#chargeLesson` raises no automatic charge when `Ledger.activeCharge` already finds one, so completing a missed lesson that was billed by hand does not bill it twice.
 `Ledger.describeBalance(amount)` shares the `OUTSTANDING $X.XX` / `IN CREDIT $X.XX` labels.
 `Ledger.dues(book, today)` returns immutable `Due(student, amount, oldestUnpaidDate)` rows, oldest first,
 breaking ties by name then phone. Payments cover charges FIFO by charge date, including partial payments

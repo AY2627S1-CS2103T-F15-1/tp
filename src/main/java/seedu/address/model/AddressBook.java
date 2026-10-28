@@ -252,7 +252,12 @@ public class AddressBook implements ReadOnlyAddressBook {
         Person student = persons.asUnmodifiableObservableList().stream().filter(replacement::isWith)
                 .findFirst().orElseThrow(() -> new IllegalArgumentException("Lesson student does not exist."));
         LedgerEntry charge = null;
-        if (LedgerEntry.lessonFee(student, replacement).signum() > 0) {
+        // A lesson that was already billed by hand (for example a missed lesson) is completed without a second charge
+        boolean alreadyBilled = Ledger.activeCharge(this, replacement.getId()).isPresent();
+        if (!alreadyBilled && LedgerEntry.lessonFee(student, replacement).signum() > 0) {
+            // The automatic charge reuses the lesson's id as its entry id. Only this method creates it, and it
+            // completes the lesson, so a scheduled or missed lesson cannot already have an entry with that id.
+            // validateLedgerEntry still rejects a duplicate id if hand-edited data ever contains one.
             charge = LedgerEntry.charge(student, replacement);
             validateLedgerEntry(charge);
         }
@@ -367,6 +372,17 @@ public class AddressBook implements ReadOnlyAddressBook {
         lessonList.forEach(lesson -> lessonsById.put(lesson.getId(), lesson));
         Set<UUID> entryIds = new HashSet<>();
         Set<UUID> chargedLessons = new HashSet<>();
+        Map<UUID, LedgerEntry> entriesById = new HashMap<>();
+        entries.forEach(entry -> entriesById.put(entry.id(), entry));
+        Set<UUID> reversedEntries = new HashSet<>();
+        for (LedgerEntry entry : entries) {
+            if (entry.kind().isReversal()) {
+                requireValidReversal(entry, entriesById.get(entry.reverses()));
+                if (!reversedEntries.add(entry.reverses())) {
+                    throw new IllegalArgumentException("That entry has already been reversed.");
+                }
+            }
+        }
         for (LedgerEntry entry : entries) {
             Person student = studentsById.get(entry.studentId());
             if (student == null) {
@@ -375,15 +391,29 @@ public class AddressBook implements ReadOnlyAddressBook {
             if (!entryIds.add(entry.id())) {
                 throw new IllegalArgumentException("Duplicate ledger entry ID.");
             }
-            if (entry.kind() == LedgerEntry.Kind.CHARGE) {
+            if (entry.kind().refersToLesson()) {
                 Lesson lesson = lessonsById.get(entry.lessonId());
                 if (lesson == null || !lesson.isWith(student)) {
                     throw new IllegalArgumentException("Ledger lesson does not exist or belongs to another student.");
                 }
-                if (!chargedLessons.add(entry.lessonId())) {
-                    throw new IllegalArgumentException("That lesson already has a charge.");
-                }
             }
+            if (entry.kind() == LedgerEntry.Kind.CHARGE && !reversedEntries.contains(entry.id())
+                    && !chargedLessons.add(entry.lessonId())) {
+                throw new IllegalArgumentException("That lesson already has a charge.");
+            }
+        }
+    }
+
+    /** Checks that {@code reversal} cancels exactly an entry of the matching kind, student, lesson and amount. */
+    private static void requireValidReversal(LedgerEntry reversal, LedgerEntry original) {
+        LedgerEntry.Kind expected = reversal.kind() == LedgerEntry.Kind.CHARGE_REVERSAL
+                ? LedgerEntry.Kind.CHARGE : LedgerEntry.Kind.PAYMENT;
+        if (original == null || original.kind() != expected
+                || !original.studentId().equals(reversal.studentId())
+                || !Objects.equals(original.lessonId(), reversal.lessonId())
+                || original.amount().compareTo(reversal.amount()) != 0) {
+            throw new IllegalArgumentException("A reversal must cancel an earlier entry of the same student, "
+                    + "lesson and amount.");
         }
     }
 
@@ -391,16 +421,23 @@ public class AddressBook implements ReadOnlyAddressBook {
         requireNonNull(entry);
         Person student = persons.asUnmodifiableObservableList().stream().filter(entry::isWith).findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Ledger student does not exist."));
+        if (entry.kind().refersToLesson() && lessons.asUnmodifiableObservableList().stream().noneMatch(lesson ->
+                lesson.getId().equals(entry.lessonId()) && lesson.isWith(student))) {
+            throw new IllegalArgumentException("Ledger lesson does not exist or belongs to another student.");
+        }
         if (entry.kind() == LedgerEntry.Kind.CHARGE) {
-            if (lessons.asUnmodifiableObservableList().stream().noneMatch(lesson ->
-                    lesson.getId().equals(entry.lessonId()) && lesson.isWith(student))) {
-                throw new IllegalArgumentException("Ledger lesson does not exist or belongs to another student.");
+            Ledger.activeCharge(this, entry.lessonId()).ifPresent(existing -> {
+                throw new IllegalArgumentException("That lesson already has a charge of "
+                        + Ledger.format(existing.amount()) + ".");
+            });
+        }
+        if (entry.kind().isReversal()) {
+            LedgerEntry original = ledgerEntries.stream().filter(existing -> existing.id().equals(entry.reverses()))
+                    .findFirst().orElse(null);
+            requireValidReversal(entry, original);
+            if (Ledger.isReversed(this, original)) {
+                throw new IllegalArgumentException("That entry has already been reversed.");
             }
-            ledgerEntries.stream().filter(existing -> entry.lessonId().equals(existing.lessonId()))
-                    .findFirst().ifPresent(existing -> {
-                        throw new IllegalArgumentException("That lesson already has a charge of "
-                                + Ledger.format(existing.amount()) + ".");
-                    });
         }
         if (ledgerEntries.stream().anyMatch(existing -> existing.id().equals(entry.id()))) {
             throw new IllegalArgumentException("Duplicate ledger entry ID.");
