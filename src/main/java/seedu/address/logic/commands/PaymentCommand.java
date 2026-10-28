@@ -25,6 +25,13 @@ public class PaymentCommand extends Command {
             + "Parameters: st/STUDENT_INDEX amt/AMOUNT [d/DATE] [n/NOTES]\nExample: pay st/1 amt/50.00";
     public static final String MESSAGE_AMOUNT_CONSTRAINTS =
             "Amount must be greater than 0 with at most 2 decimal places.";
+    /**
+     * A payment of at least this amount is still recorded, but the reply asks the user to check it, because a
+     * single payment this large is more likely to be a mistyped amount with extra digits than a real one.
+     */
+    public static final BigDecimal LARGE_AMOUNT = new BigDecimal("10000.00");
+    public static final String MESSAGE_LARGE_AMOUNT =
+            "Warning: %1$s is an unusually large payment. Check that the amount has no extra digits.";
     public static final String MESSAGE_FUTURE_DATE = "Payment dates cannot be in the future.";
 
     private final Index studentIndex;
@@ -73,8 +80,12 @@ public class PaymentCommand extends Command {
             throw new CommandException(e.getMessage(), e);
         }
         BigDecimal balance = Ledger.balance(model.getAddressBook(), student);
-        return new CommandResult("Payment of " + Ledger.format(amount) + " recorded for " + student.getName()
-                + " on " + paymentDate + ".\nBalance: " + Ledger.describeBalance(balance) + ".");
+        String feedback = "Payment of " + Ledger.format(amount) + " recorded for " + student.getName()
+                + " on " + paymentDate + ".\nBalance: " + Ledger.describeBalance(balance) + ".";
+        if (amount.compareTo(LARGE_AMOUNT) >= 0) {
+            feedback += "\n" + String.format(MESSAGE_LARGE_AMOUNT, Ledger.format(amount));
+        }
+        return new CommandResult(feedback);
     }
 
     @Override
