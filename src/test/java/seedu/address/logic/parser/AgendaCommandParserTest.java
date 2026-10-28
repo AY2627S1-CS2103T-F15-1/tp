@@ -5,7 +5,10 @@ import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +17,8 @@ import seedu.address.logic.commands.AgendaCommand;
 import seedu.address.model.lesson.LessonDate;
 
 public class AgendaCommandParserTest {
+
+    private static final Clock CLOCK = Clock.fixed(Instant.parse("2030-01-07T00:00:00Z"), ZoneOffset.UTC);
 
     private AgendaCommandParser parser = new AgendaCommandParser();
 
@@ -31,6 +36,15 @@ public class AgendaCommandParserTest {
     @Test
     public void parse_weekWithoutDate_usesToday() throws Exception {
         assertTrue(parser.parse(" week/").equals(new AgendaCommand(LocalDate.now(), true)));
+    }
+
+    @Test
+    public void parse_relativeAndDefaultDates_useInjectedClock() throws Exception {
+        AgendaCommandParser fixedParser = new AgendaCommandParser(CLOCK);
+
+        assertParseSuccess(fixedParser, " d/today", new AgendaCommand(LocalDate.of(2030, 1, 7), false));
+        assertParseSuccess(fixedParser, " d/tmr", new AgendaCommand(LocalDate.of(2030, 1, 8), false));
+        assertParseSuccess(fixedParser, "", new AgendaCommand(LocalDate.of(2030, 1, 7), false));
     }
 
     @Test

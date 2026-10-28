@@ -100,7 +100,7 @@ public class AddressBookParser {
             case ListCommand.COMMAND_WORD -> new ListCommandParser().parse(arguments);
             case RemarkCommand.COMMAND_WORD -> new RemarkCommandParser().parse(arguments);
             case SortCommand.COMMAND_WORD -> new SortCommandParser().parse(arguments);
-            case AgendaCommand.COMMAND_WORD -> new AgendaCommandParser().parse(arguments);
+            case AgendaCommand.COMMAND_WORD -> new AgendaCommandParser(clock).parse(arguments);
             case ViewCommand.COMMAND_WORD -> new ViewCommandParser().parse(arguments);
             case TodayCommand.COMMAND_WORD -> {
                 requireNoArguments(commandWord, arguments);

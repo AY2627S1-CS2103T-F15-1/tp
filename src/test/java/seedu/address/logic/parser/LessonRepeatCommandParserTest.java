@@ -4,6 +4,10 @@ import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailur
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.Messages;
@@ -19,6 +23,7 @@ public class LessonRepeatCommandParserTest {
     private static final String USAGE = LessonRepeatCommand.MESSAGE_USAGE;
     private static final String RANGE_ERROR = LessonRepeatCommand.MESSAGE_COUNT_CONSTRAINTS + "\n" + USAGE;
     private static final String REQUIRED_FIELDS = " st/1 d/2026-12-22 t/16:30 count/4";
+    private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-10-28T00:00:00Z"), ZoneOffset.UTC);
 
     private LessonRepeatCommandParser parser = new LessonRepeatCommandParser();
 
@@ -116,5 +121,19 @@ public class LessonRepeatCommandParserTest {
     public void parse_textBeforeFirstPrefix_failure() {
         assertParseFailure(parser, " 1" + REQUIRED_FIELDS,
                 String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, USAGE));
+    }
+
+    @Test
+    public void parse_relativeStartDate_usesInjectedClock() {
+        LessonRepeatCommandParser fixedParser = new LessonRepeatCommandParser(CLOCK);
+
+        assertParseSuccess(fixedParser, " st/1 d/tmr t/16:30 count/4",
+                new LessonRepeatCommand(INDEX_FIRST_PERSON, null, new LessonDate("2026-10-29"),
+                        new LessonTime("16:30"), new LessonDuration(LessonDuration.DEFAULT_MINUTES), null, 4, 1,
+                        CLOCK));
+        assertParseSuccess(fixedParser, " st/1 d/today t/16:30 count/4",
+                new LessonRepeatCommand(INDEX_FIRST_PERSON, null, new LessonDate("2026-10-28"),
+                        new LessonTime("16:30"), new LessonDuration(LessonDuration.DEFAULT_MINUTES), null, 4, 1,
+                        CLOCK));
     }
 }

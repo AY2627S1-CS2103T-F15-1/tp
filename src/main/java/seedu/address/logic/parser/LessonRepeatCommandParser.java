@@ -10,6 +10,8 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TIME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_VENUE;
 
+import java.time.Clock;
+import java.time.LocalDate;
 import java.util.Objects;
 import java.util.function.IntPredicate;
 
@@ -26,6 +28,18 @@ import seedu.address.model.person.Venue;
  * Parses input arguments and creates a new LessonRepeatCommand object
  */
 public class LessonRepeatCommandParser implements Parser<LessonRepeatCommand> {
+
+    private final Clock clock;
+
+    /** Uses the local system date. */
+    public LessonRepeatCommandParser() {
+        this(Clock.systemDefaultZone());
+    }
+
+    /** Uses an explicit date source for relative dates. */
+    public LessonRepeatCommandParser(Clock clock) {
+        this.clock = Objects.requireNonNull(clock);
+    }
 
     /**
      * Parses the given {@code String} of arguments in the context of the LessonRepeatCommand
@@ -53,14 +67,14 @@ public class LessonRepeatCommandParser implements Parser<LessonRepeatCommand> {
         LessonDuration duration = Objects.requireNonNullElse(
                 ParserUtil.parseOptional(argMultimap, PREFIX_DURATION, ParserUtil::parseDuration),
                 new LessonDuration(LessonDuration.DEFAULT_MINUTES));
-        LessonDate date = ParserUtil.parseDate(argMultimap.getValue(PREFIX_DATE).get());
+        LessonDate date = ParserUtil.parseDate(argMultimap.getValue(PREFIX_DATE).get(), LocalDate.now(clock));
         LessonTime time = ParserUtil.parseTime(argMultimap.getValue(PREFIX_TIME).get());
 
         int count = parseBounded(argMultimap.getValue(PREFIX_COUNT).get(), LessonRepeatCommand::isValidCount);
         int every = argMultimap.getValue(PREFIX_EVERY).isEmpty() ? LessonRepeatCommand.DEFAULT_EVERY
                 : parseBounded(argMultimap.getValue(PREFIX_EVERY).get(), LessonRepeatCommand::isValidEvery);
 
-        return new LessonRepeatCommand(studentIndex, subject, date, time, duration, venue, count, every);
+        return new LessonRepeatCommand(studentIndex, subject, date, time, duration, venue, count, every, clock);
     }
 
     /**
