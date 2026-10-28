@@ -5,7 +5,6 @@ import static java.util.Objects.requireNonNull;
 import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.Month;
-import java.time.temporal.ChronoUnit;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -19,10 +18,10 @@ import java.util.regex.Pattern;
  * accepted. The year has four digits, or two digits for a year from 2000 to 2099.
  *
  * <p>A year of four digits shows the order of the other parts. When both the first and the last part have at
- * most two digits, as in {@code 26-12-22}, the date can be read either way, and the reading that is nearer to
- * today is taken, which is 22 December 2026 for that example if it is typed in 2026. Two readings that are equally
- * near are settled in favour of the day first. A month is never written before the day, so {@code 12/22/2026} is
- * not a date. Impossible dates such as 2026-02-30 are never moved to a nearby real date.
+ * most two digits, as in {@code 26-12-22}, the date is read with the day first, which is 26 December 2022 for that
+ * example. It is read with the year first only if the day-first reading is not a real date, as in
+ * {@code 35-12-31}, so the same text always means the same date. A month is never written before the day, so
+ * {@code 12/22/2026} is not a date. Impossible dates such as 2026-02-30 are never moved to a nearby real date.
  */
 final class FlexibleDateParser {
 
@@ -37,11 +36,10 @@ final class FlexibleDateParser {
 
     /**
      * Returns the date that {@code text} stands for, or an empty {@code Optional} if it is not a real date written
-     * in one of the accepted ways. {@code today} settles a date that can be read in two ways.
+     * in one of the accepted ways.
      */
-    static Optional<LocalDate> parse(String text, LocalDate today) {
+    static Optional<LocalDate> parse(String text) {
         requireNonNull(text);
-        requireNonNull(today);
         Matcher matcher = THREE_PARTS.matcher(text.strip().replaceAll("\\s+", " "));
         if (!matcher.matches()) {
             return Optional.empty();
@@ -50,16 +48,7 @@ final class FlexibleDateParser {
         String middle = matcher.group("middle");
         String last = matcher.group("last");
 
-        Optional<LocalDate> dayFirst = of(last, middle, first);
-        Optional<LocalDate> yearFirst = of(first, middle, last);
-        if (dayFirst.isPresent() && yearFirst.isPresent()) {
-            return distance(yearFirst.get(), today) < distance(dayFirst.get(), today) ? yearFirst : dayFirst;
-        }
-        return dayFirst.or(() -> yearFirst);
-    }
-
-    private static long distance(LocalDate date, LocalDate today) {
-        return Math.abs(ChronoUnit.DAYS.between(date, today));
+        return of(last, middle, first).or(() -> of(first, middle, last));
     }
 
     /** Returns the date made of {@code year}, {@code month} and {@code day}, if they are written well and real. */

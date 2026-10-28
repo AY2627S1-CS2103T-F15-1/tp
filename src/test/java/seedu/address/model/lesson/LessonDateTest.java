@@ -56,9 +56,9 @@ public class LessonDateTest {
     }
 
     @Test
-    public void constructor_dateReadableTwoWays_usesGivenTodayToChoose() {
-        assertEquals(new LessonDate("2026-12-22"), new LessonDate("26-12-22", LocalDate.of(2026, 10, 26)));
-        assertEquals(new LessonDate("2022-12-26"), new LessonDate("26-12-22", LocalDate.of(2022, 10, 26)));
+    public void constructor_dateReadableTwoWays_readsTheDayFirst() {
+        assertEquals(new LessonDate("2022-12-26"), new LessonDate("26-12-22"));
+        assertEquals(new LessonDate("2027-11-26"), new LessonDate("26/11/27"));
     }
 
     @Test
