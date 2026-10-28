@@ -333,7 +333,7 @@ public class FinanceIntegrationTest {
     public void payListAndReverse_correctAWrongPaymentAndSurviveARestart() throws Exception {
         logic.execute("pay st/2 amt/100 d/18/10/2026 n/PayNow ref 4471");
         logic.execute("pay st/2 amt/50");
-        assertEquals("PAYMENTS\n1. 2026-10-18 Bob $100.00 — PayNow ref 4471\n2. " + TODAY + " Bob $50.00\n\n"
+        assertEquals("PAYMENTS\n1. 2026-10-18 Bob $100.00 — PayNow ref 4471\n2. " + TODAY + " Bob $50.00\n"
                 + "Use 'pay reverse INDEX' with these rows. Indices stay fixed until the next 'pay list'.",
                 logic.execute("pay list").getFeedbackToUser());
 

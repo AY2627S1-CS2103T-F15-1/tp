@@ -4,7 +4,10 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -60,20 +63,28 @@ public class PaymentListCommand extends Command {
             return new CommandResult(student == null ? MESSAGE_NO_PAYMENTS
                     : String.format(MESSAGE_NO_PAYMENTS_FOR_STUDENT, student.getName()));
         }
+        // Built once, so listing n payments stays linear instead of scanning the students and the ledger per row.
+        Map<UUID, String> studentNames = model.getAddressBook().getPersonList().stream()
+                .collect(Collectors.toMap(Person::getId, person -> person.getName().toString()));
+        Set<UUID> reversedIds = Ledger.reversedEntryIds(model.getAddressBook());
+
         String rows = IntStream.range(0, payments.size())
-                .mapToObj(i -> (i + 1) + ". " + describe(model, payments.get(i)))
+                .mapToObj(i -> (i + 1) + ". " + describe(payments.get(i), studentNames, reversedIds))
                 .collect(Collectors.joining("\n"));
-        return new CommandResult(MESSAGE_HEADER + "\n" + rows + "\n\n" + MESSAGE_FOOTER);
+        return new CommandResult(MESSAGE_HEADER + "\n" + rows + "\n" + MESSAGE_FOOTER);
     }
 
-    private static String describe(Model model, LedgerEntry payment) {
-        String name = model.getAddressBook().getPersonList().stream()
-                .filter(payment::isWith).map(person -> person.getName().toString()).findFirst().orElseThrow();
+    private static String describe(LedgerEntry payment, Map<UUID, String> studentNames, Set<UUID> reversedIds) {
+        String name = studentNames.get(payment.studentId());
+        if (name == null) {
+            throw new IllegalStateException("Payment " + payment.id() + " refers to student " + payment.studentId()
+                    + ", who is not in the address book.");
+        }
         StringBuilder row = new StringBuilder(payment.date() + " " + name + " " + Ledger.format(payment.amount()));
         if (payment.notes() != null) {
             row.append(" — ").append(payment.notes());
         }
-        if (Ledger.isReversed(model.getAddressBook(), payment)) {
+        if (reversedIds.contains(payment.id())) {
             row.append(MESSAGE_REVERSED_MARK);
         }
         return row.toString();

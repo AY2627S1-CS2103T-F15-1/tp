@@ -7,8 +7,11 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.person.Person;
@@ -36,6 +39,17 @@ public final class Ledger {
         requireNonNull(book);
         requireNonNull(entry);
         return book.getLedgerEntries().stream().anyMatch(other -> entry.id().equals(other.reverses()));
+    }
+
+    /**
+     * Returns the IDs of every entry that some reversal in {@code book} cancels. Callers that test many entries
+     * should build this once and look entries up in it, instead of calling {@link #isReversed} for each entry,
+     * which scans the whole ledger every time.
+     */
+    public static Set<UUID> reversedEntryIds(ReadOnlyAddressBook book) {
+        requireNonNull(book);
+        return book.getLedgerEntries().stream().map(LedgerEntry::reverses).filter(Objects::nonNull)
+                .collect(Collectors.toSet());
     }
 
     /** Returns the charge of a lesson that has not been reversed. A lesson has at most one. */

@@ -559,16 +559,16 @@ Examples:
 * `pay list st/2` lists the payments of the second displayed student.
 * `pay reverse 2` reverses payment 2 of the last list.
 
-Example output:
+Example output. `pay reverse 2` replies:
+```text
+Payment of $50.00 reversed.
+```
+and a later `pay list` shows that payment marked:
 ```text
 PAYMENTS
 1. 2026-10-18 Priya Kumar $100.00 — PayNow ref 4471
 2. 2026-10-19 Priya Kumar $50.00 [REVERSED]
-
 Use 'pay reverse INDEX' with these rows. Indices stay fixed until the next 'pay list'.
-```
-```text
-Payment of $90.00 reversed.
 ```
 
 ### Charging a lesson: `charge`

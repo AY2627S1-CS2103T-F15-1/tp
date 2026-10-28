@@ -1,6 +1,7 @@
 package seedu.address.model.finance;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -8,6 +9,7 @@ import static seedu.address.testutil.Assert.assertThrows;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
@@ -302,6 +304,25 @@ public class LedgerTest {
         assertTrue(Ledger.dues(book, DAY).isEmpty());
         assertTrue(Ledger.activeCharge(book, charge.lessonId()).isEmpty());
         assertEquals(4, book.getLedgerEntries().size());
+    }
+
+    @Test
+    public void reversedEntryIds_containsExactlyTheEntriesSomeReversalCancels() {
+        AddressBook book = new AddressBook();
+        book.addPerson(alice);
+        assertTrue(Ledger.reversedEntryIds(book).isEmpty());
+
+        LedgerEntry reversedPayment = LedgerEntry.payment(alice, new BigDecimal("30.00"), DAY);
+        LedgerEntry keptPayment = LedgerEntry.payment(alice, new BigDecimal("40.00"), DAY);
+        book.addLedgerEntry(reversedPayment);
+        book.addLedgerEntry(keptPayment);
+        LedgerEntry reversal = LedgerEntry.reversalOf(reversedPayment, DAY);
+        book.addLedgerEntry(reversal);
+
+        assertEquals(Set.of(reversedPayment.id()), Ledger.reversedEntryIds(book));
+        assertTrue(Ledger.isReversed(book, reversedPayment));
+        assertFalse(Ledger.isReversed(book, keptPayment));
+        assertFalse(Ledger.reversedEntryIds(book).contains(reversal.id()));
     }
 
     @Test

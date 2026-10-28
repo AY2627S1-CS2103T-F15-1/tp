@@ -15,11 +15,15 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
+import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
+import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.person.Person;
 import seedu.address.testutil.PersonBuilder;
@@ -76,9 +80,57 @@ public class PaymentListCommandTest {
 
         assertEquals("PAYMENTS\n"
                 + "1. 2026-10-18 Priya Kumar $100.00 — PayNow ref 4471\n"
-                + "2. 2026-10-19 Priya Kumar $50.00 [REVERSED]\n\n"
+                + "2. 2026-10-19 Priya Kumar $50.00 [REVERSED]\n"
                 + "Use 'pay reverse INDEX' with these rows. Indices stay fixed until the next 'pay list'.", result);
         assertEquals(2, model.getShownPayments().size());
+    }
+
+    @Test
+    public void execute_severalStudents_eachRowNamesItsOwnStudentAndOnlyReversedRowsAreMarked() throws Exception {
+        pay(priya, "10.00", DAY_ONE, null);
+        LedgerEntry bens = pay(ben, "20.00", DAY_ONE, "cash");
+        pay(priya, "30.00", DAY_TWO, null);
+        model.addLedgerEntry(LedgerEntry.reversalOf(bens, DAY_TWO));
+
+        String result = new PaymentListCommand(null).execute(model).getFeedbackToUser();
+
+        assertEquals("PAYMENTS\n"
+                + "1. 2026-10-18 Priya Kumar $10.00\n"
+                + "2. 2026-10-18 Ben Tan $20.00 — cash [REVERSED]\n"
+                + "3. 2026-10-19 Priya Kumar $30.00\n"
+                + "Use 'pay reverse INDEX' with these rows. Indices stay fixed until the next 'pay list'.", result);
+    }
+
+    @Test
+    public void execute_paymentOfStudentNoLongerInBook_failsWithAMessage() {
+        AddressBook ledgerHolder = new AddressBook();
+        ledgerHolder.addPerson(priya);
+        LedgerEntry orphan = LedgerEntry.payment(priya, new BigDecimal("10.00"), DAY_ONE);
+        ledgerHolder.addLedgerEntry(orphan);
+        // A book whose ledger names a student that its student list lacks, which the real model never allows.
+        AddressBook inconsistent = new AddressBook() {
+            @Override
+            public ObservableList<Person> getPersonList() {
+                return FXCollections.observableArrayList();
+            }
+
+            @Override
+            public ObservableList<LedgerEntry> getLedgerEntries() {
+                return ledgerHolder.getLedgerEntries();
+            }
+        };
+        Model badModel = new ModelManager() {
+            @Override
+            public ReadOnlyAddressBook getAddressBook() {
+                return inconsistent;
+            }
+        };
+
+        PaymentListCommand listAll = new PaymentListCommand(null);
+
+        IllegalStateException error = assertThrows(IllegalStateException.class, () -> listAll.execute(badModel));
+        assertTrue(error.getMessage().contains(orphan.id().toString()));
+        assertTrue(error.getMessage().contains(priya.getId().toString()));
     }
 
     @Test
