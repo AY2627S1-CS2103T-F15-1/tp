@@ -1132,6 +1132,10 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `lesson cancel 1` again, then `lesson move 1 d/<next week>`<br>
       Expected: Both are rejected because the lesson is already cancelled.
 
+   1. Test case: Mark a past lesson missed, then run `lesson cancel 1 r/Changed my mind`<br>
+      Expected: The command is rejected because cancelling it would erase the no-show record. `view STUDENT_INDEX`
+      still reports the lesson as missed.
+
    1. Test case: `lesson cancel 99`<br>
       Expected: An error that the lesson index is invalid.
 

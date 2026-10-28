@@ -33,6 +33,8 @@ public class LessonCancelCommand extends Command {
     public static final String MESSAGE_REASON = "\nReason: %1$s";
     public static final String MESSAGE_ALREADY_CANCELLED = "That lesson is already cancelled.";
     public static final String MESSAGE_COMPLETED_LESSON = "Cannot cancel a completed lesson.";
+    public static final String MESSAGE_MISSED_LESSON = "Cannot cancel a missed lesson, as that would lose the record "
+            + "that it was missed.";
 
     private static final Logger logger = LogsCenter.getLogger(LessonCancelCommand.class);
 
@@ -61,6 +63,9 @@ public class LessonCancelCommand extends Command {
             throw new CommandException(MESSAGE_COMPLETED_LESSON);
         }
         LessonCommandUtil.requireNotCharged(model, target);
+        if (target.getStatus() == LessonStatus.MISSED) {
+            throw new CommandException(MESSAGE_MISSED_LESSON);
+        }
 
         model.setLesson(target, target.cancel(reason));
         logger.fine("Cancelled lesson");
