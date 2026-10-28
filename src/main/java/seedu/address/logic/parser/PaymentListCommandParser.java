@@ -17,7 +17,13 @@ public class PaymentListCommandParser implements Parser<PaymentListCommand> {
         }
         arguments.verifyNoDuplicatePrefixesFor(PREFIX_STUDENT);
         arguments.verifyNoEmptyValuesFor(PREFIX_STUDENT);
-        Index studentIndex = ParserUtil.parseOptional(arguments, PREFIX_STUDENT, ParserUtil::parseIndex);
+        Index studentIndex;
+        try {
+            studentIndex = ParserUtil.parseOptional(arguments, PREFIX_STUDENT, ParserUtil::parseIndex);
+        } catch (ParseException e) {
+            // Section 3.2: an index that is not a positive whole number is a format error, with the usage string
+            throw ParserUtil.invalidFormat(PaymentListCommand.MESSAGE_USAGE);
+        }
         return new PaymentListCommand(studentIndex);
     }
 }

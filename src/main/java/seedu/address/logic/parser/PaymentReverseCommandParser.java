@@ -11,11 +11,6 @@ import seedu.address.logic.parser.exceptions.ParseException;
 public class PaymentReverseCommandParser implements Parser<PaymentReverseCommand> {
     private final Clock clock;
 
-    /** Dates the reversal with the local system date. */
-    public PaymentReverseCommandParser() {
-        this(Clock.systemDefaultZone());
-    }
-
     /** Dates the reversal with {@code clock}. */
     public PaymentReverseCommandParser(Clock clock) {
         this.clock = Objects.requireNonNull(clock);

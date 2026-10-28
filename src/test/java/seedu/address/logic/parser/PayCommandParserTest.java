@@ -12,6 +12,7 @@ import java.time.ZoneId;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.logic.Messages;
 import seedu.address.logic.commands.PaymentCommand;
 import seedu.address.logic.commands.PaymentListCommand;
 import seedu.address.logic.commands.PaymentReverseCommand;
@@ -34,11 +35,23 @@ public class PayCommandParserTest {
     }
 
     @Test
-    public void parse_listWithBadArguments_throwsParseException() {
-        assertThrows(ParseException.class, () -> parser.parse(" list 2"));
-        assertThrows(ParseException.class, () -> parser.parse(" list st/"));
-        assertThrows(ParseException.class, () -> parser.parse(" list st/0"));
-        assertThrows(ParseException.class, () -> parser.parse(" list st/1 st/2"));
+    public void parse_listWithBadIndexOrExtraText_throwsInvalidFormatWithUsage() {
+        // Section 3.2: not a positive whole number, or text where none is allowed, is a format error
+        String expected = String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, PaymentListCommand.MESSAGE_USAGE);
+        for (String input : new String[] {" list 2", " list st/0", " list st/-1", " list st/abc", " list st/1.5"}) {
+            ParseException e = assertThrows(ParseException.class, () -> parser.parse(input), input);
+            assertEquals(expected, e.getMessage(), input);
+        }
+    }
+
+    @Test
+    public void parse_listWithEmptyOrRepeatedStudentPrefix_throwsTheGlobalMessages() {
+        ParseException empty = assertThrows(ParseException.class, () -> parser.parse(" list st/"));
+        assertEquals("Empty value for st/. Enter a value after this prefix.", empty.getMessage());
+
+        ParseException repeated = assertThrows(ParseException.class, () -> parser.parse(" list st/1 st/2"));
+        assertTrue(repeated.getMessage().startsWith(Messages.MESSAGE_DUPLICATE_FIELDS), repeated.getMessage());
+        assertTrue(repeated.getMessage().contains("st/"), repeated.getMessage());
     }
 
     @Test

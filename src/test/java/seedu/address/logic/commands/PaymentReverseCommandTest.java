@@ -22,6 +22,7 @@ import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
+import seedu.address.model.UserPrefs;
 import seedu.address.model.finance.Ledger;
 import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.person.Person;
@@ -100,6 +101,22 @@ public class PaymentReverseCommandTest {
 
         // row 1 of the list the user saw is still the 90.00 payment, not the older 5.00 one
         assertEquals(payment.id(), model.getAddressBook().getLedgerEntries().getLast().reverses());
+    }
+
+    @Test
+    public void execute_modelRejectsTheReversal_reportsItAsACommandException() throws Exception {
+        Model rejecting = new ModelManager(model.getAddressBook(), new UserPrefs()) {
+            @Override
+            public void addLedgerEntry(LedgerEntry entry) {
+                throw new IllegalArgumentException("The ledger refused this entry.");
+            }
+        };
+        rejecting.setShownPayments(List.of(payment));
+
+        CommandException e = assertThrows(CommandException.class, () -> reverse(1).execute(rejecting));
+
+        assertEquals("The ledger refused this entry.", e.getMessage());
+        assertEquals(1, rejecting.getAddressBook().getLedgerEntries().size());
     }
 
     @Test
