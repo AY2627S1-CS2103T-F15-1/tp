@@ -26,6 +26,7 @@
           </minWidth>
         </Label>
         <Label fx:id="name" text="\$first" styleClass="cell_big_label" />
+        <Label fx:id="archived" styleClass="cell_small_label" text="(archived)" />
         <Label fx:id="level" styleClass="cell_small_label" text="\$level" />
       </HBox>
       <FlowPane fx:id="subjects" />

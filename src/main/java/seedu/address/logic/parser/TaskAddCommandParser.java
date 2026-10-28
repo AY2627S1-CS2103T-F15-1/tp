@@ -60,10 +60,11 @@ public class TaskAddCommandParser implements Parser<TaskAddCommand> {
         argMultimap.verifyNoEmptyValuesFor(PREFIX_STUDENT, PREFIX_LESSON, PREFIX_HOMEWORK, PREFIX_PAYMENT,
                 PREFIX_DESCRIPTION, PREFIX_DUE);
 
-        Index studentIndex = ParserUtil.parseOptional(argMultimap, PREFIX_STUDENT, ParserUtil::parseIndex);
-        Index lessonIndex = ParserUtil.parseOptional(argMultimap, PREFIX_LESSON, ParserUtil::parseIndex);
-        Index homeworkIndex = ParserUtil.parseOptional(argMultimap, PREFIX_HOMEWORK, ParserUtil::parseIndex);
-        Index paymentIndex = ParserUtil.parseOptional(argMultimap, PREFIX_PAYMENT, ParserUtil::parseIndex);
+        ParserUtil.ValueParser<Index> linkIndex = value -> ParserUtil.parseIndex(value, TaskAddCommand.MESSAGE_USAGE);
+        Index studentIndex = ParserUtil.parseOptional(argMultimap, PREFIX_STUDENT, linkIndex);
+        Index lessonIndex = ParserUtil.parseOptional(argMultimap, PREFIX_LESSON, linkIndex);
+        Index homeworkIndex = ParserUtil.parseOptional(argMultimap, PREFIX_HOMEWORK, linkIndex);
+        Index paymentIndex = ParserUtil.parseOptional(argMultimap, PREFIX_PAYMENT, linkIndex);
         String description = parseDescription(argMultimap.getValue(PREFIX_DESCRIPTION).get());
         LocalDate due = argMultimap.getValue(PREFIX_DUE).isPresent()
                 ? parseDue(argMultimap.getValue(PREFIX_DUE).get(), LocalDate.now(clock)) : null;

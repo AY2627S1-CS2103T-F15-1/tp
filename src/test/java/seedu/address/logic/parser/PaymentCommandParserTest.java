@@ -51,7 +51,8 @@ public class PaymentCommandParserTest {
     @Test
     public void parse_invalidIndex_rejected() {
         for (String index : new String[]{"0", "-1", "1.5", "abc", "2147483648"}) {
-            assertParseFailure(parser, " st/" + index + " amt/50", ParserUtil.MESSAGE_INVALID_INDEX);
+            assertParseFailure(parser, " st/" + index + " amt/50",
+                    String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, PaymentCommand.MESSAGE_USAGE));
         }
     }
 
@@ -60,6 +61,15 @@ public class PaymentCommandParserTest {
         for (String amount : new String[]{"0", "0.00", "-1", "1.001", "1e3", "NaN", "Infinity", "1.",
             ".50", "$", "1,000", "1 0", "$50.00"}) {
             assertParseFailure(parser, " st/1 amt/" + amount, PaymentCommand.MESSAGE_AMOUNT_CONSTRAINTS);
+        }
+    }
+
+    @Test
+    public void parse_largeAmount_accepted() {
+        // A large amount is only warned about when the payment is recorded, so the parser has no upper limit
+        for (String amount : new String[]{"10000", "100000000.50", "99999999999999999999"}) {
+            assertParseSuccess(parser, " st/1 amt/" + amount,
+                    new PaymentCommand(INDEX_FIRST_PERSON, new BigDecimal(amount), null, null, CLOCK));
         }
     }
 

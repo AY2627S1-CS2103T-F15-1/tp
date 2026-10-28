@@ -119,9 +119,16 @@ public class TaskCommandParserTest {
         assertParseFailure(parser, " add st/1 desc/x due/someday", LessonDate.MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, " add st/1 desc/x due/2026-02-30", LessonDate.MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, " add st/1 desc/" + DESCRIPTION_TOO_LONG, Task.MESSAGE_DESCRIPTION_CONSTRAINTS);
-        assertParseFailure(parser, " add st/0 desc/x", ParserUtil.MESSAGE_INVALID_INDEX);
-        assertParseFailure(parser, " add st/abc desc/x", ParserUtil.MESSAGE_INVALID_INDEX);
-        assertParseFailure(parser, " add lesson/-1 desc/x", ParserUtil.MESSAGE_INVALID_INDEX);
+    }
+
+    @Test
+    public void parseAdd_invalidLinkIndex_usageFailure() {
+        String expected = String.format(MESSAGE_INVALID_COMMAND_FORMAT, TaskAddCommand.MESSAGE_USAGE);
+        for (String prefix : new String[]{"st/", "lesson/", "hw/", "pay/"}) {
+            for (String index : new String[]{"0", "-1", "abc", "1.5"}) {
+                assertParseFailure(parser, " add " + prefix + index + " desc/x", expected);
+            }
+        }
     }
 
     @Test
@@ -148,7 +155,10 @@ public class TaskCommandParserTest {
     public void parseList_invalid_failure() {
         assertParseFailure(parser, " list all/yes", String.format(ParserUtil.MESSAGE_FLAG_TAKES_NO_VALUE, "all/"));
         assertParseFailure(parser, " list st/", "Empty value for st/. Enter a value after this prefix.");
-        assertParseFailure(parser, " list st/0", ParserUtil.MESSAGE_INVALID_INDEX);
+        String expected = String.format(MESSAGE_INVALID_COMMAND_FORMAT, TaskListCommand.MESSAGE_USAGE);
+        for (String index : new String[]{"0", "-1", "abc", "1.5"}) {
+            assertParseFailure(parser, " list st/" + index, expected);
+        }
         assertParseFailure(parser, " list 1", String.format(MESSAGE_INVALID_COMMAND_FORMAT,
                 TaskListCommand.MESSAGE_USAGE));
     }

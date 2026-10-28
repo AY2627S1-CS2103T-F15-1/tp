@@ -11,6 +11,7 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import org.junit.jupiter.api.Test;
@@ -20,6 +21,7 @@ import seedu.address.logic.Messages;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.homework.HomeworkStatus;
 import seedu.address.model.lesson.Lesson;
@@ -35,6 +37,12 @@ import seedu.address.testutil.TaskBuilder;
 public class DeleteCommandTest {
 
     private Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
+
+    @Test
+    public void messageUsage_endsWithTheSpecifiedConfirmationLine() {
+        assertTrue(DeleteCommand.MESSAGE_USAGE.endsWith("Linked lessons, homework, tasks, and financial history "
+                + "require 'confirm', e.g. delete 1 confirm"));
+    }
 
     @Test
     public void execute_validIndexUnfilteredList_success() {
@@ -151,10 +159,65 @@ public class DeleteCommandTest {
         String preview = assertDoesNotThrow(() -> new DeleteCommand(INDEX_FIRST_PERSON).execute(model))
                 .getFeedbackToUser();
 
-        assertTrue(preview.contains("This also deletes 2 homework item(s), including 2 upcoming homework item(s)."),
+        assertTrue(preview.contains("This also deletes 2 homework item(s), including 2 upcoming homework item(s), "
+                + "and 0 financial event(s)."),
                 preview);
         assertTrue(preview.contains("Recorded feedback on 1 homework item(s) will be deleted."), preview);
         assertTrue(model.getFilteredPersonList().contains(person));
+    }
+
+    @Test
+    public void execute_studentWithFinancialHistoryOnly_previewMatchesTheSpecificationSentence() {
+        Person person = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        model.addLedgerEntry(LedgerEntry.payment(person, new BigDecimal("10.00"), LocalDate.now()));
+
+        String preview = assertDoesNotThrow(() -> new DeleteCommand(INDEX_FIRST_PERSON).execute(model))
+                .getFeedbackToUser();
+
+        String expected = String.format(DeleteCommand.MESSAGE_CONFIRMATION, person.getName(), person.getPhone(), 0,
+                "", 1)
+                + "\nThis also deletes 0 homework item(s), including 0 upcoming homework item(s), "
+                + "and 1 financial event(s)."
+                + "\nBalance: IN CREDIT $10.00."
+                + "\nUse 'archive INDEX' to retain these obligations and all history instead.";
+        assertEquals(expected, preview);
+    }
+
+    @Test
+    public void execute_studentWithHomeworkAndFinancialHistory_previewUsesOneSentence() {
+        Person person = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        model.addHomework(Homework.assign(person.getId(), "Practice set", LocalDate.now().plusDays(1)));
+        model.addLedgerEntry(LedgerEntry.payment(person, new BigDecimal("10.00"), LocalDate.now()));
+
+        String preview = assertDoesNotThrow(() -> new DeleteCommand(INDEX_FIRST_PERSON).execute(model))
+                .getFeedbackToUser();
+
+        String expected = String.format(DeleteCommand.MESSAGE_CONFIRMATION, person.getName(), person.getPhone(), 0,
+                "", 1)
+                + "\nThis also deletes 1 homework item(s), including 1 upcoming homework item(s), "
+                + "and 1 financial event(s)."
+                + "\nBalance: IN CREDIT $10.00."
+                + "\nUse 'archive INDEX' to retain these obligations and all history instead.";
+        assertEquals(expected, preview);
+    }
+
+    @Test
+    public void execute_studentWithTasksAndFinancialHistory_taskLineComesBeforeBalance() {
+        Person person = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        model.addTask(new TaskBuilder().withId("a").withStudent(person).build());
+        model.addLedgerEntry(LedgerEntry.payment(person, new BigDecimal("10.00"), LocalDate.now()));
+
+        String preview = assertDoesNotThrow(() -> new DeleteCommand(INDEX_FIRST_PERSON).execute(model))
+                .getFeedbackToUser();
+
+        String expected = String.format(DeleteCommand.MESSAGE_CONFIRMATION, person.getName(), person.getPhone(), 0,
+                "", 1)
+                + "\nThis also deletes 0 homework item(s), including 0 upcoming homework item(s), "
+                + "and 1 financial event(s)."
+                + "\nThis also deletes 1 task(s)."
+                + "\nBalance: IN CREDIT $10.00."
+                + "\nUse 'archive INDEX' to retain these obligations and all history instead.";
+        assertEquals(expected, preview);
     }
 
     @Test
@@ -167,7 +230,8 @@ public class DeleteCommandTest {
 
         String expected = String.format(DeleteCommand.MESSAGE_CONFIRMATION, person.getName(), person.getPhone(), 0,
                 "", 1)
-                + "\nThis also deletes 1 homework item(s), including 1 upcoming homework item(s)."
+                + "\nThis also deletes 1 homework item(s), including 1 upcoming homework item(s), "
+                + "and 0 financial event(s)."
                 + "\nUse 'archive INDEX' to retain these obligations and all history instead.";
         assertEquals(expected, preview);
     }

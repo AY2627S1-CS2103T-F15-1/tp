@@ -100,10 +100,20 @@ public class LessonCancelCommandTest {
     }
 
     @Test
-    public void execute_chargedLesson_throwsCommandException() {
+    public void execute_chargedCompletedLesson_reportsCompletedNotBilled() {
         Lesson completed = new LessonBuilder().withStudent(ALICE).withDate(LocalDate.now()).build().complete(null);
         model.addLesson(completed);
         model.addLedgerEntry(LedgerEntry.charge(ALICE, completed));
+
+        assertCommandFailure(new LessonCancelCommand(INDEX_FIRST_PERSON, "Student unwell"), model,
+                LessonCancelCommand.MESSAGE_COMPLETED_LESSON);
+    }
+
+    @Test
+    public void execute_chargedMissedLesson_throwsCommandException() {
+        Lesson missed = new LessonBuilder().withStudent(ALICE).withDate(LocalDate.now()).build().miss();
+        model.addLesson(missed);
+        model.addLedgerEntry(LedgerEntry.charge(ALICE, missed));
 
         assertCommandFailure(new LessonCancelCommand(INDEX_FIRST_PERSON, "Student unwell"), model,
                 LessonCommandUtil.MESSAGE_CHARGED_LESSON);

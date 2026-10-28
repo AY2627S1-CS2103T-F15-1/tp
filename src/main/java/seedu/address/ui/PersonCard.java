@@ -31,6 +31,8 @@ public class PersonCard extends UiPart<Region> {
     @FXML
     private Label name;
     @FXML
+    private Label archived;
+    @FXML
     private Label id;
     @FXML
     private Label phone;
@@ -55,6 +57,7 @@ public class PersonCard extends UiPart<Region> {
         this.person = person;
         id.setText(displayedIndex + ". ");
         name.setText(person.getName().fullName);
+        showIfPresent(archived, person.isArchived() ? "(archived)" : null);
         phone.setText(person.getPhone().value);
         level.setText(person.getLevel().value);
         rate.setText(person.getRate().toDisplayString() + "/hour");

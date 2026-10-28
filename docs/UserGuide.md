@@ -30,7 +30,7 @@ For power-users, TutorFlow can help you manage your students and lessons faster 
 
    * `delete 3` : Deletes the 3rd student shown in the current list.
 
-   * `clear confirm` : Deletes all students, lessons, homework, follow-up tasks and charge/payment records.
+   * `clear confirm` : Deletes all students, lessons, homework, tasks, and financial history.
 
    * `exit` : Exits the app.
 
@@ -172,6 +172,7 @@ Format: `view INDEX`
   * the **balance**: what the student owes, as `OUTSTANDING $X.XX`, or the credit from paying ahead, as `IN CREDIT $X.XX`. A student who owes nothing shows `OUTSTANDING $0.00`.
   * the **outstanding homework**: assignments awaiting submission or review, with due dates and feedback
 * A section with nothing to show says so, for example `No upcoming lessons.`, instead of disappearing.
+* An archived student is marked after their name, as in `Viewing: Chen Hao (archived)`, so that you can tell them apart from active students when you reach them through `student list all/` or `find`.
 * The command only shows information. It does not change the student list, so the indexes you use for other commands stay the same.
 
 Examples:
@@ -186,6 +187,7 @@ Format: `remark INDEX r/REMARK`
 
 * Sets the remark of the student at the specified `INDEX`, which is the index number shown in the displayed student list and **must be a positive integer** 1, 2, 3, ...
 * The new remark replaces the old one. Writing `r/` with nothing after it removes the remark.
+* Surrounding spaces are removed and repeated spaces inside the remark are collapsed into one, as for other free text.
 * A remark is shown in the student's card and in [`view`](#viewing-a-students-overview-view).
 
 Examples:
@@ -201,8 +203,8 @@ Format: `delete INDEX [confirm]`
 * Deletes the student at the specified `INDEX`.
 * The index refers to the index number shown in the displayed student list.
 * The index **must be a positive integer** 1, 2, 3, ...
-* A student with no lessons, no homework and no [follow-up tasks](#adding-a-follow-up-task-task-add) is deleted immediately.
-* Deleting a student also deletes **all of their lessons, homework (including feedback) and follow-up tasks**, and this cannot be undone. If the student has any linked records, TutorFlow does not delete anything yet. It shows the student's name, phone number, linked counts and, if there are any, a warning about upcoming lessons and commitments, and asks you to repeat the command with `confirm`.
+* A student with no lessons, no homework, no payments or charges and no [follow-up tasks](#adding-a-follow-up-task-task-add) is deleted immediately.
+* Deleting a student also deletes **all of their lessons, homework (including feedback), follow-up tasks, and charges and payments**, and this cannot be undone. If the student has any linked records, TutorFlow does not delete anything yet. It shows the student's name, phone number, linked counts and, if there are any, a warning about upcoming lessons and commitments, and asks you to repeat the command with `confirm`.
 * The keyword `confirm` is in lower case.
 
 Examples:
@@ -218,7 +220,8 @@ Format: `sort [asc|desc]`
 
 * `asc` sorts from A to Z and `desc` sorts from Z to A. If no order is given, `asc` is used.
 * All students are shown after sorting, even if the list was filtered by an earlier `find` command.
-* The new order is saved, so the students stay in this order the next time you open the app.
+* TutorFlow keeps this order. A student you add later, or whose name you change, takes their place in it, so the list stays sorted.
+* The order is saved, so it is still used the next time you open the app. Until you first use `sort`, new students are added at the end of the list.
 
 Examples:
 * `sort` sorts all students from A to Z.
@@ -265,7 +268,7 @@ Format: `lesson repeat st/STUDENT_INDEX [s/SUBJECT] d/START_DATE t/TIME [dur/MIN
 * The first lesson is on `START_DATE`. Each later lesson is at the same time of day, `WEEKS` weeks after the one before it.
 * The series is **all or nothing**. TutorFlow checks every lesson first, and if any of them is invalid or is a duplicate of a lesson that already exists, it adds none of them and says `This exact lesson already exists. No occurrences were added.`
 * Each lesson is a full, independent lesson: you can move, cancel, complete or bill it on its own. The lessons are linked only so that a series can be cancelled together.
-* The new lessons are not added to the lesson list that is displayed, so run `agenda` or `lesson list st/STUDENT_INDEX` to see and number them. If the list on screen did change, TutorFlow tells you that the lesson numbers have changed.
+* The new lessons are not added to the lesson list that is displayed, so run `agenda` or `lesson list st/STUDENT_INDEX` to see and number them. If adding the series changes the numbers on screen, the result ends with `Lesson numbers have changed. Current lesson list:` and the new numbering, as `lesson add` does.
 * Lessons that overlap another lesson only produce a warning, as for `lesson add`. If many lessons of the series overlap, the warning is summarised in one line.
 
 Examples:
@@ -283,7 +286,7 @@ Format: `agenda [d/DATE] [week/]`
 * Each line shows the lesson number, the time, the student, the subject, the venue, and the status if the lesson is not simply scheduled. Lessons that overlap another lesson are marked `⚠ overlaps`.
 * Cancelled lessons are listed but are not counted in the number of lessons and the total time.
 * The lesson numbers are the ones that `lesson move`, `lesson cancel`, `lesson done` and `lesson missed` take, so run `agenda` or `lesson list` first and then use the number you see.
-* Lessons are numbered in time order, so moving a lesson to another time can change its number, and the numbers of others. Run `agenda` or `lesson list` again before you use a number a second time. The result of `lesson move` and `lesson cancel` names the lesson that was changed, so you can check that it was the right one.
+* Lessons are numbered in time order. If moving, cancelling, completing or marking a lesson missed changes the displayed numbers, the result includes `Lesson numbers have changed. Current lesson list:` and the refreshed list. If every lesson keeps its number, for example when a lesson only changes its time or is cancelled but stays in the list, the numbers are not shown again. Use those new numbers for your next command. Running `agenda` or `lesson list` again also refreshes the list.
 * A day without lessons is not an error: it shows `No lessons on Tue 22 Dec 2026.`
 
 Examples:
@@ -370,6 +373,41 @@ Examples:
 * `lesson cancel 1` Cancels the 1st lesson.
 * `lesson cancel 3 r/Student unwell` Cancels the 3rd lesson and records the reason.
 
+### Cancelling future occurrences of a series: `lesson series cancel`
+
+Ends a recurring series without erasing its history.
+
+Format: `lesson series cancel LESSON_INDEX confirm`
+
+* Select the displayed number of any occurrence belonging to the series, even a past occurrence.
+* `confirm` is required, in lower case. Without it, no lesson is changed.
+* All scheduled occurrences starting now or later are cancelled together, including occurrences moved to another date or time. Occurrences that have started, or are already completed, missed or cancelled, remain unchanged.
+* Each affected lesson keeps its identity and booking details, with the reason `Series cancelled`. No record is deleted.
+* A lesson not linked to a recurring series is rejected. A series with no eligible occurrences is also rejected without changing data.
+* Select an existing occurrence of the series. This command cancels existing recurring bookings; it does not create them.
+* If any affected occurrence has a recorded charge, nothing is cancelled. Billed history is retained.
+* Cancellation is a status change, not a deletion, and is not undoable. `confirm` is required because the change affects multiple bookings. The current build does not provide an `undo` command.
+* Success is `Cancelled N series occurrences.` (or `Cancelled 1 series occurrence.` for a single occurrence).
+
+Example: `lesson list st/1 all/`, then `lesson series cancel 3 confirm` cancels the eligible occurrences of the series containing the 3rd displayed lesson.
+
+### Setting travel warnings: `travel`
+
+Sets one offline buffer for journeys between lessons at different physical venues. Warnings never block a booking and do not calculate routes or actual journey times.
+
+Format: `travel buffer/MINUTES`
+
+* `MINUTES` must be a whole number from 0 to 180, inclusive. The default is 30 minutes; 0 disables travel warnings. The setting is saved and restored on reopening TutorFlow. Any other value, such as `buffer/200`, shows the command usage and changes nothing.
+* Each scheduled lesson is compared with earlier scheduled lessons on the same date. The gap starts when the **latest-ending** earlier lesson ends, not necessarily the lesson that started most recently.
+* A gap shorter than the buffer produces a warning naming both students, the venues, destination date and time, available minutes and required buffer. For example: `Travel warning: Tan Wei Ming at Bishan -> Priya Kumar at Clementi (Sat 24 Oct 2026 11:10): 10 min available; 30 min required.` Back-to-back lessons at different venues have a zero-minute gap and can therefore trigger a travel warning without overlapping.
+* There is no travel warning for overlapping lessons, an unnamed venue, `Online` (ignoring case), or the same venue ignoring case. If several preceding lessons finish together, the first at a different physical venue is used.
+* After `lesson add`, `lesson repeat` and `lesson move`, warnings cover journeys into or out of the added or moved lessons, not unrelated journeys on those dates. Warnings also appear below each day's relevant lessons in `agenda` and below today's lessons in `today`, and when you change the buffer, which lists the warnings on every date, including past ones. Changing the buffer does not change the currently displayed lesson numbers.
+
+Examples:
+
+* `travel buffer/10` sets a ten-minute buffer and reports insufficient gaps.
+* `travel buffer/0` disables travel warnings; overlap warnings still work.
+
 ### Completing a lesson and recording notes: `lesson done`
 
 Marks a lesson completed and optionally records what was taught.
@@ -377,7 +415,7 @@ Marks a lesson completed and optionally records what was taught.
 Format: `lesson done INDEX [n/NOTES]`
 
 * `INDEX` is the lesson number from the current `agenda` or `lesson list`, not the student number. It must be a positive integer.
-* The first completion adds the hourly lesson fee to the student’s balance and shows `Charge of $X.XX recorded.` Updating notes never charges again. A fee that is zero, including after cent rounding, completes the lesson without creating a charge and explains why. Use [`charge`](#charging-a-lesson-charge) to bill a lesson by hand.
+* The first completion adds the hourly lesson fee to the student’s balance and shows `Charge of $X.XX recorded.` Updating notes never charges again. A fee that is zero, including after cent rounding, completes the lesson without creating a charge and explains why: for a rate of $0.00 it says `No automatic charge: This student's rate is $0.00.` and how to specify an amount. Use [`charge`](#charging-a-lesson-charge) to bill a lesson by hand.
 * Only lessons dated today or earlier can be completed, using your computer's local date. A cancelled lesson cannot be completed.
 * `NOTES` is optional free text of 1–1000 printable characters on one line. Leading/trailing whitespace is trimmed and repeated spaces are collapsed. An empty `n/`, line breaks and repeated `n/` parameters are rejected.
 * Completing a lesson retains its student, subject, date, time, duration and venue. The status and notes are saved automatically. Use `view STUDENT_INDEX` to see recent notes and the completed-lesson count.
@@ -483,6 +521,7 @@ Format: `pay st/STUDENT_INDEX amt/AMOUNT [d/DATE] [n/NOTES]`
 
 * `STUDENT_INDEX` is the positive student number in the displayed student list. After `find`, use that filtered list's numbers. It is independent of lesson numbers, so payment can follow `lesson done` immediately without running `agenda` or `list` again.
 * `AMOUNT` must be greater than zero with at most two decimal places, such as `50`, `50.00` or `0.50`. Dollar signs, negative amounts, zero, commas and scientific notation are rejected.
+* A payment of $10,000.00 or more is recorded, but TutorFlow adds a warning such as `Warning: $100000.00 is an unusually large payment. Check that the amount has no extra digits.`
 * `DATE` defaults to today using your computer's local date. Accepts `YYYY-MM-DD`, `DD/MM/YYYY`, `today` and `tmr`; future dates are rejected with `Payment dates cannot be in the future.`
 * `NOTES` is optional printable text of 1–200 characters on one line, such as a transfer reference. Extra spaces are collapsed and the notes are saved with the payment.
 * Each prefix can appear once, in any order. Both `st/` and `amt/` are required. Empty or repeated fields are rejected.
@@ -590,7 +629,7 @@ Format: `dues`
 
 ### Clearing all entries: `clear`
 
-Deletes **all** students, lessons, homework and charge/payment records from TutorFlow.
+Deletes **all** students, lessons, homework, tasks, and financial history (charges and payments) from TutorFlow.
 
 Format: `clear confirm`
 
@@ -600,7 +639,7 @@ Format: `clear confirm`
 * Clearing data that is already empty works and does nothing.
 
 Examples:
-* `clear` shows `This deletes ALL students, lessons, homework, follow-up tasks and charge/payment records. Type 'clear confirm' to proceed.`
+* `clear` shows `This deletes ALL students, lessons, homework, tasks, and financial history. Type 'clear confirm' to proceed.`
 * `clear confirm` deletes everything.
 
 ### Exiting the program: `exit`
@@ -671,7 +710,7 @@ Action     | Format, Examples
 **Delete** | `delete INDEX [confirm]`<br> e.g., `delete 3`, `delete 3 confirm`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [l/LEVEL] [s/SUBJECT]... [r/RATE] [v/VENUE]`<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
-**List**   | `list`
+**List**   | `list [l/LEVEL] [s/SUBJECT] [archived/\|all/]`<br> e.g., `list`, `list l/S3 s/Math`, `list archived/`
 **View**   | `view INDEX`<br> e.g., `view 1`
 **Balance** | `balance st/INDEX`<br> e.g., `balance st/1`
 **Charge** | `charge l/LESSON_INDEX [amt/AMOUNT]`, `charge reverse l/LESSON_INDEX`<br> e.g., `charge l/1`, `charge l/1 amt/50`, `charge reverse l/1`
@@ -679,6 +718,8 @@ Action     | Format, Examples
 **Payment list / reverse** | `pay list [st/STUDENT_INDEX]`, `pay reverse PAYMENT_INDEX`<br> e.g., `pay list st/2`, `pay reverse 2`
 **Dues** | `dues`
 **Sort**   | `sort [asc\|desc]`<br> e.g., `sort desc`
+**Archive / Restore** | `archive INDEX`, `restore INDEX`<br> e.g., `archive 3`, `list archived/` then `restore 1`
+**Student aliases** | `student add\|edit\|delete\|find\|view\|list\|archive\|restore ...` (with the same arguments)<br> e.g., `student list l/S3`
 **Remark** | `remark INDEX r/REMARK`<br> e.g., `remark 1 r/Prefers morning lessons`
 **Help**   | `help [COMMAND]`<br> e.g., `help`, `help lesson add`
 **Lesson add** | `lesson add st/STUDENT_INDEX [s/SUBJECT] d/DATE t/TIME [dur/MINUTES] [v/VENUE] [past/]`<br> e.g., `lesson add st/1 s/Math d/2026-12-22 t/16:30 dur/90`, `lesson add st/1 d/tmr t/16:30`, `lesson add st/1 d/2026-10-12 t/16:30 past/`
@@ -688,10 +729,25 @@ Action     | Format, Examples
 **Lesson list** | `lesson list st/STUDENT_INDEX [all/]`<br> e.g., `lesson list st/1 all/`
 **Lesson move** | `lesson move INDEX [d/DATE] [t/TIME] [dur/MINUTES] [v/VENUE]`<br> e.g., `lesson move 1 d/2026-12-24 t/17:00`
 **Lesson cancel** | `lesson cancel INDEX [r/REASON]`<br> e.g., `lesson cancel 1 r/Student unwell`
+**Lesson series cancel** | `lesson series cancel LESSON_INDEX confirm`<br> e.g., `lesson series cancel 3 confirm`
+**Travel** | `travel buffer/MINUTES`<br> e.g., `travel buffer/30`
 **Lesson done** | `lesson done INDEX [n/NOTES]`<br> e.g., `lesson done 1 n/Covered quadratic roots`
 **Lesson missed** | `lesson missed INDEX`<br> e.g., `lesson missed 1`
-* A student with no lessons and no [follow-up tasks](#adding-a-follow-up-task-task-add) is deleted immediately.
-* Deleting a student also deletes **all of their lessons and follow-up tasks**, and this cannot be undone. If the student has any lessons or tasks, TutorFlow does not delete anything yet. It shows the student's name, phone number, number of lessons and tasks and, if there are any, a warning about upcoming lessons, and asks you to repeat the command with `confirm`.
+**Lesson prep** | `lesson prep INDEX n/NOTES`<br> e.g., `lesson prep 1 n/Bring the mock paper`
+**Homework add** | `hw add st/STUDENT_INDEX desc/DESCRIPTION due/DATE`<br> e.g., `hw add st/1 desc/Algebra Q1-10 due/tmr`
+**Homework list** | `hw list [st/STUDENT_INDEX] [overdue/\|outstanding/]`<br> e.g., `hw list`, `hw list st/1 overdue/`
+**Homework edit** | `hw edit INDEX [desc/DESCRIPTION] [due/DATE]`<br> e.g., `hw edit 1 due/2026-10-21`
+**Homework status** | `hw status INDEX s/assigned\|submitted\|reviewed`<br> e.g., `hw status 1 s/submitted`
+**Homework feedback** | `hw feedback INDEX f/FEEDBACK`<br> e.g., `hw feedback 1 f/Revisit negative indices`
+**Homework delete** | `hw delete INDEX [confirm]`<br> e.g., `hw delete 2`, `hw delete 2 confirm`
+**Task add** | `task add st/INDEX\|lesson/INDEX\|hw/INDEX desc/TEXT [due/DATE]`<br> e.g., `task add st/1 desc/Call parent due/tmr`
+**Task list** | `task list [all/] [st/INDEX]`<br> e.g., `task list`, `task list all/`, `task list st/1`
+**Task edit** | `task edit INDEX desc/TEXT [due/DATE\|due/-]`<br> e.g., `task edit 1 desc/Call parent again due/-`
+**Task done** | `task done INDEX`<br> e.g., `task done 1`
+**Task delete** | `task delete INDEX [confirm]`<br> e.g., `task delete 1`, `task delete 1 confirm`
+**Demo** | `demo [confirm]`<br> e.g., `demo`, `demo confirm`
+**Save** | `save`
+**Exit** | `exit`
 
 
 ## Student continuity in v1.4 alpha
@@ -704,6 +760,8 @@ The existing student commands remain available. You can also write `student add`
   The two flags cannot be combined and take no values.
 * `archive INDEX` (or `student archive INDEX`) hides a student from active lists while retaining
   lessons and upcoming agenda commitments. An archived student cannot receive new lessons.
+  In a list that includes archived students, such as `student list all/`, their card shows
+  `(archived)` after the name.
 * `student list archived/` followed by `restore INDEX` restores a student. All student commands
   use the currently visible student numbers; the student panel refreshes after changes.
 * `lesson prep INDEX n/NOTES` records 1-1000 printable characters of preparation. It neither

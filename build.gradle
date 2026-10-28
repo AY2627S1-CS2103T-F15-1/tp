@@ -33,6 +33,10 @@ test {
     finalizedBy jacocoTestReport
 }
 
+run {
+    enableAssertions = true
+}
+
 processResources {
     from('docs') {
         include 'UserGuide.md', 'images/**'

@@ -17,6 +17,12 @@ import seedu.address.model.UserPrefs;
 public class ClearCommandTest {
 
     @Test
+    public void confirmationMessage_matchesTheSpecificationWording() {
+        assertEquals("This deletes ALL students, lessons, homework, tasks, and financial history. "
+                + "Type 'clear confirm' to proceed.", ClearCommand.MESSAGE_CONFIRMATION);
+    }
+
+    @Test
     public void execute_emptyAddressBook_success() {
         Model model = new ModelManager();
         Model expectedModel = new ModelManager();

@@ -5,6 +5,8 @@ import seedu.address.logic.parser.exceptions.ParseException;
 
 /** Routes student namespace aliases through the same validated top-level parsers. */
 public class StudentCommandParser implements Parser<Command> {
+    public static final String COMMAND_WORD = "student";
+
     @Override
     public Command parse(String args) throws ParseException {
         String input = args.strip();

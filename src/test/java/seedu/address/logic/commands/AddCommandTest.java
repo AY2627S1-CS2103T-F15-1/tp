@@ -8,7 +8,6 @@ import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -28,6 +27,7 @@ import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.StudentOrder;
 import seedu.address.model.task.Task;
 import seedu.address.testutil.PersonBuilder;
 
@@ -120,6 +120,11 @@ public class AddCommandTest {
      */
     private class ModelStub implements Model {
         @Override
+        public void setTravelBuffer(int minutes) {
+            throw new AssertionError("Unexpected travel operation");
+        }
+
+        @Override
         public java.util.Optional<seedu.address.model.finance.LedgerEntry> chargeLesson(Lesson target,
                 Lesson completedLesson) {
             throw new AssertionError("This method should not be called.");
@@ -201,7 +206,7 @@ public class AddCommandTest {
         }
 
         @Override
-        public void sortPersons(Comparator<Person> comparator) {
+        public void sortPersons(StudentOrder order) {
             throw new AssertionError("This method should not be called.");
         }
 

@@ -3,11 +3,9 @@ package seedu.address.logic.commands;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.model.Model.PREDICATE_SHOW_ACTIVE_PERSONS;
 
-import java.util.Comparator;
-
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.model.Model;
-import seedu.address.model.person.Person;
+import seedu.address.model.person.StudentOrder;
 
 /**
  * Sorts all persons in the address book by name.
@@ -28,9 +26,6 @@ public class SortCommand extends Command {
     public static final String MESSAGE_SUCCESS_ASCENDING = "Sorted all students by name (A to Z).";
     public static final String MESSAGE_SUCCESS_DESCENDING = "Sorted all students by name (Z to A).";
 
-    private static final Comparator<Person> NAME_COMPARATOR =
-            Comparator.comparing(person -> person.getName().fullName, String.CASE_INSENSITIVE_ORDER);
-
     private final boolean isDescending;
 
     /**
@@ -44,7 +39,7 @@ public class SortCommand extends Command {
     @Override
     public CommandResult execute(Model model) {
         requireNonNull(model);
-        model.sortPersons(isDescending ? NAME_COMPARATOR.reversed() : NAME_COMPARATOR);
+        model.sortPersons(isDescending ? StudentOrder.DESCENDING : StudentOrder.ASCENDING);
         // Sorting a filtered list would leave the user unsure which persons were sorted, so show everyone.
         model.updateFilteredPersonList(PREDICATE_SHOW_ACTIVE_PERSONS);
         return new CommandResult(isDescending ? MESSAGE_SUCCESS_DESCENDING : MESSAGE_SUCCESS_ASCENDING);

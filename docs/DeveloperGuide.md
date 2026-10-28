@@ -14,7 +14,7 @@
 ## **Acknowledgements**
 
 * This project is based on the [AddressBook-Level3](https://github.com/se-edu/addressbook-level3) project created by the [SE-EDU initiative](https://se-education.org). The architecture, the command and parser design and the testing approach are adapted from it.
-* Libraries used: [JavaFX](https://openjfx.io/) (user interface), [Jackson](https://github.com/FasterXML/jackson) (JSON storage), [JUnit5](https://github.com/junit-team/junit5) (testing), [Checkstyle](https://checkstyle.sourceforge.io/) and [JaCoCo](https://www.jacoco.org/jacoco/) (code quality and coverage).
+* Libraries used: [JavaFX](https://openjfx.io/) (user interface), [Jackson](https://github.com/FasterXML/jackson) (JSON storage), [commonmark-java](https://github.com/commonmark/commonmark-java) (showing the bundled User Guide in the Help window), [JUnit5](https://github.com/junit-team/junit5) (testing), [Monocle](https://github.com/TestFX/Monocle) (running the user interface tests without a screen), [Checkstyle](https://checkstyle.sourceforge.io/) and [JaCoCo](https://www.jacoco.org/jacoco/) (code quality and coverage).
 * Documentation is built with [MarkBind](https://markbind.org/) and the diagrams are drawn with [PlantUML](https://plantuml.com/).
 
 --------------------------------------------------------------------------------------------------------------------
@@ -117,6 +117,11 @@ Here are the other classes in `Logic` (omitted from the class diagram above) tha
 How the parsing works:
 * When called upon to parse a user command, the `AddressBookParser` class creates an `XYZCommandParser` (`XYZ` is a placeholder for the specific command name, e.g., `AddCommandParser`). The parser uses the other classes shown above to parse the user command and create an `XYZCommand` object (e.g., `AddCommand`). The `AddressBookParser` returns that object as a `Command` object.
 * All `XYZCommandParser` classes, such as `AddCommandParser` and `DeleteCommandParser`, implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
+* Arguments are parsed by each `XYZCommandParser`, not by `AddressBookParser`, because the prefixes, required fields and error messages differ between commands. Logic that more than one parser needs lives in shared classes instead of being copied:
+  * `ArgumentTokenizer`, `ArgumentMultimap` and `ParserUtil` split and validate prefixed values, and all prefixes are defined once in `CliSyntax`.
+  * An index that is not a positive whole number is reported as `Invalid command format!` with the command's usage. A parser gets this by calling `ParserUtil.parseIndex(value, usage)`.
+  * `CommandInput` splits the first word from the rest of an input. `AddressBookParser` uses it for the command word, and `SubCommandParser` uses it for the sub-command word of `lesson` and `task`. `SubCommandParser` is given one `Parser` per sub-command word, so adding a sub-command means registering one more parser.
+  * `ConfirmableIndex` parses an index with an optional `confirm` keyword and is used by `delete`, `task delete` and `hw delete`. It strips surrounding whitespace with `String.strip()` and splits the words with `(?U)\s+`, so all three treat Unicode spaces such as U+3000 the same way as ASCII ones, both around the arguments and between the index and `confirm`.
 
 ### Model component
 **API** : [`Model.java`](https://github.com/AY2627S1-CS2103T-F15-1/tp/tree/master/src/main/java/seedu/address/model/Model.java)
@@ -167,11 +172,25 @@ Diagram source: [LessonMoveSequenceDiagram.puml](diagrams/LessonMoveSequenceDiag
 
 How the pieces fit together:
 
-* **Lesson indices.** `Model#getFilteredLessonList()` returns the lessons that `agenda` or `lesson list` last chose, sorted by date, then start time, then student name. `agenda` and `lesson list` number the lessons they show in that order, and `lesson move` and `lesson cancel` take the same number, so the number a tutor sees is always the one that the next command acts on. `lesson add` resets the filter so that every lesson is shown.
+* **Lesson indices.** `Model#getFilteredLessonList()` returns the lessons that `agenda` or `lesson list` last chose, sorted by date, then start time, then student name. Lesson mutations retain the active filter. `LogicManager` compares the displayed identities and rows before and after a mutation and appends the refreshed numbered list when those rows change. Commands do not append a second list; `lesson add` marks its already-formatted list with `CommandResult#withDisplayedLessons`, so the central handler can reuse it. This prevents both stale numbers and duplicate numbering messages.
 * **Overlaps.** `Lesson#overlaps(Lesson)` is true when both lessons are scheduled, are on the same date, and each starts before the other ends. It compares minutes since the start of the day, so back-to-back lessons are not an overlap and a lesson that ends at midnight can still be compared. `Model#getConflictingLessons(Lesson)` returns the other lessons that overlap a lesson, and `lesson add` and `lesson move` append the result to their message as a warning. `agenda` marks every lesson that has at least one overlap.
 * **Cancelling.** `Lesson#cancel(String)` returns a copy with the status `CANCELLED` and the reason. The lesson is kept, so it stays in the agenda for billing, but it is no longer scheduled and so it never overlaps.
 * **Immutability.** `Lesson` is immutable. `lesson move` and `lesson cancel` build a changed copy and ask the model to replace the old lesson with it, in the same way that `edit` replaces a `Person`.
 * **Defaults to type less.** `lesson add` takes the subject from the student when the student has only one, uses 60 minutes if no duration is given, and uses the student's venue if no venue is given.
+
+#### Travel buffers and series cancellation
+
+`travel buffer/MINUTES` updates the buffer through `Model#setTravelBuffer`. The value belongs to the `AddressBook`, so snapshots, resets and JSON saves include it. Missing values in older files default to 30; invalid stored values reject the file rather than silently altering the setting.
+
+`TravelGap#find` sorts scheduled lessons chronologically and scans groups sharing a date and start time. It retains the latest preceding end and its tied lessons, so a short lesson nested inside a longer lesson cannot produce a misleading departure time. It uses minutes since midnight, avoiding wraparound at 00:00. Different dates and non-scheduled lessons are excluded. The command layer formats the returned gaps with the shared `MESSAGE_TRAVEL_WARNING`, including both student names, without changing lesson filters or blocking bookings. `AgendaCommand`, `TodayCommand`, `LessonAddCommand` and `LessonMoveCommand` use the same calculation. Add and move report only journeys into or out of the changed lesson; agenda and today restrict destinations to their displayed dates. Today's warnings use the same two-space indentation as its lesson rows.
+
+`lesson series cancel LESSON_INDEX confirm` requires exact confirmation before resolving the occurrence in the displayed list. The optional UUID returned by `Lesson#getSeriesId` identifies its series independently of dates, and is retained by rescheduling, status updates, preparation updates and student edits. The command selects only scheduled occurrences whose date and time are not before its injected clock, builds all cancellations in an `AddressBook` copy, then replaces the model data once. The cancellation reason is `Series cancelled`; historical records and permanent IDs are retained. The series ID is an optional JSON field, so older lessons still load without being assigned to an invented series.
+
+`LessonRepeatCommand` creates one UUID and attaches it to every occurrence using `Lesson#withSeries(UUID)`. `Lesson#getSeriesId` returns that optional UUID; `JsonAdaptedLesson` uses the same optional `seriesId` JSON field as recurring bookings. After adding the series, the command reports each travel gap involving a new occurrence once, including journeys into and out of it. Weekly agenda warnings are formatted inside the day loop, immediately after that day's lesson rows.
+
+Move, single cancellation and series cancellation use `LessonCommandUtil#requireNotCharged` to retain billed history. Series cancellation validates every affected occurrence before building its replacement, so a charge on even the last eligible occurrence leaves all bookings and ledger records unchanged. Cancellation is a status change and is outside the deletion/clear operations specified for undo in section 4.36. It is not undoable. PR #143 was closed without merging, and current master has no undo implementation or model reset hook; a future undo implementation must invalidate its snapshot after a successful travel-buffer change and preserve it after a rejected change.
+
+`TravelGapTest`, `TravelCommandParserTest`, `LessonSeriesCancelCommandTest` and `LessonTravelWorkflowTest` cover buffer boundaries, venue exceptions, latest-end selection, moved occurrences, confirmation, filtered numbering, failed-save retries and JSON restarts.
 
 #### Design considerations
 
@@ -223,7 +242,7 @@ The sequence diagram below shows `execute("lesson repeat st/1 d/2026-10-29 t/16:
 
 **Dates.** `LessonCommandUtil` holds the date and subject checks that `lesson add`, `lesson repeat` and `lesson move` share: `requireNotInPast`, `requireNotAfterToday`, `requireNotTooFarPast`, `requireNearFuture` and `chooseSubject`. The date checks have a version that takes a `Clock`, and `LessonAddCommand` and `LessonRepeatCommand` have a constructor that takes one, in the same way as `LessonDoneCommand`, so that the boundaries (today, two years ahead and two years back) can be tested with a fixed date. With `past/`, a date after today is rejected, so that `past/` cannot create a scheduled lesson that `lesson done` would refuse.
 
-**Not yet done.** The spec also asks for travel warnings on each occurrence. They depend on the travel-time feature and are not part of this change.
+**Travel warnings.** After scheduling, the shared travel-gap calculation reports journeys into or out of the new occurrences without blocking them. It excludes unrelated journeys and emits each affected journey once.
 
 `LessonRepeatCommandTest`, `LessonRepeatCommandParserTest` and `SeriesIntegrationTest` cover the series rules, the all-or-nothing behaviour, moving and cancelling an occurrence, and saving and reloading a series.
 
@@ -471,10 +490,6 @@ The following activity diagram summarizes what happens when a user executes a ne
   * Cons: We must ensure that the implementation of each individual command is correct.
 
 
---------------------------------------------------------------------------------------------------------------------
-
-## **Documentation, logging, testing, dev-ops**
-
 ### Student balances and dues
 
 `LedgerEntry` is immutable and records its UUID, permanent student UUID, optional lesson UUID, kind,
@@ -530,8 +545,7 @@ updated balance, and save performed by `LogicManager`:
 
 Integration follow-ups before full alpha sign-off:
 * Finance: implement the running account statement in specification section 4.29.
-* Lesson move/cancel and series cancellation (#142): check active charges before changing a billed lesson.
-  Preserve lesson and series UUIDs across every copy operation.
+Move, cancellation and series cancellation already reject changes to billed lessons and preserve lesson and series UUIDs. Series cancellation checks the whole batch before replacing the address book.
 
 `LogicManager(Model, Storage, Clock)` passes a shared date source to the finance and relevant lesson
 parsers/commands. Interactive constructors default to the system clock. Finance workflow tests use a
@@ -544,6 +558,10 @@ records and prompts even when they only have payment records and no lessons. Cle
 `JsonAdaptedLedgerEntry` and the optional `ledgerEntries` collection in `JsonSerializableAddressBook` persist every
 record. Loading validates IDs, amounts and student references. Older files load an empty ledger: completed lessons
 are not billed retroactively, because their historical rate and payment state are unknown.
+
+--------------------------------------------------------------------------------------------------------------------
+
+## **Documentation, logging, testing, dev-ops**
 
 * [Documentation guide](Documentation.md)
 * [Testing guide](Testing.md)
@@ -1001,31 +1019,46 @@ testers are expected to do more *exploratory* testing.
 
    1. Download the JAR file and copy it into an empty folder.
 
-   1. Double-click the JAR file.<br>
-      Expected: The GUI opens empty with welcome and demo instructions. The window size may not be optimal.
+   1. Open a terminal in that folder, check with `java -version` that Java 25 is used, and run `java -jar tutorflow.jar`.<br>
+      Expected: The GUI opens with no students. The result box shows the welcome message and suggests `demo`. The window size may not be optimal.
 
 1. Saving window preferences
 
    1. Resize the window to an optimal size. Move the window to a different location. Close the window.
 
-   1. Relaunch the app by double-clicking the JAR file.<br>
+   1. Relaunch the app with `java -jar tutorflow.jar`.<br>
        Expected: The most recent window size and location are retained.
 
 
-### Deleting a person
+### Deleting a student
 
-1. Deleting a person while all persons are being shown
+1. Deleting a student who has no lessons, homework, tasks or payments
 
-   1. Prerequisites: List all persons using the `list` command, with multiple persons in the list.
+   1. Prerequisites: Use `list`, with multiple students in the list. The 1st student has no linked records.
 
    1. Test case: `delete 1`<br>
-      Expected: The first contact is deleted from the list. The status message shows the deleted contact's details.
+      Expected: The 1st student is deleted at once and disappears from the list. The result box shows `Deleted student:` and the student's details.
+
+1. Deleting a student who has lessons
+
+   1. Prerequisites: Use `list`. Schedule a future lesson for the 1st student, such as `lesson add st/1 d/tmr t/16:00`.
+
+   1. Test case: `delete 1`<br>
+      Expected: Nothing is deleted. The result box shows the student's name and phone number, the number of lessons, a warning about the upcoming lesson, and `Type 'delete 1 confirm' to proceed.`
+
+   1. Test case: `delete 1 confirm`<br>
+      Expected: The student and their lessons are deleted. `agenda d/DATE` for the lesson's date no longer shows the lesson.
+
+1. Incorrect delete commands
 
    1. Test case: `delete 0`<br>
-      Expected: No person is deleted. The status message shows error details.
+      Expected: No student is deleted. The result box shows `Invalid command format!` and the usage of `delete`.
 
-   1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
-      Expected: Similar to previous.
+   1. Test case: `delete x`, where x is larger than the list size<br>
+      Expected: No student is deleted. The result box says that no student has that number and how many items the list has.
+
+   1. Other incorrect delete commands to try: `delete`, `delete 1 yes`<br>
+      Expected: Similar to `delete 0`.
 
 
 ### Lessons
