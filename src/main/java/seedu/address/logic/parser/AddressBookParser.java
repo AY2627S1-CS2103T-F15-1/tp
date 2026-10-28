@@ -78,7 +78,7 @@ public class AddressBookParser {
         return switch (commandWord) {
             case BalanceCommand.COMMAND_WORD -> new BalanceCommandParser().parse(arguments);
             case ChargeCommand.COMMAND_WORD -> new ChargeCommandParser(clock).parse(arguments);
-            case PaymentCommand.COMMAND_WORD -> new PaymentCommandParser(clock).parse(arguments);
+            case PaymentCommand.COMMAND_WORD -> new PayCommandParser(clock).parse(arguments);
             case DuesCommand.COMMAND_WORD -> {
                 requireNoArguments(commandWord, arguments);
                 yield new DuesCommand(clock);

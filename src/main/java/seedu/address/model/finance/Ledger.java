@@ -41,8 +41,13 @@ public final class Ledger {
         return book.getLedgerEntries().stream().anyMatch(other -> entry.id().equals(other.reverses()));
     }
 
-    /** Returns the ids of every entry that a reversal in {@code book} cancels, found in one pass. */
-    private static Set<UUID> reversedIds(ReadOnlyAddressBook book) {
+    /**
+     * Returns the IDs of every entry that some reversal in {@code book} cancels, found in one pass. Callers that
+     * test many entries should build this once and look entries up in it, instead of calling {@link #isReversed}
+     * for each entry, which scans the whole ledger every time.
+     */
+    public static Set<UUID> reversedIds(ReadOnlyAddressBook book) {
+        requireNonNull(book);
         return book.getLedgerEntries().stream().map(LedgerEntry::reverses).filter(Objects::nonNull)
                 .collect(Collectors.toSet());
     }

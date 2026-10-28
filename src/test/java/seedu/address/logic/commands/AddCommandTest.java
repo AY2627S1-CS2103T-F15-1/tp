@@ -23,6 +23,7 @@ import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.ReadOnlyUserPrefs;
+import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
@@ -281,6 +282,16 @@ public class AddCommandTest {
 
         @Override
         public void setShownTasks(List<Task> tasks) {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
+        public List<LedgerEntry> getShownPayments() {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
+        public void setShownPayments(List<LedgerEntry> payments) {
             throw new AssertionError("This method should not be called.");
         }
     }
