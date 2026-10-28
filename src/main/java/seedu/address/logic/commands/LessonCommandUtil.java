@@ -5,6 +5,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import seedu.address.commons.core.index.Index;
@@ -17,6 +18,7 @@ import seedu.address.model.lesson.LessonDate;
 import seedu.address.model.lesson.LessonDuration;
 import seedu.address.model.lesson.LessonStatus;
 import seedu.address.model.lesson.LessonTime;
+import seedu.address.model.lesson.TravelGap;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Subject;
 
@@ -35,6 +37,8 @@ final class LessonCommandUtil {
     static final String MESSAGE_CHARGED_LESSON = "Reverse the active charge with "
             + "'charge reverse l/INDEX' before cancelling or rescheduling this lesson.";
     static final String MESSAGE_OVERLAP_WARNING = "\nWarning: this overlaps with %1$s";
+    static final String MESSAGE_TRAVEL_WARNING = "Travel warning: %s at %s -> %s at %s (%s %s): "
+            + "%d min available; %d min required.";
 
     private static final int MAX_YEARS_AHEAD = 2;
 
@@ -215,5 +219,36 @@ final class LessonCommandUtil {
             return "";
         }
         return String.format(MESSAGE_OVERLAP_WARNING, Messages.formatOverlaps(overlappingLessons));
+    }
+
+    /** Reports travel warnings for the selected destination lessons without changing any displayed numbers. */
+    static String getTravelWarnings(Model model, Predicate<Lesson> destinations) {
+        return getTravelWarnings(model, destinations, "");
+    }
+
+    /** Reports destination warnings with the indentation used by their containing view. */
+    static String getTravelWarnings(Model model, Predicate<Lesson> destinations, String indentation) {
+        return formatTravelWarnings(model, gap -> destinations.test(gap.next()), indentation);
+    }
+
+    /** Reports only journeys into or out of the added or moved lesson, not unrelated warnings on that date. */
+    static String getTravelWarningsForLesson(Model model, Lesson changed) {
+        return getTravelWarningsForLessons(model, List.of(changed));
+    }
+
+    /** Reports each incoming or outgoing journey affected by a batch of new occurrences once. */
+    static String getTravelWarningsForLessons(Model model, List<Lesson> changed) {
+        return formatTravelWarnings(model, gap -> changed.stream().anyMatch(lesson ->
+                gap.previous().getId().equals(lesson.getId()) || gap.next().getId().equals(lesson.getId())), "");
+    }
+
+    private static String formatTravelWarnings(Model model, Predicate<TravelGap> included, String indentation) {
+        return TravelGap.find(model.getAddressBook().getLessonList(), model.getAddressBook().getTravelBuffer())
+                .stream().filter(included)
+                .map(gap -> "\n" + indentation + String.format(MESSAGE_TRAVEL_WARNING,
+                        gap.previous().getStudentName(), Messages.formatVenue(gap.previous()),
+                        gap.next().getStudentName(), Messages.formatVenue(gap.next()),
+                        gap.next().getDate(), gap.next().getTime(), gap.minutes(), gap.buffer()))
+                .collect(Collectors.joining());
     }
 }

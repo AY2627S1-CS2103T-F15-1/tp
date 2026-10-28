@@ -43,6 +43,14 @@ public class JsonAdaptedLessonTest {
     private static final String VALID_STATUS = ALICE_MATH.getStatus().toString();
 
     @Test
+    public void toModelType_blankSeriesId_rejectsMalformedSavedData() throws Exception {
+        String raw = "{\"studentName\":\"Alice Pauline\",\"studentPhone\":\"94351253\",\"subject\":\"Math\","
+                + "\"date\":\"2026-10-21\",\"time\":\"10:00\",\"duration\":60,\"seriesId\":\" \"}";
+        JsonAdaptedLesson data = JsonUtil.fromJsonString(raw, JsonAdaptedLesson.class);
+        assertThrows(IllegalValueException.class, data::toModelType);
+    }
+
+    @Test
     public void toModelType_invalidNotes_throwsIllegalValueException() {
         for (String notes : new String[] {"", "a".repeat(Lesson.MAX_NOTES_LENGTH + 1), "First\nSecond"}) {
             JsonAdaptedLesson lesson = new JsonAdaptedLesson(VALID_NAME, VALID_PHONE, VALID_SUBJECT, VALID_DATE,

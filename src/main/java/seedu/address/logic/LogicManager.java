@@ -6,6 +6,7 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.logging.Logger;
 
 import javafx.collections.ObservableList;
@@ -19,6 +20,7 @@ import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.Model;
+import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
 import seedu.address.storage.Storage;
 
@@ -93,7 +95,7 @@ public class LogicManager implements Logic {
         CommandResult commandResult;
         Command command = addressBookParser.parseCommand(commandText);
         String before = snapshot();
-        List<String> shownBefore = lessonSelection();
+        List<UUID> shownBefore = lessonSelection();
         boolean wasDirty = dirty;
         boolean changed;
         try {
@@ -106,7 +108,7 @@ public class LogicManager implements Logic {
         }
 
         String numbering = "";
-        List<String> shownAfter = lessonSelection();
+        List<UUID> shownAfter = lessonSelection();
         boolean preservesShownRows = shownAfter.size() >= shownBefore.size()
                 && shownAfter.subList(0, shownBefore.size()).equals(shownBefore);
         if (changed && !preservesShownRows) {
@@ -130,10 +132,13 @@ public class LogicManager implements Logic {
         return commandResult;
     }
 
-    /** Captures visible row identity and labels before mutation can reorder a live sorted list. */
-    private List<String> lessonSelection() {
-        return model.getFilteredLessonList().stream()
-                .map(lesson -> lesson.getId() + " " + Messages.format(lesson) + " " + lesson.getStatus()).toList();
+    /**
+     * Captures which lesson each visible number selects, before a mutation can reorder the live sorted list.
+     * Only the lesson ids are compared: a lesson whose time, status or student name changed but that keeps its
+     * number has not been renumbered.
+     */
+    private List<UUID> lessonSelection() {
+        return model.getFilteredLessonList().stream().map(Lesson::getId).toList();
     }
 
     /** Captures serialized state without writing, keeping persistence comparison separate from domain equality. */

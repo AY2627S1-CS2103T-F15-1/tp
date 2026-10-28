@@ -2,7 +2,6 @@ package seedu.address.model;
 
 import static java.util.Objects.requireNonNull;
 
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -23,8 +22,10 @@ import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonStatus;
+import seedu.address.model.lesson.TravelGap;
 import seedu.address.model.lesson.UniqueLessonList;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.StudentOrder;
 import seedu.address.model.person.UniquePersonList;
 import seedu.address.model.task.Task;
 
@@ -42,6 +43,8 @@ public class AddressBook implements ReadOnlyAddressBook {
 
     private final UniquePersonList persons = new UniquePersonList();
     private final UniqueLessonList lessons = new UniqueLessonList();
+    private int travelBuffer = TravelGap.DEFAULT_BUFFER;
+    private StudentOrder studentOrder; // null until the students are sorted
     private final ObservableList<Task> tasks = FXCollections.observableArrayList();
     private final ObservableList<Task> unmodifiableTasks = FXCollections.unmodifiableObservableList(tasks);
     private final ObservableList<LedgerEntry> ledgerEntries = FXCollections.observableArrayList();
@@ -111,6 +114,9 @@ public class AddressBook implements ReadOnlyAddressBook {
         // Copy and validate everything first, so that a rejected replacement leaves this address book unchanged
         List<LedgerEntry> replacementEntries = List.copyOf(newData.getLedgerEntries());
         List<Task> replacementTasks = List.copyOf(newData.getTaskList());
+        if (!TravelGap.isValidBuffer(newData.getTravelBuffer())) {
+            throw new IllegalArgumentException(TravelGap.MESSAGE_CONSTRAINTS);
+        }
         validateLedgerEntries(newData.getPersonList(), newData.getLessonList(), replacementEntries);
         validateTasks(replacementTasks);
         setPersons(newData.getPersonList());
@@ -118,6 +124,22 @@ public class AddressBook implements ReadOnlyAddressBook {
         ledgerEntries.setAll(replacementEntries);
         tasks.setAll(replacementTasks);
         homework.setAll(newData.getHomeworkList());
+        setTravelBuffer(newData.getTravelBuffer());
+        studentOrder = newData.getStudentOrder().orElse(null);
+        keepStudentOrder();
+    }
+
+    @Override
+    public int getTravelBuffer() {
+        return travelBuffer;
+    }
+
+    /** Sets the minimum gap for journeys between physical venues. */
+    public void setTravelBuffer(int minutes) {
+        if (!TravelGap.isValidBuffer(minutes)) {
+            throw new IllegalArgumentException(TravelGap.MESSAGE_CONSTRAINTS);
+        }
+        travelBuffer = minutes;
     }
 
     //// person-level operations
@@ -136,6 +158,7 @@ public class AddressBook implements ReadOnlyAddressBook {
      */
     public void addPerson(Person p) {
         persons.add(p);
+        keepStudentOrder();
     }
 
     /**
@@ -148,6 +171,7 @@ public class AddressBook implements ReadOnlyAddressBook {
 
         editedPerson = editedPerson.withId(target.getId());
         persons.setPerson(target, editedPerson);
+        keepStudentOrder();
         updateStudentOfLessons(target, editedPerson);
     }
 
@@ -421,10 +445,25 @@ public class AddressBook implements ReadOnlyAddressBook {
     }
 
     /**
-     * Sorts the persons in this {@code AddressBook} using the given {@code comparator}.
+     * Sorts the persons in this {@code AddressBook} in {@code order}, and keeps that order when persons are added or
+     * edited later.
      */
-    public void sortPersons(Comparator<Person> comparator) {
-        persons.sort(comparator);
+    public void sortPersons(StudentOrder order) {
+        requireNonNull(order);
+        studentOrder = order;
+        persons.sort(order.comparator());
+    }
+
+    @Override
+    public Optional<StudentOrder> getStudentOrder() {
+        return Optional.ofNullable(studentOrder);
+    }
+
+    /** Puts the persons back in the order chosen with {@code sort}, if one was chosen. */
+    private void keepStudentOrder() {
+        if (studentOrder != null) {
+            persons.sort(studentOrder.comparator());
+        }
     }
 
     /** Adds a unique assignment belonging to a known student. */
@@ -524,11 +563,13 @@ public class AddressBook implements ReadOnlyAddressBook {
                 && lessons.equals(otherAddressBook.lessons)
                 && homework.equals(otherAddressBook.homework)
                 && ledgerEntries.equals(otherAddressBook.ledgerEntries)
-                && tasks.equals(otherAddressBook.tasks);
+                && tasks.equals(otherAddressBook.tasks)
+                && travelBuffer == otherAddressBook.travelBuffer
+                && studentOrder == otherAddressBook.studentOrder;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(persons, lessons, homework, ledgerEntries, tasks);
+        return Objects.hash(persons, lessons, homework, ledgerEntries, tasks, travelBuffer, studentOrder);
     }
 }

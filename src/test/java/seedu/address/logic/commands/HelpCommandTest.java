@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.testutil.Assert.assertThrows;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -30,8 +32,8 @@ public class HelpCommandTest {
         for (String command : new String[] {"add", "edit", "delete", "list", "find", "view", "sort", "remark",
             "lesson repeat",
             "lesson add", "lesson list", "lesson move", "lesson cancel", "lesson done", "lesson missed",
-            "agenda", "today", "task add", "task list", "task edit", "task done", "task delete", "clear", "help",
-            "exit"}) {
+            "lesson series cancel", "travel", "agenda", "today", "task add", "task list", "task edit",
+            "task done", "task delete", "clear", "help", "exit"}) {
             assertTrue(message.contains("\n  " + command + " "), command + " is missing from the list");
         }
         assertTrue(message.contains("Schedules a lesson"));
@@ -62,6 +64,8 @@ public class HelpCommandTest {
         assertHelpUsage(LessonCancelCommand.MESSAGE_USAGE, "lesson cancel");
         assertHelpUsage(LessonDoneCommand.MESSAGE_USAGE, "lesson done");
         assertHelpUsage(LessonMissedCommand.MESSAGE_USAGE, "lesson missed");
+        assertHelpUsage(LessonSeriesCancelCommand.MESSAGE_USAGE, "lesson series cancel");
+        assertHelpUsage(TravelCommand.MESSAGE_USAGE, "travel");
         assertHelpUsage(AgendaCommand.MESSAGE_USAGE, "agenda");
         assertHelpUsage(TodayCommand.MESSAGE_USAGE, "today");
         assertHelpUsage(TaskAddCommand.MESSAGE_USAGE, "task add");
@@ -109,6 +113,34 @@ public class HelpCommandTest {
         assertCommandFailure(new HelpCommand("ADD"), model, String.format(HelpCommand.MESSAGE_NO_HELP, "ADD"));
         // a prefix of a command word is not a command
         assertCommandFailure(new HelpCommand("les"), model, String.format(HelpCommand.MESSAGE_NO_HELP, "les"));
+    }
+
+    @Test
+    public void execute_everyListedCommand_isARealCommand() throws Exception {
+        seedu.address.logic.parser.AddressBookParser parser = new seedu.address.logic.parser.AddressBookParser();
+        for (String line : helpFor("").lines().filter(l -> l.startsWith("  ")).toList()) {
+            String word = line.strip().split(" {2,}")[0];
+            try {
+                parser.parseCommand(word);
+            } catch (seedu.address.logic.parser.exceptions.ParseException e) {
+                assertFalse(e.getMessage().equals(seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND),
+                        "help lists '" + word + "' but the parser does not know it");
+            }
+        }
+    }
+
+    @Test
+    public void execute_everyListedCommand_hasARowInTheUserGuideSummary() throws Exception {
+        String guide = Files.readString(Path.of("docs", "UserGuide.md"));
+        String summary = guide.substring(guide.indexOf("## Command summary"));
+        List<String> names = helpFor("").lines().filter(line -> line.startsWith("  "))
+                .map(line -> line.substring(2).split("  ", 2)[0].trim()).toList();
+
+        assertTrue(names.size() > 25, "the command list was not read: " + names);
+        for (String name : names) {
+            assertTrue(summary.contains("`" + name + " ") || summary.contains("`" + name + "`"),
+                    "the UG command summary has no row for '" + name + "'");
+        }
     }
 
     @Test

@@ -1,10 +1,14 @@
 package seedu.address.model;
 
+import java.util.Optional;
+
 import javafx.collections.ObservableList;
 import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
+import seedu.address.model.lesson.TravelGap;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.StudentOrder;
 import seedu.address.model.task.Task;
 
 /**
@@ -23,6 +27,16 @@ public interface ReadOnlyAddressBook {
      * This list will not contain any duplicate lessons.
      */
     ObservableList<Lesson> getLessonList();
+
+    /** Returns the offline travel buffer; older data sets use thirty minutes. */
+    default int getTravelBuffer() {
+        return TravelGap.DEFAULT_BUFFER;
+    }
+
+    /** Returns the order chosen with {@code sort}, or empty if the students were never sorted. */
+    default Optional<StudentOrder> getStudentOrder() {
+        return Optional.empty();
+    }
 
     /** Returns the immutable view of recorded charges and payments. */
     ObservableList<LedgerEntry> getLedgerEntries();

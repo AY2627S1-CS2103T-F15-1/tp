@@ -7,6 +7,8 @@ import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
 import static seedu.address.logic.commands.CommandTestUtil.showPersonAtIndex;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.model.AddressBook;
@@ -14,6 +16,7 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.StudentOrder;
 import seedu.address.testutil.AddressBookBuilder;
 import seedu.address.testutil.PersonBuilder;
 
@@ -32,6 +35,7 @@ public class SortCommandTest {
     public void execute_unsortedList_sortsAscending() {
         Model model = createModel(CARL, ZACK, AARON, BELLA);
         Model expectedModel = createModel(AARON, BELLA, CARL, ZACK);
+        expectedModel.sortPersons(StudentOrder.ASCENDING);
 
         assertCommandSuccess(new SortCommand(false), model, SortCommand.MESSAGE_SUCCESS_ASCENDING, expectedModel);
     }
@@ -40,6 +44,7 @@ public class SortCommandTest {
     public void execute_unsortedList_sortsDescending() {
         Model model = createModel(CARL, ZACK, AARON, BELLA);
         Model expectedModel = createModel(ZACK, CARL, BELLA, AARON);
+        expectedModel.sortPersons(StudentOrder.DESCENDING);
 
         assertCommandSuccess(new SortCommand(true), model, SortCommand.MESSAGE_SUCCESS_DESCENDING, expectedModel);
     }
@@ -48,6 +53,7 @@ public class SortCommandTest {
     public void execute_alreadySortedList_listUnchanged() {
         Model model = createModel(AARON, BELLA, CARL, ZACK);
         Model expectedModel = createModel(AARON, BELLA, CARL, ZACK);
+        expectedModel.sortPersons(StudentOrder.ASCENDING);
 
         assertCommandSuccess(new SortCommand(false), model, SortCommand.MESSAGE_SUCCESS_ASCENDING, expectedModel);
     }
@@ -56,6 +62,7 @@ public class SortCommandTest {
     public void execute_emptyAddressBook_success() {
         Model model = createModel();
         Model expectedModel = createModel();
+        expectedModel.sortPersons(StudentOrder.ASCENDING);
 
         assertCommandSuccess(new SortCommand(false), model, SortCommand.MESSAGE_SUCCESS_ASCENDING, expectedModel);
     }
@@ -65,9 +72,41 @@ public class SortCommandTest {
         Model model = createModel(CARL, ZACK, AARON, BELLA);
         showPersonAtIndex(model, INDEX_FIRST_PERSON);
         Model expectedModel = createModel(AARON, BELLA, CARL, ZACK);
+        expectedModel.sortPersons(StudentOrder.ASCENDING);
 
         assertCommandSuccess(new SortCommand(false), model, SortCommand.MESSAGE_SUCCESS_ASCENDING, expectedModel);
         assertEquals(4, model.getFilteredPersonList().size());
+    }
+
+    @Test
+    public void execute_thenAddStudent_newStudentTakesItsPlaceInTheOrder() {
+        Model model = createModel(CARL, ZACK, AARON);
+        new SortCommand(true).execute(model);
+
+        model.addPerson(BELLA);
+
+        assertEquals(List.of(ZACK, CARL, BELLA, AARON), model.getAddressBook().getPersonList());
+    }
+
+    @Test
+    public void execute_thenRenameStudent_studentMovesToItsPlaceInTheOrder() {
+        Model model = createModel(CARL, ZACK, AARON, BELLA);
+        new SortCommand(false).execute(model);
+        Person renamed = new PersonBuilder(AARON).withName("Yvonne Lim").build();
+
+        model.setPerson(AARON, renamed);
+
+        assertEquals(List.of("bella ng", "Carl Kurz", "Yvonne Lim", "zack lee"), model.getAddressBook()
+                .getPersonList().stream().map(person -> person.getName().fullName).toList());
+    }
+
+    @Test
+    public void addPerson_neverSorted_appendsAtTheEnd() {
+        Model model = createModel(CARL, ZACK);
+
+        model.addPerson(AARON);
+
+        assertEquals(List.of(CARL, ZACK, AARON), model.getAddressBook().getPersonList());
     }
 
     @Test

@@ -118,6 +118,33 @@ public class AgendaCommandTest {
     }
 
     @Test
+    public void execute_weekWithTravelWarnings_placesEachWarningImmediatelyAfterItsDay() {
+        for (int day = 0; day < 2; day++) {
+            addLessons(new LessonBuilder().withStudent(ALICE).withDate(MONDAY.plusDays(day)).withTime("10:00")
+                    .withDuration(60).withVenue("Home").build(),
+                    new LessonBuilder().withStudent(ALICE).withDate(MONDAY.plusDays(day)).withTime("11:10")
+                    .withDuration(60).withVenue("Cafe").build());
+        }
+        String expected = "Week of Mon 07 Jan 2030 to Sun 13 Jan 2030 (4 lessons, 4h)";
+        for (int day = 0; day < 7; day++) {
+            String date = List.of("Mon 07", "Tue 08", "Wed 09", "Thu 10", "Fri 11", "Sat 12", "Sun 13")
+                    .get(day) + " Jan 2030";
+            expected += "\n" + date + (day < 2 ? " (2 lessons, 2h)" : " (0 lessons, 0m)");
+            if (day < 2) {
+                expected += String.format("\n%2d. %s  %-18s %-10s %s", day * 2 + 1, "10:00-11:00",
+                        "Alice Pauline", "Math", "Home");
+                expected += String.format("\n%2d. %s  %-18s %-10s %s", day * 2 + 2, "11:10-12:10",
+                        "Alice Pauline", "Math", "Cafe");
+                expected += "\nTravel warning: Alice Pauline at Home -> Alice Pauline at Cafe (" + date
+                        + " 11:10): 10 min available; 30 min required.";
+            } else {
+                expected += "\n  — no lessons —";
+            }
+        }
+        assertEquals(expected, new AgendaCommand(MONDAY, true).execute(model).getFeedbackToUser());
+    }
+
+    @Test
     public void equals() {
         AgendaCommand command = new AgendaCommand(MONDAY, false);
 

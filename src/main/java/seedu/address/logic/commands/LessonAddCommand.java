@@ -125,7 +125,8 @@ public class LessonAddCommand extends Command {
 
         String numbering = formatChangedLessonNumbers(model.getFilteredLessonList(), lesson, previousLessonCount);
         CommandResult result = new CommandResult(String.format(MESSAGE_SUCCESS, Messages.format(lesson),
-                Messages.formatVenue(lesson)) + LessonCommandUtil.getOverlapWarning(model, lesson) + numbering);
+                Messages.formatVenue(lesson)) + LessonCommandUtil.getOverlapWarning(model, lesson)
+                + LessonCommandUtil.getTravelWarningsForLesson(model, lesson) + numbering);
         return numbering.isEmpty() ? result : result.withDisplayedLessons(model.getFilteredLessonList());
     }
 

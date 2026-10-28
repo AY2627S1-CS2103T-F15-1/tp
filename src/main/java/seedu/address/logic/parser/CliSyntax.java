@@ -29,8 +29,13 @@ public class CliSyntax {
     public static final Prefix PREFIX_PAYMENT = new Prefix("pay/");
     public static final Prefix PREFIX_WEEK = new Prefix("week/");
     public static final Prefix PREFIX_ALL = new Prefix("all/");
+    public static final Prefix PREFIX_BUFFER = new Prefix("buffer/");
     public static final Prefix PREFIX_PAST = new Prefix("past/");
     public static final Prefix PREFIX_COUNT = new Prefix("count/");
     public static final Prefix PREFIX_EVERY = new Prefix("every/");
+    public static final Prefix PREFIX_STATUS = new Prefix("s/");
+    public static final Prefix PREFIX_FEEDBACK = new Prefix("f/");
+    public static final Prefix PREFIX_OVERDUE = new Prefix("overdue/");
+    public static final Prefix PREFIX_OUTSTANDING = new Prefix("outstanding/");
 
 }

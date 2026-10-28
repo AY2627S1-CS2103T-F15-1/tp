@@ -37,7 +37,8 @@ public class PaymentCommandParser implements Parser<PaymentCommand> {
         ParserUtil.requirePrefixesPresent(arguments, PaymentCommand.MESSAGE_USAGE, PREFIX_STUDENT, PREFIX_AMOUNT);
         arguments.verifyNoDuplicatePrefixesFor(PREFIX_STUDENT, PREFIX_AMOUNT, PREFIX_DATE, PREFIX_NOTES);
         arguments.verifyNoEmptyValuesFor(PREFIX_STUDENT, PREFIX_AMOUNT, PREFIX_DATE, PREFIX_NOTES);
-        Index index = ParserUtil.parseIndex(arguments.getValue(PREFIX_STUDENT).orElseThrow());
+        Index index = ParserUtil.parseIndex(arguments.getValue(PREFIX_STUDENT).orElseThrow(),
+                PaymentCommand.MESSAGE_USAGE);
         String amountText = arguments.getValue(PREFIX_AMOUNT).orElseThrow();
         if (!amountText.matches("[0-9]+(?:\\.[0-9]{1,2})?")) {
             throw new ParseException(PaymentCommand.MESSAGE_AMOUNT_CONSTRAINTS);

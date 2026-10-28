@@ -146,10 +146,13 @@ public class HelpWindowTest {
     @BeforeAll
     public static void startJavaFx() throws Exception {
         CountDownLatch started = new CountDownLatch(1);
-        Platform.startup(() -> {
-            Platform.setImplicitExit(false);
+        try {
+            Platform.startup(started::countDown);
+        } catch (IllegalStateException alreadyStarted) {
+            // Another UI test started JavaFX earlier in the same test run
             started.countDown();
-        });
+        }
+        Platform.setImplicitExit(false);
         assertTrue(started.await(10, TimeUnit.SECONDS), "JavaFX did not start");
     }
 

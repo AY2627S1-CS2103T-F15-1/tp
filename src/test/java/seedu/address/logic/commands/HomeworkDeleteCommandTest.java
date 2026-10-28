@@ -81,14 +81,14 @@ public class HomeworkDeleteCommandTest {
 
         String message = new HomeworkDeleteCommand(INDEX_FIRST_PERSON, false).execute(model).getFeedbackToUser();
 
-        assertEquals("This homework has 1 linked task(s): Algebra Q1-10. Deleting it also deletes those tasks. "
-                + "Type 'hw delete 1 confirm' to delete it anyway. Nothing is deleted.", message);
+        assertEquals("This deletes homework 'Algebra Q1-10', any feedback, and 1 linked task(s). "
+                + "Type 'hw delete 1 confirm' to proceed.", message);
         assertEquals(1, model.getAddressBook().getHomeworkList().size());
         assertEquals(1, model.getAddressBook().getTaskList().size());
     }
 
     @Test
-    public void execute_withFeedbackAndTasksUnconfirmed_mentionsBoth() throws Exception {
+    public void execute_withFeedbackAndTasksUnconfirmed_usesTheTaskMessage() throws Exception {
         Homework item = new HomeworkBuilder(ALICE).withStatus(HomeworkStatus.SUBMITTED).withFeedback("Keep").build();
         showWith(item);
         model.addTask(Task.create("Mark it", null, ALICE, item));
@@ -96,9 +96,8 @@ public class HomeworkDeleteCommandTest {
 
         String message = new HomeworkDeleteCommand(INDEX_FIRST_PERSON, false).execute(model).getFeedbackToUser();
 
-        assertEquals("This homework has feedback recorded and 2 linked task(s): Algebra Q1-10. "
-                + "Deleting it also deletes those tasks. "
-                + "Type 'hw delete 1 confirm' to delete it anyway. Nothing is deleted.", message);
+        assertEquals("This deletes homework 'Algebra Q1-10', any feedback, and 2 linked task(s). "
+                + "Type 'hw delete 1 confirm' to proceed.", message);
         assertEquals(1, model.getAddressBook().getHomeworkList().size());
         assertEquals(2, model.getAddressBook().getTaskList().size());
     }
