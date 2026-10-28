@@ -129,6 +129,16 @@ public class AddressBook implements ReadOnlyAddressBook {
         keepStudentOrder();
     }
 
+    /** Clears this {@code AddressBook} of all data. */
+    public void clearData() {
+        ledgerEntries.clear();
+        tasks.clear();
+        homework.clear();
+        setTravelBuffer(TravelGap.DEFAULT_BUFFER);
+        studentOrder = null;
+        keepStudentOrder();
+    }
+
     @Override
     public int getTravelBuffer() {
         return travelBuffer;
