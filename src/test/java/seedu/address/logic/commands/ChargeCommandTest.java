@@ -177,6 +177,33 @@ public class ChargeCommandTest {
     }
 
     @Test
+    public void lessonDone_missedLessonBilledByHand_completesWithoutASecondCharge() throws Exception {
+        addLesson(LessonStatus.MISSED, "2026-10-18", 60);
+        charge(new BigDecimal("50")).execute(model);
+
+        CommandResult result = new LessonDoneCommand(INDEX_FIRST_PERSON, null, CLOCK).execute(model);
+
+        assertEquals(LessonStatus.COMPLETED, model.getFilteredLessonList().get(0).getStatus());
+        assertEquals(1, model.getAddressBook().getLedgerEntries().size());
+        assertEquals(new BigDecimal("50.00"), balance());
+        assertTrue(result.getFeedbackToUser().contains(LessonDoneCommand.MESSAGE_ALREADY_BILLED),
+                result.getFeedbackToUser());
+        assertFalse(result.getFeedbackToUser().contains("Charge of"), result.getFeedbackToUser());
+    }
+
+    @Test
+    public void lessonDone_missedLessonChargedThenReversed_chargesOnceMore() throws Exception {
+        addLesson(LessonStatus.MISSED, "2026-10-18", 60);
+        charge(new BigDecimal("50")).execute(model);
+        reverse().execute(model);
+
+        CommandResult result = new LessonDoneCommand(INDEX_FIRST_PERSON, null, CLOCK).execute(model);
+
+        assertTrue(result.getFeedbackToUser().contains("Charge of $50.00 recorded."), result.getFeedbackToUser());
+        assertEquals(new BigDecimal("50.00"), balance());
+    }
+
+    @Test
     public void reverse_chargePaidAgainst_leavesTheStudentInCredit() throws Exception {
         addLesson(LessonStatus.COMPLETED, "2026-10-18", 90);
         charge(null).execute(model);

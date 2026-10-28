@@ -42,11 +42,11 @@ public final class Ledger {
     }
 
     /**
-     * Returns the IDs of every entry that some reversal in {@code book} cancels. Callers that test many entries
-     * should build this once and look entries up in it, instead of calling {@link #isReversed} for each entry,
-     * which scans the whole ledger every time.
+     * Returns the IDs of every entry that some reversal in {@code book} cancels, found in one pass. Callers that
+     * test many entries should build this once and look entries up in it, instead of calling {@link #isReversed}
+     * for each entry, which scans the whole ledger every time.
      */
-    public static Set<UUID> reversedEntryIds(ReadOnlyAddressBook book) {
+    public static Set<UUID> reversedIds(ReadOnlyAddressBook book) {
         requireNonNull(book);
         return book.getLedgerEntries().stream().map(LedgerEntry::reverses).filter(Objects::nonNull)
                 .collect(Collectors.toSet());
@@ -81,11 +81,12 @@ public final class Ledger {
     private static LocalDate oldestUnpaidDate(ReadOnlyAddressBook book, Person student) {
         assert balance(book, student).signum() > 0 : "Only debtors have an oldest unpaid charge";
         List<LedgerEntry> entries = book.getLedgerEntries().stream().filter(entry -> entry.isWith(student)).toList();
+        Set<UUID> reversedIds = reversedIds(book);
         BigDecimal payments = entries.stream().filter(entry -> entry.kind() == LedgerEntry.Kind.PAYMENT)
-                .filter(entry -> !isReversed(book, entry))
+                .filter(entry -> !reversedIds.contains(entry.id()))
                 .map(LedgerEntry::amount).reduce(ZERO, BigDecimal::add);
         List<LedgerEntry> charges = entries.stream().filter(entry -> entry.kind() == LedgerEntry.Kind.CHARGE)
-                .filter(entry -> !isReversed(book, entry))
+                .filter(entry -> !reversedIds.contains(entry.id()))
                 .sorted(Comparator.comparing(LedgerEntry::date).thenComparing(LedgerEntry::id)).toList();
         for (LedgerEntry charge : charges) {
             if (payments.compareTo(charge.amount()) < 0) {

@@ -181,6 +181,23 @@ public class LedgerTest {
     }
 
     @Test
+    public void dues_reversedChargesAndPaymentsAreIgnored_whenFindingTheOldestUnpaidDate() {
+        AddressBook book = new AddressBook();
+        book.addPerson(alice);
+        LedgerEntry oldCharge = charge(book, alice, "40", DAY.minusDays(10));
+        book.addLedgerEntry(oldCharge);
+        book.addLedgerEntry(charge(book, alice, "60", DAY.minusDays(2)));
+        LedgerEntry payment = LedgerEntry.payment(alice, new BigDecimal("40"), DAY.minusDays(1));
+        book.addLedgerEntry(payment);
+        book.addLedgerEntry(LedgerEntry.reversalOf(oldCharge, DAY));
+        book.addLedgerEntry(LedgerEntry.reversalOf(payment, DAY));
+
+        // Only the $60 charge is left, and nothing has paid for it
+        assertEquals(List.of(new Ledger.Due(alice, new BigDecimal("60.00"), DAY.minusDays(2))),
+                Ledger.dues(book, DAY));
+    }
+
+    @Test
     public void dues_paymentsClearOldestChargesFirst_andIncludeArchivedStudents() {
         AddressBook book = new AddressBook();
         Person archivedBob = bob.withArchived(true);
@@ -239,7 +256,8 @@ public class LedgerTest {
         LedgerEntry charge = book.chargeLesson(lesson, lesson.complete(null)).orElseThrow();
         assertEquals(charge, book.getLedgerEntries().getFirst());
         assertEquals(new BigDecimal("75.00"), charge.amount());
-        assertThrows(IllegalArgumentException.class, () -> book.chargeLesson(lesson, lesson.complete(null)));
+        // A lesson that already has an active charge is completed without a second one
+        assertTrue(book.chargeLesson(lesson, lesson.complete(null)).isEmpty());
         assertEquals(1, book.getLedgerEntries().size());
     }
 
@@ -307,10 +325,10 @@ public class LedgerTest {
     }
 
     @Test
-    public void reversedEntryIds_containsExactlyTheEntriesSomeReversalCancels() {
+    public void reversedIds_containsExactlyTheEntriesSomeReversalCancels() {
         AddressBook book = new AddressBook();
         book.addPerson(alice);
-        assertTrue(Ledger.reversedEntryIds(book).isEmpty());
+        assertTrue(Ledger.reversedIds(book).isEmpty());
 
         LedgerEntry reversedPayment = LedgerEntry.payment(alice, new BigDecimal("30.00"), DAY);
         LedgerEntry keptPayment = LedgerEntry.payment(alice, new BigDecimal("40.00"), DAY);
@@ -319,10 +337,10 @@ public class LedgerTest {
         LedgerEntry reversal = LedgerEntry.reversalOf(reversedPayment, DAY);
         book.addLedgerEntry(reversal);
 
-        assertEquals(Set.of(reversedPayment.id()), Ledger.reversedEntryIds(book));
+        assertEquals(Set.of(reversedPayment.id()), Ledger.reversedIds(book));
         assertTrue(Ledger.isReversed(book, reversedPayment));
         assertFalse(Ledger.isReversed(book, keptPayment));
-        assertFalse(Ledger.reversedEntryIds(book).contains(reversal.id()));
+        assertFalse(Ledger.reversedIds(book).contains(reversal.id()));
     }
 
     @Test

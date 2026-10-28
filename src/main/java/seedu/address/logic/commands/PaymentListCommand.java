@@ -66,7 +66,7 @@ public class PaymentListCommand extends Command {
         // Built once, so listing n payments stays linear instead of scanning the students and the ledger per row.
         Map<UUID, String> studentNames = model.getAddressBook().getPersonList().stream()
                 .collect(Collectors.toMap(Person::getId, person -> person.getName().toString()));
-        Set<UUID> reversedIds = Ledger.reversedEntryIds(model.getAddressBook());
+        Set<UUID> reversedIds = Ledger.reversedIds(model.getAddressBook());
 
         String rows = IntStream.range(0, payments.size())
                 .mapToObj(i -> (i + 1) + ". " + describe(payments.get(i), studentNames, reversedIds))
