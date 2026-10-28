@@ -74,6 +74,12 @@ public class JsonAddressBookStorageTest {
     }
 
     @Test
+    public void readAddressBook_deeplyNestedJson_throwsDataLoadingException() throws Exception {
+        int depth = 10_000;
+        assertInvalidJsonIsRejected("{\"persons\":" + "[".repeat(depth) + "]".repeat(depth) + "}");
+    }
+
+    @Test
     public void readAddressBook_nullStudent_throwsDataLoadingException() throws Exception {
         assertInvalidJsonIsRejected("{\"persons\":[null]}");
     }
