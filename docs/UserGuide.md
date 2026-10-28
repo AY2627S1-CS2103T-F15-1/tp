@@ -75,6 +75,28 @@ For power-users, TutorFlow can help you manage your students and lessons faster 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </box>
 
+### Writing dates
+
+Every date parameter, such as `d/` in `lesson add`, `agenda` and `pay`, `due/` in `hw add` and `task add`, accepts the same ways of writing a date, so you can type the one you find quickest.
+
+* The **day, month and year** are separated by `/`, `-`, `.` or a space, the same one between all three.
+* The date is written **day first** or **year first**. A month is never written first, so `12/22/2026` is not accepted.
+* The **month** is a number, such as `9` or `09`, or its English name in full or short, such as `Sep`, `Sept` or `September`, in any letter case.
+* The **year** has four digits, or two digits for a year from 2000 to 2099.
+* `today` and `tmr` also work wherever a date is accepted, in any letter case.
+* A date that does not exist, such as `30/02/2026`, is rejected. It is never moved to a nearby date.
+
+| You can write | Meaning |
+|---------------|---------|
+| `2026-12-22`, `2026/12/22`, `2026.12.22`, `2026 Dec 22` | 22 December 2026, year first |
+| `22/12/2026`, `22-12-2026`, `22.12.2026`, `22 December 2026` | 22 December 2026, day first |
+| `22/12/26`, `22-Dec-26`, `26-12-22`, `26/Dec/22` | 22 December 2026, with a two-digit year |
+
+<box type="warning" seamless>
+
+**Two readings:** with a two-digit year, a date such as `05/10/26` could be 5 October 2026 or 26 October 2005. TutorFlow takes the reading that is nearer to today's date, and if both are equally near, the one with the day first. Every command that takes a date shows the date in full in its reply, such as `Tue 22 Dec 2026`, so check it there. When in doubt, write the year with four digits.
+</box>
+
 ### Viewing help: `help`
 
 Shows every command, or how to use one command, without leaving TutorFlow.
@@ -239,7 +261,7 @@ Schedules a lesson for a student.
 Format: `lesson add st/STUDENT_INDEX [s/SUBJECT] d/DATE t/TIME [dur/MINUTES] [v/VENUE] [past/]`
 
 * `STUDENT_INDEX` is the index number shown in the displayed student list, and **must be a positive integer** 1, 2, 3, ...
-* `DATE` is written as `YYYY-MM-DD`, such as `2026-12-22`, as `D/M/YYYY`, such as `22/12/2026`, or as the word `today` or `tmr` (tomorrow), in any letter case, which TutorFlow works out from the date on your computer. It must be today or later, and no more than 2 years ahead, which catches a mistyped year.
+* `DATE` is written in any of the [ways to write a date](#writing-dates), such as `2026-12-22`, `22/12/2026` or `22 Dec 26`, or as the word `today` or `tmr` (tomorrow), in any letter case, which TutorFlow works out from the date on your computer. It must be today or later, and no more than 2 years ahead, which catches a mistyped year.
 * `past/` is a flag that records a lesson that has **already taken place**, so that you can complete it and bill it. With `past/`, a date before today is accepted, up to 2 years ago, but a date after today is rejected, so use `past/` only for a lesson that has already taken place. Without it, a date in the past is rejected, because that is usually a mistyped year. Every other rule still applies.
 * Each lesson remembers the student's **level at the time of booking**, so that `lesson list` can still show it after the student moves up a level. Lessons that were booked before this version show `unknown (not recorded)`.
 * `TIME` is written in 24-hour time, such as `16:30`. `4:30pm` and `1630` are also accepted.
@@ -815,7 +837,7 @@ Numbers are session-local, so display a new list after restarting.
 * Descriptions contain 1-200 printable characters on one line. Feedback contains 1-1000.
   Surrounding spaces are trimmed and repeated spaces are collapsed. Empty values and duplicate
   prefixes are rejected. Free text may contain unrelated prefix-like words, such as `n/`.
-* Due dates accept `YYYY-MM-DD`, `DD/MM/YYYY`, `today`, or `tmr`. Assignment dates and changed due
+* Due dates accept any of the [ways to write a date](#writing-dates), `today`, or `tmr`. Assignment dates and changed due
   dates must be today through one calendar year ahead, inclusive, using the local computer date.
   Editing another field preserves an old due date; explicitly supplying the same old date also works.
 * Identical normalized descriptions and due dates for the same student are rejected, even when

@@ -395,6 +395,31 @@ public class ParserUtilTest {
     }
 
     @Test
+    public void parseDate_manyWaysOfWritingADate_sameDate() throws Exception {
+        LocalDate day = LocalDate.of(2026, 10, 26);
+        LessonDate expected = new LessonDate("2026-12-22");
+
+        for (String text : new String[] {"22/12/2026", "22-12-2026", "22.12.2026", "22/12/26", "22-12-26",
+            "26-12-22", "26/12/22", "2026/12/22", "22 Dec 2026", "22-Dec-26", "2026-Dec-22", "22 December 2026"}) {
+            assertEquals(expected, ParserUtil.parseDate(text, day), text);
+        }
+    }
+
+    @Test
+    public void parseDate_twoDigitsEitherWay_usesTheGivenDayToChoose() throws Exception {
+        // 26-12-22 is 22 December 2026 or 26 December 2022
+        assertEquals(new LessonDate("2026-12-22"), ParserUtil.parseDate("26-12-22", LocalDate.of(2026, 10, 26)));
+        assertEquals(new LessonDate("2022-12-26"), ParserUtil.parseDate("26-12-22", LocalDate.of(2022, 10, 26)));
+    }
+
+    @Test
+    public void parseDate_notADate_throwsParseExceptionWithTheAcceptedWays() {
+        for (String text : new String[] {"12/22/2026", "30/02/2026", "22 Dce 2026", "9/10", "next week"}) {
+            assertThrows(ParseException.class, LessonDate.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseDate(text));
+        }
+    }
+
+    @Test
     public void parseDate_keywordUsesComputerDate() throws Exception {
         assertEquals(new LessonDate(LocalDate.now().toString()), ParserUtil.parseDate("today"));
     }

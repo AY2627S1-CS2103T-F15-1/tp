@@ -44,14 +44,30 @@ public class LessonDateTest {
         assertFalse(LessonDate.isValidDate("2026-13-01")); // impossible month
         assertFalse(LessonDate.isValidDate("30/02/2026")); // impossible date in the other format
         assertFalse(LessonDate.isValidDate("9/10")); // no year
-        assertFalse(LessonDate.isValidDate("2026/09/22")); // wrong separator
-        assertFalse(LessonDate.isValidDate("22-09-2026")); // wrong order
+        assertFalse(LessonDate.isValidDate("09/22/2026")); // month first
 
         // valid dates
         assertTrue(LessonDate.isValidDate("2026-09-22"));
         assertTrue(LessonDate.isValidDate("2028-02-29")); // leap day
         assertTrue(LessonDate.isValidDate("22/09/2026"));
         assertTrue(LessonDate.isValidDate(" 2026-09-22 ")); // surrounding spaces
+        assertTrue(LessonDate.isValidDate("2026/09/22")); // year first with another separator
+        assertTrue(LessonDate.isValidDate("22-09-2026")); // day first with another separator
+    }
+
+    @Test
+    public void constructor_dateReadableTwoWays_usesGivenTodayToChoose() {
+        assertEquals(new LessonDate("2026-12-22"), new LessonDate("26-12-22", LocalDate.of(2026, 10, 26)));
+        assertEquals(new LessonDate("2022-12-26"), new LessonDate("26-12-22", LocalDate.of(2022, 10, 26)));
+    }
+
+    @Test
+    public void constructor_otherWaysOfWritingADate_sameDate() {
+        LessonDate expected = new LessonDate("2026-09-22");
+
+        assertEquals(expected, new LessonDate("22-Sep-2026"));
+        assertEquals(expected, new LessonDate("22 September 2026"));
+        assertEquals(expected, new LessonDate("22.9.2026"));
     }
 
     @Test
