@@ -115,4 +115,18 @@ public class SubjectTest {
             Locale.setDefault(defaultLocale);
         }
     }
+
+    @Test
+    public void displayOrder_turkishLocale_alphabeticalIgnoringCase() {
+        Locale defaultLocale = Locale.getDefault();
+        try {
+            // In Turkish, "I".toLowerCase() is a dotless i, which would sort Info after Japanese
+            Locale.setDefault(Locale.forLanguageTag("tr-TR"));
+            List<String> sorted = List.of(new Subject("Japanese"), new Subject("Info"), new Subject("biology"))
+                    .stream().sorted(Subject.DISPLAY_ORDER).map(Subject::toString).toList();
+            assertEquals(List.of("biology", "Info", "Japanese"), sorted);
+        } finally {
+            Locale.setDefault(defaultLocale);
+        }
+    }
 }
