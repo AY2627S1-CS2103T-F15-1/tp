@@ -29,8 +29,11 @@ public class ChargeCommandParser implements Parser<ChargeCommand> {
     @Override
     public ChargeCommand parse(String args) throws ParseException {
         String trimmed = args.strip();
-        boolean isReversal = CommandInput.split(trimmed).map(CommandInput::getWord)
-                .filter(ChargeCommand.REVERSE_KEYWORD::equals).isPresent();
+        String firstWord = CommandInput.split(trimmed).map(CommandInput::getWord).orElse("");
+        boolean isReversal = firstWord.equals(ChargeCommand.REVERSE_KEYWORD);
+        if (firstWord.matches("\\p{L}+") && !isReversal) {
+            throw new ParseException(ChargeCommand.MESSAGE_SUBCOMMANDS);
+        }
         if (isReversal) {
             trimmed = trimmed.substring(ChargeCommand.REVERSE_KEYWORD.length());
         }
