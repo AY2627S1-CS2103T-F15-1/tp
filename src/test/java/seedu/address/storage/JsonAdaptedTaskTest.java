@@ -9,13 +9,18 @@ import static seedu.address.testutil.TypicalLessons.ALICE_MATH;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.exceptions.IllegalValueException;
+import seedu.address.commons.util.JsonUtil;
+import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.homework.Homework;
+import seedu.address.model.person.Person;
 import seedu.address.model.task.Task;
+import seedu.address.testutil.PersonBuilder;
 import seedu.address.testutil.TaskBuilder;
 
 public class JsonAdaptedTaskTest {
@@ -52,6 +57,32 @@ public class JsonAdaptedTaskTest {
         assertEquals(task, restored);
         assertEquals(homework.getId(), restored.getHomeworkId().get());
         assertTrue(restored.getLessonId().isEmpty());
+    }
+
+    @Test
+    public void toModelType_paymentTask_roundTripKeepsThePaymentId() throws Exception {
+        Person student = new PersonBuilder().withName("Alice").withPhone("91234567").build();
+        LedgerEntry payment = LedgerEntry.payment(student, new java.math.BigDecimal("10.00"),
+                LocalDate.of(2026, 10, 28), "ref");
+        Task task = new TaskBuilder().withPayment(payment, student).build();
+
+        Task restored = new JsonAdaptedTask(task).toModelType();
+
+        assertEquals(task, restored);
+        assertEquals(payment.id(), restored.getPaymentId().get());
+        assertTrue(restored.getLessonId().isEmpty());
+        assertTrue(restored.getHomeworkId().isEmpty());
+    }
+
+    @Test
+    public void paymentIdBeforeSchema18_isRejected() throws Exception {
+        String payment = UUID.randomUUID().toString();
+        JsonAdaptedTask task = new JsonAdaptedTask(ID, "Call", null, false, STUDENT, null, null, payment);
+        String json = JsonUtil.toJsonString(new JsonSerializableAddressBook(
+                List.of(new JsonAdaptedPerson(ALICE)), List.of(), List.of(), List.of(), List.of(task)));
+        json = json.replace("\"schemaVersion\" : 18", "\"schemaVersion\" : 17");
+        JsonSerializableAddressBook data = JsonUtil.fromJsonString(json, JsonSerializableAddressBook.class);
+        assertThrows(IllegalValueException.class, data::toModelType);
     }
 
     @Test
@@ -103,8 +134,11 @@ public class JsonAdaptedTaskTest {
                 new JsonAdaptedTask(ID, "Call", null, false, STUDENT, "not-a-uuid", null)::toModelType);
         assertThrows(IllegalValueException.class, String.format(MESSAGE_INVALID_ID_FORMAT, "homeworkId"),
                 new JsonAdaptedTask(ID, "Call", null, false, STUDENT, null, "")::toModelType);
-        assertThrows(IllegalValueException.class, JsonAdaptedTask.MESSAGE_TWO_LINKS,
-                new JsonAdaptedTask(ID, "Call", null, false, STUDENT, valid.toString(),
-                        valid.toString())::toModelType);
+        assertThrows(IllegalValueException.class, JsonAdaptedTask.MESSAGE_TWO_LINKS, ()
+                -> new JsonAdaptedTask(ID, "Call", null, false, STUDENT, valid.toString(),
+                        valid.toString()).toModelType());
+        assertThrows(IllegalValueException.class, JsonAdaptedTask.MESSAGE_TWO_LINKS, ()
+                -> new JsonAdaptedTask(ID, "Call", null, false, STUDENT, null, valid.toString(),
+                        valid.toString()).toModelType());
     }
 }

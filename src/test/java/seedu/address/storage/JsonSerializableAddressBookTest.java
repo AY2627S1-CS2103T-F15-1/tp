@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.commons.util.JsonUtil;
 import seedu.address.model.AddressBook;
+import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonDate;
@@ -149,6 +150,20 @@ public class JsonSerializableAddressBookTest {
     }
 
     @Test
+    public void toModelType_paymentTask_keepsThePaymentLink() throws Exception {
+        AddressBook addressBook = TypicalLessons.getTypicalAddressBookWithLessons();
+        LedgerEntry payment = LedgerEntry.payment(TypicalPersons.ALICE, new java.math.BigDecimal("10.00"),
+                LocalDate.of(2026, 10, 28), "PayNow");
+        addressBook.addLedgerEntry(payment);
+        addressBook.addTask(new TaskBuilder().withPayment(payment, TypicalPersons.ALICE).build());
+
+        AddressBook restored = new JsonSerializableAddressBook(addressBook).toModelType();
+
+        assertEquals(payment.id(), restored.getTaskList().getFirst().getPaymentId().orElseThrow());
+        assertEquals(TypicalPersons.ALICE.getId(), restored.getTaskList().getFirst().getStudentId());
+    }
+
+    @Test
     public void toModelType_noTasksInFile_loadsWithoutTasks() throws Exception {
         JsonSerializableAddressBook dataFromFile = JsonUtil.readJsonFile(TYPICAL_PERSONS_FILE,
                 JsonSerializableAddressBook.class).get();
@@ -214,6 +229,37 @@ public class JsonSerializableAddressBookTest {
                 List.of(unresolvable.get(0), valid, unresolvable.get(3)));
         assertEquals(List.of(TaskBuilder.idOf("ok")),
                 mixed.toModelType().getTaskList().stream().map(Task::getId).toList());
+    }
+
+    @Test
+    public void toModelType_taskWithMissingPayment_isSkipped() throws Exception {
+        AddressBook addressBook = TypicalLessons.getTypicalAddressBookWithLessons();
+        String json = JsonUtil.toJsonString(new JsonSerializableAddressBook(addressBook));
+        String missing = UUID.randomUUID().toString();
+        json = json.replace("\"tasks\" : [ ]", "\"tasks\" : [{\"id\":\"" + TaskBuilder.idOf("pay")
+                + "\",\"description\":\"Call\",\"done\":false,\"studentId\":\""
+                + TypicalPersons.ALICE.getId() + "\",\"paymentId\":\"" + missing + "\"}]");
+
+        AddressBook restored = JsonUtil.fromJsonString(json, JsonSerializableAddressBook.class).toModelType();
+
+        assertTrue(restored.getTaskList().isEmpty());
+    }
+
+    @Test
+    public void toModelType_taskLinkedToANonPaymentLedgerEntry_isSkipped() throws Exception {
+        AddressBook addressBook = TypicalLessons.getTypicalAddressBookWithLessons();
+        Lesson lesson = addressBook.getLessonList().stream().filter(item -> item.isWith(TypicalPersons.ALICE))
+                .findFirst().orElseThrow();
+        LedgerEntry charge = LedgerEntry.charge(TypicalPersons.ALICE, lesson, new java.math.BigDecimal("10.00"));
+        addressBook.addLedgerEntry(charge);
+        String json = JsonUtil.toJsonString(new JsonSerializableAddressBook(addressBook));
+        json = json.replace("\"tasks\" : [ ]", "\"tasks\" : [{\"id\":\"" + TaskBuilder.idOf("pay")
+                + "\",\"description\":\"Call\",\"done\":false,\"studentId\":\""
+                + TypicalPersons.ALICE.getId() + "\",\"paymentId\":\"" + charge.id() + "\"}]");
+
+        AddressBook restored = JsonUtil.fromJsonString(json, JsonSerializableAddressBook.class).toModelType();
+
+        assertTrue(restored.getTaskList().isEmpty());
     }
 
     @Test

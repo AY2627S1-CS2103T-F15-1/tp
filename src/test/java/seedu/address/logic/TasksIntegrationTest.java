@@ -141,6 +141,38 @@ public class TasksIntegrationTest {
     }
 
     @Test
+    public void execute_paymentTask_usesLastPayListAndSurvivesReversal() throws Exception {
+        logic.execute("pay st/1 amt/50 d/" + LocalDate.now().minusDays(1));
+        logic.execute("pay list");
+        logic.execute("task add pay/1 desc/Remind about fees");
+
+        var payment = saved().getLedgerEntries().getFirst();
+        var task = saved().getTaskList().getFirst();
+        assertEquals(payment.id(), task.getPaymentId().orElseThrow());
+        assertEquals(ALICE.getId(), task.getStudentId());
+        assertTrue(logic.execute("task list").getFeedbackToUser().contains("payment $50.00"), task.toString());
+
+        logic.execute("pay reverse 1");
+        logic.execute("task list");
+        var afterReverse = saved();
+        var storedTask = afterReverse.getTaskList().getFirst();
+        assertEquals(payment.id(), storedTask.getPaymentId().orElseThrow());
+        assertTrue(afterReverse.getLedgerEntries().stream().anyMatch(entry -> entry.id().equals(payment.id())));
+        assertTrue(logic.execute("task list").getFeedbackToUser().contains("payment $50.00"));
+    }
+
+    @Test
+    public void execute_paymentTaskBeforePayList_reportsTheListToRunFirst() throws Exception {
+        logic.execute("pay st/1 amt/50");
+        try {
+            logic.execute("task add pay/1 desc/Remind about fees");
+            throw new AssertionError("A payment link without a shown payment list should be rejected");
+        } catch (seedu.address.logic.commands.exceptions.CommandException e) {
+            assertEquals("Invalid payment index. Run 'pay list' first.", e.getMessage());
+        }
+    }
+
+    @Test
     public void execute_taskListForStudent_includesTheirLessonAndHomeworkTasksOnly() throws Exception {
         logic.execute("lesson add st/1 d/" + DAY + " t/16:00");
         logic.execute("lesson list st/1");
