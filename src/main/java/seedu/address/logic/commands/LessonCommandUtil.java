@@ -12,7 +12,7 @@ import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
-import seedu.address.model.finance.LedgerEntry;
+import seedu.address.model.finance.Ledger;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonDate;
 import seedu.address.model.lesson.LessonDuration;
@@ -34,8 +34,8 @@ final class LessonCommandUtil {
     static final String MESSAGE_SUBJECT_REQUIRED = "%1$s takes more than one subject (%2$s). "
             + "Specify one with " + PREFIX_SUBJECT + "SUBJECT.";
     static final String MESSAGE_DUPLICATE_LESSON = "This exact lesson already exists.";
-    static final String MESSAGE_CHARGED_LESSON = "Cannot change a billed lesson. "
-            + "Its financial history must be retained.";
+    static final String MESSAGE_CHARGED_LESSON = "Reverse the active charge with "
+            + "'charge reverse l/INDEX' before cancelling or rescheduling this lesson.";
     static final String MESSAGE_OVERLAP_WARNING = "\nWarning: this overlaps with %1$s";
     static final String MESSAGE_TRAVEL_WARNING = "Travel warning: %s at %s -> %s at %s (%s %s): "
             + "%d min available; %d min required.";
@@ -70,12 +70,9 @@ final class LessonCommandUtil {
         return shownLessons.get(lessonIndex.getZeroBased());
     }
 
-    /** Prevents changing a lesson once its charge has been recorded. */
+    /** Prevents changing a lesson while it has an active charge; reversing the charge lifts the restriction. */
     static void requireNotCharged(Model model, Lesson lesson) throws CommandException {
-        boolean isCharged = model.getAddressBook().getLedgerEntries().stream()
-                .anyMatch(entry -> entry.kind() == LedgerEntry.Kind.CHARGE
-                        && lesson.getId().equals(entry.lessonId()));
-        if (isCharged) {
+        if (Ledger.activeCharge(model.getAddressBook(), lesson.getId()).isPresent()) {
             throw new CommandException(MESSAGE_CHARGED_LESSON);
         }
     }

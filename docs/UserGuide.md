@@ -177,6 +177,7 @@ Format: `view INDEX`
   * the **balance**: what the student owes, as `OUTSTANDING $X.XX`, or the credit from paying ahead, as `IN CREDIT $X.XX`. A student who owes nothing shows `OUTSTANDING $0.00`.
   * the **outstanding homework**: assignments awaiting submission or review, with due dates and feedback
 * A section with nothing to show says so, for example `No upcoming lessons.`, instead of disappearing.
+* An archived student is marked after their name, as in `Viewing: Chen Hao (archived)`, so that you can tell them apart from active students when you reach them through `student list all/` or `find`.
 * The command only shows information. It does not change the student list, so the indexes you use for other commands stay the same.
 
 Examples:
@@ -224,7 +225,8 @@ Format: `sort [asc|desc]`
 
 * `asc` sorts from A to Z and `desc` sorts from Z to A. If no order is given, `asc` is used.
 * All students are shown after sorting, even if the list was filtered by an earlier `find` command.
-* The new order is saved, so the students stay in this order the next time you open the app.
+* TutorFlow keeps this order. A student you add later, or whose name you change, takes their place in it, so the list stays sorted.
+* The order is saved, so it is still used the next time you open the app. Until you first use `sort`, new students are added at the end of the list.
 
 Examples:
 * `sort` sorts all students from A to Z.
@@ -289,7 +291,7 @@ Format: `agenda [d/DATE] [week/]`
 * Each line shows the lesson number, the time, the student, the subject, the venue, and the status if the lesson is not simply scheduled. Lessons that overlap another lesson are marked `⚠ overlaps`.
 * Cancelled lessons are listed but are not counted in the number of lessons and the total time.
 * The lesson numbers are the ones that `lesson move`, `lesson cancel`, `lesson done` and `lesson missed` take, so run `agenda` or `lesson list` first and then use the number you see.
-* Lessons are numbered in time order. If moving, cancelling, completing or marking a lesson missed changes the displayed numbers, the result includes `Lesson numbers have changed. Current lesson list:` and the refreshed list. Use those new numbers for your next command. Running `agenda` or `lesson list` again also refreshes the list.
+* Lessons are numbered in time order. If moving, cancelling, completing or marking a lesson missed changes the displayed numbers, the result includes `Lesson numbers have changed. Current lesson list:` and the refreshed list. If every lesson keeps its number, for example when a lesson only changes its time or is cancelled but stays in the list, the numbers are not shown again. Use those new numbers for your next command. Running `agenda` or `lesson list` again also refreshes the list.
 * A day without lessons is not an error: it shows `No lessons on Tue 22 Dec 2026.`
 
 Examples:
@@ -418,7 +420,7 @@ Marks a lesson completed and optionally records what was taught.
 Format: `lesson done INDEX [n/NOTES]`
 
 * `INDEX` is the lesson number from the current `agenda` or `lesson list`, not the student number. It must be a positive integer.
-* The first completion adds the hourly lesson fee to the student’s balance and shows `Charge of $X.XX recorded.` Updating notes never charges again. A fee that is zero, including after cent rounding, completes the lesson without creating a charge and explains why: for a rate of $0.00 it says `No automatic charge: This student's rate is $0.00.` and how to specify an amount. Manual charging is follow-up work.
+* The first completion adds the hourly lesson fee to the student’s balance and shows `Charge of $X.XX recorded.` Updating notes never charges again. A fee that is zero, including after cent rounding, completes the lesson without creating a charge and explains why: for a rate of $0.00 it says `No automatic charge: This student's rate is $0.00.` and how to specify an amount. Use [`charge`](#charging-a-lesson-charge) to bill a lesson by hand.
 * Only lessons dated today or earlier can be completed, using your computer's local date. A cancelled lesson cannot be completed.
 * `NOTES` is optional free text of 1–1000 printable characters on one line. Leading/trailing whitespace is trimmed and repeated spaces are collapsed. An empty `n/`, line breaks and repeated `n/` parameters are rejected.
 * Completing a lesson retains its student, subject, date, time, duration and venue. The status and notes are saved automatically. Use `view STUDENT_INDEX` to see recent notes and the completed-lesson count.
@@ -454,7 +456,7 @@ Keeps a to-do attached to the student or the lesson that it is about, so that yo
 Format: `task add st/INDEX|lesson/INDEX|hw/INDEX|pay/INDEX desc/TEXT [due/DATE]`
 
 * Give **exactly one** link. `st/INDEX` takes a number from the displayed student list. `lesson/INDEX` takes a lesson number from the last `agenda` or `lesson list`.
-* `hw/INDEX` takes a homework number from the last `hw list`. If that homework was deleted since, TutorFlow says so instead of picking another item. `pay/INDEX` is accepted for the final command format, but payments cannot be listed yet, so it answers `Invalid payment index. Run 'pay list' first.`
+* `hw/INDEX` takes a homework number from the last `hw list`. If that homework was deleted since, TutorFlow says so instead of picking another item. `pay/INDEX` is accepted for the final command format, but a task cannot be linked to a payment yet, so it answers `Invalid payment index. Run 'pay list' first.`
 * `TEXT` is 1 to 200 characters on one line.
 * `DATE` is written as for [`lesson add`](#scheduling-a-lesson-lesson-add). It is optional, and a task without one is shown as `(no due date)`. A due date must be today or later (`today` and `tmr` work), otherwise TutorFlow answers `Due dates must be today or later.`
 * Two tasks may have the same text. That is not a duplicate.
@@ -524,12 +526,13 @@ Format: `pay st/STUDENT_INDEX amt/AMOUNT [d/DATE] [n/NOTES]`
 
 * `STUDENT_INDEX` is the positive student number in the displayed student list. After `find`, use that filtered list's numbers. It is independent of lesson numbers, so payment can follow `lesson done` immediately without running `agenda` or `list` again.
 * `AMOUNT` must be greater than zero with at most two decimal places, such as `50`, `50.00` or `0.50`. Dollar signs, negative amounts, zero, commas and scientific notation are rejected.
+* A payment of $10,000.00 or more is recorded, but TutorFlow adds a warning such as `Warning: $100000.00 is an unusually large payment. Check that the amount has no extra digits.`
 * `DATE` defaults to today using your computer's local date. Accepts `YYYY-MM-DD`, `DD/MM/YYYY`, `today` and `tmr`; future dates are rejected with `Payment dates cannot be in the future.`
 * `NOTES` is optional printable text of 1–200 characters on one line, such as a transfer reference. Extra spaces are collapsed and the notes are saved with the payment.
 * Each prefix can appear once, in any order. Both `st/` and `amt/` are required. Empty or repeated fields are rejected.
 * Payments are saved automatically. Partial payments reduce the amount owed; excess payments and advance payments are accepted as credit. Archived students can receive payments.
 * Every invocation records another payment. If saving fails after a payment is applied, fix the save problem and use `save` to retry; repeating `pay` would record a second payment.
-* Payment listing, manual charging and reversals are follow-up features and are not available in this increment.
+* After each payment, TutorFlow reminds you that payment numbers stay as last shown. To correct a wrong payment, see [`pay list` and `pay reverse`](#listing-and-reversing-payments-pay-list-pay-reverse). A lesson charge is corrected with [`charge reverse`](#charging-a-lesson-charge).
 
 Examples:
 * `pay st/1 amt/20` records $20 received from the first displayed student today.
@@ -539,6 +542,67 @@ Example output:
 ```text
 Payment of $20.00 recorded for Alice on 2026-10-19.
 Balance: OUTSTANDING $30.00.
+Payment indices stay as last shown; run 'pay list' to refresh.
+```
+
+### Listing and reversing payments: `pay list`, `pay reverse`
+
+Shows the payments you have recorded, and takes back a payment that was entered wrongly.
+
+Format: `pay list [st/STUDENT_INDEX]`
+
+Format to take a payment back: `pay reverse PAYMENT_INDEX`
+
+* `pay list` shows every payment, oldest first, or only those of one student when you give `st/STUDENT_INDEX` (a number from the displayed student list). Each row has a number, the date, the student, the amount and any notes. A payment that was reversed stays in the list, marked `[REVERSED]`.
+* `PAYMENT_INDEX` is the number from the **last** `pay list`. The numbers stay fixed until you run `pay list` again, even after you add or reverse payments, so a number always means the row you saw.
+* A payment can be reversed once, and a reversal cannot itself be reversed. If you reversed a payment by mistake, record the payment again with `pay`.
+* The original payment is kept and an opposite entry is added, so the account shows both the mistake and its correction. Reversing a payment that has already been counted against charges is allowed; the balance is recalculated.
+* If no list has been shown, or the number is not in it, TutorFlow says `Invalid payment index. Run 'pay list' to display payments first.` Reversing a payment twice says `That payment has already been reversed.`
+
+Examples:
+* `pay list` lists all payments.
+* `pay list st/2` lists the payments of the second displayed student.
+* `pay reverse 2` reverses payment 2 of the last list.
+
+Example output. `pay reverse 2` replies:
+```text
+Payment of $50.00 reversed.
+```
+and a later `pay list` shows that payment marked:
+```text
+PAYMENTS
+1. 2026-10-18 Priya Kumar $100.00 — PayNow ref 4471
+2. 2026-10-19 Priya Kumar $50.00 [REVERSED]
+Use 'pay reverse INDEX' with these rows. Indices stay fixed until the next 'pay list'.
+```
+
+### Charging a lesson: `charge`
+
+Records what a lesson cost by hand, or takes a charge back. TutorFlow normally charges a lesson by itself when you complete it with `lesson done`. `charge` is for the cases that does not cover: billing a missed lesson, an agreed discount, or a lesson of a student whose rate is $0.
+
+Format: `charge l/LESSON_INDEX [amt/AMOUNT]`
+
+Format to take a charge back: `charge reverse l/LESSON_INDEX`
+
+* `LESSON_INDEX` is the lesson number from the current `agenda` or `lesson list`, not the student number.
+* Without `amt/`, the charge is the student's current hourly rate × the lesson duration ÷ 60, rounded to cents. `AMOUNT` must be greater than zero with at most two decimal places.
+* Only a completed or missed lesson can be charged. A cancelled lesson gives `Cannot charge a cancelled lesson.`, and a lesson that is still scheduled gives `Cannot charge a lesson scheduled for Thu 22 Oct 2026.`
+* A lesson has at most one active charge. A second one gives `That lesson already has a charge of $75.50.`
+* If the student's rate is $0 and you give no `amt/`, TutorFlow asks you to specify an amount.
+* A charge is never deleted. `charge reverse` adds an opposite entry dated today, so the account shows both the charge and its correction. After a reversal the lesson can be charged again, for example with a different amount. If the student has already paid, the reversal can leave them in credit.
+* While a lesson has an active charge it cannot be moved or cancelled. TutorFlow says `Reverse the active charge with 'charge reverse l/INDEX' before cancelling or rescheduling this lesson.`
+* A missed lesson that you billed with `charge` can still be completed with `lesson done` to correct a wrong "missed". It becomes completed and is not charged a second time.
+* `charge reverse` on a lesson without an active charge gives `That lesson has no active charge; it may already have been reversed.`
+
+Examples:
+* `charge l/1` charges lesson 1 at the student's rate.
+* `charge l/1 amt/50` charges $50 for lesson 1.
+* `charge reverse l/1` takes back the charge of lesson 1.
+
+Example output:
+```text
+Charge of $75.50 recorded for Priya Kumar — Math, Sun 18 Oct 2026.
+Charge of $75.50 reversed for Priya Kumar.
 ```
 
 ### Viewing a student's balance: `balance`
@@ -655,7 +719,9 @@ Action     | Format, Examples
 **List**   | `list [l/LEVEL] [s/SUBJECT] [archived/\|all/]`<br> e.g., `list`, `list l/S3 s/Math`, `list archived/`
 **View**   | `view INDEX`<br> e.g., `view 1`
 **Balance** | `balance st/INDEX`<br> e.g., `balance st/1`
+**Charge** | `charge l/LESSON_INDEX [amt/AMOUNT]`, `charge reverse l/LESSON_INDEX`<br> e.g., `charge l/1`, `charge l/1 amt/50`, `charge reverse l/1`
 **Payment** | `pay st/STUDENT_INDEX amt/AMOUNT [d/DATE] [n/NOTES]`<br> e.g., `pay st/1 amt/50`
+**Payment list / reverse** | `pay list [st/STUDENT_INDEX]`, `pay reverse PAYMENT_INDEX`<br> e.g., `pay list st/2`, `pay reverse 2`
 **Dues** | `dues`
 **Sort**   | `sort [asc\|desc]`<br> e.g., `sort desc`
 **Archive / Restore** | `archive INDEX`, `restore INDEX`<br> e.g., `archive 3`, `list archived/` then `restore 1`
@@ -700,6 +766,8 @@ The existing student commands remain available. You can also write `student add`
   The two flags cannot be combined and take no values.
 * `archive INDEX` (or `student archive INDEX`) hides a student from active lists while retaining
   lessons and upcoming agenda commitments. An archived student cannot receive new lessons.
+  In a list that includes archived students, such as `student list all/`, their card shows
+  `(archived)` after the name.
 * `student list archived/` followed by `restore INDEX` restores a student. All student commands
   use the currently visible student numbers; the student panel refreshes after changes.
 * `lesson prep INDEX n/NOTES` records 1-1000 printable characters of preparation. It neither

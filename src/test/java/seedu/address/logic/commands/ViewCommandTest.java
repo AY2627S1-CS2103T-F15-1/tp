@@ -132,6 +132,16 @@ public class ViewCommandTest {
     }
 
     @Test
+    public void execute_archivedStudent_marksTheStudentArchived() throws Exception {
+        model.setPerson(ALICE, ALICE.withArchived(true));
+        model.updateFilteredPersonList(Model.PREDICATE_SHOW_ALL_PERSONS);
+
+        String overview = view(INDEX_FIRST_PERSON);
+
+        assertTrue(overview.startsWith("Viewing: Alice Pauline (archived)\n"), overview);
+    }
+
+    @Test
     public void execute_studentWithUpcomingLessons_showsTheEarliestScheduledOne() throws Exception {
         addLessons(
                 lesson(TODAY.plusDays(7), "16:30"),
