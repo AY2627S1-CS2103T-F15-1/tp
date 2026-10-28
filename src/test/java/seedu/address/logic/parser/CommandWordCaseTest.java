@@ -59,6 +59,10 @@ public class CommandWordCaseTest {
         assertSameCommand("hw status 1 s/submitted", "HW STATUS 1 s/submitted");
         assertSameCommand("hw delete 1 confirm", "Hw Delete 1 Confirm");
         assertSameCommand("student list archived/", "Student LIST archived/");
+        assertSameCommand("pay list st/1", "PAY LIST st/1");
+        assertSameCommand("pay reverse 1", "Pay Reverse 1");
+        assertSameCommand("charge reverse l/1", "CHARGE REVERSE l/1");
+        assertSameCommand("charge l/1 amt/40", "Charge l/1 amt/40");
     }
 
     @Test

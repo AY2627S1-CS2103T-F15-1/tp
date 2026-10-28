@@ -2,8 +2,7 @@ package seedu.address.logic.parser;
 
 import java.time.Clock;
 import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Optional;
 
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.PaymentListCommand;
@@ -14,8 +13,6 @@ import seedu.address.logic.parser.exceptions.ParseException;
  * Parses the arguments of {@code pay}, which records a payment, or is followed by {@code list} or {@code reverse}.
  */
 public class PayCommandParser implements Parser<Command> {
-    private static final Pattern SUB_COMMAND_FORMAT = Pattern.compile("(?<word>\\S+)(?<arguments>.*)", Pattern.DOTALL);
-
     private final Clock clock;
 
     /** Creates a parser that reads today's date from {@code clock}. */
@@ -25,12 +22,12 @@ public class PayCommandParser implements Parser<Command> {
 
     @Override
     public Command parse(String args) throws ParseException {
-        Matcher matcher = SUB_COMMAND_FORMAT.matcher(args.strip());
-        String subCommandWord = matcher.matches() ? matcher.group("word") : "";
+        Optional<CommandInput> input = CommandInput.split(args);
+        String subCommandWord = input.map(CommandInput::getWord).orElse("");
         return switch (subCommandWord) {
-            case PaymentListCommand.LIST_KEYWORD -> new PaymentListCommandParser().parse(matcher.group("arguments"));
+            case PaymentListCommand.LIST_KEYWORD -> new PaymentListCommandParser().parse(input.get().getArguments());
             case PaymentReverseCommand.REVERSE_KEYWORD ->
-                new PaymentReverseCommandParser(clock).parse(matcher.group("arguments"));
+                new PaymentReverseCommandParser(clock).parse(input.get().getArguments());
             default -> new PaymentCommandParser(clock).parse(args);
         };
     }
