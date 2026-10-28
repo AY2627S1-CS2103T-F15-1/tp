@@ -26,6 +26,10 @@ public class PaymentCommand extends Command {
             + "To list or correct payments: pay list [st/STUDENT_INDEX], pay reverse PAYMENT_INDEX";
     public static final String MESSAGE_AMOUNT_CONSTRAINTS =
             "Amount must be greater than 0 with at most 2 decimal places.";
+    /** Rejects amounts that cannot reasonably be a single tuition payment. */
+    public static final BigDecimal MAX_AMOUNT = new BigDecimal("1000000.00");
+    public static final String MESSAGE_AMOUNT_TOO_LARGE =
+            "Amount must be at most " + Ledger.format(MAX_AMOUNT) + ".";
     /**
      * A payment of at least this amount is still recorded, but the reply asks the user to check it, because a
      * single payment this large is more likely to be a mistyped amount with extra digits than a real one.
@@ -53,6 +57,9 @@ public class PaymentCommand extends Command {
         requireAllNonNull(studentIndex, amount, clock);
         if (amount.signum() <= 0 || amount.scale() > 2) {
             throw new IllegalArgumentException(MESSAGE_AMOUNT_CONSTRAINTS);
+        }
+        if (amount.compareTo(MAX_AMOUNT) > 0) {
+            throw new IllegalArgumentException(MESSAGE_AMOUNT_TOO_LARGE);
         }
         this.studentIndex = studentIndex;
         this.amount = amount.setScale(2);

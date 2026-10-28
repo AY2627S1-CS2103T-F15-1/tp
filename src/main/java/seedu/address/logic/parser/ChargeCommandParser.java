@@ -53,6 +53,9 @@ public class ChargeCommandParser implements Parser<ChargeCommand> {
                 throw new ParseException(PaymentCommand.MESSAGE_AMOUNT_CONSTRAINTS);
             }
             amount = new BigDecimal(amountText);
+            if (amount.compareTo(PaymentCommand.MAX_AMOUNT) > 0) {
+                throw new ParseException(PaymentCommand.MESSAGE_AMOUNT_TOO_LARGE);
+            }
         }
         return new ChargeCommand(index, amount, isReversal, clock);
     }

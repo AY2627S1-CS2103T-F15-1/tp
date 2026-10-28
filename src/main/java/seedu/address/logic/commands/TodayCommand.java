@@ -43,6 +43,7 @@ public class TodayCommand extends Command {
             DateTimeFormatter.ofPattern("EEEE, d MMMM uuuu", Locale.ENGLISH);
     private static final DateTimeFormatter PAST_DAY_FORMAT = DateTimeFormatter.ofPattern("EEE d MMM", Locale.ENGLISH);
     private static final Logger logger = LogsCenter.getLogger(TodayCommand.class);
+    private static final int MAX_DISPLAYED_LESSONS = 200;
 
     private final LocalDate today;
 
@@ -87,9 +88,11 @@ public class TodayCommand extends Command {
         if (lessons.isEmpty()) {
             return header + "\n" + MESSAGE_NO_LESSONS_TODAY;
         }
-        return header + lessons.stream()
+        List<Lesson> visible = lessons.stream().limit(MAX_DISPLAYED_LESSONS).toList();
+        String rows = visible.stream()
                 .map(lesson -> "\n" + formatLessonToday(lesson, !model.getConflictingLessons(lesson).isEmpty()))
                 .collect(Collectors.joining());
+        return header + rows + omitted(lessons, visible);
     }
 
     private static String formatLessonToday(Lesson lesson, boolean isOverlapping) {
@@ -106,11 +109,18 @@ public class TodayCommand extends Command {
         if (lessons.isEmpty()) {
             return header + "\n" + MESSAGE_ALL_RECORDED;
         }
-        return header + lessons.stream()
+        List<Lesson> visible = lessons.stream().limit(MAX_DISPLAYED_LESSONS).toList();
+        String rows = visible.stream()
                 .map(lesson -> String.format("\n  %-10s  %-18s %-10s %s",
                         PAST_DAY_FORMAT.format(lesson.getDate().value), lesson.getStudentName(),
                         lesson.getSubject(), MESSAGE_NOT_COMPLETED))
                 .collect(Collectors.joining());
+        return header + rows + omitted(lessons, visible);
+    }
+
+    private static String omitted(List<Lesson> all, List<Lesson> visible) {
+        return all.size() == visible.size() ? "" : "\n  Showing " + visible.size() + " of " + all.size()
+                + " lessons.";
     }
 
     private String formatDues(Model model) {
