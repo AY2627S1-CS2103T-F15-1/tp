@@ -172,6 +172,7 @@ Format: `view INDEX`
   * the **balance**: what the student owes, as `OUTSTANDING $X.XX`, or the credit from paying ahead, as `IN CREDIT $X.XX`. A student who owes nothing shows `OUTSTANDING $0.00`.
   * the **outstanding homework**: assignments awaiting submission or review, with due dates and feedback
 * A section with nothing to show says so, for example `No upcoming lessons.`, instead of disappearing.
+* An archived student is marked after their name, as in `Viewing: Chen Hao (archived)`, so that you can tell them apart from active students when you reach them through `student list all/` or `find`.
 * The command only shows information. It does not change the student list, so the indexes you use for other commands stay the same.
 
 Examples:
@@ -696,6 +697,8 @@ The existing student commands remain available. You can also write `student add`
   The two flags cannot be combined and take no values.
 * `archive INDEX` (or `student archive INDEX`) hides a student from active lists while retaining
   lessons and upcoming agenda commitments. An archived student cannot receive new lessons.
+  In a list that includes archived students, such as `student list all/`, their card shows
+  `(archived)` after the name.
 * `student list archived/` followed by `restore INDEX` restores a student. All student commands
   use the currently visible student numbers; the student panel refreshes after changes.
 * `lesson prep INDEX n/NOTES` records 1-1000 printable characters of preparation. It neither
