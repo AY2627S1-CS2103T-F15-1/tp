@@ -435,6 +435,13 @@ Format: `lesson cancel INDEX [r/REASON]`
 * The lesson stays in the agenda as cancelled and no longer overlaps other lessons.
 * A lesson that is already cancelled or already completed cannot be cancelled.
 * A cancelled lesson does not block its slot. To book that time again, use `lesson add` with the same details. The cancelled record stays in your history.
+* A lesson that was marked missed can still be cancelled, for example to correct a booking that should never have counted. Its date, time, venue and notes are kept.
+* A missed lesson with an active charge cannot be cancelled. Reverse the charge first with [`charge reverse`](#charging-a-lesson-charge).
+
+<box type="warning" seamless>
+
+**Cancelling a missed lesson replaces its missed record:** the lesson then counts as cancelled, not missed, in `view` and `lesson list`, and this cannot be undone. Only cancel a missed lesson if the "missed" was a mistake.
+</box>
 
 Examples:
 * `lesson cancel 1` Cancels the 1st lesson.
