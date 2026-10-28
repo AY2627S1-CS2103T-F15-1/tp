@@ -4,6 +4,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
@@ -25,6 +26,7 @@ public class TaskBuilder {
     private Person student = TypicalPersons.ALICE;
     private Lesson lesson;
     private Homework homework;
+    private LedgerEntry payment;
 
     /** Creates a {@code TaskBuilder} for an open task about Alice without a due date. */
     public TaskBuilder() {}
@@ -68,6 +70,7 @@ public class TaskBuilder {
         this.student = student;
         this.lesson = null;
         this.homework = null;
+        this.payment = null;
         return this;
     }
 
@@ -75,6 +78,7 @@ public class TaskBuilder {
     public TaskBuilder withLesson(Lesson lesson) {
         this.lesson = lesson;
         this.homework = null;
+        this.payment = null;
         return this;
     }
 
@@ -82,11 +86,24 @@ public class TaskBuilder {
     public TaskBuilder withHomework(Homework homework) {
         this.homework = homework;
         this.lesson = null;
+        this.payment = null;
+        return this;
+    }
+
+    /** Makes the {@code Task} that we are building about {@code payment}, which sets its student. */
+    public TaskBuilder withPayment(LedgerEntry payment, Person student) {
+        this.payment = payment;
+        this.student = student;
+        this.lesson = null;
+        this.homework = null;
         return this;
     }
 
     /** Returns the {@code Task} that we have built. */
     public Task build() {
+        if (payment != null) {
+            return new Task(id, description, due, isDone, student.getId(), null, null, payment.id());
+        }
         if (homework != null) {
             return new Task(id, description, due, isDone, homework.getStudentId(), null, homework.getId());
         }

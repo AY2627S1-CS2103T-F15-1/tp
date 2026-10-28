@@ -5,6 +5,7 @@ import java.util.List;
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
+import seedu.address.model.finance.Ledger;
 import seedu.address.model.task.Task;
 
 /**
@@ -62,6 +63,12 @@ final class TaskCommandUtil {
                     .map(item -> String.format("homework %s due %s (%s)", item.getDescription(), item.getDueDate(),
                             item.getStatus()))
                     .orElse("homework (no longer exists)");
+        }
+        if (task.getPaymentId().isPresent()) {
+            return model.getAddressBook().getLedgerEntries().stream().filter(task::isAbout).findFirst()
+                    .map(payment -> String.format("payment %s on %s%s", Ledger.format(payment.amount()),
+                            payment.date(), payment.notes() == null ? "" : " - " + payment.notes()))
+                    .orElse("payment (no longer exists)");
         }
         return "student";
     }

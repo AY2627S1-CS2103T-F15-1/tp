@@ -33,8 +33,8 @@ import seedu.address.model.task.Task;
  * Wraps all data at the address-book level.
  * Duplicates are not allowed (by .isSamePerson comparison for persons and .isSameLesson comparison for lessons).
  * A lesson belongs to a person, so deleting or editing a person also updates that person's lessons.
- * A task is about a person and optionally one of their lessons or homework items, by permanent id, so deleting any
- * of them also deletes the tasks about it, while editing them leaves the tasks as they are.
+ * A task is about a person and optionally one of their lessons, homework items or payments, by permanent id, so
+ * deleting any of them also deletes the tasks about it, while editing them leaves the tasks as they are.
  * Tasks may have the same text, but never the same id.
  */
 public class AddressBook implements ReadOnlyAddressBook {

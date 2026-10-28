@@ -14,6 +14,7 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.homework.Homework;
 import seedu.address.testutil.LessonBuilder;
 import seedu.address.testutil.PersonBuilder;
@@ -47,6 +48,10 @@ public class TaskTest {
                 -> new Task(id, " ", null, false, student, null, null));
         assertThrows(IllegalArgumentException.class, () -> new Task(id, "x", null, false, student,
                 UUID.randomUUID(), UUID.randomUUID())); // a lesson and homework at once
+        assertThrows(IllegalArgumentException.class, () -> new Task(id, "x", null, false, student,
+                null, UUID.randomUUID(), UUID.randomUUID())); // homework and payment at once
+        assertThrows(IllegalArgumentException.class, () -> new Task(id, "x", null, false, student,
+                UUID.randomUUID(), null, UUID.randomUUID())); // a lesson and payment at once
     }
 
     @Test
@@ -78,7 +83,7 @@ public class TaskTest {
     }
 
     @Test
-    public void isAbout_studentLessonAndHomework() {
+    public void isAbout_studentLessonHomeworkAndPayment() {
         Task studentTask = new TaskBuilder().withStudent(ALICE).build();
         Task lessonTask = new TaskBuilder().withLesson(ALICE_MATH).build();
         Homework homework = Homework.assign(ALICE.getId(), "Practice set", LocalDate.of(2030, 1, 1));
@@ -95,6 +100,25 @@ public class TaskTest {
         assertTrue(homeworkTask.isAbout(ALICE));
         assertFalse(homeworkTask.isAbout(ALICE_MATH));
         assertFalse(homeworkTask.isAbout(Homework.assign(ALICE.getId(), "Practice set", LocalDate.of(2030, 1, 1))));
+
+        LedgerEntry payment = LedgerEntry.payment(ALICE, java.math.BigDecimal.TEN, LocalDate.of(2026, 10, 28));
+        Task paymentTask = new TaskBuilder().withPayment(payment, ALICE).build();
+        assertTrue(paymentTask.isAbout(payment));
+        assertTrue(paymentTask.isAbout(ALICE));
+        assertFalse(paymentTask.isAbout(ALICE_MATH));
+        assertFalse(paymentTask.isAbout(LedgerEntry.payment(ALICE, java.math.BigDecimal.TEN,
+                LocalDate.of(2026, 10, 28))));
+        assertEquals(payment.id(), paymentTask.withDescription("Call again").getPaymentId().orElseThrow());
+        assertEquals(payment.id(), paymentTask.withDue(LocalDate.of(2026, 11, 1)).getPaymentId().orElseThrow());
+        assertEquals(payment.id(), paymentTask.markDone().getPaymentId().orElseThrow());
+    }
+
+    @Test
+    public void create_paymentFromAnotherStudent_throws() {
+        LedgerEntry bensonsPayment = LedgerEntry.payment(BENSON, java.math.BigDecimal.TEN,
+                LocalDate.of(2026, 10, 28));
+
+        assertThrows(IllegalArgumentException.class, () -> Task.create("Call", null, ALICE, bensonsPayment));
     }
 
     @Test
@@ -134,6 +158,8 @@ public class TaskTest {
         assertNotEquals(task, new TaskBuilder().withLesson(ALICE_MATH).build());
         assertNotEquals(task, new TaskBuilder().withHomework(
                 Homework.assign(ALICE.getId(), "Practice set", LocalDate.of(2030, 1, 1))).build());
+        assertNotEquals(task, new TaskBuilder().withPayment(
+                LedgerEntry.payment(ALICE, java.math.BigDecimal.TEN, LocalDate.of(2026, 10, 28)), ALICE).build());
     }
 
     @Test
@@ -141,7 +167,7 @@ public class TaskTest {
         Task task = new TaskBuilder().build();
         String expected = Task.class.getCanonicalName() + "{id=" + TaskBuilder.DEFAULT_ID
                 + ", description=Call parent, due=null, isDone=false, studentId=" + ALICE.getId()
-                + ", lessonId=null, homeworkId=null}";
+                + ", lessonId=null, homeworkId=null, paymentId=null}";
         assertEquals(expected, task.toString());
     }
 }
