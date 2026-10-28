@@ -98,9 +98,9 @@ public class LessonDoneCommand extends Command {
         if (target.getStatus() != LessonStatus.COMPLETED) {
             String noChargeMessage = Ledger.activeCharge(model.getAddressBook(), target.getId()).isPresent()
                     ? MESSAGE_ALREADY_BILLED
-                    : MESSAGE_NO_CHARGE;
+                    : isZeroRate ? MESSAGE_NO_CHARGE_ZERO_RATE : MESSAGE_NO_CHARGE;
             String chargeMessage = charge.map(entry -> "Charge of " + Ledger.format(entry.amount()) + " recorded.")
-                    .orElse(isZeroRate ? MESSAGE_NO_CHARGE_ZERO_RATE : MESSAGE_NO_CHARGE);
+                    .orElse(noChargeMessage);
             feedback += "\n" + chargeMessage;
         }
         return new CommandResult(feedback);
