@@ -30,6 +30,7 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.finance.AccountStatement;
 import seedu.address.model.finance.Ledger;
 import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.lesson.LessonStatus;
@@ -111,7 +112,7 @@ public class FinanceIntegrationTest {
         logic.execute("lesson done 2");
         logic.execute("find Bob");
         String balance = logic.execute("balance st/1").getFeedbackToUser();
-        assertTrue(balance.contains("Balance for Bob"));
+        assertTrue(balance.startsWith("Account \u2014 Bob"));
         assertTrue(balance.contains("$80.00"));
         String dues = logic.execute("dues").getFeedbackToUser();
         assertTrue(dues.contains("Alice"));
@@ -135,9 +136,10 @@ public class FinanceIntegrationTest {
     @Test
     public void emptyAndCreditAccounts_noOutstandingDues() throws Exception {
         assertEquals(DuesCommand.MESSAGE_NO_DUES, logic.execute("dues").getFeedbackToUser());
-        assertTrue(logic.execute("balance st/1").getFeedbackToUser().contains("OUTSTANDING $0.00"));
+        assertEquals(String.format(AccountStatement.MESSAGE_NO_ACTIVITY, alice.getName()),
+                logic.execute("balance st/1").getFeedbackToUser());
         model.addLedgerEntry(LedgerEntry.payment(alice, new BigDecimal("100"), TODAY));
-        assertTrue(logic.execute("balance st/1").getFeedbackToUser().contains("IN CREDIT $100.00"));
+        assertTrue(logic.execute("balance st/1").getFeedbackToUser().endsWith("IN CREDIT $100.00"));
         assertEquals(DuesCommand.MESSAGE_NO_DUES, logic.execute("dues").getFeedbackToUser());
     }
 
