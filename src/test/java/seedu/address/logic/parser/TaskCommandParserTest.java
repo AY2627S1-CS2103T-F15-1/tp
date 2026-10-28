@@ -39,7 +39,6 @@ public class TaskCommandParserTest {
         assertParseFailure(parser, "  ", String.format(MESSAGE_INVALID_COMMAND_FORMAT,
                 "Task commands: task add, task list, task edit, task done, task delete"));
         assertParseFailure(parser, " remove 1", MESSAGE_UNKNOWN_COMMAND);
-        assertParseFailure(parser, " ADD st/1 desc/x", MESSAGE_UNKNOWN_COMMAND);
     }
 
     // ---- due dates
@@ -224,6 +223,5 @@ public class TaskCommandParserTest {
         assertParseFailure(parser, " delete 0", format);
         assertParseFailure(parser, " delete 1 yes", format);
         assertParseFailure(parser, " delete confirm", format);
-        assertParseFailure(parser, " delete 1 CONFIRM", format);
     }
 }

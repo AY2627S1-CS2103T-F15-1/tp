@@ -53,7 +53,7 @@ public class HomeworkCommandParser implements Parser<Command> {
         ParserUtil.requirePrintable(args, MESSAGE_NOT_PRINTABLE);
         String[] parts = args.strip().split("\\s+", 2);
         String arguments = parts.length == 2 ? parts[1] : "";
-        return switch (parts[0]) {
+        return switch (parts[0].toLowerCase(Locale.ROOT)) {
             case "add" -> parseAdd(" " + arguments);
             case "edit" -> parseEdit(" " + arguments);
             case "list" -> parseList(" " + arguments);

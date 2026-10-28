@@ -45,7 +45,6 @@ public class HomeworkCommandParserTest {
         assertParseFailure(parser, "", HomeworkCommandParser.MESSAGE_SUBCOMMANDS);
         assertParseFailure(parser, "   ", HomeworkCommandParser.MESSAGE_SUBCOMMANDS);
         assertParseFailure(parser, "assign st/1", HomeworkCommandParser.MESSAGE_SUBCOMMANDS);
-        assertParseFailure(parser, "ADD st/1 desc/A due/tmr", HomeworkCommandParser.MESSAGE_SUBCOMMANDS);
     }
 
     @Test
@@ -270,7 +269,6 @@ public class HomeworkCommandParserTest {
         assertParseFailure(parser, "delete one", expected);
         assertParseFailure(parser, "delete confirm", expected);
         assertParseFailure(parser, "delete 1 yes", expected);
-        assertParseFailure(parser, "delete 1 CONFIRM", expected);
         assertParseFailure(parser, "delete 1 confirm confirm", expected);
         assertParseFailure(parser, "delete 1 2", expected);
     }

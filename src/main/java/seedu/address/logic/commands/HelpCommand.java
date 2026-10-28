@@ -3,6 +3,7 @@ package seedu.address.logic.commands;
 import static java.util.Objects.requireNonNull;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -137,7 +138,8 @@ public class HelpCommand extends Command {
             return new CommandResult(MESSAGE_ALL_COMMANDS + format(COMMANDS));
         }
 
-        String lookup = commandName.startsWith("student ") ? commandName.substring("student ".length()) : commandName;
+        String typed = commandName.toLowerCase(Locale.ROOT);
+        String lookup = typed.startsWith("student ") ? typed.substring("student ".length()) : typed;
         Optional<CommandHelp> exactMatch = COMMANDS.stream()
                 .filter(command -> command.name.equals(lookup)).findFirst();
         if (exactMatch.isPresent()) {
@@ -146,7 +148,7 @@ public class HelpCommand extends Command {
 
         // A word such as "lesson" is not a command on its own, so show the commands that start with it
         List<CommandHelp> matches = COMMANDS.stream()
-                .filter(command -> command.name.startsWith(commandName + " ")).collect(Collectors.toList());
+                .filter(command -> command.name.startsWith(typed + " ")).collect(Collectors.toList());
         if (matches.isEmpty()) {
             throw new CommandException(String.format(MESSAGE_NO_HELP, commandName));
         }

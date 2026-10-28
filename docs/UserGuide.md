@@ -65,6 +65,11 @@ For power-users, TutorFlow can help you manage your students and lessons faster 
 * `today` and `exit` take no parameters. If you type anything after them, TutorFlow shows an error and does not run them.<br>
   For example, `exit now` is rejected, so a mistyped command cannot close the app.
 
+* Command words are not case-sensitive: `LIST`, `List` and `list` are the same command, and so are `LESSON ADD` and `lesson add`. The same goes for the keyword `confirm`. Parameter prefixes such as `n/` and `st/` must still be in lower case, and the values you type keep their case.
+
+* The command box remembers the commands you have entered in this session. Press `Up` to bring back an earlier command and `Down` to move forward again, as in a terminal. Down past the newest command returns to what you were typing.<br>
+  When a command fails, it stays in the command box, so you can correct it instead of typing it all again.
+
 * If you enter an unknown command, such as `foo`, TutorFlow shows `Unknown command. Type "help" for list of commands.` Type `help` to see the available commands.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
@@ -79,7 +84,7 @@ Format: `help [COMMAND]`
 * `help` shows every command with a one-line summary.
 * `help COMMAND` shows what the command does, its parameters and an example. `COMMAND` is the command as you type it, so for the lesson commands write both words, such as `help lesson add`.
 * `help lesson` lists the commands that start with `lesson`.
-* `COMMAND` is case-sensitive, like every command. For a name that is not a command, such as `help foo`, TutorFlow says `No help available for 'foo'. Type 'help' for the full list.`
+* `COMMAND` is not case-sensitive, like every command word, so `help LESSON ADD` works like `help lesson add`. For a name that is not a command, such as `help foo`, TutorFlow says `No help available for 'foo'. Type 'help' for the full list.`
 * To read this guide inside TutorFlow, use the `Help` menu or press `F1`. The guide opens in a resizable window and works offline. Use its Contents links to jump to any feature. External links are disabled inside the offline viewer, which shows a message when you activate one. It shows the User Guide bundled with your version of the app. Click `Reload guide` to return to that bundled guide.
 * The command list and `help COMMAND` are short syntax references. The full guide includes the field limits, examples and behavior rules.
 * Documentation changes appear in the next build of the app. When running from source, restart with `./gradlew run` (Windows: `.\gradlew.bat run`) to bundle the current `docs/UserGuide.md`. For a JAR, rebuild with `./gradlew shadowJar` or download an updated release, then restart with that JAR. `Reload guide` does not download newer documentation into an older JAR.
@@ -203,9 +208,9 @@ Format: `delete INDEX [confirm]`
 * Deletes the student at the specified `INDEX`.
 * The index refers to the index number shown in the displayed student list.
 * The index **must be a positive integer** 1, 2, 3, ...
-* A student with no lessons, no homework, no payments or charges and no [follow-up tasks](#adding-a-follow-up-task-task-add) is deleted immediately.
-* Deleting a student also deletes **all of their lessons, homework (including feedback), follow-up tasks, and charges and payments**, and this cannot be undone. If the student has any linked records, TutorFlow does not delete anything yet. It shows the student's name, phone number, linked counts and, if there are any, a warning about upcoming lessons and commitments, and asks you to repeat the command with `confirm`.
-* The keyword `confirm` is in lower case.
+* A student with no lessons, no homework and no [follow-up tasks](#adding-a-follow-up-task-task-add) is deleted immediately.
+* Deleting a student also deletes **all of their lessons, homework (including feedback) and follow-up tasks**, and this cannot be undone. If the student has any linked records, TutorFlow does not delete anything yet. It shows the student's name, phone number, linked counts and, if there are any, a warning about upcoming lessons and commitments, and asks you to repeat the command with `confirm`.
+* The keyword `confirm` can be written in any letter case, such as `CONFIRM`.
 
 Examples:
 * `list` followed by `delete 2` deletes the 2nd student, if they have no lessons or homework.
@@ -380,7 +385,7 @@ Ends a recurring series without erasing its history.
 Format: `lesson series cancel LESSON_INDEX confirm`
 
 * Select the displayed number of any occurrence belonging to the series, even a past occurrence.
-* `confirm` is required, in lower case. Without it, no lesson is changed.
+* `confirm` is required, and can be written in any letter case. Without it, no lesson is changed.
 * All scheduled occurrences starting now or later are cancelled together, including occurrences moved to another date or time. Occurrences that have started, or are already completed, missed or cancelled, remain unchanged.
 * Each affected lesson keeps its identity and booking details, with the reason `Series cancelled`. No record is deleted.
 * A lesson not linked to a recurring series is rejected. A series with no eligible occurrences is also rejected without changing data.
@@ -635,7 +640,7 @@ Deletes **all** students, lessons, homework, tasks, and financial history (charg
 Format: `clear confirm`
 
 * Typing `clear` on its own deletes nothing. It only reminds you what would be deleted and how to confirm.
-* `confirm` must be written exactly in lower case. Anything else after `clear` is rejected, so a mistyped command can never wipe your data.
+* `confirm` can be written in any letter case. Anything else after `clear` is rejected, so a mistyped command can never wipe your data.
 * Clearing cannot be undone. TutorFlow saves the empty data straight away, so copy `data/tutorflow-v14.json` first if you may want your records back.
 * Clearing data that is already empty works and does nothing.
 

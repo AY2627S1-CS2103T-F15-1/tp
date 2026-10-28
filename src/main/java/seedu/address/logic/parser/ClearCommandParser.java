@@ -21,7 +21,7 @@ public class ClearCommandParser implements Parser<ClearCommand> {
         if (trimmedArgs.isEmpty()) {
             return new ClearCommand(false);
         }
-        if (trimmedArgs.equals(ClearCommand.CONFIRM_KEYWORD)) {
+        if (trimmedArgs.equalsIgnoreCase(ClearCommand.CONFIRM_KEYWORD)) {
             return new ClearCommand(true);
         }
         throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, ClearCommand.MESSAGE_USAGE));

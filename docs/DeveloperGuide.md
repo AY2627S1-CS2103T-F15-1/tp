@@ -75,6 +75,8 @@ The **API** of this component is specified in [`Ui.java`](https://github.com/AY2
 
 The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `PersonListPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
 
+`CommandBox` also lets the user step through the commands entered in the session with the `Up` and `Down` keys. The steps are kept by `CommandHistory`, a plain class with no JavaFX dependency, so it can be unit tested. It keeps the latest 100 commands, ignores blank commands and a repeat of the previous command, and remembers what the user had typed before stepping back so that `Down` returns to it. A command is recorded when it is entered, whether it succeeds or not. A failed command is left in the text field, and `CommandHistory` does not offer it again on the first `Up`, because it is already shown.
+
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-F15-1/tp/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-F15-1/tp/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
 
 The `UI` component,
@@ -120,7 +122,7 @@ How the parsing works:
 * Arguments are parsed by each `XYZCommandParser`, not by `AddressBookParser`, because the prefixes, required fields and error messages differ between commands. Logic that more than one parser needs lives in shared classes instead of being copied:
   * `ArgumentTokenizer`, `ArgumentMultimap` and `ParserUtil` split and validate prefixed values, and all prefixes are defined once in `CliSyntax`.
   * An index that is not a positive whole number is reported as `Invalid command format!` with the command's usage. A parser gets this by calling `ParserUtil.parseIndex(value, usage)`.
-  * `CommandInput` splits the first word from the rest of an input. `AddressBookParser` uses it for the command word, and `SubCommandParser` uses it for the sub-command word of `lesson` and `task`. `SubCommandParser` is given one `Parser` per sub-command word, so adding a sub-command means registering one more parser.
+  * `CommandInput` splits the first word from the rest of an input and lower-cases that word, so command words and sub-command words do not depend on letter case. The same holds for the `confirm` keyword, which `ConfirmableIndex`, `ClearCommandParser`, `DemoCommandParser` and `LessonSeriesCancelCommandParser` compare ignoring case. Prefixes such as `n/` remain case-sensitive. `AddressBookParser` uses it for the command word, and `SubCommandParser` uses it for the sub-command word of `lesson` and `task`. `SubCommandParser` is given one `Parser` per sub-command word, so adding a sub-command means registering one more parser.
   * `ConfirmableIndex` parses an index with an optional `confirm` keyword and is used by `delete`, `task delete` and `hw delete`. It strips surrounding whitespace with `String.strip()` and splits the words with `(?U)\s+`, so all three treat Unicode spaces such as U+3000 the same way as ASCII ones, both around the arguments and between the index and `confirm`.
 
 ### Model component
@@ -1030,6 +1032,21 @@ testers are expected to do more *exploratory* testing.
    1. Relaunch the app with `java -jar tutorflow.jar`.<br>
        Expected: The most recent window size and location are retained.
 
+
+### Command box
+
+1. Letter case of commands
+
+   1. Test case: `LIST`, then `Lesson List st/1`, then `DELETE 1 CONFIRM` (on a student with no records)<br>
+      Expected: Each runs as if typed in lower case. A prefix in upper case, such as `N/`, is still rejected.
+
+1. History and failed commands
+
+   1. Test case: run `list`, then `find alex`, then `bogus`<br>
+      Expected: `bogus` fails, is shown in red and stays in the command box.
+
+   1. Press `Up` repeatedly, then `Down` repeatedly<br>
+      Expected: `find alex`, then `list`, and `Up` again changes nothing. `Down` walks forward and the last `Down` shows `bogus` again.
 
 ### Deleting a student
 
