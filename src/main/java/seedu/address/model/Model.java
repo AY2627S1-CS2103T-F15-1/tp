@@ -139,8 +139,6 @@ public interface Model {
      */
     void updateFilteredLessonList(Predicate<Lesson> predicate);
 
-<<<<<<< HEAD
-=======
     /**
      * Adds the given task. No task with the same id may exist.
      */
@@ -174,7 +172,6 @@ public interface Model {
      */
     void setShownTasks(List<Task> tasks);
 
->>>>>>> origin/master
     /** Adds an assignment belonging to a known student. */
     void addHomework(Homework homework);
 
