@@ -27,4 +27,9 @@ public class UndoCommand extends Command {
         }
         return new CommandResult(String.format(MESSAGE_SUCCESS, type.description), false, false);
     }
+
+    @Override
+    public boolean equals(Object other) {
+        return other instanceof UndoCommand;
+    }
 }
