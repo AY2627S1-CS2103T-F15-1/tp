@@ -85,12 +85,16 @@ public class PaymentCommandTest {
     }
 
     @Test
-    public void execute_largeAmountAboveLimit_rejected() throws Exception {
+    public void execute_largeAmount_recordedWithWarning() throws Exception {
         Model model = new ModelManager();
         model.addPerson(ALICE);
 
-        assertThrows(IllegalArgumentException.class, PaymentCommand.MESSAGE_AMOUNT_TOO_LARGE, () ->
-                payment(INDEX_FIRST_PERSON, new BigDecimal("100000000.50")));
+        CommandResult result = payment(INDEX_FIRST_PERSON, new BigDecimal("100000000.50")).execute(model);
+
+        assertEquals("Payment of $100000000.50 recorded for " + ALICE.getName() + " on " + TODAY
+                + ".\nBalance: IN CREDIT $100000000.50.\n" + PaymentCommand.MESSAGE_INDICES_NOTE + "\n"
+                + String.format(PaymentCommand.MESSAGE_LARGE_AMOUNT, "$100000000.50"), result.getFeedbackToUser());
+        assertEquals(new BigDecimal("-100000000.50"), Ledger.balance(model.getAddressBook(), ALICE));
     }
 
     @Test

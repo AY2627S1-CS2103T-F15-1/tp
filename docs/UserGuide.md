@@ -602,7 +602,7 @@ Records money received from a student and shows the updated outstanding balance 
 Format: `pay st/STUDENT_INDEX amt/AMOUNT [d/DATE] [n/NOTES]`
 
 * `STUDENT_INDEX` is the positive student number in the displayed student list. After `find`, use that filtered list's numbers. It is independent of lesson numbers, so payment can follow `lesson done` immediately without running `agenda` or `list` again.
-* `AMOUNT` must be greater than zero, at most `$1,000,000.00`, and have at most two decimal places, such as `50`, `50.00` or `0.50`. Dollar signs, negative amounts, zero, commas and scientific notation are rejected.
+* `AMOUNT` must be greater than zero with at most two decimal places, such as `50`, `50.00` or `0.50`. Dollar signs, negative amounts, zero, commas and scientific notation are rejected.
 * A payment of $10,000.00 or more is recorded, but TutorFlow adds a warning such as `Warning: $100000.00 is an unusually large payment. Check that the amount has no extra digits.`
 * `DATE` defaults to today using your computer's local date. Accepts `YYYY-MM-DD`, `DD/MM/YYYY`, `today` and `tmr`; future dates are rejected with `Payment dates cannot be in the future.`
 * `NOTES` is optional printable text of 1–200 characters on one line, such as a transfer reference. Extra spaces are collapsed and the notes are saved with the payment.
@@ -662,7 +662,7 @@ Format: `charge l/LESSON_INDEX [amt/AMOUNT]`
 Format to take a charge back: `charge reverse l/LESSON_INDEX`
 
 * `LESSON_INDEX` is the lesson number from the current `agenda` or `lesson list`, not the student number.
-* Without `amt/`, the charge is the student's current hourly rate × the lesson duration ÷ 60, rounded to cents. `AMOUNT` must be greater than zero, at most `$1,000,000.00`, and have at most two decimal places.
+* Without `amt/`, the charge is the student's current hourly rate × the lesson duration ÷ 60, rounded to cents. `AMOUNT` must be greater than zero with at most two decimal places.
 * Only a completed or missed lesson can be charged. A cancelled lesson gives `Cannot charge a cancelled lesson.`, and a lesson that is still scheduled gives `Cannot charge a lesson scheduled for Thu 22 Oct 2026.`
 * A lesson has at most one active charge. A second one gives `That lesson already has a charge of $75.50.`
 * If the student's rate is $0 and you give no `amt/`, TutorFlow asks you to specify an amount.

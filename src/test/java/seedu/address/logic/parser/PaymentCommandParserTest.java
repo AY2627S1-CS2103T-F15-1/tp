@@ -65,9 +65,11 @@ public class PaymentCommandParserTest {
     }
 
     @Test
-    public void parse_amountAboveLimit_rejected() {
-        for (String amount : new String[]{"1000000.01", "100000000.50", "99999999999999999999"}) {
-            assertParseFailure(parser, " st/1 amt/" + amount, PaymentCommand.MESSAGE_AMOUNT_TOO_LARGE);
+    public void parse_largeAmount_accepted() {
+        // Amount is currency-neutral; only the digit string is bounded by the command input itself
+        for (String amount : new String[]{"10000", "100000000.50", "99999999999999999999"}) {
+            assertParseSuccess(parser, " st/1 amt/" + amount,
+                    new PaymentCommand(INDEX_FIRST_PERSON, new BigDecimal(amount), null, null, CLOCK));
         }
     }
 

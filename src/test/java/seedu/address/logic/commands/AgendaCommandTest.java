@@ -145,6 +145,21 @@ public class AgendaCommandTest {
     }
 
     @Test
+    public void execute_weekOverTwoHundredLessons_capsRowsButKeepsTheTotal() {
+        for (int i = 0; i < 201; i++) {
+            model.addLesson(new LessonBuilder().withStudent(ALICE).withDate(MONDAY)
+                    .withTime(String.format("%02d:%02d", 6 + i / 60, i % 60))
+                    .withDuration(15).build());
+        }
+
+        String[] lines = new AgendaCommand(MONDAY, true).execute(model).getFeedbackToUser().split("\n");
+
+        assertEquals("Week of Mon 07 Jan 2030 to Sun 13 Jan 2030 (201 lessons, 50h 15m)", lines[0]);
+        assertTrue(java.util.Arrays.stream(lines)
+                .anyMatch(line -> line.equals("Showing the first 200 of 201 lessons.")));
+    }
+
+    @Test
     public void equals() {
         AgendaCommand command = new AgendaCommand(MONDAY, false);
 

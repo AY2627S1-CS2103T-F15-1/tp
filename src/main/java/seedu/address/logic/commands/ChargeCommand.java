@@ -66,9 +66,6 @@ public class ChargeCommand extends Command {
         if (amount != null && (amount.signum() <= 0 || amount.scale() > 2)) {
             throw new IllegalArgumentException(PaymentCommand.MESSAGE_AMOUNT_CONSTRAINTS);
         }
-        if (amount != null && amount.compareTo(PaymentCommand.MAX_AMOUNT) > 0) {
-            throw new IllegalArgumentException(PaymentCommand.MESSAGE_AMOUNT_TOO_LARGE);
-        }
         this.lessonIndex = lessonIndex;
         this.amount = amount == null ? null : amount.setScale(2);
         this.isReversal = isReversal;
