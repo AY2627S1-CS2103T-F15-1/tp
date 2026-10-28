@@ -520,20 +520,21 @@ Examples:
 
 ### Adding a follow-up task: `task add`
 
-Keeps a to-do attached to the student or the lesson that it is about, so that you do not forget it.
+Keeps a to-do attached to the student, lesson, homework item or payment that it is about, so that you do not forget it.
 
 Format: `task add st/INDEX|lesson/INDEX|hw/INDEX|pay/INDEX desc/TEXT [due/DATE]`
 
 * Give **exactly one** link. `st/INDEX` takes a number from the displayed student list. `lesson/INDEX` takes a lesson number from the last `agenda` or `lesson list`.
-* `hw/INDEX` takes a homework number from the last `hw list`. If that homework was deleted since, TutorFlow says so instead of picking another item. `pay/INDEX` is accepted for the final command format, but a task cannot be linked to a payment yet, so it answers `Invalid payment index. Run 'pay list' first.`
+* `hw/INDEX` takes a homework number from the last `hw list`. `pay/INDEX` takes a payment number from the last `pay list`. If no payment list has been shown, or `INDEX` is out of range, TutorFlow answers `Invalid payment index. Run 'pay list' first.` If the selected homework or payment was deleted since, TutorFlow says so instead of picking another item; for a payment, the message is `That payment was deleted. Run 'pay list' to refresh.`
 * `TEXT` is 1 to 200 characters on one line.
 * `DATE` is written as for [`lesson add`](#scheduling-a-lesson-lesson-add). It is optional, and a task without one is shown as `(no due date)`. A due date must be today or later (`today` and `tmr` work), otherwise TutorFlow answers `Due dates must be today or later.`
 * Two tasks may have the same text. That is not a duplicate.
-* A task is linked to its student, lesson or homework by their permanent identifiers, not by name, phone or time. Editing a student, moving, cancelling or rebooking a lesson, or editing homework never changes what a task is about, and a new booking in the slot of a cancelled lesson does not take over that lesson's tasks. When a student, a lesson or a homework item is deleted, the tasks about it are deleted with it.
+* A task is linked to its student, lesson, homework or payment by their permanent identifiers, not by name, phone, time or amount. Editing a student, moving, cancelling or rebooking a lesson, editing homework, or reversing a payment never changes what a task is about, and a new booking in the slot of a cancelled lesson does not take over that lesson's tasks. When a student, a lesson or a homework item is deleted, the tasks about it are deleted with it.
 
 Examples:
 * `task add st/1 desc/Call parent due/2026-12-01` adds a task to the 1st student, due on 1 December 2026.
 * `task add lesson/1 desc/Prepare mock paper` adds a task to the 1st lesson in the current agenda.
+* `task add pay/1 desc/Remind about fees` adds a task to the 1st payment in the last `pay list`.
 
 ### Listing tasks: `task list`
 
@@ -543,7 +544,7 @@ Format: `task list [all/] [st/INDEX]`
 
 * By default, only open tasks are shown, with the earliest due date first and the tasks without a due date last. With `all/`, completed tasks are shown as well.
 * `st/INDEX` limits the list to the tasks of one student, including the tasks about that student's lessons.
-* Each row shows the status, the text, the due date, the student, and what the task is about (the student, or the lesson as it now reads, with its current status).
+* Each row shows the status, the text, the due date, the student, and what the task is about: the student, or the linked lesson, homework item or payment as it now reads.
 * The task numbers stay **fixed until the next `task list`**: completing or deleting a task does not renumber the others.
 
 Examples:
@@ -822,7 +823,7 @@ Action     | Format, Examples
 **Homework status** | `hw status INDEX s/assigned\|submitted\|reviewed`<br> e.g., `hw status 1 s/submitted`
 **Homework feedback** | `hw feedback INDEX f/FEEDBACK`<br> e.g., `hw feedback 1 f/Revisit negative indices`
 **Homework delete** | `hw delete INDEX [confirm]`<br> e.g., `hw delete 2`, `hw delete 2 confirm`
-**Task add** | `task add st/INDEX\|lesson/INDEX\|hw/INDEX desc/TEXT [due/DATE]`<br> e.g., `task add st/1 desc/Call parent due/tmr`
+**Task add** | `task add st/INDEX\|lesson/INDEX\|hw/INDEX\|pay/INDEX desc/TEXT [due/DATE]`<br> e.g., `task add st/1 desc/Call parent due/tmr`, `task add pay/1 desc/Remind about fees`
 **Task list** | `task list [all/] [st/INDEX]`<br> e.g., `task list`, `task list all/`, `task list st/1`
 **Task edit** | `task edit INDEX desc/TEXT [due/DATE\|due/-]`<br> e.g., `task edit 1 desc/Call parent again due/-`
 **Task done** | `task done INDEX`<br> e.g., `task done 1`
@@ -912,9 +913,9 @@ v1.4 writes `data/tutorflow-v14.json`. If this file is absent, it reads legacy
 `data/addressbook.json`, assigns stable internal student and lesson identifiers, and saves
 an initial v1.4 copy. The legacy file remains untouched so an older application cannot erase
 v1.4 fields. If both files exist, the v1.4 file takes precedence. Keep both in your backup.
-This alpha writes schema 17 and accepts unversioned legacy files plus schemas 14 through 17.
+This alpha writes schema 18 and accepts unversioned legacy files plus schemas 14 through 18.
 Older files without homework, a ledger or follow-up tasks start with empty records for those features. Older builds
-refuse schema 17, protecting follow-up tasks (and any charges and payments) from being dropped when saving.
+refuse schema 18, protecting task payment links (and any charges and payments) from being dropped when saving.
 An unsupported schema version stops startup and leaves the original file in place. Open that data
 with a compatible TutorFlow build, or restore a backup made by your installed build. An older alpha
 cannot open data saved by a newer alpha that added data fields. Invalid files use the recovery flow
