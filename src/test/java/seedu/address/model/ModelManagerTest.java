@@ -253,7 +253,7 @@ public class ModelManagerTest {
     }
 
     @Test
-    public void undoDestructiveAction_removeHomework_returnsDestructiveActionDeleteHWAndUndoes() {
+    public void undoDestructiveAction_removeHomework_returnsDestructiveActionDeleteHwAndUndoes() {
         modelManager.addPerson(GEORGE);
         Homework hw = Homework.assign(
                 GEORGE.getId(), "Test Homework",

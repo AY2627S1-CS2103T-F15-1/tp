@@ -10,7 +10,7 @@ import seedu.address.model.person.StudentOrder;
 import seedu.address.model.task.Task;
 
 /**
- * A Model based on ModelManager, with additional undo capabilities.
+ * An extension to AddressBook, with additional undo capabilities.
  */
 public class VersionedAddressBook extends AddressBook {
     private DestructiveActionType lastDestructiveAction = DestructiveActionType.NONE;
@@ -38,6 +38,10 @@ public class VersionedAddressBook extends AddressBook {
         lastDestructiveAction = DestructiveActionType.NONE;
     }
 
+    /**
+     * Undoes the last destructive action performed on this AddressBook,
+     * provided no attempts to modify it have been made.
+     */
     public DestructiveActionType undoDestructiveAction() {
         if (lastDestructiveAction == DestructiveActionType.NONE) {
             return lastDestructiveAction;
