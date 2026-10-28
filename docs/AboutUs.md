@@ -43,7 +43,7 @@ You can reach us at the email `e1406390[at]u.nus.edu`
 <img src="images/ilieks.png" width="200px">
 
 [[github](https://github.com/IliekS)]
-[[portfolio](team/ilieks.md)]
+[[portfolio](ilieks.md)]
 
 Year 3 Computer Science
 * Role: Developer

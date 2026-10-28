@@ -285,11 +285,12 @@ The sequence diagram below shows `execute("lesson repeat st/1 d/2026-10-29 t/16:
 
 **Parsing.** `today` takes no parameters, so `AddressBookParser` calls `requireNoArguments` before it creates the command: `today 2` fails with `The 'today' command takes no parameters.` instead of running. `AddressBookParser` passes `LocalDate.now()` to `TodayCommand`, and `ViewCommandParser` passes it to `ViewCommand` with the parsed index. The commands do not read the clock themselves, so tests can give them a fixed date.
 
-**Building the dashboard.** `TodayCommand#execute` gets the lessons from `Model#getAddressBook()` and returns the date followed by three sections, in this order:
+**Building the dashboard.** `TodayCommand#execute` gets the lessons from `Model#getAddressBook()` and returns the date followed by four sections, in this order:
 
 * `TODAY'S LESSONS`: the lessons on that date that are not cancelled, in time order, with their count and total time in the heading. A completed or missed lesson shows its status. For each lesson, `Model#getConflictingLessons(Lesson)` decides whether to add the `⚠ overlaps` marker that `agenda` uses.
 * `LESSONS AWAITING NOTES`: the scheduled lessons from earlier days, most recent first.
 * `OVERDUE HOMEWORK`: `HomeworkQueries#summary(book, null, true, today)` selects every student's assigned homework that was due before today. It writes each item as `hw list` does, but without numbers, so the homework numbers that `hw list` showed still apply.
+* `DUES`: `Ledger.formatDues(book, today)` gives the students who owe money, oldest unpaid charge first, followed by the total. The dashboard prepends the `DUES` heading when the ledger has no debtors.
 
 A section with nothing to show gives its own empty state, such as `No lessons today.`, instead of disappearing.
 
@@ -307,11 +308,12 @@ The sequence diagram below shows `execute("today")`. For simplicity, it leaves o
 1. `NEXT LESSON`: the first scheduled lesson from today onwards, with any preparation notes
 1. `RECENT LESSON NOTES`: the three most recent notes of completed lessons, newest first
 1. `LESSON HISTORY`: the numbers of completed, cancelled and missed lessons
+1. `BALANCE`: `Ledger.describeBalance(Ledger.balance(book, student))`
 1. `OUTSTANDING HOMEWORK`: `HomeworkQueries#summary(book, studentId, false, today)` selects the student's homework that is not yet reviewed, overdue first
 
 Like the dashboard, the overview gives an empty state for a section with nothing to show. It does not change the displayed student list, so the numbers used by other commands stay the same.
 
-More sections are planned: dues from the ledger after `OVERDUE HOMEWORK` on the dashboard, a balance between `LESSON HISTORY` and `OUTSTANDING HOMEWORK` in the overview, and travel warnings in `TODAY'S LESSONS`. None of them exists yet. Each is meant to plug in the same way, as another read-only query on the address book whose text the command adds at its position in the order.
+Travel warnings for the lessons shown are included after `TODAY'S LESSONS`. The dashboard and overview remain read-only: each section is a query on the address book whose text is added at its position in the order.
 
 #### Design considerations
 

@@ -17,7 +17,8 @@ public class ArchiveCommand extends Command {
     public static final String COMMAND_WORD_RESTORE = "restore";
 
     public static final String MESSAGE_USAGE_ARCHIVE = COMMAND_WORD_ARCHIVE + " INDEX";
-    public static final String MESSAGE_USAGE_RESTORE = COMMAND_WORD_RESTORE + " INDEX (after 'list archived/')";
+    public static final String MESSAGE_USAGE_RESTORE = COMMAND_WORD_RESTORE
+            + " INDEX (after 'list archived/' or 'list all/')";
 
     public static final String MESSAGE_ALREADY_ARCHIVED = "This student is already archived.";
     public static final String MESSAGE_ALREADY_ACTIVE =
