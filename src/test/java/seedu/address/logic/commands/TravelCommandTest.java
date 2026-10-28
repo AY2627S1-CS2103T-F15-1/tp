@@ -23,6 +23,7 @@ public class TravelCommandTest {
         assertEquals("Travel buffer set to 0 minutes.", new TravelCommand(0).execute(model).getFeedbackToUser());
         assertEquals(0, model.getAddressBook().getTravelBuffer());
         assertTrue(model.getAddressBook().getLessonList().isEmpty());
+        assertEquals("Travel buffer set to 1 minute.", new TravelCommand(1).execute(model).getFeedbackToUser());
     }
 
     @Test

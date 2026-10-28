@@ -1,12 +1,9 @@
 package seedu.address.logic.parser;
 
-import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
-import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
-
 import java.time.Clock;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -18,8 +15,7 @@ public class LessonCommandParser implements Parser<Command> {
 
     public static final String COMMAND_WORD = "lesson";
 
-    private static final Pattern SUB_COMMAND_FORMAT = Pattern.compile("(?<subCommandWord>\\S+)(?<arguments>.*)");
-    private final Clock clock;
+    private final SubCommandParser subCommandParser;
 
     /** Uses the local system date. */
     public LessonCommandParser() {
@@ -28,7 +24,18 @@ public class LessonCommandParser implements Parser<Command> {
 
     /** Uses a shared date source for scheduling and completing lessons. */
     public LessonCommandParser(Clock clock) {
-        this.clock = Objects.requireNonNull(clock);
+        Objects.requireNonNull(clock);
+        Map<String, Parser<? extends Command>> parsers = new LinkedHashMap<>();
+        parsers.put("prep", new LessonPrepCommandParser());
+        parsers.put("add", new LessonAddCommandParser(clock));
+        parsers.put("list", new LessonListCommandParser(clock));
+        parsers.put("repeat", new LessonRepeatCommandParser());
+        parsers.put("move", new LessonMoveCommandParser());
+        parsers.put("cancel", new LessonCancelCommandParser());
+        parsers.put("series", new LessonSeriesCancelCommandParser());
+        parsers.put("done", new LessonDoneCommandParser(clock));
+        parsers.put("missed", new LessonMissedCommandParser());
+        subCommandParser = new SubCommandParser(parsers, getUsage());
     }
 
     /**
@@ -38,28 +45,12 @@ public class LessonCommandParser implements Parser<Command> {
      */
     @Override
     public Command parse(String args) throws ParseException {
-        Matcher matcher = SUB_COMMAND_FORMAT.matcher(args.trim());
-        if (!matcher.matches()) {
-            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, getUsage()));
-        }
-
-        String arguments = matcher.group("arguments");
-        return switch (matcher.group("subCommandWord")) {
-            case "prep" -> new LessonPrepCommandParser().parse(arguments);
-            case "add" -> new LessonAddCommandParser(clock).parse(arguments);
-            case "list" -> new LessonListCommandParser(clock).parse(arguments);
-            case "repeat" -> new LessonRepeatCommandParser().parse(arguments);
-            case "move" -> new LessonMoveCommandParser().parse(arguments);
-            case "cancel" -> new LessonCancelCommandParser().parse(arguments);
-            case "series" -> new LessonSeriesCancelCommandParser().parse(arguments);
-            case "done" -> new LessonDoneCommandParser(clock).parse(arguments);
-            case "missed" -> new LessonMissedCommandParser().parse(arguments);
-            default -> throw new ParseException(MESSAGE_UNKNOWN_COMMAND);
-        };
+        return subCommandParser.parse(args);
     }
 
     private static String getUsage() {
-        return "Lesson commands: lesson add, lesson repeat, lesson list, lesson move, lesson cancel, "
-                + "lesson series cancel, lesson done, lesson missed";
+        return "Lesson commands: " + COMMAND_WORD + " add, " + COMMAND_WORD + " repeat, " + COMMAND_WORD + " list, "
+                + COMMAND_WORD + " move, " + COMMAND_WORD + " cancel, " + COMMAND_WORD + " series cancel, "
+                + COMMAND_WORD + " done, " + COMMAND_WORD + " missed, " + COMMAND_WORD + " prep";
     }
 }

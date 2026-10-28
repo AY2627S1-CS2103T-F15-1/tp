@@ -18,8 +18,10 @@ import seedu.address.model.AddressBook;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonDate;
+import seedu.address.model.person.StudentOrder;
 import seedu.address.model.task.Task;
 import seedu.address.testutil.LessonBuilder;
+import seedu.address.testutil.PersonBuilder;
 import seedu.address.testutil.TaskBuilder;
 import seedu.address.testutil.TypicalLessons;
 import seedu.address.testutil.TypicalPersons;
@@ -41,6 +43,30 @@ public class JsonSerializableAddressBookTest {
                     + invalid + "}", JsonSerializableAddressBook.class);
             assertThrows(IllegalValueException.class, data::toModelType);
         }
+    }
+
+    @Test
+    public void toModelType_sortedAddressBook_keepsItsOrderForLaterAdditions() throws Exception {
+        AddressBook addressBook = TypicalPersons.getTypicalAddressBook();
+        addressBook.sortPersons(StudentOrder.DESCENDING);
+
+        AddressBook restored = new JsonSerializableAddressBook(addressBook).toModelType();
+        assertEquals(addressBook, restored);
+        restored.addPerson(new PersonBuilder().withName("Bob Choo").withPhone("90001234").build());
+
+        List<String> names = restored.getPersonList().stream().map(person -> person.getName().fullName).toList();
+        assertEquals(names.stream().sorted(String.CASE_INSENSITIVE_ORDER.reversed()).toList(), names);
+    }
+
+    @Test
+    public void toModelType_missingOrInvalidStudentOrder() throws Exception {
+        JsonSerializableAddressBook legacy = JsonUtil.fromJsonString("{\"persons\":[]}",
+                JsonSerializableAddressBook.class);
+        assertTrue(legacy.toModelType().getStudentOrder().isEmpty());
+        JsonSerializableAddressBook invalid = JsonUtil.fromJsonString("{\"persons\":[],\"studentOrder\":\"SIDEWAYS\"}",
+                JsonSerializableAddressBook.class);
+        assertThrows(IllegalValueException.class, JsonSerializableAddressBook.MESSAGE_INVALID_STUDENT_ORDER,
+                invalid::toModelType);
     }
 
     @Test

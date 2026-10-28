@@ -10,18 +10,45 @@ import java.util.UUID;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
 
-/** An immutable charge or payment. Amounts are captured when recorded, independently of later rate changes. */
+/**
+ * An immutable charge, payment or reversal. Amounts are captured when recorded, independently of later rate changes.
+ * A mistake is never deleted: a reversal is a further entry that cancels the entry named by {@code reverses}, so the
+ * history shows that a correction happened.
+ */
 public record LedgerEntry(UUID id, UUID studentId, UUID lessonId, Kind kind,
-        BigDecimal amount, LocalDate date, String notes) {
+        BigDecimal amount, LocalDate date, String notes, UUID reverses) {
     public static final String MESSAGE_NOTES_CONSTRAINTS =
             "Payment notes must contain 1-200 printable characters on one line.";
 
     /** The financial effect of a record. */
-    public enum Kind { CHARGE, PAYMENT }
+    public enum Kind {
+        CHARGE, PAYMENT, CHARGE_REVERSAL, PAYMENT_REVERSAL;
+
+        /** Returns whether this kind cancels an earlier entry. */
+        public boolean isReversal() {
+            return this == CHARGE_REVERSAL || this == PAYMENT_REVERSAL;
+        }
+
+        /** Returns whether entries of this kind refer to a lesson. */
+        public boolean refersToLesson() {
+            return this == CHARGE || this == CHARGE_REVERSAL;
+        }
+
+        /** Returns whether entries of this kind add to what the student owes. */
+        public boolean increasesBalance() {
+            return this == CHARGE || this == PAYMENT_REVERSAL;
+        }
+    }
 
     /** Restores records and callers that predate optional payment notes. */
     public LedgerEntry(UUID id, UUID studentId, UUID lessonId, Kind kind, BigDecimal amount, LocalDate date) {
-        this(id, studentId, lessonId, kind, amount, date, null);
+        this(id, studentId, lessonId, kind, amount, date, null, null);
+    }
+
+    /** Restores records and callers that predate reversals. */
+    public LedgerEntry(UUID id, UUID studentId, UUID lessonId, Kind kind, BigDecimal amount, LocalDate date,
+            String notes) {
+        this(id, studentId, lessonId, kind, amount, date, notes, null);
     }
 
     /** Validates required fields and stores exact amounts at two decimal places. */
@@ -30,8 +57,11 @@ public record LedgerEntry(UUID id, UUID studentId, UUID lessonId, Kind kind,
         if (notes != null && !isValidNotes(notes)) {
             throw new IllegalArgumentException(MESSAGE_NOTES_CONSTRAINTS);
         }
-        if ((kind == Kind.CHARGE) != (lessonId != null)) {
+        if (kind.refersToLesson() != (lessonId != null)) {
             throw new IllegalArgumentException("Only charges must refer to a lesson.");
+        }
+        if (kind.isReversal() != (reverses != null)) {
+            throw new IllegalArgumentException("Only reversals must refer to the entry they reverse.");
         }
         if (amount.signum() <= 0) {
             throw new IllegalArgumentException("Charges and payments must be positive.");
@@ -50,6 +80,25 @@ public record LedgerEntry(UUID id, UUID studentId, UUID lessonId, Kind kind,
         }
         return new LedgerEntry(lesson.getId(), student.getId(), lesson.getId(), Kind.CHARGE,
                 lessonFee(student, lesson), lesson.getDate().value);
+    }
+
+    /** Creates a charge of an explicit amount, such as a discounted fee or a charge for a missed lesson. */
+    public static LedgerEntry charge(Person student, Lesson lesson, BigDecimal amount) {
+        if (!lesson.isWith(student)) {
+            throw new IllegalArgumentException("Charge student does not match the lesson.");
+        }
+        return new LedgerEntry(UUID.randomUUID(), student.getId(), lesson.getId(), Kind.CHARGE, amount,
+                lesson.getDate().value);
+    }
+
+    /** Creates the entry that cancels {@code original}, dated {@code date}. */
+    public static LedgerEntry reversalOf(LedgerEntry original, LocalDate date) {
+        if (original.kind().isReversal()) {
+            throw new IllegalArgumentException("A reversal cannot itself be reversed.");
+        }
+        Kind kind = original.kind() == Kind.CHARGE ? Kind.CHARGE_REVERSAL : Kind.PAYMENT_REVERSAL;
+        return new LedgerEntry(UUID.randomUUID(), original.studentId(), original.lessonId(), kind,
+                original.amount(), date, null, original.id());
     }
 
     /** Returns the rounded fee, which may be zero for a free or very low-rate lesson. */

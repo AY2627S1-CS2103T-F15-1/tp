@@ -96,7 +96,8 @@ public class ViewCommand extends Command {
         student.getEmail().ifPresent(email -> contact.append(SEPARATOR).append("Email: ").append(email));
         student.getVenue().ifPresent(venue -> contact.append(SEPARATOR).append("Venue: ").append(venue));
 
-        StringBuilder text = new StringBuilder(String.format(MESSAGE_VIEWING, student.getName()));
+        StringBuilder text = new StringBuilder(String.format(MESSAGE_VIEWING,
+                student.getName() + (student.isArchived() ? " (archived)" : "")));
         text.append("\nLevel ").append(student.getLevel()).append(SEPARATOR).append(subjects)
                 .append(SEPARATOR).append(student.getRate().toDisplayString()).append("/hour");
         text.append("\n").append(contact);

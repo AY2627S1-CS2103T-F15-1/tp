@@ -59,7 +59,7 @@ public class ModelManagerTest {
     }
 
     @Test
-    public void sortPersons_nullComparator_throwsNullPointerException() {
+    public void sortPersons_nullOrder_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> modelManager.sortPersons(null));
     }
 

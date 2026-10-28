@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.testutil.Assert.assertThrows;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -95,6 +97,12 @@ public class HelpCommandTest {
     }
 
     @Test
+    public void execute_commandNameInAnyCase_stillFindsCommand() throws Exception {
+        assertHelpUsage(LessonAddCommand.MESSAGE_USAGE, "LESSON Add");
+        assertTrue(helpFor("LESSON").startsWith(String.format(HelpCommand.MESSAGE_COMMANDS_STARTING_WITH, "LESSON")));
+    }
+
+    @Test
     public void execute_partialCommandName_listsMatchingSubCommands() throws Exception {
         String message = helpFor("lesson");
 
@@ -107,8 +115,7 @@ public class HelpCommandTest {
     @Test
     public void execute_unknownCommandName_throwsCommandException() {
         assertCommandFailure(new HelpCommand("foo"), model, String.format(HelpCommand.MESSAGE_NO_HELP, "foo"));
-        // case matters, as it does for every command
-        assertCommandFailure(new HelpCommand("ADD"), model, String.format(HelpCommand.MESSAGE_NO_HELP, "ADD"));
+        assertCommandFailure(new HelpCommand("ADDD"), model, String.format(HelpCommand.MESSAGE_NO_HELP, "ADDD"));
         // a prefix of a command word is not a command
         assertCommandFailure(new HelpCommand("les"), model, String.format(HelpCommand.MESSAGE_NO_HELP, "les"));
     }
@@ -124,6 +131,20 @@ public class HelpCommandTest {
                 assertFalse(e.getMessage().equals(seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND),
                         "help lists '" + word + "' but the parser does not know it");
             }
+        }
+    }
+
+    @Test
+    public void execute_everyListedCommand_hasARowInTheUserGuideSummary() throws Exception {
+        String guide = Files.readString(Path.of("docs", "UserGuide.md"));
+        String summary = guide.substring(guide.indexOf("## Command summary"));
+        List<String> names = helpFor("").lines().filter(line -> line.startsWith("  "))
+                .map(line -> line.substring(2).split("  ", 2)[0].trim()).toList();
+
+        assertTrue(names.size() > 25, "the command list was not read: " + names);
+        for (String name : names) {
+            assertTrue(summary.contains("`" + name + " ") || summary.contains("`" + name + "`"),
+                    "the UG command summary has no row for '" + name + "'");
         }
     }
 

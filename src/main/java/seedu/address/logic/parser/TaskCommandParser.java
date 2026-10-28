@@ -1,12 +1,9 @@
 package seedu.address.logic.parser;
 
-import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
-import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
-
 import java.time.Clock;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -18,9 +15,7 @@ public class TaskCommandParser implements Parser<Command> {
 
     public static final String COMMAND_WORD = "task";
 
-    private static final Pattern SUB_COMMAND_FORMAT = Pattern.compile("(?<subCommandWord>\\S+)(?<arguments>.*)");
-
-    private final Clock clock;
+    private final SubCommandParser subCommandParser;
 
     /** Creates a parser that reads today's date from the system clock. */
     public TaskCommandParser() {
@@ -29,7 +24,14 @@ public class TaskCommandParser implements Parser<Command> {
 
     /** Creates a parser that reads today's date, for due dates, from {@code clock}. */
     public TaskCommandParser(Clock clock) {
-        this.clock = Objects.requireNonNull(clock);
+        Objects.requireNonNull(clock);
+        Map<String, Parser<? extends Command>> parsers = new LinkedHashMap<>();
+        parsers.put("add", new TaskAddCommandParser(clock));
+        parsers.put("list", new TaskListCommandParser());
+        parsers.put("edit", new TaskEditCommandParser(clock));
+        parsers.put("done", new TaskDoneCommandParser());
+        parsers.put("delete", new TaskDeleteCommandParser());
+        subCommandParser = new SubCommandParser(parsers, getUsage());
     }
 
     /**
@@ -39,20 +41,7 @@ public class TaskCommandParser implements Parser<Command> {
      */
     @Override
     public Command parse(String args) throws ParseException {
-        Matcher matcher = SUB_COMMAND_FORMAT.matcher(args.trim());
-        if (!matcher.matches()) {
-            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, getUsage()));
-        }
-
-        String arguments = matcher.group("arguments");
-        return switch (matcher.group("subCommandWord")) {
-            case "add" -> new TaskAddCommandParser(clock).parse(arguments);
-            case "list" -> new TaskListCommandParser().parse(arguments);
-            case "edit" -> new TaskEditCommandParser(clock).parse(arguments);
-            case "done" -> new TaskDoneCommandParser().parse(arguments);
-            case "delete" -> new TaskDeleteCommandParser().parse(arguments);
-            default -> throw new ParseException(MESSAGE_UNKNOWN_COMMAND);
-        };
+        return subCommandParser.parse(args);
     }
 
     private static String getUsage() {

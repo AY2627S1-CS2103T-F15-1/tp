@@ -14,7 +14,7 @@
 ## **Acknowledgements**
 
 * This project is based on the [AddressBook-Level3](https://github.com/se-edu/addressbook-level3) project created by the [SE-EDU initiative](https://se-education.org). The architecture, the command and parser design and the testing approach are adapted from it.
-* Libraries used: [JavaFX](https://openjfx.io/) (user interface), [Jackson](https://github.com/FasterXML/jackson) (JSON storage), [JUnit5](https://github.com/junit-team/junit5) (testing), [Checkstyle](https://checkstyle.sourceforge.io/) and [JaCoCo](https://www.jacoco.org/jacoco/) (code quality and coverage).
+* Libraries used: [JavaFX](https://openjfx.io/) (user interface), [Jackson](https://github.com/FasterXML/jackson) (JSON storage), [commonmark-java](https://github.com/commonmark/commonmark-java) (showing the bundled User Guide in the Help window), [JUnit5](https://github.com/junit-team/junit5) (testing), [Monocle](https://github.com/TestFX/Monocle) (running the user interface tests without a screen), [Checkstyle](https://checkstyle.sourceforge.io/) and [JaCoCo](https://www.jacoco.org/jacoco/) (code quality and coverage).
 * Documentation is built with [MarkBind](https://markbind.org/) and the diagrams are drawn with [PlantUML](https://plantuml.com/).
 
 --------------------------------------------------------------------------------------------------------------------
@@ -75,6 +75,8 @@ The **API** of this component is specified in [`Ui.java`](https://github.com/AY2
 
 The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `PersonListPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
 
+`CommandBox` also lets the user step through the commands entered in the session with the `Up` and `Down` keys. The steps are kept by `CommandHistory`, a plain class with no JavaFX dependency, so it can be unit tested. It keeps the latest 100 commands, ignores blank commands and a repeat of the previous command, and remembers what the user had typed before stepping back so that `Down` returns to it. A command is recorded when it is entered, whether it succeeds or not. A failed command is left in the text field, and `CommandHistory` does not offer it again on the first `Up`, because it is already shown.
+
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-F15-1/tp/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-F15-1/tp/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
 
 The `UI` component,
@@ -117,6 +119,11 @@ Here are the other classes in `Logic` (omitted from the class diagram above) tha
 How the parsing works:
 * When called upon to parse a user command, the `AddressBookParser` class creates an `XYZCommandParser` (`XYZ` is a placeholder for the specific command name, e.g., `AddCommandParser`). The parser uses the other classes shown above to parse the user command and create an `XYZCommand` object (e.g., `AddCommand`). The `AddressBookParser` returns that object as a `Command` object.
 * All `XYZCommandParser` classes, such as `AddCommandParser` and `DeleteCommandParser`, implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
+* Arguments are parsed by each `XYZCommandParser`, not by `AddressBookParser`, because the prefixes, required fields and error messages differ between commands. Logic that more than one parser needs lives in shared classes instead of being copied:
+  * `ArgumentTokenizer`, `ArgumentMultimap` and `ParserUtil` split and validate prefixed values, and all prefixes are defined once in `CliSyntax`.
+  * An index that is not a positive whole number is reported as `Invalid command format!` with the command's usage. A parser gets this by calling `ParserUtil.parseIndex(value, usage)`.
+  * `CommandInput` splits the first word from the rest of an input and lower-cases that word, so command words and sub-command words do not depend on letter case. The same holds for the `confirm` keyword, which `ConfirmableIndex`, `ClearCommandParser`, `DemoCommandParser` and `LessonSeriesCancelCommandParser` compare ignoring case. Prefixes such as `n/` remain case-sensitive. `AddressBookParser` uses it for the command word, and `SubCommandParser` uses it for the sub-command word of `lesson` and `task`. `SubCommandParser` is given one `Parser` per sub-command word, so adding a sub-command means registering one more parser.
+  * `ConfirmableIndex` parses an index with an optional `confirm` keyword and is used by `delete`, `task delete` and `hw delete`. It strips surrounding whitespace with `String.strip()` and splits the words with `(?U)\s+`, so all three treat Unicode spaces such as U+3000 the same way as ASCII ones, both around the arguments and between the index and `confirm`.
 
 ### Model component
 **API** : [`Model.java`](https://github.com/AY2627S1-CS2103T-F15-1/tp/tree/master/src/main/java/seedu/address/model/Model.java)
@@ -128,7 +135,7 @@ The `Model` component,
 
 * stores the address book data i.e., all `Person` objects, each of which represents a student with a name, phone number, level, subjects and rate, and optionally an email, a venue and a remark (the `Person` objects are contained in a `UniquePersonList` object). Two `Person` objects are the same student if they have the same phone number and the same name, ignoring case.
 * stores the `Lesson` objects, each of which is a lesson with a student, a subject, a date, a start time, a duration, a status and optionally a venue (the `Lesson` objects are contained in a `UniqueLessonList` object). A `Lesson` refers to its student by the student's name and phone number, which together identify a `Person`. Deleting a student deletes their lessons, and editing the name or phone number of a student keeps their lessons attached.
-* stores immutable `LedgerEntry` records for lesson charges and student payments. Each record refers to a permanent student UUID and, for charges only, a lesson UUID. `Ledger` derives balances and unpaid dues from those records; those calculations do not mutate the ledger.
+* stores immutable `LedgerEntry` records for lesson charges, student payments and the reversals of either. Each record refers to a permanent student UUID and, for charges and charge reversals, a lesson UUID; a reversal also refers to the entry it cancels. `Ledger` derives balances and unpaid dues from those records; those calculations do not mutate the ledger.
 * stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
 * stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
 * does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
@@ -501,16 +508,12 @@ The following activity diagram summarizes what happens when a user executes a ne
   * Cons: We must ensure that the implementation of each individual command is correct.
 
 
---------------------------------------------------------------------------------------------------------------------
-
-## **Documentation, logging, testing, dev-ops**
-
 ### Student balances and dues
 
 `LedgerEntry` is immutable and records its UUID, permanent student UUID, optional lesson UUID, kind,
-positive exact `BigDecimal` amount and date. Charges require a lesson UUID; payments have none.
+positive exact `BigDecimal` amount, date and notes. There are four kinds. `CHARGE` and `CHARGE_REVERSAL` require a lesson UUID; `PAYMENT` and `PAYMENT_REVERSAL` have none. A reversal also records the UUID of the entry it cancels (`reverses`), has the same student, lesson and amount as that entry, and can be added only once per entry. Entries are never deleted: `charge reverse` adds a `CHARGE_REVERSAL`.
 `AddressBook` owns the unmodifiable list and validates student/lesson references, unique entry IDs,
-and at most one charge per lesson. Profile edits never rewrite financial records. Copy/reset,
+and at most one active (not reversed) charge per lesson. Profile edits never rewrite financial records. Copy/reset,
 equality, student deletion, clear, and the real JSON snapshot include both finance and homework.
 
 `LessonDoneCommand` explicitly calls `Model.chargeLesson(target, completedLesson)` on first completion.
@@ -520,7 +523,7 @@ This operation validates the charge, replaces the lesson and records the charge 
 use `setLesson`, so note corrections do not bill again. Fees use the current hourly rate × duration
 in minutes ÷ 60, rounded once with `RoundingMode.HALF_UP`, and retain the permanent lesson UUID.
 The command translates model validation failures to `CommandException` and gives an accurate zero-fee
-message without directing users to a manual charge command that is not implemented yet.
+message; `charge l/INDEX amt/AMOUNT` can then bill the lesson by hand.
 
 Ledger copy/reset and JSON restoration validate records in one pass using student/lesson maps and
 sets of entry IDs and charged lesson IDs. The ledger validation cost is O(students + lessons + entries),
@@ -529,7 +532,7 @@ rather than scanning the growing list once per entry. Other domains keep their e
 `removeLesson` refuses to delete a billed lesson, including detached equal-value lookup, so a saved
 charge cannot point at a deleted lesson. Student deletion still cascades all of that student's history.
 
-`Ledger.balance(book, student)` adds charges and subtracts payments, returning a negative value for credit.
+`Ledger.balance(book, student)` adds charges and payment reversals and subtracts payments and charge reversals, returning a negative value for credit. `Ledger.activeCharge(book, lessonId)` returns the charge of a lesson that no reversal cancels; the lesson move/cancel guard and the one-charge-per-lesson rule use it. `ChargeCommand` records a manual charge or a reversal. `PaymentListCommand` lists `PAYMENT` entries oldest first, and stores them with `Model#setShownPayments`. It builds a student-name map and the set from `Ledger.reversedIds` once per listing, so listing stays linear in the number of entries instead of scanning the ledger for every row; `PaymentReverseCommand` takes its index from that stored list (like `task list` and the task commands), so the numbers stay fixed until the next `pay list`. It refuses a payment that is gone from the ledger or that `Ledger.isReversed` finds already cancelled, and otherwise adds `LedgerEntry.reversalOf(payment, today)`. `PayCommandParser` routes `pay list` and `pay reverse` to their parsers and everything else to `PaymentCommandParser`. The automatic charge raised by `lesson done` keeps the lesson's UUID as its entry ID, so a charge raised again after a reversal gets a random ID; a charge made with `charge` always gets a random ID. `AddressBook#chargeLesson` raises no automatic charge when `Ledger.activeCharge` already finds one, so completing a missed lesson that was billed by hand does not bill it twice.
 `Ledger.describeBalance(amount)` shares the `OUTSTANDING $X.XX` / `IN CREDIT $X.XX` labels.
 `Ledger.dues(book, today)` returns immutable `Due(student, amount, oldestUnpaidDate)` rows, oldest first,
 breaking ties by name then phone. Payments cover charges FIFO by charge date, including partial payments
@@ -559,9 +562,8 @@ updated balance, and save performed by `LogicManager`:
 <puml src="diagrams/PaymentSequenceDiagram.puml" alt="Sequence diagram for recording a student payment and saving the updated ledger" />
 
 Integration follow-ups before full alpha sign-off:
-* Finance: introduce reversal records and a schema migration before implementing payment/charge reversal.
-  A charge currently uses the lesson UUID, so recharging after reversal requires a new event identity design.
 * Finance: implement the running account statement in specification section 4.29.
+* Tasks: `task add pay/INDEX` (specification section 4.31) is not implemented. It still answers `Invalid payment index. Run 'pay list' first.`, because linking a task to a payment needs a new task link and storage field. `pay list` and `pay reverse` are done, so this is the last open piece of the payment-index feature.
 Move, cancellation and series cancellation already reject changes to billed lessons and preserve lesson and series UUIDs. Series cancellation checks the whole batch before replacing the address book.
 
 `LogicManager(Model, Storage, Clock)` passes a shared date source to the finance and relevant lesson
@@ -575,6 +577,10 @@ records and prompts even when they only have payment records and no lessons. Cle
 `JsonAdaptedLedgerEntry` and the optional `ledgerEntries` collection in `JsonSerializableAddressBook` persist every
 record. Loading validates IDs, amounts and student references. Older files load an empty ledger: completed lessons
 are not billed retroactively, because their historical rate and payment state are unknown.
+
+--------------------------------------------------------------------------------------------------------------------
+
+## **Documentation, logging, testing, dev-ops**
 
 * [Documentation guide](Documentation.md)
 * [Testing guide](Testing.md)
@@ -1032,31 +1038,61 @@ testers are expected to do more *exploratory* testing.
 
    1. Download the JAR file and copy it into an empty folder.
 
-   1. Double-click the JAR file.<br>
-      Expected: The GUI opens empty with welcome and demo instructions. The window size may not be optimal.
+   1. Open a terminal in that folder, check with `java -version` that Java 25 is used, and run `java -jar tutorflow.jar`.<br>
+      Expected: The GUI opens with no students. The result box shows the welcome message and suggests `demo`. The window size may not be optimal.
 
 1. Saving window preferences
 
    1. Resize the window to an optimal size. Move the window to a different location. Close the window.
 
-   1. Relaunch the app by double-clicking the JAR file.<br>
+   1. Relaunch the app with `java -jar tutorflow.jar`.<br>
        Expected: The most recent window size and location are retained.
 
 
-### Deleting a person
+### Command box
 
-1. Deleting a person while all persons are being shown
+1. Letter case of commands
 
-   1. Prerequisites: List all persons using the `list` command, with multiple persons in the list.
+   1. Test case: `LIST`, then `Lesson List st/1`, then `DELETE 1 CONFIRM` (on a student with no records)<br>
+      Expected: Each runs as if typed in lower case. A prefix in upper case, such as `N/`, is still rejected.
+
+1. History and failed commands
+
+   1. Test case: run `list`, then `find alex`, then `bogus`<br>
+      Expected: `bogus` fails, is shown in red and stays in the command box.
+
+   1. Press `Up` repeatedly, then `Down` repeatedly<br>
+      Expected: `find alex`, then `list`, and `Up` again changes nothing. `Down` walks forward and the last `Down` shows `bogus` again.
+
+### Deleting a student
+
+1. Deleting a student who has no lessons, homework, tasks or payments
+
+   1. Prerequisites: Use `list`, with multiple students in the list. The 1st student has no linked records.
 
    1. Test case: `delete 1`<br>
-      Expected: The first contact is deleted from the list. The status message shows the deleted contact's details.
+      Expected: The 1st student is deleted at once and disappears from the list. The result box shows `Deleted student:` and the student's details.
+
+1. Deleting a student who has lessons
+
+   1. Prerequisites: Use `list`. Schedule a future lesson for the 1st student, such as `lesson add st/1 d/tmr t/16:00`.
+
+   1. Test case: `delete 1`<br>
+      Expected: Nothing is deleted. The result box shows the student's name and phone number, the number of lessons, a warning about the upcoming lesson, and `Type 'delete 1 confirm' to proceed.`
+
+   1. Test case: `delete 1 confirm`<br>
+      Expected: The student and their lessons are deleted. `agenda d/DATE` for the lesson's date no longer shows the lesson.
+
+1. Incorrect delete commands
 
    1. Test case: `delete 0`<br>
-      Expected: No person is deleted. The status message shows error details.
+      Expected: No student is deleted. The result box shows `Invalid command format!` and the usage of `delete`.
 
-   1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
-      Expected: Similar to previous.
+   1. Test case: `delete x`, where x is larger than the list size<br>
+      Expected: No student is deleted. The result box says that no student has that number and how many items the list has.
+
+   1. Other incorrect delete commands to try: `delete`, `delete 1 yes`<br>
+      Expected: Similar to `delete 0`.
 
 
 ### Writing dates

@@ -246,8 +246,10 @@ public class LessonRepeatCommandTest {
         String message = execute(new LessonRepeatCommand(INDEX_FIRST_PERSON, MATH, START_DATE, TIME, DURATION,
                 null, 2, 1));
 
-        assertEquals("Scheduled 2 weekly occurrences.\nLesson numbers have changed. "
-                + "Run 'agenda' or 'lesson list st/1' to refresh them.", message);
+        assertTrue(message.startsWith("Scheduled 2 weekly occurrences.\n\nLesson numbers have changed. "
+                + "Current lesson list:\n1. "), message);
+        assertEquals(1, message.split("Lesson numbers have changed", -1).length - 1);
+        assertFalse(message.contains("to refresh them"));
     }
 
     @Test

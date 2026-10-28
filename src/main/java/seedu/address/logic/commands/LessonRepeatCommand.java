@@ -66,8 +66,6 @@ public class LessonRepeatCommand extends Command {
             + "or later.";
     public static final String MESSAGE_NOT_DISPLAYED = "The new lessons are not in the displayed list. "
             + "Run 'agenda' or 'lesson list " + PREFIX_STUDENT + "%1$d' to number them.";
-    public static final String MESSAGE_NUMBERS_CHANGED = "Lesson numbers have changed. "
-            + "Run 'agenda' or 'lesson list " + PREFIX_STUDENT + "%1$d' to refresh them.";
     public static final String MESSAGE_DATE_IN_PAST = "That date is in the past. A series starts today or later.";
     public static final String MESSAGE_DUPLICATE_SERIES = LessonCommandUtil.MESSAGE_DUPLICATE_LESSON
             + " No occurrences were added.";
@@ -163,10 +161,14 @@ public class LessonRepeatCommand extends Command {
         String summary = everyWeeks == DEFAULT_EVERY
                 ? String.format(MESSAGE_SUCCESS_WEEKLY, count)
                 : String.format(MESSAGE_SUCCESS_EVERY, count, everyWeeks);
-        String shown = isRenumbered(shownBefore, model.getFilteredLessonList())
-                ? MESSAGE_NUMBERS_CHANGED : MESSAGE_NOT_DISPLAYED;
-        return new CommandResult(summary + "\n" + String.format(shown, studentIndex.getOneBased()) + warnings
-                + LessonCommandUtil.getTravelWarningsForLessons(model, series));
+        String details = warnings + LessonCommandUtil.getTravelWarningsForLessons(model, series);
+        if (isRenumbered(shownBefore, model.getFilteredLessonList())) {
+            // Like lesson add, end with the new numbering so that the tutor does not use stale numbers.
+            return new CommandResult(summary + details + Messages.formatLessonList(model.getFilteredLessonList()))
+                    .withDisplayedLessons(model.getFilteredLessonList());
+        }
+        return new CommandResult(summary + "\n" + String.format(MESSAGE_NOT_DISPLAYED, studentIndex.getOneBased())
+                + details);
     }
 
     /**

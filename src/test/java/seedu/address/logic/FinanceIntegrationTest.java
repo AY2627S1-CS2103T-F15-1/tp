@@ -20,7 +20,10 @@ import org.junit.jupiter.api.io.TempDir;
 import seedu.address.logic.commands.BalanceCommand;
 import seedu.address.logic.commands.DuesCommand;
 import seedu.address.logic.commands.HelpCommand;
+import seedu.address.logic.commands.LessonCancelCommand;
+import seedu.address.logic.commands.LessonMoveCommand;
 import seedu.address.logic.commands.PaymentCommand;
+import seedu.address.logic.commands.PaymentReverseCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.Model;
@@ -119,6 +122,17 @@ public class FinanceIntegrationTest {
     }
 
     @Test
+    public void completedLesson_moveAndCancelNameTheStatusEvenThoughItIsBilled() throws Exception {
+        logic.execute("lesson add st/1 d/" + TODAY + " t/10:00");
+        logic.execute("lesson done 1");
+
+        String completedMove = LessonMoveCommand.MESSAGE_COMPLETED_LESSON;
+        assertThrows(CommandException.class, completedMove, () -> logic.execute("lesson move 1 t/11:00"));
+        String completedCancel = LessonCancelCommand.MESSAGE_COMPLETED_LESSON;
+        assertThrows(CommandException.class, completedCancel, () -> logic.execute("lesson cancel 1"));
+    }
+
+    @Test
     public void emptyAndCreditAccounts_noOutstandingDues() throws Exception {
         assertEquals(DuesCommand.MESSAGE_NO_DUES, logic.execute("dues").getFeedbackToUser());
         assertTrue(logic.execute("balance st/1").getFeedbackToUser().contains("OUTSTANDING $0.00"));
@@ -154,9 +168,9 @@ public class FinanceIntegrationTest {
     public void payment_recordsPartialFullAndExcessPaymentsAndPersistsThem() throws Exception {
         logic.execute("lesson add st/1 d/" + TODAY + " t/10:00");
         logic.execute("lesson done 1");
-        assertTrue(logic.execute("pay st/1 amt/20").getFeedbackToUser().endsWith("OUTSTANDING $30.00."));
+        assertTrue(logic.execute("pay st/1 amt/20").getFeedbackToUser().contains("OUTSTANDING $30.00."));
         assertTrue(logic.execute("dues").getFeedbackToUser().contains("$30.00 total"));
-        assertTrue(logic.execute("pay st/1 amt/30").getFeedbackToUser().endsWith("OUTSTANDING $0.00."));
+        assertTrue(logic.execute("pay st/1 amt/30").getFeedbackToUser().contains("OUTSTANDING $0.00."));
         assertEquals(DuesCommand.MESSAGE_NO_DUES, logic.execute("dues").getFeedbackToUser());
         assertTrue(logic.execute("pay amt/10.25 st/1").getFeedbackToUser().contains("IN CREDIT $10.25"));
         assertTrue(logic.execute("balance st/1").getFeedbackToUser().contains("IN CREDIT $10.25"));
@@ -174,7 +188,7 @@ public class FinanceIntegrationTest {
         String payment = logic.execute("pay st/2 amt/120").getFeedbackToUser();
 
         assertTrue(payment.contains("Payment of $120.00 recorded for Bob"));
-        assertTrue(payment.endsWith("OUTSTANDING $0.00."));
+        assertTrue(payment.contains("OUTSTANDING $0.00."));
         assertEquals(alice, model.getFilteredPersonList().get(0));
         assertEquals(bob, model.getFilteredPersonList().get(1));
         ReadOnlyAddressBook saved = storage.readAddressBook().orElseThrow();
@@ -194,7 +208,7 @@ public class FinanceIntegrationTest {
         String payment = logic.execute("pay st/1 amt/80").getFeedbackToUser();
 
         assertTrue(payment.contains("Payment of $80.00 recorded for Bob"));
-        assertTrue(payment.endsWith("OUTSTANDING $0.00."));
+        assertTrue(payment.contains("OUTSTANDING $0.00."));
         assertEquals(1, model.getFilteredPersonList().size());
         assertEquals(bob, model.getFilteredPersonList().getFirst());
         ReadOnlyAddressBook saved = storage.readAddressBook().orElseThrow();
@@ -215,7 +229,7 @@ public class FinanceIntegrationTest {
         String payment = logic.execute("pay st/2 amt/80").getFeedbackToUser();
 
         assertTrue(payment.contains("Payment of $80.00 recorded for Bob"));
-        assertTrue(payment.endsWith("OUTSTANDING $0.00."));
+        assertTrue(payment.contains("OUTSTANDING $0.00."));
         assertTrue(model.getFilteredLessonList().isEmpty());
         assertEquals(2, model.getFilteredPersonList().size());
         ReadOnlyAddressBook saved = storage.readAddressBook().orElseThrow();
@@ -269,7 +283,8 @@ public class FinanceIntegrationTest {
         logic.execute("edit 1 r/0");
         logic.execute("lesson add st/1 d/" + TODAY + " t/10:00");
         String result = logic.execute("lesson done 1").getFeedbackToUser();
-        assertTrue(result.contains("No automatic charge: The lesson fee is $0.00."));
+        assertTrue(result.contains("No automatic charge: This student's rate is $0.00. Specify an amount with amt/ "
+                + "if you want to charge for this lesson. Use charge with an amount."), result);
         assertTrue(model.getAddressBook().getLedgerEntries().isEmpty());
         assertEquals(Ledger.ZERO, Ledger.balance(storage.readAddressBook().orElseThrow(), alice));
     }
@@ -303,7 +318,8 @@ public class FinanceIntegrationTest {
     public void pay_optionalDateAndNotes_persistWithExactSpecifiedFeedback() throws Exception {
         logic.execute("lesson add st/2 d/" + TODAY + " t/10:00");
         logic.execute("lesson done 1");
-        assertEquals("Payment of $30.00 recorded for Bob on 2026-10-18.\nBalance: OUTSTANDING $50.00.",
+        assertEquals("Payment of $30.00 recorded for Bob on 2026-10-18.\nBalance: OUTSTANDING $50.00.\n"
+                + "Payment indices stay as last shown; run 'pay list' to refresh.",
                 logic.execute("pay st/2 amt/30 d/18/10/2026 n/PayNow ref 4471").getFeedbackToUser());
         ReadOnlyAddressBook saved = storage.readAddressBook().orElseThrow();
         assertEquals(TODAY.minusDays(1), saved.getLedgerEntries().getLast().date());
@@ -311,6 +327,25 @@ public class FinanceIntegrationTest {
         assertEquals(new BigDecimal("50.00"), Ledger.balance(saved, bob));
         assertEquals(bob.getId(), saved.getLedgerEntries().getLast().studentId());
         assertEquals(alice, model.getFilteredPersonList().getFirst());
+    }
+
+    @Test
+    public void payListAndReverse_correctAWrongPaymentAndSurviveARestart() throws Exception {
+        logic.execute("pay st/2 amt/100 d/18/10/2026 n/PayNow ref 4471");
+        logic.execute("pay st/2 amt/50");
+        assertEquals("PAYMENTS\n1. 2026-10-18 Bob $100.00 — PayNow ref 4471\n2. " + TODAY + " Bob $50.00\n"
+                + "Use 'pay reverse INDEX' with these rows. Indices stay fixed until the next 'pay list'.",
+                logic.execute("pay list").getFeedbackToUser());
+
+        assertEquals("Payment of $50.00 reversed.", logic.execute("pay reverse 2").getFeedbackToUser());
+        assertThrows(CommandException.class, PaymentReverseCommand.MESSAGE_ALREADY_REVERSED, () ->
+                logic.execute("pay reverse 2"));
+        assertTrue(logic.execute("pay list st/2").getFeedbackToUser().contains("$50.00 [REVERSED]"));
+
+        ReadOnlyAddressBook saved = storage.readAddressBook().orElseThrow();
+        assertEquals(3, saved.getLedgerEntries().size());
+        assertEquals(new BigDecimal("-100.00"), Ledger.balance(saved, bob));
+        assertEquals(saved.getLedgerEntries().get(1).id(), saved.getLedgerEntries().getLast().reverses());
     }
 
     @Test
@@ -327,7 +362,8 @@ public class FinanceIntegrationTest {
         Clock midnight = Clock.fixed(Instant.parse("2026-10-18T16:30:00Z"), ZoneId.of("Asia/Singapore"));
         Logic fixedLogic = new LogicManager(model, new StorageManager(storage,
                 new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json"))), midnight);
-        assertEquals("Payment of $10.00 recorded for Alice on 2026-10-19.\nBalance: IN CREDIT $10.00.",
+        assertEquals("Payment of $10.00 recorded for Alice on 2026-10-19.\nBalance: IN CREDIT $10.00.\n"
+                + "Payment indices stay as last shown; run 'pay list' to refresh.",
                 fixedLogic.execute("pay st/1 amt/10").getFeedbackToUser());
         assertEquals(TODAY, storage.readAddressBook().orElseThrow().getLedgerEntries().getFirst().date());
         assertEquals(PaymentCommand.MESSAGE_USAGE + "\n" + HelpCommand.MESSAGE_USER_GUIDE,
