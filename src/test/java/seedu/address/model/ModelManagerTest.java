@@ -27,6 +27,7 @@ import seedu.address.commons.core.GuiSettings;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
+import seedu.address.model.person.exceptions.PersonNotFoundException;
 import seedu.address.testutil.AddressBookBuilder;
 import seedu.address.testutil.LessonBuilder;
 
@@ -295,6 +296,20 @@ public class ModelManagerTest {
         assertEquals(DestructiveActionType.NONE, modelManager.undoDestructiveAction());
         assertEquals(before, modelManager);
     }
+
+    @Test
+    public void undoDestructiveAction_failedDestruct_resetsUndo() {
+        modelManager.addPerson(BENSON);
+        modelManager.addLesson(BENSON_PHYSICS);
+        modelManager.addPerson(ELLE);
+        modelManager.deleteLesson(BENSON_PHYSICS);
+        ModelManager before = copyOfModelManager();
+        assertThrows(PersonNotFoundException.class, () -> modelManager.deletePerson(FIONA));
+
+        assertEquals(DestructiveActionType.NONE, modelManager.undoDestructiveAction());
+        assertEquals(before, modelManager);
+    }
+
 
     @Test
     public void equals() {

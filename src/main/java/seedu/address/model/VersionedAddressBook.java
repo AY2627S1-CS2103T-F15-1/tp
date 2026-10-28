@@ -24,8 +24,13 @@ public class VersionedAddressBook extends AddressBook {
         super(toBeCopied);
     }
 
-    private void saveState(DestructiveActionType actionType) {
+    private void saveState() {
         this.lastState = new AddressBook(this);
+        // Resets, in case the action fails
+        resetDestructiveAction();
+    }
+
+    private void saveDestructiveAction(DestructiveActionType actionType) {
         this.lastDestructiveAction = actionType;
     }
 
@@ -72,8 +77,9 @@ public class VersionedAddressBook extends AddressBook {
 
     @Override
     public void clearData() {
-        this.saveState(DestructiveActionType.CLEAR);
+        saveState();
         super.clearData();
+        saveDestructiveAction(DestructiveActionType.CLEAR);
     }
 
     @Override
@@ -90,8 +96,9 @@ public class VersionedAddressBook extends AddressBook {
 
     @Override
     public void removePerson(Person key) {
-        saveState(DestructiveActionType.DELETE_STUDENT);
+        saveState();
         super.removePerson(key);
+        saveDestructiveAction(DestructiveActionType.DELETE_STUDENT);
     }
 
     @Override
@@ -108,8 +115,9 @@ public class VersionedAddressBook extends AddressBook {
 
     @Override
     public void removeLesson(Lesson key) {
-        saveState(DestructiveActionType.DELETE_LESSON);
+        saveState();
         super.removeLesson(key);
+        saveDestructiveAction(DestructiveActionType.DELETE_LESSON);
     }
 
     @Override
@@ -126,8 +134,9 @@ public class VersionedAddressBook extends AddressBook {
 
     @Override
     public void removeTask(Task key) {
-        saveState(DestructiveActionType.DELETE_TASK);
+        saveState();
         super.removeTask(key);
+        saveDestructiveAction(DestructiveActionType.DELETE_TASK);
     }
 
     @Override
@@ -162,7 +171,8 @@ public class VersionedAddressBook extends AddressBook {
 
     @Override
     public void removeHomework(Homework target) {
-        saveState(DestructiveActionType.DELETE_HW);
+        saveState();
         super.removeHomework(target);
+        saveDestructiveAction(DestructiveActionType.DELETE_HW);
     }
 }
