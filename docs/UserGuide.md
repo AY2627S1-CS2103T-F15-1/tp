@@ -631,6 +631,7 @@ Format: `pay list [st/STUDENT_INDEX]`
 Format to take a payment back: `pay reverse PAYMENT_INDEX`
 
 * `pay list` shows every payment, oldest first, or only those of one student when you give `st/STUDENT_INDEX` (a number from the displayed student list). Each row has a number, the date, the student, the amount and any notes. A payment that was reversed stays in the list, marked `[REVERSED]`.
+* `pay list` displays the first 200 rows and then `Showing 200 of N payments`. Hidden rows keep their numbers, so `pay reverse INDEX` can still address them.
 * `PAYMENT_INDEX` is the number from the **last** `pay list`. The numbers stay fixed until you run `pay list` again, even after you add or reverse payments, so a number always means the row you saw.
 * A payment can be reversed once, and a reversal cannot itself be reversed. If you reversed a payment by mistake, record the payment again with `pay`.
 * The original payment is kept and an opposite entry is added, so the account shows both the mistake and its correction. Reversing a payment that has already been counted against charges is allowed; the balance is recalculated.
@@ -901,6 +902,7 @@ Numbers are session-local, so display a new list after restarting.
   It keeps the assignment, due date, status, numbered selection and linked tasks. Other assignment details stay
   unchanged; the cleared feedback also stays absent after saving and restarting.
 * Lists show overdue items first, then due dates ascending, retaining insertion order for ties.
+* `hw list` displays the first 200 rows and then `Showing 200 of N homework item(s)`. Hidden rows keep their numbers for indexed homework commands.
   History includes reviewed items and feedback; `outstanding/` includes assigned and submitted work.
   `overdue/` and `outstanding/` take no values and cannot be combined.
 * Homework and dues summaries show only the last four phone digits when another active or archived student

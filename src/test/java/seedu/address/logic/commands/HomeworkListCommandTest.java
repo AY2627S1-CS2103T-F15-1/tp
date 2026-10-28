@@ -1,6 +1,7 @@
 package seedu.address.logic.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -158,6 +159,21 @@ public class HomeworkListCommandTest {
         list(null, false, false);
 
         assertEquals(before, List.copyOf(model.getAddressBook().getHomeworkList()));
+    }
+
+    @Test
+    public void execute_moreThanTwoHundredHomeworkItems_showsFirstTwoHundredAndKeepsAllIndices() throws Exception {
+        for (int i = 0; i < HomeworkListCommand.MAX_DISPLAYED_HOMEWORK + 1; i++) {
+            add(new HomeworkBuilder(ALICE).withDescription("Homework " + i).build());
+        }
+
+        String result = list(null, false, false);
+
+        assertTrue(result.contains("\n200. "));
+        assertFalse(result.contains("\n201. "));
+        assertTrue(result.contains(String.format(HomeworkListCommand.MESSAGE_TRUNCATED,
+                HomeworkListCommand.MAX_DISPLAYED_HOMEWORK, HomeworkListCommand.MAX_DISPLAYED_HOMEWORK + 1)));
+        assertEquals(HomeworkListCommand.MAX_DISPLAYED_HOMEWORK + 1, model.getDisplayedHomework().size());
     }
 
     @Test
