@@ -131,6 +131,8 @@ public class AddressBook implements ReadOnlyAddressBook {
 
     /** Clears this {@code AddressBook} of all data. */
     public void clearData() {
+        persons.setPersons(List.of());
+        lessons.setLessons(List.of());
         ledgerEntries.clear();
         tasks.clear();
         homework.clear();
