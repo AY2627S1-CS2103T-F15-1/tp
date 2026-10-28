@@ -1,13 +1,12 @@
 package seedu.address.ui;
 
-import java.util.Comparator;
-
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.Subject;
 
 /**
  * A UI component that displays information of a {@code Person}.
@@ -62,7 +61,7 @@ public class PersonCard extends UiPart<Region> {
         showIfPresent(venue, person.getVenue().map(value -> value.value).orElse(null));
         remark.setText(person.getRemark().value);
         person.getSubjects().stream()
-                .sorted(Comparator.comparing(subject -> subject.value.toLowerCase()))
+                .sorted(Subject.DISPLAY_ORDER)
                 .forEach(subject -> subjects.getChildren().add(new Label(subject.value)));
     }
 
