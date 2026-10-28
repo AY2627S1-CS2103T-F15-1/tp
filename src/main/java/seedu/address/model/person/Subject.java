@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
 import java.text.Normalizer;
+import java.util.Comparator;
 
 /**
  * Represents a subject taught to a student in TutorFlow.
@@ -20,6 +21,13 @@ public class Subject {
             "Subjects must be 1-30 characters using only letters (in any language), digits, spaces, & and -.";
 
     public static final String VALIDATION_REGEX = "[\\p{L}\\p{N}][\\p{L}\\p{M}\\p{N} &-]{0,29}";
+
+    /**
+     * The order in which a student's subjects are shown: alphabetical, ignoring case. It does not depend on the
+     * computer's language settings, so the same student's subjects appear in the same order everywhere.
+     */
+    public static final Comparator<Subject> DISPLAY_ORDER =
+            Comparator.comparing(subject -> subject.value, String.CASE_INSENSITIVE_ORDER);
 
     public final String value;
 
