@@ -136,7 +136,7 @@ public class AddressBook implements ReadOnlyAddressBook {
         ledgerEntries.clear();
         tasks.clear();
         homework.clear();
-        setTravelBuffer(TravelGap.DEFAULT_BUFFER);
+        travelBuffer = TravelGap.DEFAULT_BUFFER;
         studentOrder = null;
         keepStudentOrder();
     }
