@@ -40,6 +40,9 @@ public class PhoneTest {
         assertFalse(Phone.isValidPhone("9--1234567")); // repeated hyphens
         assertFalse(Phone.isValidPhone("9123 4567 ")); // trailing space
         assertFalse(Phone.isValidPhone("+65- 9123 4567")); // repeated mixed separators
+        assertFalse(Phone.isValidPhone(" "));
+        assertFalse(Phone.isValidPhone(" - "));
+        assertFalse(Phone.isValidPhone("+"));
 
         // valid phone numbers
         assertFalse(Phone.isValidPhone("911")); // fewer than eight digits
@@ -50,6 +53,7 @@ public class PhoneTest {
         assertTrue(Phone.isValidPhone("9312-1534")); // hyphens within digits
         assertTrue(Phone.isValidPhone("+65 9123-4567")); // plus sign with separators
         assertTrue(Phone.isValidPhone("+65 9123 4567")); // separators between all digit groups
+        assertTrue(Phone.isValidPhone("91234567")); // a single digit group
     }
 
     @Test

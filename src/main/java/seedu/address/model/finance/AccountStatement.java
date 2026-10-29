@@ -34,11 +34,14 @@ public final class AccountStatement {
         BigDecimal running = Ledger.ZERO;
         BigDecimal charged = Ledger.ZERO;
         BigDecimal paid = Ledger.ZERO;
+        BigDecimal withdrawn = Ledger.ZERO;
         for (LedgerEntry entry : entries) {
             BigDecimal signed = entry.kind().increasesBalance() ? entry.amount() : entry.amount().negate();
             running = running.add(signed);
             if (entry.kind().refersToLesson()) {
                 charged = charged.add(signed);
+            } else if (entry.kind() == LedgerEntry.Kind.WITHDRAWAL) {
+                withdrawn = withdrawn.add(entry.amount());
             } else {
                 paid = paid.subtract(signed);
             }
@@ -47,7 +50,8 @@ public final class AccountStatement {
         }
         return statement.append("\nTotal charged ").append(Ledger.format(charged))
                 .append(" · total paid ").append(Ledger.format(paid))
-                .append(" (after reversals) · ").append(Ledger.describeBalance(running)).toString();
+                .append(" (after reversals) · total withdrawn ").append(Ledger.format(withdrawn))
+                .append(" · ").append(Ledger.describeBalance(running)).toString();
     }
 
     /**

@@ -83,20 +83,19 @@ public final class Ledger {
         assert balance(book, student).signum() > 0 : "Only debtors have an oldest unpaid charge";
         List<LedgerEntry> entries = book.getLedgerEntries().stream().filter(entry -> entry.isWith(student)).toList();
         Set<UUID> reversedIds = reversedIds(book);
-        BigDecimal payments = entries.stream().filter(entry -> entry.kind() == LedgerEntry.Kind.PAYMENT)
-                .filter(entry -> !reversedIds.contains(entry.id()))
-                .map(LedgerEntry::amount).reduce(ZERO, BigDecimal::add);
-        BigDecimal withdrawals = entries.stream().filter(entry -> entry.kind() == LedgerEntry.Kind.WITHDRAWAL)
-                .map(LedgerEntry::amount).reduce(ZERO, BigDecimal::add);
-        payments = payments.subtract(withdrawals);
         List<LedgerEntry> charges = entries.stream().filter(entry -> entry.kind() == LedgerEntry.Kind.CHARGE)
                 .filter(entry -> !reversedIds.contains(entry.id()))
                 .sorted(Comparator.comparing(LedgerEntry::date).thenComparing(LedgerEntry::id)).toList();
+        BigDecimal credit = entries.stream().filter(entry -> entry.kind() == LedgerEntry.Kind.PAYMENT)
+                .filter(entry -> !reversedIds.contains(entry.id()))
+                .map(LedgerEntry::amount).reduce(ZERO, BigDecimal::add)
+                .subtract(entries.stream().filter(entry -> entry.kind() == LedgerEntry.Kind.WITHDRAWAL)
+                        .map(LedgerEntry::amount).reduce(ZERO, BigDecimal::add));
         for (LedgerEntry charge : charges) {
-            if (payments.compareTo(charge.amount()) < 0) {
+            if (credit.compareTo(charge.amount()) < 0) {
                 return charge.date();
             }
-            payments = payments.subtract(charge.amount());
+            credit = credit.subtract(charge.amount());
         }
         throw new IllegalStateException("A positive balance must have an unpaid charge.");
     }
