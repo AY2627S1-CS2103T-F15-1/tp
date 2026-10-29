@@ -6,6 +6,10 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_DURATION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TIME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_VENUE;
 
+import java.time.Clock;
+import java.time.LocalDate;
+import java.util.Objects;
+
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.LessonMoveCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -18,6 +22,18 @@ import seedu.address.model.person.Venue;
  * Parses input arguments and creates a new LessonMoveCommand object
  */
 public class LessonMoveCommandParser implements Parser<LessonMoveCommand> {
+
+    private final Clock clock;
+
+    /** Uses the local system date. */
+    public LessonMoveCommandParser() {
+        this(Clock.systemDefaultZone());
+    }
+
+    /** Uses an explicit date source for relative dates. */
+    public LessonMoveCommandParser(Clock clock) {
+        this.clock = Objects.requireNonNull(clock);
+    }
 
     /**
      * Parses the given {@code String} of arguments in the context of the LessonMoveCommand
@@ -38,7 +54,9 @@ public class LessonMoveCommandParser implements Parser<LessonMoveCommand> {
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_DATE, PREFIX_TIME, PREFIX_DURATION, PREFIX_VENUE);
         argMultimap.verifyNoEmptyValuesFor(PREFIX_DATE, PREFIX_TIME, PREFIX_DURATION, PREFIX_VENUE);
 
-        LessonDate date = ParserUtil.parseOptional(argMultimap, PREFIX_DATE, ParserUtil::parseDate);
+        LocalDate today = LocalDate.now(clock);
+        LessonDate date = ParserUtil.parseOptional(argMultimap, PREFIX_DATE,
+                value -> ParserUtil.parseDate(value, today));
         LessonTime time = ParserUtil.parseOptional(argMultimap, PREFIX_TIME, ParserUtil::parseTime);
         LessonDuration duration = ParserUtil.parseOptional(argMultimap, PREFIX_DURATION, ParserUtil::parseDuration);
         Venue venue = ParserUtil.parseOptional(argMultimap, PREFIX_VENUE, ParserUtil::parseVenue);

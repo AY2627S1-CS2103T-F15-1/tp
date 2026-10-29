@@ -134,7 +134,7 @@ public class HomeworkCommandParser implements Parser<Command> {
         return switch (text.strip().toLowerCase(Locale.ENGLISH)) {
             case "today" -> LocalDate.now(clock);
             case "tmr" -> LocalDate.now(clock).plusDays(1);
-            default -> ParserUtil.parseDate(text).value;
+            default -> ParserUtil.parseDate(text, LocalDate.now(clock)).value;
         };
     }
 

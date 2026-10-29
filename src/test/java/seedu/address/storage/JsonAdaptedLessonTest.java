@@ -157,6 +157,15 @@ public class JsonAdaptedLessonTest {
     }
 
     @Test
+    public void toModelType_flexibleStoredDate_rejected() {
+        for (String storedDate : new String[] {"22/12/2026", "22 Dec 2026", "2026/12/22", "26-12-22"}) {
+            JsonAdaptedLesson lesson = new JsonAdaptedLesson(VALID_NAME, VALID_PHONE, VALID_SUBJECT, storedDate,
+                    VALID_TIME, VALID_DURATION, VALID_VENUE, VALID_STATUS, null, null);
+            assertThrows(IllegalValueException.class, LessonDate.MESSAGE_CONSTRAINTS, lesson::toModelType);
+        }
+    }
+
+    @Test
     public void toModelType_nullDate_throwsIllegalValueException() {
         JsonAdaptedLesson lesson = new JsonAdaptedLesson(VALID_NAME, VALID_PHONE, VALID_SUBJECT, null,
                 VALID_TIME, VALID_DURATION, VALID_VENUE, VALID_STATUS, null, null);

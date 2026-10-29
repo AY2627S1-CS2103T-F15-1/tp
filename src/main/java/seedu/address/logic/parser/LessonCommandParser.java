@@ -29,8 +29,8 @@ public class LessonCommandParser implements Parser<Command> {
         parsers.put("prep", new LessonPrepCommandParser());
         parsers.put("add", new LessonAddCommandParser(clock));
         parsers.put("list", new LessonListCommandParser(clock));
-        parsers.put("repeat", new LessonRepeatCommandParser());
-        parsers.put("move", new LessonMoveCommandParser());
+        parsers.put("repeat", new LessonRepeatCommandParser(clock));
+        parsers.put("move", new LessonMoveCommandParser(clock));
         parsers.put("cancel", new LessonCancelCommandParser());
         parsers.put("series", new LessonSeriesCancelCommandParser());
         parsers.put("done", new LessonDoneCommandParser(clock));

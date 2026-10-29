@@ -67,6 +67,14 @@ public class HomeworkCommandParserTest {
     }
 
     @Test
+    public void parseAddAndEdit_relativeDates_useInjectedClock() {
+        assertParseSuccess(parser, "add st/1 desc/Algebra due/tmr",
+                new HomeworkAddCommand(INDEX_FIRST_PERSON, "Algebra", TODAY.plusDays(1), TODAY));
+        assertParseSuccess(parser, "edit 1 due/tmr",
+                new HomeworkEditCommand(INDEX_FIRST_PERSON, null, TODAY.plusDays(1), TODAY));
+    }
+
+    @Test
     public void parseAdd_textThatLooksLikeAnotherPrefix_staysInTheDescription() {
         assertParseSuccess(parser, "add st/1 desc/Read n/a notes and s/o p/3 due/tmr",
                 new HomeworkAddCommand(INDEX_FIRST_PERSON, "Read n/a notes and s/o p/3", TODAY.plusDays(1), TODAY));

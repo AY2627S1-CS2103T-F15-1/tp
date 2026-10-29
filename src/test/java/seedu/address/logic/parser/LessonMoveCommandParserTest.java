@@ -5,6 +5,10 @@ import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailur
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.Messages;
@@ -15,6 +19,8 @@ import seedu.address.model.lesson.LessonTime;
 import seedu.address.model.person.Venue;
 
 public class LessonMoveCommandParserTest {
+
+    private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-10-28T00:00:00Z"), ZoneOffset.UTC);
 
     private LessonMoveCommandParser parser = new LessonMoveCommandParser();
 
@@ -60,5 +66,13 @@ public class LessonMoveCommandParserTest {
     public void parse_repeatedField_failure() {
         assertParseFailure(parser, " 1 d/2026-12-24 d/2026-12-25",
                 Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_DATE));
+    }
+
+    @Test
+    public void parse_relativeDate_usesInjectedClock() {
+        LessonMoveCommandParser fixedParser = new LessonMoveCommandParser(CLOCK);
+
+        assertParseSuccess(fixedParser, " 1 d/tmr",
+                new LessonMoveCommand(INDEX_FIRST_PERSON, new LessonDate("2026-10-29"), null, null, null));
     }
 }

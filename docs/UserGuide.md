@@ -82,7 +82,7 @@ Every date parameter, such as `d/` in `lesson add`, `agenda` and `pay`, `due/` i
 * The **day, month and year** are separated by `/`, `-`, `.` or a space, the same one between all three.
 * The date is written **day first** or **year first**. A month is never written first, so `12/22/2026` is not accepted.
 * The **month** is a number, such as `9` or `09`, or its English name in full or short, such as `Sep`, `Sept` or `September`, in any letter case.
-* The **year** has four digits, or two digits for a year from 2000 to 2099.
+* The **year** has four digits, or two digits for a year from 2000 to 2099. A two-digit year is read last when that makes a real date, or first when it does not.
 * `today` and `tmr` also work wherever a date is accepted, in any letter case.
 * A date that does not exist, such as `30/02/2026`, is rejected. It is never moved to a nearby date.
 
@@ -91,10 +91,11 @@ Every date parameter, such as `d/` in `lesson add`, `agenda` and `pay`, `due/` i
 | `2026-12-22`, `2026/12/22`, `2026.12.22`, `2026 Dec 22` | 22 December 2026, year first |
 | `22/12/2026`, `22-12-2026`, `22.12.2026`, `22 December 2026` | 22 December 2026, day first |
 | `22/12/26`, `22-Dec-26`, `22 Dec 26`, `22.12.26` | 22 December 2026, with a two-digit year |
+| `35-12-31` | 31 December 2035, because 35 December is not a date |
 
 <box type="warning" seamless>
 
-**Two-digit years come last:** a date such as `05/10/26` is read with the day first, as 5 October 2026, never as 26 October 2005. The year is read first only when the day-first reading is not a real date, such as `35-12-31`. To write the year first, use four digits, such as `2026-12-22`. Every command that takes a date shows the date in full in its reply, such as `Tue 22 Dec 2026`, so check it there.
+**Two-digit years are read day first:** a date such as `05/10/26` is read as 5 October 2026, never as 26 October 2005. A year-first reading is used only when the day-first reading is not a real date, as in `35-12-31`, which is 31 December 2035. Write the year with four digits when you want to be certain. Every command that takes a date shows the date in full in its reply, such as `Tue 22 Dec 2026`.
 </box>
 
 ### Viewing help: `help`

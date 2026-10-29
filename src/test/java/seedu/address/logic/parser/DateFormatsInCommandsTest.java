@@ -14,6 +14,7 @@ import seedu.address.logic.parser.exceptions.ParseException;
 public class DateFormatsInCommandsTest {
 
     private static final String[] OTHER_WAYS = {"22/12/2026", "22-12-26", "22 Dec 26", "22 Dec 2026", "2026/Dec/22"};
+    private static final String[] OTHER_PAST_WAYS = {"22/12/2025", "22-12-25", "22 Dec 2025", "2025/Dec/22"};
 
     private final AddressBookParser parser = new AddressBookParser(
             Clock.fixed(Instant.parse("2026-10-26T04:00:00Z"), ZoneId.of("Asia/Singapore")));
@@ -21,6 +22,13 @@ public class DateFormatsInCommandsTest {
     private void assertSameAsIsoDate(String commandFormat) throws ParseException {
         Object iso = parser.parseCommand(String.format(commandFormat, "2026-12-22"));
         for (String date : OTHER_WAYS) {
+            assertEquals(iso, parser.parseCommand(String.format(commandFormat, date)), date);
+        }
+    }
+
+    private void assertSameAsIsoDateInThePast(String commandFormat) throws ParseException {
+        Object iso = parser.parseCommand(String.format(commandFormat, "2025-12-22"));
+        for (String date : OTHER_PAST_WAYS) {
             assertEquals(iso, parser.parseCommand(String.format(commandFormat, date)), date);
         }
     }
@@ -34,10 +42,15 @@ public class DateFormatsInCommandsTest {
     }
 
     @Test
-    public void parseCommand_homeworkTaskAndPaymentDates_sameAsIsoDate() throws Exception {
+    public void parseCommand_homeworkAndTaskDates_sameAsIsoDate() throws Exception {
         assertSameAsIsoDate("hw add st/1 desc/Algebra due/%s");
         assertSameAsIsoDate("hw edit 1 due/%s");
         assertSameAsIsoDate("task add st/1 desc/Call due/%s");
         assertSameAsIsoDate("task edit 1 desc/Call due/%s");
+    }
+
+    @Test
+    public void parseCommand_paymentDate_sameAsIsoDate() throws Exception {
+        assertSameAsIsoDateInThePast("pay st/1 amt/5 d/%s");
     }
 }
