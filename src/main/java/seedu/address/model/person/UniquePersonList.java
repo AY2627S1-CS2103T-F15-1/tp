@@ -133,6 +133,13 @@ public class UniquePersonList implements Iterable<Person> {
         return internalList.equals(otherUniquePersonList.internalList);
     }
 
+    /**
+     * Returns if this collection is empty.
+     */
+    public boolean isEmpty() {
+        return internalList.isEmpty();
+    }
+
     @Override
     public int hashCode() {
         return internalList.hashCode();
