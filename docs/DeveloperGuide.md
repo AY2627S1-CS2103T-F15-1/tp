@@ -162,6 +162,26 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Student lookup and correction of optional values
+
+`NameContainsKeywordsPredicate` normalizes names and keywords to NFC and applies simple Unicode case folding
+to code points before substring matching. This follows the case equivalence used by `Person#hasIdentity`,
+including dotless i and supplementary letters, while retaining significant accents.
+
+`StudentLabels#format` checks the full student list, including archived students, and adds the phone number
+when names collide ignoring case. Both `Ledger` dues and `HomeworkQueries` use this label, so their command,
+overview and dashboard summaries identify the same student independently of the current student filter.
+
+`EditPersonDescriptor` distinguishes an omitted optional contact field from a requested clear using explicit
+email and venue clear flags. The parser sets these only for an empty `e/` or `v/`; non-empty replacements
+still pass normal validation. Copies, equality and hashes retain the clear intent. `EditCommand` replaces the
+student with the same ID, so existing lesson snapshots and linked homework, ledger and tasks are retained.
+
+An explicitly empty homework `f/` calls `Homework#withoutFeedback`, which returns a copy with absent feedback
+and the same identity, due date and status. Clearing is also allowed after a status correction to `assigned`;
+recording non-empty feedback still requires submission. No data-schema change is needed: absent email, venue
+and feedback already use the existing optional JSON fields. Regression tests cover saving and reloading them.
+
 ### Lesson scheduling, agenda and conflict detection
 
 The lesson commands are `lesson add`, `lesson repeat`, `lesson list`, `lesson move`, `lesson cancel`, `lesson done` and `lesson missed`. They share the `lesson` command word, which `AddressBookParser` hands to `LessonCommandParser`. That parser reads the next word and passes the rest of the arguments to the parser of that command. `agenda` is its own command word.

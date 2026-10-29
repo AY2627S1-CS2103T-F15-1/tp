@@ -245,6 +245,8 @@ public class HomeworkCommandParserTest {
                 new HomeworkFeedbackCommand(INDEX_FIRST_PERSON, "Check st/1 and desc/x"));
         assertParseSuccess(parser, "feedback 1 f/" + "x".repeat(1000),
                 new HomeworkFeedbackCommand(INDEX_FIRST_PERSON, "x".repeat(1000)));
+        assertParseSuccess(parser, "feedback 1 f/", new HomeworkFeedbackCommand(INDEX_FIRST_PERSON, ""));
+        assertParseSuccess(parser, "feedback 1 f/   ", new HomeworkFeedbackCommand(INDEX_FIRST_PERSON, ""));
     }
 
     @Test
@@ -255,7 +257,6 @@ public class HomeworkCommandParserTest {
         assertParseFailure(parser, "feedback", missing("f/", HomeworkFeedbackCommand.MESSAGE_USAGE));
         assertParseFailure(parser, "feedback f/Good", expected);
         assertParseFailure(parser, "feedback 0 f/Good", expected);
-        assertParseFailure(parser, "feedback 1 f/", emptyValue("f/"));
         assertParseFailure(parser, "feedback 1 f/" + "x".repeat(1001), Lesson.MESSAGE_NOTES_CONSTRAINTS);
         assertParseFailure(parser, "feedback 1 f/Good f/Better",
                 Messages.getErrorMessageForDuplicatePrefixes(new Prefix("f/")));

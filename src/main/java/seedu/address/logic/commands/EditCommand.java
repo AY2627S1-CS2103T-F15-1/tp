@@ -50,6 +50,7 @@ public class EditCommand extends Command {
             + "[" + PREFIX_SUBJECT + "SUBJECT]... "
             + "[" + PREFIX_RATE + "RATE] "
             + "[" + PREFIX_VENUE + "VENUE]\n"
+            + "An empty e/ or v/ clears that optional value; omitted fields stay unchanged.\n"
             + "Example: " + COMMAND_WORD + " 1 "
             + PREFIX_PHONE + "91234567 "
             + PREFIX_EMAIL + "johndoe@example.com";
@@ -115,11 +116,13 @@ public class EditCommand extends Command {
 
         Name updatedName = editPersonDescriptor.getName().orElse(personToEdit.getName());
         Phone updatedPhone = editPersonDescriptor.getPhone().orElse(personToEdit.getPhone());
-        Email updatedEmail = editPersonDescriptor.getEmail().or(personToEdit::getEmail).orElse(null);
+        Email updatedEmail = editPersonDescriptor.isEmailCleared() ? null
+                : editPersonDescriptor.getEmail().or(personToEdit::getEmail).orElse(null);
         Level updatedLevel = editPersonDescriptor.getLevel().orElse(personToEdit.getLevel());
         Set<Subject> updatedSubjects = editPersonDescriptor.getSubjects().orElse(personToEdit.getSubjects());
         Rate updatedRate = editPersonDescriptor.getRate().orElse(personToEdit.getRate());
-        Venue updatedVenue = editPersonDescriptor.getVenue().or(personToEdit::getVenue).orElse(null);
+        Venue updatedVenue = editPersonDescriptor.isVenueCleared() ? null
+                : editPersonDescriptor.getVenue().or(personToEdit::getVenue).orElse(null);
 
         return new Person(personToEdit.getId(), personToEdit.isArchived(), updatedName, updatedPhone, updatedEmail,
                 updatedLevel, updatedSubjects, updatedRate,
@@ -155,8 +158,8 @@ public class EditCommand extends Command {
     }
 
     /**
-     * Stores the details to edit the person with. Each non-empty field value will replace the
-     * corresponding field value of the person.
+     * Stores replacement values and explicit clearing of optional contact fields.
+     * An absent value without a clear flag leaves the corresponding field unchanged.
      */
     public static class EditPersonDescriptor {
         private Name name;
@@ -166,6 +169,8 @@ public class EditCommand extends Command {
         private Set<Subject> subjects;
         private Rate rate;
         private Venue venue;
+        private boolean isEmailCleared;
+        private boolean isVenueCleared;
 
         public EditPersonDescriptor() {}
 
@@ -181,13 +186,16 @@ public class EditCommand extends Command {
             setSubjects(toCopy.subjects);
             setRate(toCopy.rate);
             setVenue(toCopy.venue);
+            isEmailCleared = toCopy.isEmailCleared;
+            isVenueCleared = toCopy.isVenueCleared;
         }
 
         /**
          * Returns true if at least one field is edited.
          */
         public boolean isAnyFieldEdited() {
-            return CollectionUtil.isAnyNonNull(name, phone, email, level, subjects, rate, venue);
+            return isEmailCleared || isVenueCleared
+                    || CollectionUtil.isAnyNonNull(name, phone, email, level, subjects, rate, venue);
         }
 
         public void setName(Name name) {
@@ -208,6 +216,17 @@ public class EditCommand extends Command {
 
         public void setEmail(Email email) {
             this.email = email;
+            isEmailCleared = false;
+        }
+
+        /** Removes the optional email instead of retaining its previous value. */
+        public void clearEmail() {
+            email = null;
+            isEmailCleared = true;
+        }
+
+        public boolean isEmailCleared() {
+            return isEmailCleared;
         }
 
         public Optional<Email> getEmail() {
@@ -249,6 +268,17 @@ public class EditCommand extends Command {
 
         public void setVenue(Venue venue) {
             this.venue = venue;
+            isVenueCleared = false;
+        }
+
+        /** Removes the optional usual venue instead of retaining its previous value. */
+        public void clearVenue() {
+            venue = null;
+            isVenueCleared = true;
+        }
+
+        public boolean isVenueCleared() {
+            return isVenueCleared;
         }
 
         public Optional<Venue> getVenue() {
@@ -272,12 +302,14 @@ public class EditCommand extends Command {
                     && Objects.equals(level, otherEditPersonDescriptor.level)
                     && Objects.equals(subjects, otherEditPersonDescriptor.subjects)
                     && Objects.equals(rate, otherEditPersonDescriptor.rate)
-                    && Objects.equals(venue, otherEditPersonDescriptor.venue);
+                    && Objects.equals(venue, otherEditPersonDescriptor.venue)
+                    && isEmailCleared == otherEditPersonDescriptor.isEmailCleared
+                    && isVenueCleared == otherEditPersonDescriptor.isVenueCleared;
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(name, phone, email, level, subjects, rate, venue);
+            return Objects.hash(name, phone, email, level, subjects, rate, venue, isEmailCleared, isVenueCleared);
         }
 
         @Override
@@ -290,6 +322,8 @@ public class EditCommand extends Command {
                     .add("subjects", subjects)
                     .add("rate", rate)
                     .add("venue", venue)
+                    .add("isEmailCleared", isEmailCleared)
+                    .add("isVenueCleared", isVenueCleared)
                     .toString();
         }
     }

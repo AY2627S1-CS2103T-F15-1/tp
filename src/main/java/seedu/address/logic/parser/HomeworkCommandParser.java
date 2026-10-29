@@ -76,15 +76,14 @@ public class HomeworkCommandParser implements Parser<Command> {
         return new HomeworkStatusCommand(index, status);
     }
 
-    /** Parses feedback using the shared printable one-line notes boundary. */
+    /** Parses printable feedback; an explicitly empty f/ clears feedback without deleting the assignment. */
     private Command parseFeedback(String args) throws ParseException {
         ArgumentMultimap values = ArgumentTokenizer.tokenize(args, PREFIX_FEEDBACK);
         values.verifyNoDuplicatePrefixesFor(PREFIX_FEEDBACK);
-        values.verifyNoEmptyValuesFor(PREFIX_FEEDBACK);
         ParserUtil.requirePrefixesFound(values, HomeworkFeedbackCommand.MESSAGE_USAGE, PREFIX_FEEDBACK);
         Index index = ParserUtil.parseIndex(values.getPreamble(), HomeworkFeedbackCommand.MESSAGE_USAGE);
-        return new HomeworkFeedbackCommand(index,
-                ParserUtil.parseNotes(values.getValue(PREFIX_FEEDBACK).orElseThrow()));
+        String feedback = values.getValue(PREFIX_FEEDBACK).orElseThrow();
+        return new HomeworkFeedbackCommand(index, feedback.isEmpty() ? "" : ParserUtil.parseNotes(feedback));
     }
 
     /** Parses exactly an index and optional confirmation word. */

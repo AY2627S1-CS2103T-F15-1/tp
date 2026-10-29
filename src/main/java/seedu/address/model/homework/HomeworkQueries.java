@@ -9,6 +9,7 @@ import java.util.UUID;
 
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.StudentLabels;
 
 /** Shared query and display rules for homework lists, student overviews, and dashboards. */
 public final class HomeworkQueries {
@@ -41,7 +42,8 @@ public final class HomeworkQueries {
         requireNonNull(today);
         Person student = book.getPersonList().stream()
                 .filter(person -> person.getId().equals(item.getStudentId())).findFirst().orElseThrow();
-        return student.getName() + (student.isArchived() ? " (archived)" : "") + " " + item.getDescription()
+        return StudentLabels.format(book, student) + (student.isArchived() ? " (archived)" : "")
+                + " " + item.getDescription()
                 + " due " + item.getDueDate() + " " + (item.isOverdue(today) ? "OVERDUE" : item.getStatus());
     }
 

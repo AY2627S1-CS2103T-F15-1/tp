@@ -101,6 +101,11 @@ public final class Homework {
         return new Homework(id, studentId, description, dueDate, status, requireNonNull(feedback));
     }
 
+    /** Clears mistaken feedback without changing identity, due date, or lifecycle, including corrected statuses. */
+    public Homework withoutFeedback() {
+        return new Homework(id, studentId, description, dueDate, status, null);
+    }
+
     /**
      * Returns whether {@code other} duplicates this assignment: it is for the same student, has the same due date
      * and a description that is the same when letter case is ignored. Descriptions are compared after their

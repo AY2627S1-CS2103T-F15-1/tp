@@ -13,18 +13,19 @@ import seedu.address.model.Model;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.homework.HomeworkStatus;
 
-/** Records or replaces feedback on submitted or reviewed homework. */
+/** Records or replaces feedback after submission, or explicitly clears mistaken feedback at any status. */
 public class HomeworkFeedbackCommand extends Command {
     public static final String MESSAGE_USAGE = "hw feedback INDEX f/FEEDBACK";
 
     public static final String MESSAGE_SUCCESS = "Feedback recorded for homework %1$d: %2$s";
+    public static final String MESSAGE_CLEARED = "Feedback cleared for homework %1$d: %2$s";
 
     private static final Logger logger = LogsCenter.getLogger(HomeworkFeedbackCommand.class);
 
     private final Index index;
     private final String feedback;
 
-    /** Creates a command that records {@code feedback} on the homework at {@code index} of the last list. */
+    /** Creates a command that records feedback, or clears it when empty, on the homework at the last list's index. */
     public HomeworkFeedbackCommand(Index index, String feedback) {
         requireNonNull(index);
         requireNonNull(feedback);
@@ -36,12 +37,14 @@ public class HomeworkFeedbackCommand extends Command {
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
         Homework target = HomeworkCommandSupport.target(model, index);
-        if (target.getStatus() == HomeworkStatus.ASSIGNED) {
+        boolean isClearing = feedback.isEmpty();
+        if (!isClearing && target.getStatus() == HomeworkStatus.ASSIGNED) {
             throw new CommandException(Homework.MESSAGE_FEEDBACK_NOT_SUBMITTED);
         }
-        model.setHomework(target, target.withFeedback(feedback));
-        logger.fine("Recorded feedback on a homework item");
-        return new CommandResult(String.format(MESSAGE_SUCCESS, index.getOneBased(), target.getDescription()));
+        model.setHomework(target, isClearing ? target.withoutFeedback() : target.withFeedback(feedback));
+        logger.fine(isClearing ? "Cleared homework feedback" : "Recorded feedback on a homework item");
+        return new CommandResult(String.format(isClearing ? MESSAGE_CLEARED : MESSAGE_SUCCESS,
+                index.getOneBased(), target.getDescription()));
     }
 
     @Override

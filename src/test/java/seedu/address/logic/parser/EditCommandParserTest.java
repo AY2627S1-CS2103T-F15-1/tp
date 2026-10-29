@@ -9,7 +9,6 @@ import static seedu.address.logic.commands.CommandTestUtil.INVALID_NAME_DESC;
 import static seedu.address.logic.commands.CommandTestUtil.INVALID_PHONE_DESC;
 import static seedu.address.logic.commands.CommandTestUtil.INVALID_RATE_DESC;
 import static seedu.address.logic.commands.CommandTestUtil.INVALID_SUBJECT_DESC;
-import static seedu.address.logic.commands.CommandTestUtil.INVALID_VENUE_DESC;
 import static seedu.address.logic.commands.CommandTestUtil.LEVEL_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.LEVEL_DESC_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.NAME_DESC_AMY;
@@ -54,6 +53,7 @@ import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.Rate;
 import seedu.address.model.person.Subject;
+import seedu.address.model.person.Venue;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
 
 public class EditCommandParserTest {
@@ -100,8 +100,7 @@ public class EditCommandParserTest {
         assertParseFailure(parser, "1" + INVALID_LEVEL_DESC, Level.MESSAGE_CONSTRAINTS); // invalid level
         assertParseFailure(parser, "1" + INVALID_SUBJECT_DESC, Subject.MESSAGE_CONSTRAINTS); // invalid subject
         assertParseFailure(parser, "1" + INVALID_RATE_DESC, Rate.MESSAGE_CONSTRAINTS); // invalid rate
-        assertParseFailure(parser, "1" + INVALID_VENUE_DESC,
-                "Empty value for v/. Enter a value after this prefix."); // invalid venue
+        assertParseFailure(parser, "1 v/" + "x".repeat(101), Venue.MESSAGE_CONSTRAINTS);
 
         // invalid phone followed by valid email
         assertParseFailure(parser, "1" + INVALID_PHONE_DESC + EMAIL_DESC_AMY, Phone.MESSAGE_CONSTRAINTS);
@@ -129,6 +128,19 @@ public class EditCommandParserTest {
         EditCommand expectedCommand = new EditCommand(targetIndex, descriptor);
 
         assertParseSuccess(parser, userInput, expectedCommand);
+    }
+
+    @Test
+    public void parse_explicitEmptyOptionalFields_clearsOnlyThoseFields() {
+        EditPersonDescriptor emailOnly = new EditPersonDescriptor();
+        emailOnly.clearEmail();
+        assertParseSuccess(parser, "1 e/", new EditCommand(INDEX_FIRST_PERSON, emailOnly));
+        EditPersonDescriptor venueOnly = new EditPersonDescriptor();
+        venueOnly.clearVenue();
+        assertParseSuccess(parser, "1 v/  ", new EditCommand(INDEX_FIRST_PERSON, venueOnly));
+        emailOnly.clearVenue();
+        assertParseSuccess(parser, "1 e/ v/", new EditCommand(INDEX_FIRST_PERSON, emailOnly));
+        assertParseFailure(parser, "1 v/ v/School", Messages.getErrorMessageForDuplicatePrefixes(PREFIX_VENUE));
     }
 
     @Test

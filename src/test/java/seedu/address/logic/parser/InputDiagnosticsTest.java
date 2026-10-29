@@ -45,11 +45,11 @@ public class InputDiagnosticsTest {
 
     @Test
     public void parse_emptyField_identifiesItsPrefix() {
-        for (String command : new String[] {"add n/ p/91234567 l/J1 s/Math r/100", "edit 1 e/",
+        for (String command : new String[] {"add n/ p/91234567 l/J1 s/Math r/100", "edit 1 p/",
             "lesson cancel 1 r/"}) {
             ParseException error = assertThrows(ParseException.class, () -> parser.parseCommand(command));
             assertTrue(error.getMessage().contains("Empty value"), error.getMessage());
-            String prefix = command.startsWith("add") ? "n/" : command.startsWith("edit") ? "e/" : "r/";
+            String prefix = command.startsWith("add") ? "n/" : command.startsWith("edit") ? "p/" : "r/";
             assertTrue(error.getMessage().contains(prefix));
         }
     }

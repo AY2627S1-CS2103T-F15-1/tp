@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.StudentLabels;
 
 /** Calculates student balances from recorded charges and payments, without changing the underlying records. */
 public final class Ledger {
@@ -114,7 +115,7 @@ public final class Ledger {
                 .append(" student(s) with outstanding balances \u2014 ").append(format(total)).append(" total");
         for (Due due : dues) {
             long days = Math.max(0, ChronoUnit.DAYS.between(due.oldestUnpaidDate(), today));
-            result.append("\n  ").append(due.student().getName())
+            result.append("\n  ").append(StudentLabels.format(book, due.student()))
                     .append(due.student().isArchived() ? " (archived)" : "")
                     .append(" ").append(format(due.amount())).append(" oldest unpaid ").append(days)
                     .append(days == 1 ? " day" : " days");

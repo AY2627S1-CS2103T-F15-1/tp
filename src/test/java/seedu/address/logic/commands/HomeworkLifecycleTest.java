@@ -84,7 +84,7 @@ public class HomeworkLifecycleTest {
     @Test
     public void parse_statusFeedbackAndDelete_invalidInputsReject() {
         for (String args : new String[] {"status 1 s/overdue", "status 1 s/", "status 0 s/reviewed",
-            "feedback 1 f/", "feedback 1 f/" + "x".repeat(1001), "feedback 1 f/A\tB",
+            "feedback 1", "feedback 1 f/" + "x".repeat(1001), "feedback 1 f/A\tB",
             "delete 1 extra", "delete 1 confirm extra", "status 1 s/assigned s/reviewed"}) {
             assertThrows(ParseException.class, () -> parser.parse(args), args);
         }
