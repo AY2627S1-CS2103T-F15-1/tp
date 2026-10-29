@@ -26,8 +26,6 @@ public class VersionedAddressBook extends AddressBook {
 
     private void saveState() {
         this.lastState = new AddressBook(this);
-        // Resets, in case the action fails
-        resetDestructiveAction();
     }
 
     private void saveDestructiveAction(DestructiveActionType actionType) {
@@ -75,8 +73,8 @@ public class VersionedAddressBook extends AddressBook {
 
     @Override
     public void resetData(ReadOnlyAddressBook newData) {
-        this.resetDestructiveAction();
         super.resetData(newData);
+        this.resetDestructiveAction();
     }
 
     @Override
