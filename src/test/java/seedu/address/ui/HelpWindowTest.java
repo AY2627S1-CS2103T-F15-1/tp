@@ -89,6 +89,34 @@ public class HelpWindowTest {
     }
 
     @Test
+    public void addStudentButton_populatesAddPrefixWithoutCreatingAStudent() throws Exception {
+        onFx(() -> {
+            JsonAddressBookStorage addressStorage =
+                    new JsonAddressBookStorage(temporaryFolder.resolve("add-shortcut.json"));
+            LogicManager logic = new LogicManager(new ModelManager(), new StorageManager(addressStorage,
+                    new JsonUserPrefsStorage(temporaryFolder.resolve("add-prefs.json"))));
+            MainWindow main = new MainWindow(new Stage(), logic,
+                    addressStorage.getAddressBookFilePath());
+            main.fillInnerParts();
+            main.show();
+            try {
+                TextField input = (TextField) main.getRoot().getScene().lookup("#commandTextField");
+                Button add = (Button) main.getRoot().getScene().lookup("#addStudentButton");
+
+                add.fire();
+
+                assertEquals("add n/", input.getText());
+                assertEquals("add n/".length(), input.getCaretPosition());
+                assertTrue(input.isFocused());
+                assertTrue(logic.getFilteredPersonList().isEmpty());
+            } finally {
+                main.getRoot().hide();
+            }
+            return null;
+        });
+    }
+
+    @Test
     public void execute_successRejectionAndMalformedFile_logsNoPrivatePayload() throws Exception {
         String marker = "PrivateContactAlpha";
         String phone = "98765432101234";

@@ -13,7 +13,7 @@ import seedu.address.logic.parser.exceptions.ParseException;
 /**
  * The UI component that is responsible for receiving user command inputs.
  */
-public class CommandBox extends UiPart<Region> {
+public class CommandBox extends UiPart<Region> implements CommandDraftTarget {
 
     public static final String ERROR_STYLE_CLASS = "error";
     private static final String FXML = "CommandBox.fxml";
@@ -33,6 +33,26 @@ public class CommandBox extends UiPart<Region> {
         // calls #setStyleToDefault() whenever there is a change to the text of the command box.
         commandTextField.textProperty().addListener((unused1, unused2, unused3) -> setStyleToDefault());
         commandTextField.addEventFilter(KeyEvent.KEY_PRESSED, this::handleHistoryKey);
+    }
+
+    /** Returns the current command text. */
+    @Override
+    public String getText() {
+        return commandTextField.getText();
+    }
+
+    /** Replaces the command text and focuses the field so the user can continue typing. */
+    @Override
+    public void setTextAndFocus(String text) {
+        commandTextField.setText(text);
+        commandTextField.requestFocus();
+        commandTextField.positionCaret(text.length());
+    }
+
+    /** Clears the command text and returns focus to it. */
+    @Override
+    public void clearAndFocus() {
+        setTextAndFocus("");
     }
 
     /**
