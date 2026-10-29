@@ -17,6 +17,7 @@ import static seedu.address.testutil.TypicalPersons.ELLE;
 import static seedu.address.testutil.TypicalPersons.FIONA;
 import static seedu.address.testutil.TypicalPersons.GEORGE;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -237,11 +238,13 @@ public class ModelManagerTest {
 
     @Test
     public void undoDestructiveAction_removePerson_returnsDestructiveActionDeleteStudentAndUndoes() {
+        LocalDate date = LocalDate.of(2027, 8, 31);
         modelManager.addPerson(CARL);
         modelManager.addLesson(CARL_ENGLISH);
-        modelManager.addHomework(
-                Homework.assign(CARL.getId(), "A", LocalDate.of(2027, 8, 31)));
+        modelManager.addHomework(Homework.assign(CARL.getId(), "A", date));
         modelManager.addLedgerEntry(LedgerEntry.charge(CARL, CARL_ENGLISH));
+        modelManager.addLedgerEntry(LedgerEntry.payment(CARL, new BigDecimal(10), date));
+        modelManager.addTask(Task.create("B", date, CARL));
         ModelManager before = copyOfModelManager();
 
         modelManager.deletePerson(CARL);
