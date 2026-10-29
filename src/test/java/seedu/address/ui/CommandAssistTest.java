@@ -86,6 +86,15 @@ public class CommandAssistTest {
     }
 
     @Test
+    public void cancel_afterOpeningEditWithAnOlderDraft_keepsTheOlderDraft() {
+        assist.archive(1);
+        assist.beginEditInteraction(1, () -> { });
+        assist.cancelEditInteraction(1);
+
+        assertEquals("archive 1", input.getText());
+    }
+
+    @Test
     public void displayedListChanged_clearsUnchangedGeneratedDraft() {
         assist.editField(1, CommandAssist.Field.NAME);
         assist.displayedListChanged();

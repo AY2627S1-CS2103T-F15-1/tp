@@ -14,7 +14,7 @@ public final class CommandAssist {
     private final Consumer<String> helpOutput;
     private String generatedDraft;
     private boolean generatedReferencesStudent;
-    private Integer generatedEditIndex;
+    private Integer generatedFieldEditIndex;
     private Runnable closeActiveEdit;
 
     /** Creates a helper that writes generated drafts into {@code commandInput}. */
@@ -31,12 +31,12 @@ public final class CommandAssist {
     /** Replaces the command input with the edit command for one field of the displayed student. */
     public void editField(int displayedIndex, Field field) {
         requireNonNull(field);
-        if (generatedEditIndex != null && generatedEditIndex != displayedIndex) {
+        if (generatedFieldEditIndex != null && generatedFieldEditIndex != displayedIndex) {
             closeEditMode();
         }
         setDraft(field.draftFor(displayedIndex));
         generatedReferencesStudent = true;
-        generatedEditIndex = displayedIndex;
+        generatedFieldEditIndex = displayedIndex;
         announceHelp(field.commandWord());
     }
 
@@ -45,7 +45,7 @@ public final class CommandAssist {
         closeEditMode();
         setDraft("archive " + displayedIndex);
         generatedReferencesStudent = true;
-        generatedEditIndex = null;
+        generatedFieldEditIndex = null;
         announceHelp("archive");
     }
 
@@ -54,7 +54,7 @@ public final class CommandAssist {
         closeEditMode();
         setDraft("delete " + displayedIndex);
         generatedReferencesStudent = true;
-        generatedEditIndex = null;
+        generatedFieldEditIndex = null;
         announceHelp("delete");
     }
 
@@ -63,7 +63,7 @@ public final class CommandAssist {
         closeEditMode();
         setDraft("add " + CliSyntax.PREFIX_NAME);
         generatedReferencesStudent = false;
-        generatedEditIndex = null;
+        generatedFieldEditIndex = null;
         announceHelp("add");
     }
 
@@ -74,7 +74,6 @@ public final class CommandAssist {
     public void beginEditInteraction(int displayedIndex, Runnable closeEditMode) {
         requireNonNull(closeEditMode);
         closeEditMode();
-        generatedEditIndex = displayedIndex;
         closeActiveEdit = closeEditMode;
         announceHelp("edit");
     }
@@ -84,18 +83,22 @@ public final class CommandAssist {
      * unchanged field-edit command generated for that card. A later archive, delete or add action is left intact.
      */
     public void cancelEditInteraction(int displayedIndex) {
-        if (generatedEditIndex != null && generatedEditIndex == displayedIndex
-                && generatedDraft != null && generatedDraft.equals(commandInput.getText())) {
-            commandInput.clearAndFocus();
+        if (generatedFieldEditIndex != null && generatedFieldEditIndex == displayedIndex) {
+            if (generatedDraft != null && generatedDraft.equals(commandInput.getText())) {
+                commandInput.clearAndFocus();
+            }
+            generatedDraft = null;
+            generatedReferencesStudent = false;
+            generatedFieldEditIndex = null;
         }
-        finishInteraction();
+        closeEditMode();
     }
 
     /** Cancels the active card interaction after a draft was submitted or replaced by another interaction. */
     public void finishInteraction() {
         generatedDraft = null;
         generatedReferencesStudent = false;
-        generatedEditIndex = null;
+        generatedFieldEditIndex = null;
         closeEditMode();
     }
 
