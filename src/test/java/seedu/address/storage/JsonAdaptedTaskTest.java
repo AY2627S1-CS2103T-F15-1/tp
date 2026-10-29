@@ -86,6 +86,18 @@ public class JsonAdaptedTaskTest {
     }
 
     @Test
+    public void paymentIdBeforeTaskPaymentSchema_isRejectedUsingTheNamedThreshold() throws Exception {
+        String payment = UUID.randomUUID().toString();
+        JsonAdaptedTask task = new JsonAdaptedTask(ID, "Call", null, false, STUDENT, null, null, payment);
+        String json = JsonUtil.toJsonString(new JsonSerializableAddressBook(
+                List.of(new JsonAdaptedPerson(ALICE)), List.of(), List.of(), List.of(), List.of(task)));
+        json = json.replace("\"schemaVersion\" : " + StorageSchema.TASK_PAYMENT_VERSION,
+                "\"schemaVersion\" : " + (StorageSchema.TASK_PAYMENT_VERSION - 1));
+        JsonSerializableAddressBook data = JsonUtil.fromJsonString(json, JsonSerializableAddressBook.class);
+        assertThrows(IllegalValueException.class, data::toModelType);
+    }
+
+    @Test
     public void toModelType_missingDoneAndDue_meansOpenWithoutDueDate() throws Exception {
         Task task = task(ID, "Call", null, null, STUDENT).toModelType();
 

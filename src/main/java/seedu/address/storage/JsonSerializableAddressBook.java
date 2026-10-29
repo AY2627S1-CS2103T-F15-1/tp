@@ -123,9 +123,10 @@ class JsonSerializableAddressBook {
      */
     public AddressBook toModelType() throws IllegalValueException {
         StorageSchema.requireSupported(schemaVersion);
-        if ((schemaVersion == null || schemaVersion < 18)
+        if ((schemaVersion == null || schemaVersion < StorageSchema.TASK_PAYMENT_VERSION)
                 && tasks.stream().filter(java.util.Objects::nonNull).anyMatch(JsonAdaptedTask::hasPaymentLink)) {
-            throw new IllegalValueException("Task's paymentId field requires schema version 18 or later.");
+            throw new IllegalValueException("Task's paymentId field requires schema version "
+                    + StorageSchema.TASK_PAYMENT_VERSION + " or later.");
         }
         Set<UUID> studentIds = new HashSet<>();
         Set<UUID> lessonIds = new HashSet<>();
