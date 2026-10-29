@@ -28,7 +28,7 @@ public class VersionedAddressBookTest {
     }
 
     @Test
-    public void nonDestructiveCommand_successfulOrFails_noUndo() {
+    public void undo_nonDestructiveCommandSuccessOrFail_noUndo() {
         book.beforeCommand(false);
         book.addPerson(BENSON);
         book.addTask(Task.create("a", date, BENSON));
@@ -46,7 +46,7 @@ public class VersionedAddressBookTest {
     }
 
     @Test
-    public void destructiveCommand_undoes() {
+    public void undo_destructiveCommandSuccess_undoes() {
         book.addPerson(BENSON);
         book.addTask(Task.create("a", date, BENSON));
         AddressBook before = new AddressBook(book);
@@ -60,7 +60,7 @@ public class VersionedAddressBookTest {
     }
 
     @Test
-    public void destructiveCommand_fails_noResetUndo() {
+    public void undo_destructiveCommandFail_noResetUndo() {
         book.addPerson(GEORGE);
         Task t = Task.create("a", date, GEORGE);
         book.addTask(t);
