@@ -28,7 +28,7 @@ import seedu.address.model.task.Task;
 public class ModelManager implements Model {
     private static final Logger logger = LogsCenter.getLogger(ModelManager.class);
 
-    private final AddressBook addressBook;
+    private final VersionedAddressBook addressBook;
     private final UserPrefs userPrefs;
     private final FilteredList<Person> filteredPersons;
     private final FilteredList<Lesson> filteredLessons;
@@ -45,7 +45,7 @@ public class ModelManager implements Model {
 
         logger.fine("Initializing model");
 
-        this.addressBook = new AddressBook(addressBook);
+        this.addressBook = new VersionedAddressBook(addressBook);
         this.userPrefs = new UserPrefs(userPrefs);
         filteredPersons = new FilteredList<>(this.addressBook.getPersonList(), PREDICATE_SHOW_ACTIVE_PERSONS);
         filteredLessons = new FilteredList<>(this.addressBook.getLessonList());
@@ -54,6 +54,16 @@ public class ModelManager implements Model {
 
     public ModelManager() {
         this(new AddressBook(), new UserPrefs());
+    }
+
+    @Override
+    public void beforeCommand(boolean isDestructive) {
+        this.addressBook.beforeCommand(isDestructive);
+    }
+
+    @Override
+    public void afterCommand(String destructiveDescription, boolean isSuccessful) {
+        this.addressBook.afterCommand(destructiveDescription, isSuccessful);
     }
 
     //=========== UserPrefs ==================================================================================
@@ -79,6 +89,11 @@ public class ModelManager implements Model {
     @Override
     public void setAddressBook(ReadOnlyAddressBook addressBook) {
         this.addressBook.resetData(addressBook);
+    }
+
+    @Override
+    public void clearAddressBook() {
+        this.addressBook.clearData();
     }
 
     @Override
@@ -111,7 +126,6 @@ public class ModelManager implements Model {
     @Override
     public void setPerson(Person target, Person editedPerson) {
         requireAllNonNull(target, editedPerson);
-
         addressBook.setPerson(target, editedPerson);
     }
 
@@ -181,7 +195,6 @@ public class ModelManager implements Model {
     @Override
     public void setLesson(Lesson target, Lesson editedLesson) {
         requireAllNonNull(target, editedLesson);
-
         addressBook.setLesson(target, editedLesson);
     }
 
@@ -223,6 +236,12 @@ public class ModelManager implements Model {
     public void updateFilteredLessonList(Predicate<Lesson> predicate) {
         requireNonNull(predicate);
         filteredLessons.setPredicate(predicate);
+    }
+
+    //=========== Undo ============================================================
+    @Override
+    public String undoDestructiveAction() {
+        return this.addressBook.undoDestructiveAction();
     }
 
     @Override

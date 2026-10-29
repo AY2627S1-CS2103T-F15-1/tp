@@ -129,6 +129,18 @@ public class AddressBook implements ReadOnlyAddressBook {
         keepStudentOrder();
     }
 
+    /** Clears this {@code AddressBook} of all data. */
+    public void clearData() {
+        persons.setPersons(List.of());
+        lessons.setLessons(List.of());
+        ledgerEntries.clear();
+        tasks.clear();
+        homework.clear();
+        travelBuffer = TravelGap.DEFAULT_BUFFER;
+        studentOrder = null;
+        keepStudentOrder();
+    }
+
     @Override
     public int getTravelBuffer() {
         return travelBuffer;
@@ -566,6 +578,15 @@ public class AddressBook implements ReadOnlyAddressBook {
                 && tasks.equals(otherAddressBook.tasks)
                 && travelBuffer == otherAddressBook.travelBuffer
                 && studentOrder == otherAddressBook.studentOrder;
+    }
+
+    /**
+     * Checks if this collection is empty. This will be true after a call to {@code resetData}.
+     */
+    @Override
+    public boolean isEmpty() {
+        return persons.isEmpty() && lessons.isEmpty() && homework.isEmpty() && ledgerEntries.isEmpty()
+                && tasks.isEmpty() && travelBuffer == TravelGap.DEFAULT_BUFFER && studentOrder == null;
     }
 
     @Override

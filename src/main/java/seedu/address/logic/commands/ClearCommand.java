@@ -3,14 +3,13 @@ package seedu.address.logic.commands;
 import static java.util.Objects.requireNonNull;
 
 import seedu.address.commons.util.ToStringBuilder;
-import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 
 /**
  * Clears all students, lessons, homework, tasks, and financial history from TutorFlow, but only once
  * the user has confirmed.
  */
-public class ClearCommand extends Command {
+public class ClearCommand extends DestructiveCommand {
 
     public static final String COMMAND_WORD = "clear";
     public static final String CONFIRM_KEYWORD = "confirm";
@@ -43,12 +42,17 @@ public class ClearCommand extends Command {
     }
 
     @Override
+    public String getDestructDescription() {
+        return "clear";
+    }
+
+    @Override
     public CommandResult execute(Model model) {
         requireNonNull(model);
         if (!isConfirmed) {
             return new CommandResult(MESSAGE_CONFIRMATION);
         }
-        model.setAddressBook(new AddressBook());
+        model.clearAddressBook();
         return new CommandResult(MESSAGE_SUCCESS);
     }
 

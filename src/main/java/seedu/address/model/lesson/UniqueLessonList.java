@@ -158,6 +158,13 @@ public class UniqueLessonList implements Iterable<Lesson> {
         return internalList.equals(otherUniqueLessonList.internalList);
     }
 
+    /**
+     * Returns if this collection is empty.
+     */
+    public boolean isEmpty() {
+        return internalList.isEmpty();
+    }
+
     @Override
     public int hashCode() {
         return internalList.hashCode();

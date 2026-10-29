@@ -14,6 +14,7 @@ import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.CommandResult;
+import seedu.address.logic.commands.DestructiveCommand;
 import seedu.address.logic.commands.SaveCommand;
 import seedu.address.logic.commands.TodayCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
@@ -98,13 +99,23 @@ public class LogicManager implements Logic {
         List<UUID> shownBefore = lessonSelection();
         boolean wasDirty = dirty;
         boolean changed;
+        boolean isSuccessful = true;
         try {
+            model.beforeCommand(command instanceof DestructiveCommand);
             commandResult = command.execute(model);
+        } catch (CommandException e) {
+            isSuccessful = false;
+            throw e;
         } finally {
             // An unavailable snapshot must never clear a previous save failure or permit an unchecked exit.
             dirty = true;
             changed = !before.equals(snapshot());
             dirty = wasDirty || changed;
+            model.afterCommand(
+                    command instanceof DestructiveCommand destructiveCommand
+                            ? destructiveCommand.getDestructDescription()
+                            : null,
+                    isSuccessful);
         }
 
         String numbering = "";

@@ -440,6 +440,23 @@ The activity diagram below shows what `delete INDEX [confirm]` does.
 ### Undo/redo feature
 
 #### Current Implementation
+A new class `VersionedAddressBook` extends `AddressBook` with undo functionality. 
+`ModelManager` converts any `AddressBook`s given into this new class, enabling undo functionality throughout the codebase.
+This new class adds three new fields.
+`transitionState` stores a snapshot of the `AddressBook` before any destructive action. 
+`lastState` stores a snapshot of the `AddressBook` before the last destructive action.
+It is populated from `transitionState` after a successful destructive command.
+After an `undoDestructiveAction` call, the state is restored from here.
+`lastDestructiveAction` stores what the description of the action.
+
+`VersionedAddressBook` depends on `beforeCommand` and `afterCommand` hooks to manage `transitionState`, `lastState`, and `lastDestructiveAction`.
+It exposes these hooks through `Model` to allow the command execution logic to activate them.
+
+`VersionedAddressBook` provides an `undoDestructiveAction` method to restore to a previous state. This is exposed by `Model` as well.
+
+The undo command simply uses this `undoDestructiveAction` method and shows the results to the user.
+
+#### Old Implementation
 The current ModelManager implementation adds three fields.
 `lastState` and `newState` - store `AddressBook`s track of state before and after a destructive operation.
 `lastDestructiveAction` keeps track of the type of destructive action, for reporting to the user.
@@ -1338,8 +1355,7 @@ A future linked task must resolve homework indices by this same shown-ID rule, t
 list. `withFeedback` retains them across unsaved warnings. Task 7 can render those rows directly;
 non-indexed overview/dashboard summaries deliberately do not replace the selection. No unused UI
 component or feedback-string parsing is required. Finance can extend summaries independently.
-Future undo snapshots must copy the complete `AddressBook`, including homework; future task-parent
-guards must wrap homework/student deletion before removing any record to avoid orphaned tasks.
+Future task-parent guards must wrap homework/student deletion before removing any record to avoid orphaned tasks.
 
 Focused regression tests cover historical feedback, schema progression and refusal, duplicate/orphan
 rejection, due-date boundaries, lifecycle correction, guarded deletion, filtered numbering, archive,

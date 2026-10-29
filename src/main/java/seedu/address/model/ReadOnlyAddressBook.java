@@ -52,4 +52,9 @@ public interface ReadOnlyAddressBook {
      * Every implementation must provide it, so that none can be saved or copied without its homework.
      */
     ObservableList<Homework> getHomeworkList();
+
+    /**
+     * Checks if this collection is empty.
+     */
+    boolean isEmpty();
 }

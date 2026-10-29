@@ -15,7 +15,7 @@ import seedu.address.model.homework.Homework;
 /**
  * Deletes assignments, requiring explicit confirmation when feedback or linked follow-up tasks would be lost.
  */
-public class HomeworkDeleteCommand extends Command {
+public class HomeworkDeleteCommand extends DestructiveCommand {
     public static final String MESSAGE_USAGE = "hw delete INDEX [confirm]";
 
     public static final String MESSAGE_SUCCESS = "Deleted homework %1$d: %2$s. "
@@ -38,6 +38,11 @@ public class HomeworkDeleteCommand extends Command {
         requireNonNull(index);
         this.index = index;
         this.isConfirmed = isConfirmed;
+    }
+
+    @Override
+    public String getDestructDescription() {
+        return "homework deletion";
     }
 
     @Override

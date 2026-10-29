@@ -37,6 +37,7 @@ import seedu.address.logic.commands.TaskDoneCommand;
 import seedu.address.logic.commands.TaskEditCommand;
 import seedu.address.logic.commands.TaskListCommand;
 import seedu.address.logic.commands.TodayCommand;
+import seedu.address.logic.commands.UndoCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.commands.WithdrawCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -185,6 +186,13 @@ public class AddressBookParserTest {
         assertEquals(new SortCommand(false), parser.parseCommand(SortCommand.COMMAND_WORD + " asc"));
         assertEquals(new SortCommand(true), parser.parseCommand(SortCommand.COMMAND_WORD + " desc"));
     }
+
+    @Test
+    public void parseCommand_undo() throws Exception {
+        assertEquals(new UndoCommand(), parser.parseCommand(UndoCommand.COMMAND_WORD));
+        assertParseException("undo 2", UndoCommand.COMMAND_WORD);
+    }
+
 
     @Test
     public void parseCommand_unrecognisedInput_throwsParseException() {

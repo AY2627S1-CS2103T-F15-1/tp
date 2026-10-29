@@ -14,6 +14,7 @@ import static seedu.address.testutil.TypicalPersons.BENSON;
 
 import java.util.List;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.GuiSettings;
@@ -24,7 +25,12 @@ import seedu.address.testutil.LessonBuilder;
 
 public class ModelManagerTest {
 
-    private ModelManager modelManager = new ModelManager();
+    private ModelManager modelManager;
+
+    @BeforeEach
+    public void resetModelManager() {
+        modelManager = new ModelManager();
+    }
 
     @Test
     public void constructor() {

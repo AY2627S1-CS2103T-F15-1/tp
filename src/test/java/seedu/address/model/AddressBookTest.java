@@ -337,6 +337,11 @@ public class AddressBookTest {
         public ObservableList<Homework> getHomeworkList() {
             return homework;
         }
+
+        @Override
+        public boolean isEmpty() {
+            return false;
+        }
     }
 
     @Test
@@ -534,5 +539,15 @@ public class AddressBookTest {
         assertEquals(source.hashCode(), addressBook.hashCode());
         addressBook.setTask(addressBook.getTaskList().get(0), addressBook.getTaskList().get(0).markDone());
         assertFalse(source.equals(addressBook));
+    }
+
+    @Test
+    public void isEmpty_emptyOrReset_true() {
+        assertTrue(new AddressBook().isEmpty());
+        addressBook.addPerson(ALICE);
+        addressBook.addLesson(ALICE_MATH);
+        assertFalse(addressBook.isEmpty());
+        addressBook.clearData();
+        assertTrue(addressBook.isEmpty());
     }
 }

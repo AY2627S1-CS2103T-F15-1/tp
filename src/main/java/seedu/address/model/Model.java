@@ -25,6 +25,12 @@ public interface Model {
     /** {@code Predicate} that always evaluates to true for lessons */
     Predicate<Lesson> PREDICATE_SHOW_ALL_LESSONS = unused -> true;
 
+    /** Hook, called before any command execution. */
+    default void beforeCommand(boolean isDestructive) {}
+
+    /** Hook, called after any command execution. */
+    default void afterCommand(String destructiveDescription, boolean isSuccessful) {}
+
     /**
      * Returns the user prefs.
      */
@@ -44,6 +50,11 @@ public interface Model {
      * Replaces address book data with the data in {@code addressBook}.
      */
     void setAddressBook(ReadOnlyAddressBook addressBook);
+
+    /**
+     * Clears address book data.
+     */
+    void clearAddressBook();
 
     /** Sets the persistent minimum gap between lessons at different physical venues. */
     void setTravelBuffer(int minutes);
@@ -190,4 +201,9 @@ public interface Model {
 
     /** Replaces the numbered selection only when a new list is explicitly displayed. */
     void showHomework(List<Homework> homework);
+
+    /**
+     * Undoes the latest destructive action during this session, if any.
+     */
+    String undoDestructiveAction();
 }
