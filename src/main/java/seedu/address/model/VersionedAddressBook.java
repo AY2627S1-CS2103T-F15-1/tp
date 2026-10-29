@@ -36,6 +36,7 @@ public class VersionedAddressBook extends AddressBook {
 
     private void resetDestructiveAction() {
         lastDestructiveAction = DestructiveActionType.NONE;
+        lastState = null;
     }
 
     /**
