@@ -461,7 +461,7 @@ Format: `lesson series cancel LESSON_INDEX confirm`
 * A lesson not linked to a recurring series is rejected. A series with no eligible occurrences is also rejected without changing data.
 * Select an existing occurrence of the series. This command cancels existing recurring bookings; it does not create them.
 * If any affected occurrence has a recorded charge, nothing is cancelled. Billed history is retained.
-* Cancellation is a status change, not a deletion, and is not undoable. `confirm` is required because the change affects multiple bookings. The current build does not provide an `undo` command.
+* Cancellation is a status change, not a deletion, and is not undoable. `confirm` is required because the change affects multiple bookings. 
 * Success is `Cancelled N series occurrences.` (or `Cancelled 1 series occurrence.` for a single occurrence).
 
 Example: `lesson list st/1 all/`, then `lesson series cancel 3 confirm` cancels the eligible occurrences of the series containing the 3rd displayed lesson.
@@ -720,7 +720,7 @@ Format: `clear confirm`
 * `confirm` can be written in any letter case. Anything else after `clear` is rejected, so a mistyped command can never wipe your data.
 * TutorFlow saves the empty data straight away, so copy `data/tutorflow-v14.json` first if you may want your records back.
 * Clearing data that is already empty works and does nothing.
-* If the clear is done in the current session and the empty data was not modified, this reversed with the `undo` command. A backup is still recommended, since the data can still be easily lost.
+* If you clear data in the current session and make no changes, it can be restored with the `undo` command. A backup is still recommended, since the data can still be easily lost.
 
 Examples:
 * `clear` shows `This deletes ALL students, lessons, homework, tasks, and financial history. Type 'clear confirm' to proceed.`
@@ -734,7 +734,6 @@ Format: `undo`
 
 * Deletion commands include the commands with `delete` in them, and the `clear` command.
 * Changes can only be undone in the current session, and for one deletion command.
-* Reversals will fail if the data is changed in any way after the deletion, including sorting lessons or another deletion.
 * Reversals will fail if the data is changed in any way after the deletion, including sorting students or another deletion.
 
 Examples:
@@ -769,7 +768,7 @@ TutorFlow data is saved automatically as a JSON file `data/tutorflow-v14.json` r
 
 Every lesson and homework assignment must link to a student in the same file through its internal student ID. Legacy lessons are linked by name and phone during migration. Missing student links are treated as invalid, as described below.
 
-<box type="warning" seamless/>
+<box type="warning" seamless>
 
 **Caution:**
 If your changes make the data file invalid, TutorFlow does not delete it. At the next run it renames the file to `tutorflow-v14.json.corrupt` (or `tutorflow-v14.json.corrupt.1` and so on, if that name is taken), starts with no students and lessons, and tells you where the file went. Fix the file and rename it back to `tutorflow-v14.json` while TutorFlow is closed to get your records back. We still recommend backing up the file before editing it.<br>
@@ -777,6 +776,7 @@ If the original cannot be renamed (for example, while another program holds it o
 If TutorFlow cannot **open** the data file, for example because another program holds it open or you may not read it, the file can well be valid, so TutorFlow never renames it. It does not start: a window says why, nothing is changed, and nothing is saved over the file. Fix the problem and start TutorFlow again.
 
 Furthermore, certain edits can cause TutorFlow to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
+
 </box>
 
 ### Archiving data files `[coming in v2.0]`

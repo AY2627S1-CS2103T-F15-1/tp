@@ -16,9 +16,4 @@ public abstract class Command {
      * @throws CommandException If an error occurs during command execution.
      */
     public abstract CommandResult execute(Model model) throws CommandException;
-
-    @Override
-    public boolean equals(Object other) {
-        return this.getClass().equals(other.getClass());
-    }
 }
