@@ -179,4 +179,10 @@ public class VersionedAddressBook extends AddressBook {
         super.removeHomework(target);
         saveDestructiveAction(DestructiveActionType.DELETE_HW);
     }
+
+    @Override
+    public void setTravelBuffer(int minutes) {
+        super.setTravelBuffer(minutes);
+        resetDestructiveAction();
+    }
 }
