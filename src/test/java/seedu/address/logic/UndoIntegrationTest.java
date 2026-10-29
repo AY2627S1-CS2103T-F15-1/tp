@@ -116,5 +116,21 @@ public class UndoIntegrationTest {
 
         ex = assertThrows(CommandException.class, () -> logic.execute("undo"));
         assertTrue(ex.getMessage().contains("Nothing to undo"));
+
+        assertThrows(ParseException.class, () -> logic.execute("lesson repeat st/1 d/2026-12-23 t/12:34"));
+
+        ex = assertThrows(CommandException.class, () -> logic.execute("undo"));
+        assertTrue(ex.getMessage().contains("Nothing to undo"));
+
+        logic.execute("lesson repeat st/1 d/2026-12-23 t/12:34 count/34 s/Math");
+
+        ex = assertThrows(CommandException.class, () -> logic.execute("undo"));
+        assertTrue(ex.getMessage().contains("Nothing to undo"));
+
+        assertThrows(CommandException.class,
+                () -> logic.execute("lesson repeat st/1 d/2026-12-23 t/12:34 count/34 s/Math"));
+
+        ex = assertThrows(CommandException.class, () -> logic.execute("undo"));
+        assertTrue(ex.getMessage().contains("Nothing to undo"));
     }
 }
