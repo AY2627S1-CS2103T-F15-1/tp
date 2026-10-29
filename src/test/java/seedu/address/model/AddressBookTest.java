@@ -337,6 +337,11 @@ public class AddressBookTest {
         public ObservableList<Homework> getHomeworkList() {
             return homework;
         }
+
+        @Override
+        public boolean isEmpty() {
+            return false;
+        }
     }
 
     @Test

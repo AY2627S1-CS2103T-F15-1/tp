@@ -583,6 +583,7 @@ public class AddressBook implements ReadOnlyAddressBook {
     /**
      * Checks if this collection is empty. This will be true after a call to {@code resetData}.
      */
+    @Override
     public boolean isEmpty() {
         return persons.isEmpty() && lessons.isEmpty() && homework.isEmpty() && ledgerEntries.isEmpty()
                 && tasks.isEmpty() && travelBuffer == TravelGap.DEFAULT_BUFFER && studentOrder == null;
