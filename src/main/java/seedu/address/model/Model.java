@@ -26,10 +26,10 @@ public interface Model {
     Predicate<Lesson> PREDICATE_SHOW_ALL_LESSONS = unused -> true;
 
     /** Hook, called before any command execution. */
-    void beforeCommand(boolean isDestructive);
+    default void beforeCommand(boolean isDestructive) {}
 
     /** Hook, called after any command execution. */
-    void afterCommand(String destructiveDescription, boolean isSuccessful);
+    default void afterCommand(String destructiveDescription, boolean isSuccessful) {}
 
     /**
      * Returns the user prefs.
