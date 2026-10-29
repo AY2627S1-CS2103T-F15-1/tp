@@ -419,7 +419,7 @@ stored a student name and phone instead of ids are not migrated.
 `hw list` and `pay list`, exactly like the lesson, homework and payment commands, and store the UUID of the row that
 was shown. `task list` numbers the tasks it displays, and `task edit|done|delete N` use that numbering.
 
-**Undo.** `task delete` participates in the single-action undo described under [Undo of the latest deletion or clear](#undo-of-the-latest-deletion-or-clear). Other task commands do not.
+**Undo.** `task delete` participates in the single-action undo described under [Undo of the latest deletion or clear](#undo-of-the-latest-deletion-or-clear). The other task commands are not destructive actions and do not create an undo point.
 
 ### Homework status and deletion
 
@@ -455,7 +455,7 @@ Undo is deliberately a single-action, session-only safety net, not a general und
 * `lastState` is the snapshot promoted from `transitionState` only after that command succeeds.
 * `lastDestructiveAction` is the message fragment used by `UndoCommand`.
 
-`LogicManager` calls `Model#beforeCommand(boolean)` before parsing-independent command execution and `Model#afterCommand(String, boolean)` in its `finally` path. The boolean tells the model whether the parsed command extends `DestructiveCommand`; the description comes from `DestructiveCommand#getDestructDescription()`. A failed command discards `transitionState`, leaving any earlier successful undo point available.
+`LogicManager` calls `Model#beforeCommand(boolean)` before command execution and `Model#afterCommand(String, boolean)` in its `finally` path. The boolean tells the model whether the parsed command extends `DestructiveCommand`; the description comes from `DestructiveCommand#getDestructDescription()`. A failed command discards `transitionState`, leaving any earlier successful undo point available.
 
 `UndoCommand` calls `Model#undoDestructiveAction()`, which restores `lastState` through `resetData`. The `LogicManager` then saves the restored state through the normal changed-data path. A save failure retains the restored in-memory state so `save` can retry, matching every other mutating command.
 

@@ -774,8 +774,8 @@ Reverses the latest deletion or clear made in this session.
 Format: `undo`
 
 * It applies to `delete`, `hw delete`, `task delete` and `clear confirm`; it does not restore lesson cancellations or other edits.
-* It undoes one destructive action, in the current session only. After the undo, there is nothing further to undo.
-* Any later successful change clears the undo opportunity, including adding, editing, sorting or another deletion. Read-only commands such as `list` and `view` do not.
+* It undoes one destructive action, in the current session only. Undoing one action uses up the available undo point.
+* Any later successful change clears the undo opportunity: adding, editing or sorting leaves nothing to undo, while another deletion replaces it with a new undo point. Read-only commands such as `list` and `view` do not.
 * If the restoration cannot be saved, the restored data stays in memory and `save` can retry the write.
 
 Examples:
