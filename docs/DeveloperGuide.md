@@ -164,13 +164,18 @@ This section describes some noteworthy details on how certain features are imple
 
 ### Student lookup and correction of optional values
 
-`NameContainsKeywordsPredicate` normalizes names and keywords to NFC and applies simple Unicode case folding
-to code points before substring matching. This follows the case equivalence used by `Person#hasIdentity`,
-including dotless i and supplementary letters, while retaining significant accents.
+`NameContainsKeywordsPredicate` normalizes names and keywords to NFC and applies the same per-code-point case
+equivalence as `String.equalsIgnoreCase` before substring matching: `toUpperCase`, then `toLowerCase`.
+This follows `Person#hasIdentity`, including dotless i and supplementary letters, while retaining significant
+accents. It does not implement full Unicode case folding or multi-character mappings.
 
-`StudentLabels#format` checks the full student list, including archived students, and adds the phone number
-when names collide ignoring case. Both `Ledger` dues and `HomeworkQueries` use this label, so their command,
-overview and dashboard summaries identify the same student independently of the current student filter.
+`StudentSummaryLabels` groups the full student list, including archived students, by case-insensitive name
+once per textual summary. It precomputes labels by student ID, avoiding a student-list scan for each homework
+row. Same-name students show only the last four phone digits. If those digits also collide, an eight-character
+student-ID reference is added, falling back to the complete ID if its prefix collides. Archived status is part
+of the same label. `Ledger` dues, `HomeworkQueries` and the `view` heading use these labels independently of
+the current filter. This formatter is scoped to textual summaries, not contact cards or exports. Full contact
+details remain in the explicit student overview, not in homework or dues rows or the startup dashboard.
 
 `EditPersonDescriptor` distinguishes an omitted optional contact field from a requested clear using explicit
 email and venue clear flags. The parser sets these only for an empty `e/` or `v/`; non-empty replacements

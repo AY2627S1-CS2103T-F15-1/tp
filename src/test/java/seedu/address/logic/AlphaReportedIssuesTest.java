@@ -65,11 +65,16 @@ public class AlphaReportedIssuesTest {
         String dues = logic.execute("dues").getFeedbackToUser();
         String homework = logic.execute("hw list").getFeedbackToUser();
 
-        assertTrue(dues.contains("Alex (91234567) $50.00"));
-        assertTrue(dues.contains("alex (92345678) $50.00"));
-        assertTrue(homework.contains("Alex (91234567) Math"));
-        assertTrue(homework.contains("alex (92345678) Math"));
-        assertTrue(logic.execute("view 1").getFeedbackToUser().contains("Alex (91234567) Math"));
+        assertTrue(dues.contains("Alex (phone ending 4567) $50.00"));
+        assertTrue(dues.contains("alex (phone ending 5678) $50.00"));
+        assertTrue(homework.contains("Alex (phone ending 4567) Math"));
+        assertTrue(homework.contains("alex (phone ending 5678) Math"));
+        assertFalse(dues.contains("91234567"));
+        assertFalse(homework.contains("92345678"));
+        String dashboard = logic.execute("today").getFeedbackToUser();
+        assertFalse(dashboard.contains("91234567"));
+        assertFalse(dashboard.contains("92345678"));
+        assertTrue(logic.execute("view 1").getFeedbackToUser().contains("Alex (phone ending 4567) Math"));
         assertEquals(2, model.getAddressBook().getHomeworkList().size());
     }
 
@@ -97,6 +102,24 @@ public class AlphaReportedIssuesTest {
         assertThrows(ParseException.class, () -> logic.execute("edit 1 p/"));
         assertThrows(ParseException.class, () -> logic.execute("edit 1 e/ e/new@example.com"));
         assertThrows(ParseException.class, () -> logic.execute("add n/Bob p/92345678 l/S3 s/Math r/50 e/"));
+    }
+
+    @Test
+    public void summaries_collidingPhoneSuffixes_referenceMatchesTheExplicitStudentOverview() throws Exception {
+        LogicManager logic = logic(model);
+        logic.execute("add n/Alex p/91234567 l/S3 s/Math r/50");
+        logic.execute("add n/Alex p/92344567 l/S3 s/Math r/50");
+        var students = model.getAddressBook().getPersonList();
+        logic.execute("hw add st/1 desc/Math due/today");
+        logic.execute("hw add st/2 desc/Math due/today");
+        String homework = logic.execute("hw list").getFeedbackToUser();
+        for (int i = 0; i < students.size(); i++) {
+            String label = "Alex (phone ending 4567, ref " + students.get(i).getId().toString().substring(0, 8) + ")";
+            assertTrue(homework.contains(label));
+            assertTrue(logic.execute("view " + (i + 1)).getFeedbackToUser().startsWith("Viewing: " + label));
+        }
+        assertFalse(homework.contains("91234567"));
+        assertFalse(homework.contains("92344567"));
     }
 
     @Test

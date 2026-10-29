@@ -28,7 +28,7 @@ public class NameContainsKeywordsPredicate implements Predicate<Person> {
                 .anyMatch(foldedName::contains);
     }
 
-    /** Uses the same simple Unicode case equivalence as student identity, retaining accent normalization. */
+    /** Uses String.equalsIgnoreCase's per-code-point case equivalence, retaining accent normalization. */
     private static String foldCase(String text) {
         int[] points = Normalizer.normalize(text, Normalizer.Form.NFC).codePoints()
                 .map(point -> Character.toLowerCase(Character.toUpperCase(point))).toArray();

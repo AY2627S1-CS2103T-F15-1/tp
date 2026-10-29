@@ -79,6 +79,17 @@ public class HomeworkFeedbackCommandTest {
     }
 
     @Test
+    public void execute_clearNeverRecordedFeedback_isIdempotentAndPreservesAssignment() throws Exception {
+        Homework original = new HomeworkBuilder(ALICE).build();
+        showWith(original);
+        HomeworkFeedbackCommand command = new HomeworkFeedbackCommand(INDEX_FIRST_PERSON, "");
+        assertEquals("Feedback cleared for homework 1: Algebra Q1-10", command.execute(model).getFeedbackToUser());
+        assertEquals(original, stored());
+        assertEquals("Feedback cleared for homework 1: Algebra Q1-10", command.execute(model).getFeedbackToUser());
+        assertEquals(original, stored());
+    }
+
+    @Test
     public void execute_assignedHomework_rejected() throws Exception {
         showWith(new HomeworkBuilder(ALICE).build());
 

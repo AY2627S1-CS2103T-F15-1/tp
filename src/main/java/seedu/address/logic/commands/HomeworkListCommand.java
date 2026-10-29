@@ -15,6 +15,7 @@ import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.homework.HomeworkQueries;
+import seedu.address.model.person.StudentSummaryLabels;
 
 /** Shows a complete or filtered homework history and establishes a stable numbered selection. */
 public class HomeworkListCommand extends Command {
@@ -63,9 +64,10 @@ public class HomeworkListCommand extends Command {
         if (rows.isEmpty()) {
             text.append(MESSAGE_NO_MATCH);
         }
+        StudentSummaryLabels labels = new StudentSummaryLabels(model.getAddressBook());
         for (int i = 0; i < rows.size(); i++) {
             text.append("\n").append(i + 1).append(". ")
-                    .append(HomeworkQueries.format(model.getAddressBook(), rows.get(i), today));
+                    .append(HomeworkQueries.format(labels, rows.get(i), today));
         }
         return new CommandResult(text.toString()).withDisplayedHomework(rows);
     }

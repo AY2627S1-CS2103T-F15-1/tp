@@ -15,7 +15,7 @@ import seedu.address.model.homework.HomeworkStatus;
 
 /** Records or replaces feedback after submission, or explicitly clears mistaken feedback at any status. */
 public class HomeworkFeedbackCommand extends Command {
-    public static final String MESSAGE_USAGE = "hw feedback INDEX f/FEEDBACK";
+    public static final String MESSAGE_USAGE = "hw feedback INDEX f/[FEEDBACK]";
 
     public static final String MESSAGE_SUCCESS = "Feedback recorded for homework %1$d: %2$s";
     public static final String MESSAGE_CLEARED = "Feedback cleared for homework %1$d: %2$s";

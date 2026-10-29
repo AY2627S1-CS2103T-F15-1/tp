@@ -95,7 +95,7 @@ public class HelpCommand extends Command {
                     "Parameters: INDEX from the last hw list; FEEDBACK is 1-1000 characters. The homework must be "
                             + "submitted or reviewed, and new feedback replaces the old. An empty f/ clears feedback "
                             + "at any status without deleting the homework or its tasks.\n"
-                            + "Example: hw feedback 1 f/Sign errors throughout Q8-12"),
+                            + "Examples: hw feedback 1 f/Sign errors throughout Q8-12; hw feedback 1 f/"),
             new CommandHelp("hw delete", "Deletes homework, after confirmation if it has feedback or tasks",
                     HomeworkDeleteCommand.MESSAGE_USAGE,
                     "Parameters: INDEX from the last hw list; confirm is needed when the homework has feedback "

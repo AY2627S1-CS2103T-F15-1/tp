@@ -86,6 +86,7 @@ public class EditPersonDescriptorTest {
         EditPersonDescriptor descriptor = new EditPersonDescriptor();
         assertFalse(descriptor.isAnyFieldEdited());
         descriptor.clearEmail();
+        assertTrue(descriptor.isAnyFieldEdited());
         descriptor.clearVenue();
         EditPersonDescriptor copy = new EditPersonDescriptor(descriptor);
         assertTrue(copy.isAnyFieldEdited());
