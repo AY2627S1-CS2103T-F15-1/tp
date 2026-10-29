@@ -26,7 +26,7 @@ public final class Ledger {
     /** A student with a positive amount owed. */
     public record Due(Person student, BigDecimal amount, LocalDate oldestUnpaidDate) { }
 
-    /** Returns charges minus payments. A negative balance represents credit. */
+    /** Returns charges and withdrawals minus payments. A negative balance represents credit. */
     public static BigDecimal balance(ReadOnlyAddressBook book, Person student) {
         requireNonNull(book);
         requireNonNull(student);
@@ -86,6 +86,9 @@ public final class Ledger {
         BigDecimal payments = entries.stream().filter(entry -> entry.kind() == LedgerEntry.Kind.PAYMENT)
                 .filter(entry -> !reversedIds.contains(entry.id()))
                 .map(LedgerEntry::amount).reduce(ZERO, BigDecimal::add);
+        BigDecimal withdrawals = entries.stream().filter(entry -> entry.kind() == LedgerEntry.Kind.WITHDRAWAL)
+                .map(LedgerEntry::amount).reduce(ZERO, BigDecimal::add);
+        payments = payments.subtract(withdrawals);
         List<LedgerEntry> charges = entries.stream().filter(entry -> entry.kind() == LedgerEntry.Kind.CHARGE)
                 .filter(entry -> !reversedIds.contains(entry.id()))
                 .sorted(Comparator.comparing(LedgerEntry::date).thenComparing(LedgerEntry::id)).toList();

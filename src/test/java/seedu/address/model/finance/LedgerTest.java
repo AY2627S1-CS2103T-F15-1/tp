@@ -217,6 +217,19 @@ public class LedgerTest {
     }
 
     @Test
+    public void dues_withdrawalThenNewCharge_findsTheNewChargeAsUnpaid() {
+        AddressBook book = new AddressBook();
+        book.addPerson(alice);
+        book.addLedgerEntry(charge(book, alice, "50", DAY.minusDays(10)));
+        book.addLedgerEntry(LedgerEntry.payment(alice, new BigDecimal("100"), DAY.minusDays(5)));
+        book.addLedgerEntry(LedgerEntry.withdrawal(alice, new BigDecimal("50"), DAY.minusDays(3)));
+        book.addLedgerEntry(charge(book, alice, "30", DAY.minusDays(1)));
+
+        assertEquals(List.of(new Ledger.Due(alice, new BigDecimal("30.00"), DAY.minusDays(1))),
+                Ledger.dues(book, DAY));
+    }
+
+    @Test
     public void descriptions_creditZeroAndOutstanding_useSharedLabels() {
         assertEquals("IN CREDIT $10.00", Ledger.describeBalance(BigDecimal.TEN.negate()));
         assertEquals("OUTSTANDING $0.00", Ledger.describeBalance(Ledger.ZERO));

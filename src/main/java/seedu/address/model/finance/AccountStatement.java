@@ -11,7 +11,7 @@ import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
 
-/** Formats the account of one student: every charge and payment in date order, with a running balance. */
+/** Formats the account of one student: every charge, payment and withdrawal in date order, with a running balance. */
 public final class AccountStatement {
     public static final String MESSAGE_NO_ACTIVITY = "No charges or payments recorded for %1$s.";
 
@@ -60,6 +60,9 @@ public final class AccountStatement {
         }
         if (entry.kind() == LedgerEntry.Kind.PAYMENT) {
             return "payment -" + Ledger.format(entry.amount());
+        }
+        if (entry.kind() == LedgerEntry.Kind.WITHDRAWAL) {
+            return "withdrawal -" + Ledger.format(entry.amount());
         }
         Optional<Lesson> lesson = book.getLessonList().stream()
                 .filter(candidate -> candidate.getId().equals(entry.lessonId())).findFirst();

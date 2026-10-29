@@ -96,6 +96,20 @@ public class AccountStatementTest {
                 AccountStatement.format(book, bob));
     }
 
+    @Test
+    public void format_withdrawal_listsAndReducesCredit() {
+        AddressBook book = new AddressBook();
+        book.addPerson(bob);
+        book.addLedgerEntry(LedgerEntry.payment(bob, new BigDecimal("100"), DAY));
+        book.addLedgerEntry(LedgerEntry.withdrawal(bob, new BigDecimal("30"), DAY.plusDays(1), "cash"));
+
+        assertEquals("Account — Lee Bob\n"
+                + "2026-10-17 payment -$100.00 bal IN CREDIT $100.00\n"
+                + "2026-10-18 withdrawal -$30.00 bal IN CREDIT $70.00\n"
+                + "Total charged $0.00 · total paid $70.00 (after reversals) · IN CREDIT $70.00",
+                AccountStatement.format(book, bob));
+    }
+
     private static LedgerEntry chargeFor(AddressBook book, Person student, String subject, LocalDate date) {
         Lesson lesson = new LessonBuilder().withStudent(student).withSubject(subject).withDuration(60)
                 .withDate(date).build();

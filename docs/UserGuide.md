@@ -687,21 +687,37 @@ Shows a student's account: every charge and payment in date order with a running
 Format: `balance st/INDEX`
 
 * `INDEX` is the positive student number in the displayed student list. After `find`, it refers to that filtered list.
-* Charges increase the balance and payments reduce it. A reversal (see `charge reverse` and `pay reverse`) is shown as its own row, `reversal of charge (DATE) $X.XX` or `reversal of payment (DATE) $X.XX` with the date of the entry it cancels, and is taken out of the totals. Events on the same day keep the order in which they were recorded. The last line gives the total charged, the total paid and the balance. Debt is shown as `OUTSTANDING $X.XX`; an overpayment is shown as `IN CREDIT $X.XX`, and a running balance that has gone into credit is shown the same way instead of as a negative number.
+* Charges increase the balance and payments reduce it. A withdrawal also reduces available credit and is shown as `withdrawal -$X.XX`. A reversal (see `charge reverse` and `pay reverse`) is shown as its own row, `reversal of charge (DATE) $X.XX` or `reversal of payment (DATE) $X.XX` with the date of the entry it cancels, and is taken out of the totals. Events on the same day keep the order in which they were recorded. The last line gives the total charged, the total paid and the balance. Debt is shown as `OUTSTANDING $X.XX`; an overpayment is shown as `IN CREDIT $X.XX`, and a running balance that has gone into credit is shown the same way instead of as a negative number.
 * A student with no charges or payments shows `No charges or payments recorded for NAME.`
 * The first time a lesson is completed with `lesson done`, TutorFlow records the student's current hourly rate × the lesson duration in minutes ÷ 60, rounded to cents using HALF_UP, as one charge. For example, $60/hour for 90 minutes costs $90.00. Updating the notes later does not charge again. Changing the student's rate does not change earlier charges.
 * Scheduled, cancelled and missed lessons do not create charges. A missed lesson creates a charge only if subsequently completed.
 * Existing completed lessons in older data files are not charged retroactively. Accounts start with no financial records when the file has no ledger.
 * Charges and payments use permanent student identifiers, so editing the student’s name or phone retains their balance.
-* Charges and payments are saved with the rest of the data. Use `pay st/INDEX amt/AMOUNT` to record money received.
+* Charges, payments and withdrawals are saved with the rest of the data. Use `pay st/INDEX amt/AMOUNT` to record money received, and `withdraw` to return available credit.
 
 Example: `balance st/1` shows the account of the first displayed student:
 ```text
 Account — Lee Bob
 2026-10-17 charge Chemistry lesson $90.00 bal $90.00
 2026-10-19 payment -$50.00 bal $40.00
-Total charged $90.00 · total paid $50.00 (after reversals) · OUTSTANDING $40.00
+Total charged $90.00 · total paid $50.00 (after reversals) · total withdrawn $0.00 · OUTSTANDING $40.00
 ```
+
+### Withdrawing available credit: `withdraw`
+
+Returns credit from a student's account, for example after an overpayment. A withdrawal is kept as its own history entry; it never deletes or edits the original payment.
+
+Format: `withdraw st/STUDENT_INDEX amt/AMOUNT [d/DATE] [n/NOTES]`
+
+* `STUDENT_INDEX` is the positive student number in the displayed student list. Archived students with credit can be selected from `list archived/`.
+* `AMOUNT` must be greater than zero with at most two decimal places, and cannot exceed the student's available credit. Withdrawing the full credit is allowed.
+* A student who owes money, or has no credit, gets an error and no withdrawal is recorded.
+* `DATE` defaults to today and cannot be in the future. `NOTES` is optional printable text of 1-200 characters on one line.
+* A withdrawal is saved automatically. It appears on the account statement as `withdrawal -$X.XX` and reduces the available credit.
+
+Examples:
+* `withdraw st/1 amt/20` returns $20 of credit to the first displayed student today.
+* `withdraw st/2 amt/50.25 d/2026-10-18 n/Bank transfer` records an earlier withdrawal with a reference.
 
 ### Viewing all outstanding balances: `dues`
 
@@ -804,6 +820,7 @@ Action     | Format, Examples
 **Charge** | `charge l/LESSON_INDEX [amt/AMOUNT]`, `charge reverse l/LESSON_INDEX`<br> e.g., `charge l/1`, `charge l/1 amt/50`, `charge reverse l/1`
 **Payment** | `pay st/STUDENT_INDEX amt/AMOUNT [d/DATE] [n/NOTES]`<br> e.g., `pay st/1 amt/50`
 **Payment list / reverse** | `pay list [st/STUDENT_INDEX]`, `pay reverse PAYMENT_INDEX`<br> e.g., `pay list st/2`, `pay reverse 2`
+**Withdraw** | `withdraw st/STUDENT_INDEX amt/AMOUNT [d/DATE] [n/NOTES]`<br> e.g., `withdraw st/1 amt/20`
 **Dues** | `dues`
 **Sort**   | `sort [asc\|desc]`<br> e.g., `sort desc`
 **Archive / Restore** | `archive INDEX`, `restore INDEX`<br> e.g., `archive 3`, `list archived/` then `restore 1`
@@ -930,9 +947,10 @@ v1.4 writes `data/tutorflow-v14.json`. If this file is absent, it reads legacy
 `data/addressbook.json`, assigns stable internal student and lesson identifiers, and saves
 an initial v1.4 copy. The legacy file remains untouched so an older application cannot erase
 v1.4 fields. If both files exist, the v1.4 file takes precedence. Keep both in your backup.
-This alpha writes schema 18 and accepts unversioned legacy files plus schemas 14 through 18.
+This alpha writes schema 19 and accepts unversioned legacy files plus schemas 14 through 19.
 Older files without homework, a ledger or follow-up tasks start with empty records for those features. Older builds
-refuse schema 18, protecting task payment links (and any charges and payments) from being dropped when saving.
+refuse schema 19, protecting withdrawals, task payment links and follow-up tasks (and any charges and payments)
+from being dropped when saving.
 An unsupported schema version stops startup and leaves the original file in place. Open that data
 with a compatible TutorFlow build, or restore a backup made by your installed build. An older alpha
 cannot open data saved by a newer alpha that added data fields. Invalid files use the recovery flow

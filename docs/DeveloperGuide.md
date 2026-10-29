@@ -135,7 +135,7 @@ The `Model` component,
 
 * stores the address book data i.e., all `Person` objects, each of which represents a student with a name, phone number, level, subjects and rate, and optionally an email, a venue and a remark (the `Person` objects are contained in a `UniquePersonList` object). Two `Person` objects are the same student if they have the same phone number and the same name, ignoring case.
 * stores the `Lesson` objects, each of which is a lesson with a student, a subject, a date, a start time, a duration, a status and optionally a venue (the `Lesson` objects are contained in a `UniqueLessonList` object). A `Lesson` refers to its student by the student's name and phone number, which together identify a `Person`. Deleting a student deletes their lessons, and editing the name or phone number of a student keeps their lessons attached.
-* stores immutable `LedgerEntry` records for lesson charges, student payments and the reversals of either. Each record refers to a permanent student UUID and, for charges and charge reversals, a lesson UUID; a reversal also refers to the entry it cancels. `Ledger` derives balances and unpaid dues from those records; those calculations do not mutate the ledger.
+* stores immutable `LedgerEntry` records for lesson charges, student payments, withdrawals and the reversals of charges or payments. Each record refers to a permanent student UUID and, for charges and charge reversals, a lesson UUID; a reversal also refers to the entry it cancels. `Ledger` derives balances and unpaid dues from those records; those calculations do not mutate the ledger.
 * stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
 * stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
 * does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
@@ -382,8 +382,8 @@ of linked-record counts as lessons, so a later feature adds one more count inste
 
 **Storage.** Tasks are saved in an optional top-level `tasks` array of `JsonAdaptedTask`, beside `persons`, `lessons`,
 `homework` and `ledgerEntries`. A file without `tasks` (schema 16 or older) loads with no tasks. Adding the array
-bumped `StorageSchema.CURRENT_VERSION` to 17, and the optional `paymentId` bumped it to 18, so that older builds
-refuse a newer file rather than loading it without those links and then deleting them on the next save.
+bumped `StorageSchema.CURRENT_VERSION` to 17; task payment links then bumped it to 18 and withdrawals to 19, so
+older builds refuse a newer file rather than loading it without those fields and then deleting them on the next save.
 
 ```json
 {
@@ -563,7 +563,7 @@ rather than scanning the growing list once per entry. Other domains keep their e
 `removeLesson` refuses to delete a billed lesson, including detached equal-value lookup, so a saved
 charge cannot point at a deleted lesson. Student deletion still cascades all of that student's history.
 
-`Ledger.balance(book, student)` adds charges and payment reversals and subtracts payments and charge reversals, returning a negative value for credit. `Ledger.activeCharge(book, lessonId)` returns the charge of a lesson that no reversal cancels; the lesson move/cancel guard and the one-charge-per-lesson rule use it. `ChargeCommand` records a manual charge or a reversal. `PaymentListCommand` lists `PAYMENT` entries oldest first, and stores them with `Model#setShownPayments`. It builds a student-name map and the set from `Ledger.reversedIds` once per listing, so listing stays linear in the number of entries instead of scanning the ledger for every row; `PaymentReverseCommand` takes its index from that stored list (like `task list` and the task commands), so the numbers stay fixed until the next `pay list`. It refuses a payment that is gone from the ledger or that `Ledger.isReversed` finds already cancelled, and otherwise adds `LedgerEntry.reversalOf(payment, today)`. `PayCommandParser` routes `pay list` and `pay reverse` to their parsers and everything else to `PaymentCommandParser`. The automatic charge raised by `lesson done` keeps the lesson's UUID as its entry ID, so a charge raised again after a reversal gets a random ID; a charge made with `charge` always gets a random ID. `AddressBook#chargeLesson` raises no automatic charge when `Ledger.activeCharge` already finds one, so completing a missed lesson that was billed by hand does not bill it twice.
+`Ledger.balance(book, student)` adds charges and payment reversals and subtracts payments, withdrawals and charge reversals, returning a negative value for credit. `Ledger.activeCharge(book, lessonId)` returns the charge of a lesson that no reversal cancels; the lesson move/cancel guard and the one-charge-per-lesson rule use it. `ChargeCommand` records a manual charge or a reversal. `PaymentListCommand` lists `PAYMENT` entries oldest first, and stores them with `Model#setShownPayments`. It builds a student-name map and the set from `Ledger.reversedIds` once per listing, so listing stays linear in the number of entries instead of scanning the ledger for every row; `PaymentReverseCommand` takes its index from that stored list (like `task list` and the task commands), so the numbers stay fixed until the next `pay list`. It refuses a payment that is gone from the ledger or that `Ledger.isReversed` finds already cancelled, and otherwise adds `LedgerEntry.reversalOf(payment, today)`. `PayCommandParser` routes `pay list` and `pay reverse` to their parsers and everything else to `PaymentCommandParser`. `WithdrawCommand` records an append-only `WITHDRAWAL` against available credit and refuses amounts above it. The automatic charge raised by `lesson done` keeps the lesson's UUID as its entry ID, so a charge raised again after a reversal gets a random ID; a charge made with `charge` always gets a random ID. `AddressBook#chargeLesson` raises no automatic charge when `Ledger.activeCharge` already finds one, so completing a missed lesson that was billed by hand does not bill it twice.
 `Ledger.describeBalance(amount)` shares the `OUTSTANDING $X.XX` / `IN CREDIT $X.XX` labels.
 `Ledger.dues(book, today)` returns immutable `Due(student, amount, oldestUnpaidDate)` rows, oldest first,
 breaking ties by name then phone. Payments cover charges FIFO by charge date, including partial payments
@@ -1279,9 +1279,10 @@ precreates the current destination, so an interrupted first save leaves legacy f
 on restart. The storage writeSnapshot seam passes the actual serialized bytes to this writer.
 Unreadable source protection is retained until positive absence or successful preservation.
 
-`StorageSchema.MINIMUM_VERSION` and `CURRENT_VERSION` centralize the supported range (14 through 18 now).
+`StorageSchema.MINIMUM_VERSION` and `CURRENT_VERSION` centralize the supported range (14 through 19 now).
 The shared `tutorflow-v14.json` path stays fixed as later domains are added. Homework uses
-schema 15, finance uses schema 16, follow-up tasks use schema 17, and task payment links use schema 18; the next domain must advance it to 19. Each build accepts unversioned legacy
+schema 15, finance uses schema 16, follow-up tasks use schema 17, task payment links use schema 18 and withdrawals
+use schema 19; the next domain must advance it to 20. Each build accepts unversioned legacy
 data and versions 14 through its current version, with explicit defaults for missing older fields.
 Add prior-version loading and future-version refusal tests alongside each schema increment.
 

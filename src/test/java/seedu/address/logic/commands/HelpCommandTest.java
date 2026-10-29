@@ -33,7 +33,7 @@ public class HelpCommandTest {
             "lesson repeat",
             "lesson add", "lesson list", "lesson move", "lesson cancel", "lesson done", "lesson missed",
             "lesson series cancel", "travel", "agenda", "today", "task add", "task list", "task edit",
-            "task done", "task delete", "clear", "help", "exit"}) {
+            "task done", "task delete", "withdraw", "clear", "help", "exit"}) {
             assertTrue(message.contains("\n  " + command + " "), command + " is missing from the list");
         }
         assertTrue(message.contains("Schedules a lesson"));
@@ -73,6 +73,7 @@ public class HelpCommandTest {
         assertHelpUsage(TaskEditCommand.MESSAGE_USAGE, "task edit");
         assertHelpUsage(TaskDoneCommand.MESSAGE_USAGE, "task done");
         assertHelpUsage(TaskDeleteCommand.MESSAGE_USAGE, "task delete");
+        assertHelpUsage(WithdrawCommand.MESSAGE_USAGE, "withdraw");
         assertHelpUsage(ClearCommand.MESSAGE_USAGE, "clear");
         assertHelpUsage(HelpCommand.MESSAGE_USAGE, "help");
         assertHelpUsage(ExitCommand.MESSAGE_USAGE, "exit");

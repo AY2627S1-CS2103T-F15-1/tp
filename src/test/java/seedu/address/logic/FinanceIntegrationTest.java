@@ -144,6 +144,32 @@ public class FinanceIntegrationTest {
     }
 
     @Test
+    public void withdraw_returnsCreditAndPersistsTheLedgerEntry() throws Exception {
+        model.addLedgerEntry(LedgerEntry.payment(alice, new BigDecimal("100"), TODAY));
+        logic.execute("save");
+
+        String result = logic.execute("withdraw st/1 amt/30 n/bank transfer").getFeedbackToUser();
+
+        assertTrue(result.contains("Withdrawal of $30.00 recorded for Alice on " + TODAY));
+        assertTrue(result.contains("Balance: IN CREDIT $70.00."));
+        ReadOnlyAddressBook saved = storage.readAddressBook().orElseThrow();
+        assertEquals(new BigDecimal("-70.00"), Ledger.balance(saved, alice));
+        assertEquals(LedgerEntry.Kind.WITHDRAWAL, saved.getLedgerEntries().getLast().kind());
+        assertEquals("bank transfer", saved.getLedgerEntries().getLast().notes());
+        assertTrue(logic.execute("balance st/1").getFeedbackToUser().contains("IN CREDIT $70.00"));
+    }
+
+    @Test
+    public void withdraw_exceedingCreditOrWithNoCredit_isRejectedWithoutChangingTheLedger() {
+        model.addLedgerEntry(LedgerEntry.payment(alice, new BigDecimal("10"), TODAY));
+        assertThrows(CommandException.class, () ->
+                logic.execute("withdraw st/1 amt/10.01"));
+        assertThrows(CommandException.class, () ->
+                logic.execute("withdraw st/2 amt/1"));
+        assertEquals(1, model.getAddressBook().getLedgerEntries().size());
+    }
+
+    @Test
     public void invalidArgumentsAndHelp_areHandledByCommandParser() throws Exception {
         for (String command : new String[]{"balance", "balance st/0", "balance st/-1", "balance st/1 extra",
             "balance 1", "balance st/1 st/2", "dues 1"}) {

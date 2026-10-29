@@ -57,6 +57,11 @@ class JsonAdaptedLedgerEntry {
                 entry.reverses() == null ? null : entry.reverses().toString());
     }
 
+    /** Returns whether the stored entry is a withdrawal introduced in a later schema. */
+    boolean isWithdrawal() {
+        return "WITHDRAWAL".equals(kind);
+    }
+
     /** Validates every field before restoring a financial record. */
     public LedgerEntry toModelType() throws IllegalValueException {
         requireField(id, "id");

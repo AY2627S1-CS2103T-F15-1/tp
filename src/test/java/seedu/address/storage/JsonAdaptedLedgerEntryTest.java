@@ -30,6 +30,14 @@ public class JsonAdaptedLedgerEntryTest {
     }
 
     @Test
+    public void toModelType_withdrawal_roundTripsEveryField() throws Exception {
+        LedgerEntry withdrawal = LedgerEntry.withdrawal(ALICE, new BigDecimal("12.30"),
+                LocalDate.of(2026, 10, 1), "bank transfer");
+
+        assertEquals(withdrawal, new JsonAdaptedLedgerEntry(withdrawal).toModelType());
+    }
+
+    @Test
     public void toModelType_invalidRequiredFields_rejected() {
         String[] valid = {UUID.randomUUID().toString(), ALICE.getId().toString(), UUID.randomUUID().toString(),
             "CHARGE", "20.00", "2026-10-01"};
@@ -141,7 +149,7 @@ public class JsonAdaptedLedgerEntryTest {
         assertEquals(charge, restored.getLedgerEntries().getFirst());
         assertTrue(restored.getLedgerEntries().getFirst().isWith(student));
         assertEquals(lesson.getId(), restored.getLedgerEntries().getFirst().lessonId());
-        assertTrue(json.contains("\"schemaVersion\" : 18"));
+        assertTrue(json.contains("\"schemaVersion\" : 19"));
     }
 
     @Test
@@ -152,7 +160,20 @@ public class JsonAdaptedLedgerEntryTest {
             assertTrue(book.getLedgerEntries().isEmpty());
         }
         assertThrows(UnsupportedSchemaException.class, () -> JsonUtil.fromJsonString(
-                "{\"schemaVersion\":19,\"persons\":[]}", JsonSerializableAddressBook.class).toModelType());
+                "{\"schemaVersion\":20,\"persons\":[]}", JsonSerializableAddressBook.class).toModelType());
+    }
+
+    @Test
+    public void withdrawalBeforeSchema19_isRejected() throws Exception {
+        AddressBook book = new AddressBook();
+        book.addPerson(ALICE);
+        book.addLedgerEntry(LedgerEntry.withdrawal(ALICE, BigDecimal.TEN, LocalDate.of(2026, 10, 18)));
+        String json = JsonUtil.toJsonString(new JsonSerializableAddressBook(book));
+        json = json.replace("\"schemaVersion\" : " + StorageSchema.WITHDRAWAL_VERSION,
+                "\"schemaVersion\" : " + (StorageSchema.WITHDRAWAL_VERSION - 1));
+        JsonSerializableAddressBook data = JsonUtil.fromJsonString(json, JsonSerializableAddressBook.class);
+
+        assertThrows(IllegalValueException.class, data::toModelType);
     }
 
     @Test

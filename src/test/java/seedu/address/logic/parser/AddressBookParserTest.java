@@ -38,6 +38,7 @@ import seedu.address.logic.commands.TaskEditCommand;
 import seedu.address.logic.commands.TaskListCommand;
 import seedu.address.logic.commands.TodayCommand;
 import seedu.address.logic.commands.ViewCommand;
+import seedu.address.logic.commands.WithdrawCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.Person;
@@ -200,5 +201,10 @@ public class AddressBookParserTest {
     public void parseCommand_lessonRepeat_routedToLessonParser() throws Exception {
         assertTrue(parser.parseCommand("lesson repeat st/1 d/2026-12-22 t/16:30 count/4")
                 instanceof LessonRepeatCommand);
+    }
+
+    @Test
+    public void parseCommand_withdraw() throws Exception {
+        assertTrue(parser.parseCommand("withdraw st/1 amt/20") instanceof WithdrawCommand);
     }
 }
