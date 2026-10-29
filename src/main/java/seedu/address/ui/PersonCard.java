@@ -77,6 +77,7 @@ public class PersonCard extends UiPart<Region> {
 
     private final int displayedIndex;
     private final CommandAssist commandAssist;
+    private boolean isEditMode;
     private boolean isTouchRevealed;
 
     /**
@@ -157,7 +158,7 @@ public class PersonCard extends UiPart<Region> {
     }
 
     private void updateActionVisibility() {
-        boolean isVisible = isTouchRevealed || cardPane.isHover() || cardPane.isFocused()
+        boolean isVisible = isEditMode || isTouchRevealed || cardPane.isHover() || cardPane.isFocused()
                 || cardEditButton.isFocused() || cardArchiveButton.isFocused() || cardDeleteButton.isFocused();
         setCardActionVisibility(isVisible);
     }
@@ -172,6 +173,7 @@ public class PersonCard extends UiPart<Region> {
     }
 
     private void showFieldEditors(boolean isVisible) {
+        isEditMode = isVisible;
         for (Button button : new Button[]{nameEditButton, levelEditButton, subjectEditButton, phoneEditButton,
             rateEditButton, emailEditButton, venueEditButton, remarkEditButton}) {
             button.setVisible(isVisible);

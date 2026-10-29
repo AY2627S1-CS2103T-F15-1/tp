@@ -31,9 +31,6 @@ public final class CommandAssist {
     /** Replaces the command input with the edit command for one field of the displayed student. */
     public void editField(int displayedIndex, Field field) {
         requireNonNull(field);
-        if (generatedFieldEditIndex != null && generatedFieldEditIndex != displayedIndex) {
-            closeEditMode();
-        }
         setDraft(field.draftFor(displayedIndex));
         generatedReferencesStudent = true;
         generatedFieldEditIndex = displayedIndex;

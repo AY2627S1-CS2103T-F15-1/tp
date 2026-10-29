@@ -1,9 +1,11 @@
 package seedu.address.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.Test;
 
@@ -92,6 +94,23 @@ public class CommandAssistTest {
         assist.cancelEditInteraction(1);
 
         assertEquals("archive 1", input.getText());
+    }
+
+    @Test
+    public void editMode_isClosedByCancelNewCardActionAndSuccessfulCommand() {
+        AtomicBoolean isClosed = new AtomicBoolean();
+        assist.beginEditInteraction(1, () -> isClosed.set(true));
+
+        assist.cancelEditInteraction(1);
+        assertTrue(isClosed.getAndSet(false));
+
+        assist.beginEditInteraction(1, () -> isClosed.set(true));
+        assist.archive(1);
+        assertTrue(isClosed.getAndSet(false));
+
+        assist.beginEditInteraction(1, () -> isClosed.set(true));
+        assist.finishInteraction();
+        assertTrue(isClosed.get());
     }
 
     @Test
