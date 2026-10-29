@@ -90,7 +90,7 @@ public class CommandAssistTest {
     @Test
     public void cancel_afterOpeningEditWithAnOlderDraft_keepsTheOlderDraft() {
         assist.archive(1);
-        assist.beginEditInteraction(1, () -> { });
+        assist.beginEditInteraction(() -> { });
         assist.cancelEditInteraction(1);
 
         assertEquals("archive 1", input.getText());
@@ -99,18 +99,28 @@ public class CommandAssistTest {
     @Test
     public void editMode_isClosedByCancelNewCardActionAndSuccessfulCommand() {
         AtomicBoolean isClosed = new AtomicBoolean();
-        assist.beginEditInteraction(1, () -> isClosed.set(true));
+        assist.beginEditInteraction(() -> isClosed.set(true));
 
         assist.cancelEditInteraction(1);
         assertTrue(isClosed.getAndSet(false));
 
-        assist.beginEditInteraction(1, () -> isClosed.set(true));
+        assist.beginEditInteraction(() -> isClosed.set(true));
         assist.archive(1);
         assertTrue(isClosed.getAndSet(false));
 
-        assist.beginEditInteraction(1, () -> isClosed.set(true));
+        assist.beginEditInteraction(() -> isClosed.set(true));
         assist.finishInteraction();
         assertTrue(isClosed.get());
+    }
+
+    @Test
+    public void beginEditInteraction_anotherCard_closesTheEarlierCard() {
+        AtomicBoolean firstCard = new AtomicBoolean();
+        assist.beginEditInteraction(() -> firstCard.set(true));
+
+        assist.beginEditInteraction(() -> { });
+
+        assertTrue(firstCard.get());
     }
 
     @Test

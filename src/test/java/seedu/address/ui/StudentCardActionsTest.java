@@ -9,11 +9,14 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.input.MouseButton;
@@ -128,6 +131,44 @@ public class StudentCardActionsTest {
             cancel.fire();
 
             assertEquals("archive 2", input.getText());
+        });
+    }
+
+    @Test
+    public void editingAnotherCard_closesTheEarlierCardEditMode() throws Exception {
+        onFx(() -> {
+            PersonCard firstCard = new PersonCard(student, 1, assist);
+            PersonCard secondCard = new PersonCard(student, 2, assist);
+            Node firstRoot = firstCard.getRoot();
+            Node secondRoot = secondCard.getRoot();
+            Button firstEdit = (Button) firstRoot.lookup("#cardEditButton");
+            Button firstPhone = (Button) firstRoot.lookup("#phoneEditButton");
+            Button secondEdit = (Button) secondRoot.lookup("#cardEditButton");
+            Button secondPhone = (Button) secondRoot.lookup("#phoneEditButton");
+
+            firstEdit.fire();
+            assertTrue(firstPhone.isVisible());
+
+            secondEdit.fire();
+
+            assertFalse(firstPhone.isVisible());
+            assertTrue(secondPhone.isVisible());
+        });
+    }
+
+    @Test
+    public void displayedListChange_closesEditModeAndClearsUnchangedDraft() throws Exception {
+        onFx(() -> {
+            ObservableList<Person> people = FXCollections.observableArrayList(student);
+            new PersonListPanel(people, assist);
+            AtomicBoolean isClosed = new AtomicBoolean();
+            assist.beginEditInteraction(() -> isClosed.set(true));
+            assist.editField(1, CommandAssist.Field.NAME);
+
+            people.set(0, new PersonBuilder().withName("Another Student").build());
+
+            assertTrue(isClosed.get());
+            assertEquals("", input.getText());
         });
     }
 

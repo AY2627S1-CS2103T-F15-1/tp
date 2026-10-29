@@ -187,7 +187,7 @@ public class PersonCard extends UiPart<Region> {
     @FXML
     private void handleCardEdit() {
         if (commandAssist != null) {
-            commandAssist.beginEditInteraction(displayedIndex, () -> showFieldEditors(false));
+            commandAssist.beginEditInteraction(() -> showFieldEditors(false));
             showFieldEditors(true);
         } else {
             showFieldEditors(true);

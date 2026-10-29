@@ -39,7 +39,7 @@ public final class CommandAssist {
 
     /** Replaces the command input with the archive command for the displayed student. */
     public void archive(int displayedIndex) {
-        closeEditMode();
+        closeActiveEditMode();
         setDraft("archive " + displayedIndex);
         generatedReferencesStudent = true;
         generatedFieldEditIndex = null;
@@ -48,7 +48,7 @@ public final class CommandAssist {
 
     /** Replaces the command input with the delete command for the displayed student. */
     public void delete(int displayedIndex) {
-        closeEditMode();
+        closeActiveEditMode();
         setDraft("delete " + displayedIndex);
         generatedReferencesStudent = true;
         generatedFieldEditIndex = null;
@@ -57,7 +57,7 @@ public final class CommandAssist {
 
     /** Replaces the command input with the beginning of the add-student command. */
     public void addStudent() {
-        closeEditMode();
+        closeActiveEditMode();
         setDraft("add " + CliSyntax.PREFIX_NAME);
         generatedReferencesStudent = false;
         generatedFieldEditIndex = null;
@@ -68,9 +68,9 @@ public final class CommandAssist {
      * Starts field-editing mode for one card and announces the edit help without changing the current draft.
      * A card that was already in field-editing mode is closed first.
      */
-    public void beginEditInteraction(int displayedIndex, Runnable closeEditMode) {
+    public void beginEditInteraction(Runnable closeEditMode) {
         requireNonNull(closeEditMode);
-        closeEditMode();
+        closeActiveEditMode();
         closeActiveEdit = closeEditMode;
         announceHelp("edit");
     }
@@ -88,7 +88,7 @@ public final class CommandAssist {
             generatedReferencesStudent = false;
             generatedFieldEditIndex = null;
         }
-        closeEditMode();
+        closeActiveEditMode();
     }
 
     /** Cancels the active card interaction after a draft was submitted or replaced by another interaction. */
@@ -96,10 +96,10 @@ public final class CommandAssist {
         generatedDraft = null;
         generatedReferencesStudent = false;
         generatedFieldEditIndex = null;
-        closeEditMode();
+        closeActiveEditMode();
     }
 
-    private void closeEditMode() {
+    private void closeActiveEditMode() {
         Runnable closeEdit = closeActiveEdit;
         closeActiveEdit = null;
         if (closeEdit != null) {
