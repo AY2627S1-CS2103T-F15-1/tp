@@ -24,9 +24,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.GuiSettings;
+import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
+import seedu.address.model.person.StudentOrder;
 import seedu.address.model.person.exceptions.PersonNotFoundException;
 import seedu.address.model.task.Task;
 import seedu.address.testutil.AddressBookBuilder;
@@ -235,10 +237,16 @@ public class ModelManagerTest {
 
     @Test
     public void undoDestructiveAction_removePerson_returnsDestructiveActionDeleteStudentAndUndoes() {
-        modelManager.addPerson(DANIEL);
+        modelManager.addPerson(CARL);
+        modelManager.addLesson(CARL_ENGLISH);
+        modelManager.addHomework(
+                Homework.assign(CARL.getId(), "A", LocalDate.of(2027, 8, 31)));
+        modelManager.addLedgerEntry(LedgerEntry.charge(CARL, CARL_ENGLISH));
         ModelManager before = copyOfModelManager();
-        modelManager.deletePerson(DANIEL);
 
+        modelManager.deletePerson(CARL);
+
+        assertTrue(modelManager.getAddressBook().isEmpty());
         assertEquals(DestructiveActionType.DELETE_STUDENT, modelManager.undoDestructiveAction());
         assertEquals(before, modelManager);
     }
@@ -296,6 +304,9 @@ public class ModelManagerTest {
         modelManager.addTask(Task.create(
                 "Test Task",
                 LocalDate.of(2026, 10, 31), BENSON));
+        modelManager.setTravelBuffer(45);
+        modelManager.addLedgerEntry(LedgerEntry.charge(CARL, CARL_ENGLISH));
+        modelManager.sortPersons(StudentOrder.DESCENDING);
 
         ModelManager before = copyOfModelManager();
 
