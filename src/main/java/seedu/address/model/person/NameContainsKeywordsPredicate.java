@@ -2,7 +2,6 @@ package seedu.address.model.person;
 
 import java.text.Normalizer;
 import java.util.List;
-import java.util.Locale;
 import java.util.function.Predicate;
 
 import seedu.address.commons.util.ToStringBuilder;
@@ -22,11 +21,18 @@ public class NameContainsKeywordsPredicate implements Predicate<Person> {
 
     @Override
     public boolean test(Person person) {
-        String lowerCaseName = person.getName().fullName.toLowerCase(Locale.ROOT);
+        String foldedName = foldCase(person.getName().fullName);
         return keywords.stream()
                 .filter(keyword -> !keyword.isBlank())
-                .map(keyword -> Normalizer.normalize(keyword, Normalizer.Form.NFC).toLowerCase(Locale.ROOT))
-                .anyMatch(lowerCaseName::contains);
+                .map(NameContainsKeywordsPredicate::foldCase)
+                .anyMatch(foldedName::contains);
+    }
+
+    /** Uses String.equalsIgnoreCase's per-code-point case equivalence, retaining accent normalization. */
+    private static String foldCase(String text) {
+        int[] points = Normalizer.normalize(text, Normalizer.Form.NFC).codePoints()
+                .map(point -> Character.toLowerCase(Character.toUpperCase(point))).toArray();
+        return new String(points, 0, points.length);
     }
 
     @Override

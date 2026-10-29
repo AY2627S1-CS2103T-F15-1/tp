@@ -162,6 +162,31 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Student lookup and correction of optional values
+
+`NameContainsKeywordsPredicate` normalizes names and keywords to NFC and applies the same per-code-point case
+equivalence as `String.equalsIgnoreCase` before substring matching: `toUpperCase`, then `toLowerCase`.
+This follows `Person#hasIdentity`, including dotless i and supplementary letters, while retaining significant
+accents. It does not implement full Unicode case folding or multi-character mappings.
+
+`StudentSummaryLabels` groups the full student list, including archived students, by case-insensitive name
+once per textual summary. It precomputes labels by student ID, avoiding a student-list scan for each homework
+row. Same-name students show only the last four phone digits. If those digits also collide, an eight-character
+student-ID reference is added, falling back to the complete ID if its prefix collides. Archived status is part
+of the same label. `Ledger` dues, `HomeworkQueries` and the `view` heading use these labels independently of
+the current filter. This formatter is scoped to textual summaries, not contact cards or exports. Full contact
+details remain in the explicit student overview, not in homework or dues rows or the startup dashboard.
+
+`EditPersonDescriptor` distinguishes an omitted optional contact field from a requested clear using explicit
+email and venue clear flags. The parser sets these only for an empty `e/` or `v/`; non-empty replacements
+still pass normal validation. Copies, equality and hashes retain the clear intent. `EditCommand` replaces the
+student with the same ID, so existing lesson snapshots and linked homework, ledger and tasks are retained.
+
+An explicitly empty homework `f/` calls `Homework#withoutFeedback`, which returns a copy with absent feedback
+and the same identity, due date and status. Clearing is also allowed after a status correction to `assigned`;
+recording non-empty feedback still requires submission. No data-schema change is needed: absent email, venue
+and feedback already use the existing optional JSON fields. Regression tests cover saving and reloading them.
+
 ### Lesson scheduling, agenda and conflict detection
 
 The lesson commands are `lesson add`, `lesson repeat`, `lesson list`, `lesson move`, `lesson cancel`, `lesson done` and `lesson missed`. They share the `lesson` command word, which `AddressBookParser` hands to `LessonCommandParser`. That parser reads the next word and passes the rest of the arguments to the parser of that command. `agenda` is its own command word.

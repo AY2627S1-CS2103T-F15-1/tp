@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.UUID;
 
 import seedu.address.model.ReadOnlyAddressBook;
-import seedu.address.model.person.Person;
+import seedu.address.model.person.StudentSummaryLabels;
 
 /** Shared query and display rules for homework lists, student overviews, and dashboards. */
 public final class HomeworkQueries {
@@ -36,18 +36,26 @@ public final class HomeworkQueries {
 
     /** Formats the student, description, due date and status of an item on one line, without its feedback. */
     public static String formatLine(ReadOnlyAddressBook book, Homework item, LocalDate today) {
-        requireNonNull(book);
+        return formatLine(new StudentSummaryLabels(book), item, today);
+    }
+
+    /** Formats one row using the labels captured once for the containing summary. */
+    private static String formatLine(StudentSummaryLabels labels, Homework item, LocalDate today) {
+        requireNonNull(labels);
         requireNonNull(item);
         requireNonNull(today);
-        Person student = book.getPersonList().stream()
-                .filter(person -> person.getId().equals(item.getStudentId())).findFirst().orElseThrow();
-        return student.getName() + (student.isArchived() ? " (archived)" : "") + " " + item.getDescription()
+        return labels.format(item.getStudentId()) + " " + item.getDescription()
                 + " due " + item.getDueDate() + " " + (item.isOverdue(today) ? "OVERDUE" : item.getStatus());
     }
 
     /** Formats an item as {@link #formatLine} does and adds its feedback, if any, on the next line. */
     public static String format(ReadOnlyAddressBook book, Homework item, LocalDate today) {
-        return formatLine(book, item, today)
+        return format(new StudentSummaryLabels(book), item, today);
+    }
+
+    /** Adds optional feedback to a row without rebuilding the containing summary's label snapshot. */
+    public static String format(StudentSummaryLabels labels, Homework item, LocalDate today) {
+        return formatLine(labels, item, today)
                 + item.getFeedback().map(feedback -> "\n    Feedback: " + feedback).orElse("");
     }
 
@@ -60,7 +68,8 @@ public final class HomeworkQueries {
         if (items.isEmpty()) {
             text.append(isOverdueSummary ? "\n  No overdue homework." : "\n  No outstanding homework.");
         } else {
-            items.forEach(item -> text.append("\n  ").append(format(book, item, today)));
+            StudentSummaryLabels labels = new StudentSummaryLabels(book);
+            items.forEach(item -> text.append("\n  ").append(format(labels, item, today)));
         }
         return text.toString();
     }

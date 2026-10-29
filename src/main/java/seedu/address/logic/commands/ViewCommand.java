@@ -18,6 +18,7 @@ import seedu.address.model.homework.HomeworkQueries;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonStatus;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.StudentSummaryLabels;
 import seedu.address.model.person.Subject;
 
 /**
@@ -79,7 +80,7 @@ public class ViewCommand extends Command {
                 .sorted(Lesson.CHRONOLOGICAL)
                 .collect(Collectors.toList());
 
-        return new CommandResult(formatStudent(student)
+        return new CommandResult(formatStudent(student, new StudentSummaryLabels(model.getAddressBook()))
                 + "\n\n" + formatNextLesson(lessons)
                 + "\n\n" + formatRecentNotes(lessons)
                 + "\n\n" + formatHistory(lessons)
@@ -87,7 +88,7 @@ public class ViewCommand extends Command {
                 + "\n\n" + HomeworkQueries.summary(model.getAddressBook(), student.getId(), false, today));
     }
 
-    private static String formatStudent(Person student) {
+    private static String formatStudent(Person student, StudentSummaryLabels labels) {
         String subjects = student.getSubjects().stream()
                 .map(Subject::toString)
                 .sorted(String.CASE_INSENSITIVE_ORDER)
@@ -97,7 +98,7 @@ public class ViewCommand extends Command {
         student.getVenue().ifPresent(venue -> contact.append(SEPARATOR).append("Venue: ").append(venue));
 
         StringBuilder text = new StringBuilder(String.format(MESSAGE_VIEWING,
-                student.getName() + (student.isArchived() ? " (archived)" : "")));
+                labels.format(student.getId())));
         text.append("\nLevel ").append(student.getLevel()).append(SEPARATOR).append(subjects)
                 .append(SEPARATOR).append(student.getRate().toDisplayString()).append("/hour");
         text.append("\n").append(contact);

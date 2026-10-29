@@ -197,6 +197,9 @@ Format: `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [l/LEVEL] [s/SUBJECT]...
 * Edits the student at the specified `INDEX`. The index refers to the index number shown in the displayed student list. The index **must be a positive integer** 1, 2, 3, ...
 * At least one of the optional fields must be provided.
 * Existing values will be updated to the input values.
+* To remove an optional email or usual venue, give an empty `e/` or `v/`, for example `edit 1 e/ v/`.
+  Omitting a prefix leaves that value unchanged. Required fields cannot be cleared. Clearing contact details
+  preserves the student and all linked history; existing lessons keep their recorded venues.
 * When editing subjects, all of the student's existing subjects are replaced; adding subjects is not cumulative. A student must keep at least one subject.
 * After changing a student's name or phone number, run `lesson list st/STUDENT_INDEX` again before using lesson numbers.
 * The values for the level, subjects, rate and venue follow the same rules as for [`add`](#adding-a-student-add).
@@ -212,7 +215,8 @@ Finds students whose names contain any of the given keywords.
 
 Format: `find KEYWORD [MORE_KEYWORDS]`
 
-* The search is case-insensitive; for example, `hans` matches `Hans`.
+* The search is case-insensitive; for example, `hans` matches `Hans`, and `ışık` matches `Işık`,
+  using the same Unicode case equivalence as student identity. Accents remain significant.
 * Keyword order does not matter; for example, `Hans Bo` matches `Bo Hans`.
 * The search considers only names.
 * A keyword matches any part of a name; for example, `Han` matches `Hans` and `Johan`, and `wei` matches `Tan Wei Ming`.
@@ -821,7 +825,7 @@ Action     | Format, Examples
 **Homework list** | `hw list [st/STUDENT_INDEX] [overdue/\|outstanding/]`<br> e.g., `hw list`, `hw list st/1 overdue/`
 **Homework edit** | `hw edit INDEX [desc/DESCRIPTION] [due/DATE]`<br> e.g., `hw edit 1 due/2026-10-21`
 **Homework status** | `hw status INDEX s/assigned\|submitted\|reviewed`<br> e.g., `hw status 1 s/submitted`
-**Homework feedback** | `hw feedback INDEX f/FEEDBACK`<br> e.g., `hw feedback 1 f/Revisit negative indices`
+**Homework feedback** | `hw feedback INDEX f/[FEEDBACK]`<br> e.g., `hw feedback 1 f/Revisit negative indices`, `hw feedback 1 f/` to clear
 **Homework delete** | `hw delete INDEX [confirm]`<br> e.g., `hw delete 2`, `hw delete 2 confirm`
 **Task add** | `task add st/INDEX\|lesson/INDEX\|hw/INDEX desc/TEXT [due/DATE]`<br> e.g., `task add st/1 desc/Call parent due/tmr`
 **Task list** | `task list [all/] [st/INDEX]`<br> e.g., `task list`, `task list all/`, `task list st/1`
@@ -873,12 +877,14 @@ Numbers are session-local, so display a new list after restarting.
 | Find work awaiting submission or review | `hw list [st/STUDENT_INDEX] outstanding/` |
 | Correct description or due date | `hw edit INDEX [desc/DESCRIPTION] [due/DATE]` |
 | Update lifecycle | `hw status INDEX s/assigned`, `s/submitted`, or `s/reviewed` |
-| Record or replace feedback | `hw feedback INDEX f/FEEDBACK` |
+| Record, replace or clear feedback | `hw feedback INDEX f/[FEEDBACK]` |
+| Clear mistaken feedback | `hw feedback INDEX f/` |
 | Delete | `hw delete INDEX [confirm]` |
 
 * Descriptions contain 1-200 printable characters on one line. Feedback contains 1-1000.
-  Surrounding spaces are trimmed and repeated spaces are collapsed. Empty values and duplicate
-  prefixes are rejected. Free text may contain unrelated prefix-like words, such as `n/`.
+  Surrounding spaces are trimmed and repeated spaces are collapsed. Empty values are rejected except that
+  an explicitly empty `f/` clears feedback. Duplicate prefixes are rejected.
+  Free text may contain unrelated prefix-like words, such as `n/`.
 * Due dates accept any of the [ways to write a date](#writing-dates), `today`, or `tmr`. Assignment dates and changed due
   dates must be today through one calendar year ahead, inclusive, using the local computer date.
   Editing another field preserves an old due date; explicitly supplying the same old date also works.
@@ -887,10 +893,20 @@ Numbers are session-local, so display a new list after restarting.
 * New homework starts `assigned`. Status values are case-insensitive. `overdue` is derived only
   when assigned homework has a due date before today; submission clears it. Repeating the same
   status reports that it is already set. Backward corrections are allowed with a warning and retain
-  recorded feedback. Recording new feedback requires `submitted` or `reviewed`.
+  recorded feedback. Recording or replacing feedback requires `submitted` or `reviewed`; an explicitly empty
+  `f/` clears feedback at any status, including after a backward status correction.
+  It keeps the assignment, due date, status, numbered selection and linked tasks. Other assignment details stay
+  unchanged; the cleared feedback also stays absent after saving and restarting.
 * Lists show overdue items first, then due dates ascending, retaining insertion order for ties.
   History includes reviewed items and feedback; `outstanding/` includes assigned and submitted work.
   `overdue/` and `outstanding/` take no values and cannot be combined.
+* Homework and dues summaries show only the last four phone digits when another active or archived student
+  has the same name (ignoring case), for example `Alex (phone ending 4567)` or
+  `Alex (phone ending 5678, archived)`. This intentionally avoids showing full phone numbers in these lists,
+  `today` and the startup dashboard. If the last four digits also match, a student reference is added, such as
+  `Alex (phone ending 4567, ref 7b04d3c8)`. The same label appears in the `view INDEX` heading so you can check
+  the matching profile and its full contact details. References are labels, not command indices; homework
+  indices still select assignments. Use `list archived/` before viewing an archived student.
 * Homework may be assigned without an upcoming lesson; the result includes a note. Archived
   students retain homework and can receive status/feedback corrections. Restore them before assigning
   new work. Use `student list archived/` then `hw list st/INDEX` to inspect their full history.

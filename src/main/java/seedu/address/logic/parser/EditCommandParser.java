@@ -42,8 +42,7 @@ public class EditCommandParser implements Parser<EditCommand> {
 
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_LEVEL,
                 PREFIX_RATE, PREFIX_VENUE);
-        argMultimap.verifyNoEmptyValuesFor(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_LEVEL,
-                PREFIX_RATE, PREFIX_VENUE, PREFIX_SUBJECT);
+        argMultimap.verifyNoEmptyValuesFor(PREFIX_NAME, PREFIX_PHONE, PREFIX_LEVEL, PREFIX_RATE, PREFIX_SUBJECT);
 
         EditPersonDescriptor editPersonDescriptor = new EditPersonDescriptor();
 
@@ -55,7 +54,12 @@ public class EditCommandParser implements Parser<EditCommand> {
             editPersonDescriptor.setPhone(ParserUtil.parsePhone(argMultimap.getValue(PREFIX_PHONE).get()));
         }
         if (argMultimap.getValue(PREFIX_EMAIL).isPresent()) {
-            editPersonDescriptor.setEmail(ParserUtil.parseEmail(argMultimap.getValue(PREFIX_EMAIL).get()));
+            String email = argMultimap.getValue(PREFIX_EMAIL).get();
+            if (email.isEmpty()) {
+                editPersonDescriptor.clearEmail();
+            } else {
+                editPersonDescriptor.setEmail(ParserUtil.parseEmail(email));
+            }
         }
         if (argMultimap.getValue(PREFIX_LEVEL).isPresent()) {
             editPersonDescriptor.setLevel(ParserUtil.parseLevel(argMultimap.getValue(PREFIX_LEVEL).get()));
@@ -69,8 +73,12 @@ public class EditCommandParser implements Parser<EditCommand> {
             editPersonDescriptor.setRate(ParserUtil.parseRate(argMultimap.getValue(PREFIX_RATE).get()));
         }
         if (argMultimap.getValue(PREFIX_VENUE).isPresent()) {
-            editPersonDescriptor.setVenue(
-                    ParserUtil.parseVenue(ParserUtil.unmaskSonOf(argMultimap.getValue(PREFIX_VENUE).get())));
+            String venue = ParserUtil.unmaskSonOf(argMultimap.getValue(PREFIX_VENUE).get());
+            if (venue.isEmpty()) {
+                editPersonDescriptor.clearVenue();
+            } else {
+                editPersonDescriptor.setVenue(ParserUtil.parseVenue(venue));
+            }
         }
 
         if (!editPersonDescriptor.isAnyFieldEdited()) {

@@ -77,7 +77,27 @@ public class EditPersonDescriptorTest {
                 + editPersonDescriptor.getLevel().orElse(null) + ", subjects="
                 + editPersonDescriptor.getSubjects().orElse(null) + ", rate="
                 + editPersonDescriptor.getRate().orElse(null) + ", venue="
-                + editPersonDescriptor.getVenue().orElse(null) + "}";
+                + editPersonDescriptor.getVenue().orElse(null) + ", isEmailCleared=false, isVenueCleared=false}";
         assertEquals(expected, editPersonDescriptor.toString());
+    }
+
+    @Test
+    public void clearOptionalFields_copyPreservesIntentAndReplacementResetsIt() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptor();
+        assertFalse(descriptor.isAnyFieldEdited());
+        descriptor.clearEmail();
+        assertTrue(descriptor.isAnyFieldEdited());
+        descriptor.clearVenue();
+        EditPersonDescriptor copy = new EditPersonDescriptor(descriptor);
+        assertTrue(copy.isAnyFieldEdited());
+        assertEquals(descriptor, copy);
+        assertEquals(descriptor.hashCode(), copy.hashCode());
+        assertFalse(copy.equals(new EditPersonDescriptor()));
+        copy.setEmail(null);
+        assertFalse(copy.isEmailCleared());
+        assertTrue(copy.isVenueCleared());
+        assertFalse(copy.equals(descriptor));
+        copy.setVenue(null);
+        assertFalse(copy.isAnyFieldEdited());
     }
 }

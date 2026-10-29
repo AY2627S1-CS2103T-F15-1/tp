@@ -76,6 +76,21 @@ public class NameContainsKeywordsPredicateTest {
     }
 
     @Test
+    public void test_unicodeCaseVariants_matchesStudentIdentityIncludingSupplementaryLetters() {
+        String[][] variants = {{"Işık", "ışık"}, {"İpek", "ipek"}, {"ΟΣ", "ος"},
+            {"\uD801\uDC00", "\uD801\uDC28"}};
+        for (String[] pair : variants) {
+            Person upper = new PersonBuilder().withName(pair[0]).build();
+            Person lower = new PersonBuilder(upper).withName(pair[1]).build();
+            assertTrue(upper.isSamePerson(lower));
+            assertTrue(new NameContainsKeywordsPredicate(List.of(pair[1])).test(upper));
+            assertTrue(new NameContainsKeywordsPredicate(List.of(pair[0])).test(lower));
+        }
+        assertFalse(new NameContainsKeywordsPredicate(List.of("Jose")).test(
+                new PersonBuilder().withName("José").build()));
+    }
+
+    @Test
     public void test_nameDoesNotContainKeywords_returnsFalse() {
         // Zero keywords
         NameContainsKeywordsPredicate predicate = new NameContainsKeywordsPredicate(List.of());

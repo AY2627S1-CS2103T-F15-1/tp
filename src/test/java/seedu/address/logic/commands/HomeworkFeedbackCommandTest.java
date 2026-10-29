@@ -9,6 +9,7 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -62,6 +63,30 @@ public class HomeworkFeedbackCommandTest {
         new HomeworkFeedbackCommand(INDEX_FIRST_PERSON, "New").execute(model);
 
         assertEquals("New", stored().getFeedback().orElseThrow());
+    }
+
+    @Test
+    public void execute_clearFeedback_submittedAndReviewedHomeworkKeepStatusAndIdentity() throws Exception {
+        for (HomeworkStatus status : List.of(HomeworkStatus.SUBMITTED, HomeworkStatus.REVIEWED)) {
+            Homework original = new HomeworkBuilder(ALICE).withStatus(status).withFeedback("Mistaken").build();
+            model.addHomework(original);
+            new HomeworkListCommand(null, false, false, TODAY).execute(model);
+            new HomeworkFeedbackCommand(INDEX_FIRST_PERSON, "").execute(model);
+            assertEquals(original.withoutFeedback(), stored());
+            assertTrue(stored().getFeedback().isEmpty());
+            model.deleteHomework(stored());
+        }
+    }
+
+    @Test
+    public void execute_clearNeverRecordedFeedback_isIdempotentAndPreservesAssignment() throws Exception {
+        Homework original = new HomeworkBuilder(ALICE).build();
+        showWith(original);
+        HomeworkFeedbackCommand command = new HomeworkFeedbackCommand(INDEX_FIRST_PERSON, "");
+        assertEquals("Feedback cleared for homework 1: Algebra Q1-10", command.execute(model).getFeedbackToUser());
+        assertEquals(original, stored());
+        assertEquals("Feedback cleared for homework 1: Algebra Q1-10", command.execute(model).getFeedbackToUser());
+        assertEquals(original, stored());
     }
 
     @Test
