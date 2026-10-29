@@ -41,8 +41,13 @@ public class ChargeCommandParserTest {
         assertParseFailure(parser, " l/0", invalidFormat);
         assertParseFailure(parser, " l/x", invalidFormat);
         assertParseFailure(parser, " 1", "Missing required parameter(s): l/\n" + ChargeCommand.MESSAGE_USAGE);
-        assertParseFailure(parser, " junk l/1", invalidFormat);
-        assertParseFailure(parser, " reversed l/1", invalidFormat);
+    }
+
+    @Test
+    public void parse_unknownSubcommand_listsAcceptedChargeForms() {
+        for (String command : new String[]{" junk l/1", " reversed l/1", " revrse l/1", " reverseX l/1"}) {
+            assertParseFailure(parser, command, ChargeCommand.MESSAGE_SUBCOMMANDS);
+        }
     }
 
     @Test

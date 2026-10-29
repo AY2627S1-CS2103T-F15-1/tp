@@ -44,6 +44,7 @@ public class AgendaCommand extends Command {
 
     private static final DateTimeFormatter DAY_FORMAT = DateTimeFormatter.ofPattern("EEE dd MMM uuuu", Locale.ENGLISH);
     private static final Logger logger = LogsCenter.getLogger(AgendaCommand.class);
+    private static final int MAX_DISPLAYED_LESSONS = 200;
 
     private final LocalDate date;
     private final boolean isWeek;
@@ -80,18 +81,39 @@ public class AgendaCommand extends Command {
     }
 
     private static String formatWeek(Model model, LocalDate first, LocalDate last, List<Lesson> lessons) {
+        List<Lesson> visibleLessons = lessons.size() > MAX_DISPLAYED_LESSONS
+                ? lessons.subList(0, MAX_DISPLAYED_LESSONS) : lessons;
         StringBuilder week = new StringBuilder(String.format(MESSAGE_WEEK_HEADER, DAY_FORMAT.format(first),
                 DAY_FORMAT.format(last), summarise(lessons)));
+        int remainingWarnings = LessonCommandUtil.MAX_DISPLAYED_TRAVEL_WARNINGS;
         for (LocalDate day = first; !day.isAfter(last); day = day.plusDays(1)) {
             LocalDate currentDay = day;
-            List<Lesson> lessonsOfDay = lessons.stream()
+            List<Lesson> allLessonsOfDay = lessons.stream()
                     .filter(lesson -> lesson.getDate().value.equals(currentDay)).collect(Collectors.toList());
-            week.append("\n").append(DAY_FORMAT.format(day)).append(" (").append(summarise(lessonsOfDay))
+            List<Lesson> lessonsOfDay = visibleLessons.stream()
+                    .filter(lesson -> lesson.getDate().value.equals(currentDay)).collect(Collectors.toList());
+            week.append("\n").append(DAY_FORMAT.format(day)).append(" (").append(summarise(allLessonsOfDay))
                     .append(")");
             week.append(lessonsOfDay.isEmpty() ? "\n" + MESSAGE_EMPTY_DAY
-                    : formatLessons(model, lessons, day));
-            week.append(LessonCommandUtil.getTravelWarnings(model,
-                    lesson -> lesson.getDate().value.equals(currentDay)));
+                    : formatLessons(model, visibleLessons, day));
+            if (remainingWarnings > 0) {
+                String warnings = LessonCommandUtil.getTravelWarnings(model,
+                        lesson -> lesson.getDate().value.equals(currentDay), "", remainingWarnings);
+                week.append(warnings);
+                remainingWarnings -= LessonCommandUtil.countTravelWarnings(model,
+                        lesson -> lesson.getDate().value.equals(currentDay), remainingWarnings);
+            }
+        }
+        int totalWarnings = LessonCommandUtil.countTravelWarnings(model,
+                lesson -> !lesson.getDate().value.isBefore(first) && !lesson.getDate().value.isAfter(last));
+        int shownWarnings = LessonCommandUtil.MAX_DISPLAYED_TRAVEL_WARNINGS - remainingWarnings;
+        if (totalWarnings > shownWarnings) {
+            week.append("\nShowing ").append(shownWarnings).append(" of ").append(totalWarnings)
+                    .append(" travel warnings.");
+        }
+        if (lessons.size() > MAX_DISPLAYED_LESSONS) {
+            week.append("\nShowing the first ").append(MAX_DISPLAYED_LESSONS)
+                    .append(" of ").append(lessons.size()).append(" lessons.");
         }
         return week.toString();
     }

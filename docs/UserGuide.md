@@ -359,6 +359,7 @@ Format: `agenda [d/DATE] [week/]`
 * Cancelled lessons are listed but are not counted in the number of lessons and the total time.
 * The lesson numbers are the ones that `lesson move`, `lesson cancel`, `lesson done` and `lesson missed` take, so run `agenda` or `lesson list` first and then use the number you see.
 * Lessons are numbered in time order. If moving, cancelling, completing or marking a lesson missed changes the displayed numbers, the result includes `Lesson numbers have changed. Current lesson list:` and the refreshed list. If every lesson keeps its number, for example when a lesson only changes its time or is cancelled but stays in the list, the numbers are not shown again. Use those new numbers for your next command. Running `agenda` or `lesson list` again also refreshes the list.
+* A week with more than 200 lessons shows the first 200 rows and a line saying how many were omitted, so the result box stays responsive.
 * A day without lessons is not an error: it shows `No lessons on Tue 22 Dec 2026.`
 
 Examples:
@@ -376,6 +377,7 @@ Format: `today`
 * The third section, `OVERDUE HOMEWORK`, shows assigned work due before today, or `No overdue homework.`. Run `hw list overdue/` to get selectable numbers.
 * The fourth section, `DUES`, is the list that [`dues`](#viewing-all-outstanding-balances-dues) shows: how many students owe money and the total, then each student's amount and the age of their oldest unpaid charge, such as `oldest unpaid 2 days` or `oldest unpaid 1 day`, the oldest first. If nobody owes money, it shows `No outstanding balances. Everyone is up to date.`
 * All four sections are always shown. An empty section is not an error: it shows `No lessons today.`, `All past lessons are recorded.`, `No overdue homework.` or `No outstanding balances. Everyone is up to date.`
+* To keep the result box responsive, each lesson section lists at most 200 rows. The heading still gives the complete count and total time.
 * Today is the date on your computer, so a wrong system clock shows the wrong day.
 
 Examples:
@@ -481,6 +483,7 @@ Format: `travel buffer/MINUTES`
 * A gap shorter than the buffer produces a warning naming both students, the venues, destination date and time, available minutes and required buffer. For example: `Travel warning: Tan Wei Ming at Bishan -> Priya Kumar at Clementi (Sat 24 Oct 2026 11:10): 10 min available; 30 min required.` Back-to-back lessons at different venues have a zero-minute gap and can therefore trigger a travel warning without overlapping.
 * There is no travel warning for overlapping lessons, an unnamed venue, `Online` (ignoring case), or the same venue ignoring case. If several preceding lessons finish together, the first at a different physical venue is used.
 * After `lesson add`, `lesson repeat` and `lesson move`, warnings cover journeys into or out of the added or moved lessons, not unrelated journeys on those dates. Warnings also appear below each day's relevant lessons in `agenda` and below today's lessons in `today`, and when you change the buffer, which lists the warnings on every date, including past ones. Changing the buffer does not change the currently displayed lesson numbers.
+* To keep command results responsive, a single result shows at most 50 travel warnings. If more exist, the result says how many were shown and how many exist in total. The rest remain in the data and are shown by narrower agenda or lesson queries.
 
 Examples:
 
@@ -629,6 +632,7 @@ Format: `pay list [st/STUDENT_INDEX]`
 Format to take a payment back: `pay reverse PAYMENT_INDEX`
 
 * `pay list` shows every payment, oldest first, or only those of one student when you give `st/STUDENT_INDEX` (a number from the displayed student list). Each row has a number, the date, the student, the amount and any notes. A payment that was reversed stays in the list, marked `[REVERSED]`.
+* `pay list` displays the first 200 rows and then `Showing 200 of N payments`. Hidden rows keep their numbers, so `pay reverse INDEX` can still address them.
 * `PAYMENT_INDEX` is the number from the **last** `pay list`. The numbers stay fixed until you run `pay list` again, even after you add or reverse payments, so a number always means the row you saw.
 * A payment can be reversed once, and a reversal cannot itself be reversed. If you reversed a payment by mistake, record the payment again with `pay`.
 * The original payment is kept and an opposite entry is added, so the account shows both the mistake and its correction. Reversing a payment that has already been counted against charges is allowed; the balance is recalculated.
@@ -899,6 +903,7 @@ Numbers are session-local, so display a new list after restarting.
   It keeps the assignment, due date, status, numbered selection and linked tasks. Other assignment details stay
   unchanged; the cleared feedback also stays absent after saving and restarting.
 * Lists show overdue items first, then due dates ascending, retaining insertion order for ties.
+* `hw list` displays the first 200 rows and then `Showing 200 of N homework item(s)`. Hidden rows keep their numbers for indexed homework commands.
   History includes reviewed items and feedback; `outstanding/` includes assigned and submitted work.
   `overdue/` and `outstanding/` take no values and cannot be combined.
 * Homework and dues summaries show only the last four phone digits when another active or archived student

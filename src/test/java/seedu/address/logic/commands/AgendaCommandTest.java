@@ -145,6 +145,46 @@ public class AgendaCommandTest {
     }
 
     @Test
+    public void execute_weekOverTwoHundredLessons_capsRowsButKeepsTheTotal() {
+        for (int i = 0; i < 201; i++) {
+            model.addLesson(new LessonBuilder().withStudent(ALICE).withDate(MONDAY)
+                    .withTime(String.format("%02d:%02d", 6 + i / 60, i % 60))
+                    .withDuration(15).build());
+        }
+
+        String[] lines = new AgendaCommand(MONDAY, true).execute(model).getFeedbackToUser().split("\n");
+
+        assertEquals("Week of Mon 07 Jan 2030 to Sun 13 Jan 2030 (201 lessons, 50h 15m)", lines[0]);
+        assertTrue(java.util.Arrays.stream(lines)
+                .anyMatch(line -> line.equals("Showing the first 200 of 201 lessons.")));
+    }
+
+    @Test
+    public void execute_weekWithMoreThanFiftyTravelWarnings_capsWarnings() {
+        for (int day = 0; day < 2; day++) {
+            for (int i = 0; i < 28; i++) {
+                java.time.LocalTime first = java.time.LocalTime.of(6, 0).plusMinutes(30L * i);
+                java.time.LocalTime second = first.plusMinutes(15);
+                model.addLesson(new LessonBuilder().withStudent(ALICE).withDate(MONDAY.plusDays(day))
+                        .withTime(first.toString()).withDuration(15)
+                        .withVenue("Home " + day + " " + i).build());
+                model.addLesson(new LessonBuilder().withStudent(ALICE).withDate(MONDAY.plusDays(day))
+                        .withTime(second.toString()).withDuration(15)
+                        .withVenue("Cafe " + day + " " + i).build());
+            }
+        }
+
+        String[] lines = new AgendaCommand(MONDAY, true).execute(model).getFeedbackToUser().split("\n");
+
+        long shownWarnings = java.util.Arrays.stream(lines)
+                .filter(line -> line.startsWith("Travel warning:")).count();
+        assertEquals(50, shownWarnings, String.join("\n", lines));
+        assertTrue(java.util.Arrays.stream(lines)
+                .anyMatch(line -> line.equals("Showing 50 of 110 travel warnings.")),
+                String.join("\n", lines));
+    }
+
+    @Test
     public void equals() {
         AgendaCommand command = new AgendaCommand(MONDAY, false);
 

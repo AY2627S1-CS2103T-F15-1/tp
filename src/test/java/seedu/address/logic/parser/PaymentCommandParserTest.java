@@ -66,7 +66,7 @@ public class PaymentCommandParserTest {
 
     @Test
     public void parse_largeAmount_accepted() {
-        // A large amount is only warned about when the payment is recorded, so the parser has no upper limit
+        // Amount is currency-neutral; only the digit string is bounded by the command input itself
         for (String amount : new String[]{"10000", "100000000.50", "99999999999999999999"}) {
             assertParseSuccess(parser, " st/1 amt/" + amount,
                     new PaymentCommand(INDEX_FIRST_PERSON, new BigDecimal(amount), null, null, CLOCK));

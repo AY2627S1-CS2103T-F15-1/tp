@@ -33,6 +33,9 @@ public class ChargeCommand extends Command {
             + "Parameters: l/LESSON_INDEX [amt/AMOUNT]\n"
             + "Example: " + COMMAND_WORD + " l/1 amt/50\n"
             + "To correct a charge: " + COMMAND_WORD + " " + REVERSE_KEYWORD + " l/LESSON_INDEX";
+    public static final String MESSAGE_SUBCOMMANDS =
+            "Charge commands: " + COMMAND_WORD + " l/LESSON_INDEX [amt/AMOUNT], "
+                    + COMMAND_WORD + " " + REVERSE_KEYWORD + " l/LESSON_INDEX";
     public static final String MESSAGE_SUCCESS = "Charge of %1$s recorded for %2$s — %3$s, %4$s.";
     public static final String MESSAGE_REVERSED = "Charge of %1$s reversed for %2$s.";
     public static final String MESSAGE_ALREADY_CHARGED = "That lesson already has a charge of %1$s.";

@@ -138,6 +138,22 @@ public class TodayCommandTest {
     }
 
     @Test
+    public void execute_moreThanTwoHundredLessonsToday_capsRowsButKeepsTheTotal() {
+        List<Lesson> lessons = java.util.stream.IntStream.range(0, 201)
+                .mapToObj(i -> new LessonBuilder().withStudent(ALICE).withDate(TODAY)
+                        .withTime(String.format("%02d:%02d", 6 + i / 60, i % 60))
+                        .withDuration(15).build())
+                .toList();
+        lessons.forEach(model::addLesson);
+
+        String[] lines = new TodayCommand(TODAY).execute(model).getFeedbackToUser().split("\n");
+
+        assertEquals("TODAY'S LESSONS (201, 50h 15m)", lines[2]);
+        assertTrue(lines[3].startsWith("  06:00-06:15"));
+        assertTrue(java.util.Arrays.stream(lines).anyMatch(line -> line.equals("  Showing 200 of 201 lessons.")));
+    }
+
+    @Test
     public void execute_completedLessonToday_showsItsStatus() {
         addLessons(new LessonBuilder(todayMath).withStatus(LessonStatus.COMPLETED).build());
 

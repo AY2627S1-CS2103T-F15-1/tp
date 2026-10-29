@@ -166,6 +166,21 @@ public class PaymentListCommandTest {
     }
 
     @Test
+    public void execute_moreThanTwoHundredPayments_showsFirstTwoHundredAndKeepsAllIndices() throws Exception {
+        for (int i = 0; i < PaymentListCommand.MAX_DISPLAYED_PAYMENTS + 1; i++) {
+            pay(priya, "1.00", DAY_ONE, null);
+        }
+
+        String result = new PaymentListCommand(null).execute(model).getFeedbackToUser();
+
+        assertTrue(result.contains("\n200. "));
+        assertFalse(result.contains("\n201. "));
+        assertTrue(result.contains(String.format(PaymentListCommand.MESSAGE_TRUNCATED,
+                PaymentListCommand.MAX_DISPLAYED_PAYMENTS, PaymentListCommand.MAX_DISPLAYED_PAYMENTS + 1)));
+        assertEquals(PaymentListCommand.MAX_DISPLAYED_PAYMENTS + 1, model.getShownPayments().size());
+    }
+
+    @Test
     public void execute_invalidStudentIndex_throwsCommandException() {
         Index outOfRange = Index.fromOneBased(3);
         PaymentListCommand command = new PaymentListCommand(outOfRange);

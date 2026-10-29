@@ -27,6 +27,7 @@ import seedu.address.model.person.Person;
  */
 public class PaymentListCommand extends Command {
     public static final String LIST_KEYWORD = "list";
+    public static final int MAX_DISPLAYED_PAYMENTS = 200;
 
     public static final String MESSAGE_USAGE = PaymentCommand.COMMAND_WORD + " " + LIST_KEYWORD
             + ": Lists recorded payments and numbers them for " + PaymentCommand.COMMAND_WORD + " "
@@ -39,6 +40,8 @@ public class PaymentListCommand extends Command {
     public static final String MESSAGE_REVERSED_MARK = " [REVERSED]";
     public static final String MESSAGE_NO_PAYMENTS = "No payments recorded.";
     public static final String MESSAGE_NO_PAYMENTS_FOR_STUDENT = "No payments recorded for %1$s.";
+    public static final String MESSAGE_TRUNCATED = "Showing %1$d of %2$d payments. The remaining payments keep their "
+            + "numbers; use 'pay reverse INDEX' to address them.";
 
     private final Index studentIndex; // null if every student's payments are listed
 
@@ -68,9 +71,13 @@ public class PaymentListCommand extends Command {
                 .collect(Collectors.toMap(Person::getId, person -> person.getName().toString()));
         Set<UUID> reversedIds = Ledger.reversedIds(model.getAddressBook());
 
-        String rows = IntStream.range(0, payments.size())
+        int shown = Math.min(payments.size(), MAX_DISPLAYED_PAYMENTS);
+        String rows = IntStream.range(0, shown)
                 .mapToObj(i -> (i + 1) + ". " + describe(payments.get(i), studentNames, reversedIds))
                 .collect(Collectors.joining("\n"));
+        if (shown < payments.size()) {
+            rows += "\n" + String.format(MESSAGE_TRUNCATED, shown, payments.size());
+        }
         return new CommandResult(MESSAGE_HEADER + "\n" + rows + "\n" + MESSAGE_FOOTER);
     }
 
