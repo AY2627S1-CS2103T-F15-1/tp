@@ -191,6 +191,29 @@ public class ParserUtilTest {
     }
 
     @Test
+    public void parseSubject_lowerCaseFirstLetter_capitalizesIt() throws Exception {
+        assertEquals("Math", ParserUtil.parseSubject("math").toString());
+        assertEquals("English & Literature", ParserUtil.parseSubject("english & Literature").toString());
+        assertEquals("Math 2", ParserUtil.parseSubject("math 2").toString());
+    }
+
+    @Test
+    public void parseSubject_nonLatinFirstLetter_capitalizesItWithoutChangingOtherLetters() throws Exception {
+        assertEquals("\u00c9conomie", ParserUtil.parseSubject("\u00e9conomie").toString());
+        assertEquals("\u534e\u6587", ParserUtil.parseSubject("\u534e\u6587").toString());
+    }
+
+    @Test
+    public void parseSubject_digitFirst_staysUnchanged() throws Exception {
+        assertEquals("3D Design", ParserUtil.parseSubject("3D Design").toString());
+    }
+
+    @Test
+    public void parseSubject_upperCaseExpandsToSeveralCharacters_keepsTheFullExpansion() throws Exception {
+        assertEquals("SS", ParserUtil.parseSubject("\u00df").toString());
+    }
+
+    @Test
     public void parseSubjects_null_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> ParserUtil.parseSubjects(null));
     }
@@ -216,7 +239,11 @@ public class ParserUtilTest {
     @Test
     public void parseSubjects_repeatedSubjects_countsEachSubjectOnce() throws Exception {
         List<String> repeated = List.of("Math", "math", "MATH", "Physics");
-        assertEquals(2, ParserUtil.parseSubjects(repeated).size());
+        Set<Subject> subjects = ParserUtil.parseSubjects(repeated);
+
+        assertEquals(2, subjects.size());
+        assertTrue(subjects.contains(new Subject("Math")));
+        assertTrue(subjects.contains(new Subject("Physics")));
     }
 
     @Test

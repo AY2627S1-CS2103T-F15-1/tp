@@ -76,6 +76,14 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_lowerCaseSubject_storesCapitalizedSubject() {
+        Person expected = new PersonBuilder(BOB).withSubjects("Mathematics").withoutEmail().withoutVenue().build();
+
+        assertParseSuccess(parser, NAME_DESC_BOB + PHONE_DESC_BOB + LEVEL_DESC_BOB + " s/mathematics"
+                + RATE_DESC_BOB, new AddCommand(expected));
+    }
+
+    @Test
     public void parse_repeatedNonSubjectValue_failure() {
         String validExpectedPersonString = NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + LEVEL_DESC_BOB
                 + SUBJECT_DESC_PHYSICS + RATE_DESC_BOB + VENUE_DESC_BOB;
