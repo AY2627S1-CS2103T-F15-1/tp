@@ -99,13 +99,11 @@ public class LogicManager implements Logic {
         List<UUID> shownBefore = lessonSelection();
         boolean wasDirty = dirty;
         boolean changed;
-        boolean isSuccessful = true;
+        boolean isSuccessful = false;
         try {
             model.beforeCommand(command instanceof DestructiveCommand);
             commandResult = command.execute(model);
-        } catch (CommandException e) {
-            isSuccessful = false;
-            throw e;
+            isSuccessful = true;
         } finally {
             // An unavailable snapshot must never clear a previous save failure or permit an unchecked exit.
             dirty = true;
@@ -115,7 +113,7 @@ public class LogicManager implements Logic {
                     command instanceof DestructiveCommand destructiveCommand
                             ? destructiveCommand.getDestructDescription()
                             : null,
-                    isSuccessful);
+                    isSuccessful && changed);
         }
 
         String numbering = "";
