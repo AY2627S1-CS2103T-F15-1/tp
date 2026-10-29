@@ -483,6 +483,7 @@ Format: `travel buffer/MINUTES`
 * A gap shorter than the buffer produces a warning naming both students, the venues, destination date and time, available minutes and required buffer. For example: `Travel warning: Tan Wei Ming at Bishan -> Priya Kumar at Clementi (Sat 24 Oct 2026 11:10): 10 min available; 30 min required.` Back-to-back lessons at different venues have a zero-minute gap and can therefore trigger a travel warning without overlapping.
 * There is no travel warning for overlapping lessons, an unnamed venue, `Online` (ignoring case), or the same venue ignoring case. If several preceding lessons finish together, the first at a different physical venue is used.
 * After `lesson add`, `lesson repeat` and `lesson move`, warnings cover journeys into or out of the added or moved lessons, not unrelated journeys on those dates. Warnings also appear below each day's relevant lessons in `agenda` and below today's lessons in `today`, and when you change the buffer, which lists the warnings on every date, including past ones. Changing the buffer does not change the currently displayed lesson numbers.
+* To keep command results responsive, a single result shows at most 50 travel warnings. If more exist, the result says how many were shown and how many exist in total. The rest remain in the data and are shown by narrower agenda or lesson queries.
 
 Examples:
 

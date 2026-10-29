@@ -39,6 +39,7 @@ final class LessonCommandUtil {
     static final String MESSAGE_OVERLAP_WARNING = "\nWarning: this overlaps with %1$s";
     static final String MESSAGE_TRAVEL_WARNING = "Travel warning: %s at %s -> %s at %s (%s %s): "
             + "%d min available; %d min required.";
+    static final int MAX_DISPLAYED_TRAVEL_WARNINGS = 50;
 
     private static final int MAX_YEARS_AHEAD = 2;
 
@@ -228,7 +229,20 @@ final class LessonCommandUtil {
 
     /** Reports destination warnings with the indentation used by their containing view. */
     static String getTravelWarnings(Model model, Predicate<Lesson> destinations, String indentation) {
-        return formatTravelWarnings(model, gap -> destinations.test(gap.next()), indentation);
+        return formatTravelWarnings(model, gap -> destinations.test(gap.next()), indentation,
+                MAX_DISPLAYED_TRAVEL_WARNINGS);
+    }
+
+    /** Reports at most {@code limit} destination warnings with the specified indentation. */
+    static String getTravelWarnings(Model model, Predicate<Lesson> destinations, String indentation, int limit) {
+        return formatTravelWarnings(model, gap -> destinations.test(gap.next()), indentation, limit);
+    }
+
+    /** Counts the destination warnings that the same selector would report without a display limit. */
+    static int countTravelWarnings(Model model, Predicate<Lesson> destinations) {
+        return (int) TravelGap.find(model.getAddressBook().getLessonList(),
+                model.getAddressBook().getTravelBuffer()).stream()
+                .filter(gap -> destinations.test(gap.next())).count();
     }
 
     /** Reports only journeys into or out of the added or moved lesson, not unrelated warnings on that date. */
@@ -239,16 +253,19 @@ final class LessonCommandUtil {
     /** Reports each incoming or outgoing journey affected by a batch of new occurrences once. */
     static String getTravelWarningsForLessons(Model model, List<Lesson> changed) {
         return formatTravelWarnings(model, gap -> changed.stream().anyMatch(lesson ->
-                gap.previous().getId().equals(lesson.getId()) || gap.next().getId().equals(lesson.getId())), "");
+                gap.previous().getId().equals(lesson.getId()) || gap.next().getId().equals(lesson.getId())), "",
+                MAX_DISPLAYED_TRAVEL_WARNINGS);
     }
 
-    private static String formatTravelWarnings(Model model, Predicate<TravelGap> included, String indentation) {
+    private static String formatTravelWarnings(Model model, Predicate<TravelGap> included, String indentation,
+            int limit) {
         return TravelGap.find(model.getAddressBook().getLessonList(), model.getAddressBook().getTravelBuffer())
                 .stream().filter(included)
                 .map(gap -> "\n" + indentation + String.format(MESSAGE_TRAVEL_WARNING,
                         gap.previous().getStudentName(), Messages.formatVenue(gap.previous()),
                         gap.next().getStudentName(), Messages.formatVenue(gap.next()),
                         gap.next().getDate(), gap.next().getTime(), gap.minutes(), gap.buffer()))
+                .limit(limit)
                 .collect(Collectors.joining());
     }
 }

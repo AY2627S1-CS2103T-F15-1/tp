@@ -160,6 +160,28 @@ public class AgendaCommandTest {
     }
 
     @Test
+    public void execute_weekWithMoreThanFiftyTravelWarnings_capsWarnings() {
+        for (int day = 0; day < 2; day++) {
+            for (int i = 0; i < 28; i++) {
+                java.time.LocalTime first = java.time.LocalTime.of(6, 0).plusMinutes(30L * i);
+                java.time.LocalTime second = first.plusMinutes(15);
+                model.addLesson(new LessonBuilder().withStudent(ALICE).withDate(MONDAY.plusDays(day))
+                        .withTime(first.toString()).withDuration(15)
+                        .withVenue("Home " + day + " " + i).build());
+                model.addLesson(new LessonBuilder().withStudent(ALICE).withDate(MONDAY.plusDays(day))
+                        .withTime(second.toString()).withDuration(15)
+                        .withVenue("Cafe " + day + " " + i).build());
+            }
+        }
+
+        String[] lines = new AgendaCommand(MONDAY, true).execute(model).getFeedbackToUser().split("\n");
+
+        assertTrue(java.util.Arrays.stream(lines)
+                .anyMatch(line -> line.matches("Showing \\d+ of \\d+ travel warnings.")),
+                String.join("\n", lines));
+    }
+
+    @Test
     public void equals() {
         AgendaCommand command = new AgendaCommand(MONDAY, false);
 

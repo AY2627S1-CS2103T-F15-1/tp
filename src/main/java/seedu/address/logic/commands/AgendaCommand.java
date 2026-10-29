@@ -85,6 +85,7 @@ public class AgendaCommand extends Command {
                 ? lessons.subList(0, MAX_DISPLAYED_LESSONS) : lessons;
         StringBuilder week = new StringBuilder(String.format(MESSAGE_WEEK_HEADER, DAY_FORMAT.format(first),
                 DAY_FORMAT.format(last), summarise(lessons)));
+        int remainingWarnings = LessonCommandUtil.MAX_DISPLAYED_TRAVEL_WARNINGS;
         for (LocalDate day = first; !day.isAfter(last); day = day.plusDays(1)) {
             LocalDate currentDay = day;
             List<Lesson> allLessonsOfDay = lessons.stream()
@@ -95,8 +96,19 @@ public class AgendaCommand extends Command {
                     .append(")");
             week.append(lessonsOfDay.isEmpty() ? "\n" + MESSAGE_EMPTY_DAY
                     : formatLessons(model, visibleLessons, day));
-            week.append(LessonCommandUtil.getTravelWarnings(model,
-                    lesson -> lesson.getDate().value.equals(currentDay)));
+            if (remainingWarnings > 0) {
+                String warnings = LessonCommandUtil.getTravelWarnings(model,
+                        lesson -> lesson.getDate().value.equals(currentDay), "", remainingWarnings);
+                week.append(warnings);
+                remainingWarnings -= (int) warnings.lines().count();
+            }
+        }
+        int totalWarnings = LessonCommandUtil.countTravelWarnings(model,
+                lesson -> !lesson.getDate().value.isBefore(first) && !lesson.getDate().value.isAfter(last));
+        int shownWarnings = LessonCommandUtil.MAX_DISPLAYED_TRAVEL_WARNINGS - remainingWarnings;
+        if (totalWarnings > shownWarnings) {
+            week.append("\nShowing ").append(shownWarnings).append(" of ").append(totalWarnings)
+                    .append(" travel warnings.");
         }
         if (lessons.size() > MAX_DISPLAYED_LESSONS) {
             week.append("\nShowing the first ").append(MAX_DISPLAYED_LESSONS)
