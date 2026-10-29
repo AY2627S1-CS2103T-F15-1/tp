@@ -69,7 +69,6 @@ For power-users, TutorFlow can help you manage your students and lessons faster 
 
 * The command box remembers the commands you have entered in this session. Press `Up` to bring back an earlier command and `Down` to move forward again, as in a terminal. Down past the newest command returns to what you were typing.<br>
   When a command fails, it stays in the command box, so you can correct it instead of typing it all again.
-* While the command box contains text, a cross button appears at its right edge. Click it to clear the box and return to typing; it disappears when the box is empty.
 
 * If you enter an unknown command, such as `foo`, TutorFlow shows `Unknown command. Type "help" for list of commands.` Type `help` to see the available commands.
 
@@ -85,6 +84,7 @@ The student cards provide shortcuts that fill the command box for you. They do n
 * Click a field's pencil to fill the command box with that field's command, such as `edit 1 n/` or `edit 1 s/`. Type the new value after the prefix and press Enter. Selecting another field replaces the prepared command. For subjects, the existing `edit` command replaces the whole subject list, so add every subject you want to keep.
 * The archive and delete buttons fill in `archive INDEX` and `delete INDEX` for that card. Archiving and deletion keep their normal confirmation behaviour, so nothing happens until you submit the command.
 * While editing fields, `Cancel` appears beside the card's top-right pencil. Click it to leave field-editing mode; it then disappears with the field pencils. It clears the prepared command only if you have not changed it and another shortcut has not replaced it. A command you typed yourself is left alone.
+* While the command box contains text, a cross button appears at its right edge. Click it to clear the box and return to typing. It disappears when the box is empty.
 * The plus button beside the command box starts an add command with `add n/` and puts the cursor there. Complete the remaining required prefixes and press Enter.
 * Each shortcut also prints the matching help command, such as `help edit` or `help archive`, to standard output. Run that command in TutorFlow to read the full usage.
 
@@ -483,7 +483,7 @@ Format: `lesson series cancel LESSON_INDEX confirm`
 * A lesson not linked to a recurring series is rejected. A series with no eligible occurrences is also rejected without changing data.
 * Select an existing occurrence of the series. This command cancels existing recurring bookings; it does not create them.
 * If any affected occurrence has a recorded charge, nothing is cancelled. Billed history is retained.
-* Cancellation is a status change, not a deletion, and is not undoable. `confirm` is required because the change affects multiple bookings.
+* Cancellation is a status change, not a deletion, and is not undoable. `confirm` is required because the change affects multiple bookings. 
 * Success is `Cancelled N series occurrences.` (or `Cancelled 1 series occurrence.` for a single occurrence).
 
 Example: `lesson list st/1 all/`, then `lesson series cancel 3 confirm` cancels the eligible occurrences of the series containing the 3rd displayed lesson.
@@ -759,9 +759,9 @@ Format: `clear confirm`
 
 * Typing `clear` on its own deletes nothing. It only reminds you what would be deleted and how to confirm.
 * `confirm` can be written in any letter case. Anything else after `clear` is rejected, so a mistyped command can never wipe your data.
-* TutorFlow saves the empty data straight away. An `undo` immediately after the clear can restore it in this session, but it is still wise to keep a backup.
+* TutorFlow saves the empty data straight away, so copy `data/tutorflow-v14.json` first if you may want your records back.
 * Clearing data that is already empty works and does nothing.
-* If you clear data and make no other change, `undo` restores it. Closing TutorFlow or making another change removes that undo opportunity.
+* If you clear data in the current session and make no changes, it can be restored with the `undo` command. A backup is still recommended, since the data can still be easily lost.
 
 Examples:
 * `clear` shows `This deletes ALL students, lessons, homework, tasks, and financial history. Type 'clear confirm' to proceed.`
@@ -769,17 +769,16 @@ Examples:
 
 ### Undoing your latest deletion or clear: `undo`
 
-Reverses the latest deletion or clear made in this session.
+Reverses a deletion that was just performed. 
 
 Format: `undo`
 
-* It applies to `delete`, `hw delete`, `task delete` and `clear confirm`; it does not restore lesson cancellations or other edits.
-* It undoes one destructive action, in the current session only. Undoing one action uses up the available undo point.
-* Any later successful change clears the undo opportunity: adding, editing or sorting leaves nothing to undo, while another deletion replaces it with a new undo point. Read-only commands such as `list` and `view` do not.
-* If the restoration cannot be saved, the restored data stays in memory and `save` can retry the write.
+* Deletion commands include the commands with `delete` in them, and the `clear` command.
+* Changes can only be undone in the current session, and for one deletion command.
+* Reversals will fail if the data is changed in any way after the deletion, including sorting students or another deletion.
 
 Examples:
-* `undo` with no eligible action shows `Nothing to undo. Undo restores your latest deletion or clear, and only until you make another change.`
+* `undo` shows `Nothing to undo.`
 * `delete 2 confirm` followed by `undo` shows `Undone: student deletion. Your data is back as it was before.`, reversing the delete.
 
 ### Exiting the program: `exit`

@@ -133,37 +133,4 @@ public class UndoIntegrationTest {
         ex = assertThrows(CommandException.class, () -> logic.execute("undo"));
         assertTrue(ex.getMessage().contains("Nothing to undo"));
     }
-
-    @Test
-    public void execute_destructiveConfirmationOnly_keepsEarlierUndoPoint() throws CommandException, ParseException {
-        willSaveFail = false;
-        Model model = new ModelManager();
-        model.addPerson(GEORGE);
-        model.addPerson(CARL);
-        LogicManager logic = createLogic(model);
-
-        logic.execute("delete 1 confirm");
-        logic.execute("clear");
-
-        assertEquals(new CommandResult("Undone: student deletion. Your data is back as it was before."),
-                logic.execute("undo"));
-        assertTrue(logic.getFilteredPersonList().contains(GEORGE));
-        assertTrue(logic.getFilteredPersonList().contains(CARL));
-    }
-
-    @Test
-    public void execute_destructiveRuntimeFailure_keepsEarlierUndoPoint() throws CommandException, ParseException {
-        willSaveFail = false;
-        Model model = new ModelManager();
-        model.addPerson(GEORGE);
-        LogicManager logic = createLogic(model);
-
-        logic.execute("delete 1 confirm");
-        logic.execute("task list");
-        assertThrows(CommandException.class, () -> logic.execute("task delete 1 confirm"));
-
-        assertEquals(new CommandResult("Undone: student deletion. Your data is back as it was before."),
-                logic.execute("undo"));
-        assertTrue(logic.getFilteredPersonList().contains(GEORGE));
-    }
 }

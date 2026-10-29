@@ -77,9 +77,7 @@ The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDi
 
 `CommandBox` also lets the user step through the commands entered in the session with the `Up` and `Down` keys. The steps are kept by `CommandHistory`, a plain class with no JavaFX dependency, so it can be unit tested. It keeps the latest 100 commands, ignores blank commands and a repeat of the previous command, and remembers what the user had typed before stepping back so that `Down` returns to it. A command is recorded when it is entered, whether it succeeds or not. A failed command is left in the text field, and `CommandHistory` does not offer it again on the first `Up`, because it is already shown. A clear button overlays the right edge of the text field only while it contains text; it clears the text and returns focus without executing a command.
 
-`CommandAssist` is the shared layer for the student-card shortcuts. It formats drafts using `CliSyntax` prefixes and command words, writes them through the small `CommandDraftTarget` interface implemented by `CommandBox`, and never calls `Logic`. `PersonCard` only reports the card's displayed index and the chosen field; it does not construct command strings or change model data. Field-editing mode is closed through a callback owned by `CommandAssist`, so a successful command, a new action on another card, and a change to the displayed list all leave the card and command box in a consistent state. `CommandBox` exposes the current draft and focus operations through `CommandDraftTarget`, and its clear control is a separate button layered over the text field rather than part of the command text.
-
-The card's action buttons are rendered from `PersonListCard.fxml`. The subject pencil is added to the same `FlowPane` as the subject labels so it follows the final subject; it is not a separate row. Cancel is shown beside the card-level Edit control only during field-editing mode. All action buttons have accessible names and tooltips, and the card itself is focus-traversable so the actions can be reached without a mouse. Hover, keyboard focus and a one-tap touch fallback reveal the card actions.
+`CommandAssist` is the shared layer for the student-card shortcuts. It formats drafts using `CliSyntax` prefixes and command words, writes them through the small `CommandDraftTarget` interface implemented by `CommandBox`, and never calls `Logic`. `PersonCard` only reports the card's displayed index and the chosen field; it does not construct command strings or change model data. Field-editing mode is closed through a callback owned by `CommandAssist`, so a successful command, a new action on another card, and a change to the displayed list all leave the card and command box in a consistent state.
 
 The shortcut draft uses the same displayed index as the indexed commands. `PersonListPanel` observes its filtered list; when that list changes, an unchanged prepared draft is cleared and field-editing mode is closed, because the old number could now identify another student. A draft that the user edited is kept, as required for predictable cancellation. `CommandAssist` also prints `help COMMAND` to standard output for each shortcut, allowing the existing help command to own the usage text instead of duplicating it in the UI.
 
@@ -223,7 +221,7 @@ How the pieces fit together:
 
 `LessonRepeatCommand` creates one UUID and attaches it to every occurrence using `Lesson#withSeries(UUID)`. `Lesson#getSeriesId` returns that optional UUID; `JsonAdaptedLesson` uses the same optional `seriesId` JSON field as recurring bookings. After adding the series, the command reports each travel gap involving a new occurrence once, including journeys into and out of it. Weekly agenda warnings are formatted inside the day loop, immediately after that day's lesson rows.
 
-Move, single cancellation and series cancellation use `LessonCommandUtil#requireNotCharged` to retain billed history. Series cancellation validates every affected occurrence before building its replacement, so a charge on even the last eligible occurrence leaves all bookings and ledger records unchanged. Cancellation is a status change, not a deletion or clear, so it is outside the one-action undo scope described below and is not undoable.
+Move, single cancellation and series cancellation use `LessonCommandUtil#requireNotCharged` to retain billed history. Series cancellation validates every affected occurrence before building its replacement, so a charge on even the last eligible occurrence leaves all bookings and ledger records unchanged. Cancellation is a status change and is outside the deletion/clear operations specified for undo in section 4.36. It is not undoable. PR #143 was closed without merging, and current master has no undo implementation or model reset hook; a future undo implementation must invalidate its snapshot after a successful travel-buffer change and preserve it after a rejected change.
 
 `TravelGapTest`, `TravelCommandParserTest`, `LessonSeriesCancelCommandTest` and `LessonTravelWorkflowTest` cover buffer boundaries, venue exceptions, latest-end selection, moved occurrences, confirmation, filtered numbering, failed-save retries and JSON restarts.
 
@@ -419,7 +417,7 @@ stored a student name and phone instead of ids are not migrated.
 `hw list` and `pay list`, exactly like the lesson, homework and payment commands, and store the UUID of the row that
 was shown. `task list` numbers the tasks it displays, and `task edit|done|delete N` use that numbering.
 
-**Undo.** `task delete` participates in the single-action undo described under [Undo of the latest deletion or clear](#undo-of-the-latest-deletion-or-clear). The other task commands are not destructive actions and do not create an undo point.
+**Not in this feature.** Undo of task commands (spec section 4.36) is part of the undo work, not of the task commands.
 
 ### Homework status and deletion
 
@@ -445,23 +443,123 @@ The activity diagram below shows what `delete INDEX [confirm]` does.
 
 <puml src="diagrams/DeleteStudentActivityDiagram.puml" alt="Activity Diagram for the `delete INDEX [confirm]` Command" />
 
-### Undo of the latest deletion or clear
+### Undo/redo feature
 
-Undo is deliberately a single-action, session-only safety net, not a general undo history. It restores the whole address book from immediately before the latest successful `delete`, `hw delete`, `task delete` or `clear confirm`. It does not undo lesson cancellations, edits, payments or other commands.
+#### Current Implementation
+A new class `VersionedAddressBook` extends `AddressBook` with undo functionality. 
+`ModelManager` converts any `AddressBook`s given into this new class, enabling undo functionality throughout the codebase.
+This new class adds three new fields.
+`transitionState` stores a snapshot of the `AddressBook` before any destructive action. 
+`lastState` stores a snapshot of the `AddressBook` before the last destructive action.
+It is populated from `transitionState` after a successful destructive command.
+After an `undoDestructiveAction` call, the state is restored from here.
+`lastDestructiveAction` stores what the description of the action.
 
-`VersionedAddressBook` extends `AddressBook` with three pieces of state:
+`VersionedAddressBook` depends on `beforeCommand` and `afterCommand` hooks to manage `transitionState`, `lastState`, and `lastDestructiveAction`.
+It exposes these hooks through `Model` to allow the command execution logic to activate them.
 
-* `transitionState` is a snapshot taken before a destructive command runs.
-* `lastState` is the snapshot promoted from `transitionState` only after that command succeeds.
-* `lastDestructiveAction` is the message fragment used by `UndoCommand`.
+`VersionedAddressBook` provides an `undoDestructiveAction` method to restore to a previous state. This is exposed by `Model` as well.
 
-`LogicManager` calls `Model#beforeCommand(boolean)` before command execution and `Model#afterCommand(String, boolean)` in its `finally` path. The boolean tells the model whether the parsed command extends `DestructiveCommand`; the description comes from `DestructiveCommand#getDestructDescription()`. A failed command discards `transitionState`, leaving any earlier successful undo point available.
+The undo command simply uses this `undoDestructiveAction` method and shows the results to the user.
 
-`UndoCommand` calls `Model#undoDestructiveAction()`, which restores `lastState` through `resetData`. The `LogicManager` then saves the restored state through the normal changed-data path. A save failure retains the restored in-memory state so `save` can retry, matching every other mutating command.
+#### Old Implementation
+The current ModelManager implementation adds three fields.
+`lastState` and `newState` - store `AddressBook`s track of state before and after a destructive operation.
+`lastDestructiveAction` keeps track of the type of destructive action, for reporting to the user.
 
-Only one undo point is retained. A successful non-destructive command clears it in `afterCommand`, as does a successful destructive command replacing it. This is intentional: undo must never silently roll back later work. Read-only commands do not clear it. The state is not persisted, so closing TutorFlow ends the undo opportunity.
+* `lastState` is used to restore the destructive action after an `undo` call.
+* `newState` is used to check if actions have actually changed the state, and to reset `lastDestructiveAction` if so, disabling `undo`. This prevents multiple changes from inadvertently being removed at once with `undo`.
 
-`VersionedAddressBookTest` exercises the hooks and failed-destructive path directly. `UndoCommandTest` and `UndoIntegrationTest` cover the command and persistence behaviour. Future changes to command execution must keep `afterCommand` on the failure path; otherwise a rejected confirmation can consume the valid undo point.
+`lastState`, `newState`, and `lastDestructiveAction` are updated on each destructive action using `wrapDestructiveAction`, as shown below.
+
+<puml src="diagrams/UndoCurrentImplementationWrapperSequenceDiagram.puml" alt="Sequence diagram for destructive action supporting Undo" />
+
+This wrapper keeps `lastState`, `newState`, and `lastDestructiveAction` consistent and ensures that the state is only saved if the destructive action succeeds.
+
+#### Proposed Implementation
+
+The proposed undo/redo mechanism is facilitated by `VersionedAddressBook`. It extends `AddressBook` with an undo/redo history, stored internally as an `addressBookStateList` and `currentStatePointer`. Additionally, it implements the following operations:
+
+* `VersionedAddressBook#commit()` -- Saves the current address book state in its history.
+* `VersionedAddressBook#undo()` -- Restores the previous address book state from its history.
+* `VersionedAddressBook#redo()` -- Restores a previously undone address book state from its history.
+
+These operations are exposed in the `Model` interface as `Model#commitAddressBook()`, `Model#undoAddressBook()` and `Model#redoAddressBook()` respectively.
+
+Given below is an example usage scenario and how the undo/redo mechanism behaves at each step.
+
+Step 1. The user launches the application for the first time. The `VersionedAddressBook` will be initialized with the initial address book state, and the `currentStatePointer` pointing to that single address book state.
+
+<puml src="diagrams/UndoRedoState0.puml" alt="UndoRedoState0" />
+
+Step 2. The user executes `delete 5` command to delete the 5th person in the address book. The `delete` command calls `Model#commitAddressBook()`, causing the modified state of the address book after the `delete 5` command executes to be saved in the `addressBookStateList`, and the `currentStatePointer` is shifted to the newly inserted address book state.
+
+<puml src="diagrams/UndoRedoState1.puml" alt="UndoRedoState1" />
+
+Step 3. The user executes `add n/David …​` to add a new person. The `add` command also calls `Model#commitAddressBook()`, causing another modified address book state to be saved into the `addressBookStateList`.
+
+<puml src="diagrams/UndoRedoState2.puml" alt="UndoRedoState2" />
+
+<box type="info" seamless>
+
+**Note:** If a command fails its execution, it will not call `Model#commitAddressBook()`, so the address book state will not be saved into the `addressBookStateList`.
+</box>
+
+Step 4. The user now decides that adding the person was a mistake, and decides to undo that action by executing the `undo` command. The `undo` command will call `Model#undoAddressBook()`, which will shift the `currentStatePointer` once to the left, pointing it to the previous address book state, and restores the address book to that state.
+
+<puml src="diagrams/UndoRedoState3.puml" alt="UndoRedoState3" />
+
+
+<box type="info" seamless>
+
+**Note:** If the `currentStatePointer` is at index 0, pointing to the initial AddressBook state, then there are no previous AddressBook states to restore. The `undo` command uses `Model#canUndoAddressBook()` to check if this is the case. If so, it will return an error to the user rather
+than attempting to perform the undo.
+</box>
+
+The following sequence diagram shows how an undo operation goes through the `Logic` component:
+
+<puml src="diagrams/UndoSequenceDiagram-Logic.puml" alt="UndoSequenceDiagram-Logic" />
+
+<box type="info" seamless>
+
+**Note:** The lifeline for `UndoCommand` should end at the destroy marker (X), but due to a limitation of PlantUML, it continues to the end of the diagram.
+</box>
+
+Similarly, how an undo operation goes through the `Model` component is shown below:
+
+<puml src="diagrams/UndoSequenceDiagram-Model.puml" alt="UndoSequenceDiagram-Model" />
+
+The `redo` command does the opposite — it calls `Model#redoAddressBook()`, which shifts the `currentStatePointer` once to the right, pointing to the previously undone state, and restores the address book to that state.
+
+<box type="info" seamless>
+
+**Note:** If the `currentStatePointer` is at index `addressBookStateList.size() - 1`, pointing to the latest address book state, then there are no undone AddressBook states to restore. The `redo` command uses `Model#canRedoAddressBook()` to check if this is the case. If so, it will return an error to the user rather than attempting to perform the redo.
+</box>
+
+Step 5. The user then decides to execute the command `list`. Commands that do not modify the address book, such as `list`, will usually not call `Model#commitAddressBook()`, `Model#undoAddressBook()` or `Model#redoAddressBook()`. Thus, the `addressBookStateList` remains unchanged.
+
+<puml src="diagrams/UndoRedoState4.puml" alt="UndoRedoState4" />
+
+Step 6. The user executes `clear`, which calls `Model#commitAddressBook()`. Since the `currentStatePointer` is not pointing at the end of the `addressBookStateList`, all address book states after the `currentStatePointer` will be purged. Reason: It no longer makes sense to redo the `add n/David …` command. This is the behavior that most modern desktop applications follow.
+
+<puml src="diagrams/UndoRedoState5.puml" alt="UndoRedoState5" />
+
+The following activity diagram summarizes what happens when a user executes a new command:
+
+<puml src="diagrams/CommitActivityDiagram.puml" width="250" />
+
+#### Design considerations:
+
+**Aspect: How undo & redo execute:**
+
+* **Alternative 1 (current choice):** Saves the entire address book.
+  * Pros: Easy to implement.
+  * Cons: May have performance issues in terms of memory usage.
+
+* **Alternative 2:** Individual command knows how to undo/redo by
+  itself.
+  * Pros: Will use less memory (e.g. for `delete`, just save the person being deleted).
+  * Cons: We must ensure that the implementation of each individual command is correct.
 
 
 ### Student balances and dues
@@ -1044,25 +1142,6 @@ testers are expected to do more *exploratory* testing.
    1. With a prepared shortcut still in the command box, run `list`, a search, or another command that changes the displayed list.<br>
       Expected: An unchanged prepared command is cleared and editing mode closes. Text you typed yourself is kept, because it may be unrelated to the old list.
 
-### Undo
-
-1. Undo a deletion, then try to use it again
-
-   1. Prerequisites: Use `list`, then delete a student with no linked records.
-
-   1. Test case: `undo`<br>
-      Expected: The student returns, and the result says the deletion was undone.
-
-   1. Test case: `undo` again<br>
-      Expected: `Nothing to undo. Undo restores your latest deletion or clear, and only until you make another change.`
-
-1. Undo is cleared by a later change
-
-   1. Prerequisites: Delete a student, then run `add n/Chris p/91234567 l/J1 s/Math r/50`.
-
-   1. Test case: `undo`<br>
-      Expected: It fails with the "Nothing to undo" message; the deleted student is not restored and Chris remains.
-
 ### Deleting a student
 
 1. Deleting a student who has no lessons, homework, tasks or payments
@@ -1298,8 +1377,7 @@ new numbered list. `getDisplayedHomework()` retains those rows even after mutati
 it must never be treated as the current database. Indexed commands take the shown row's UUID and
 resolve it against `getAddressBook().getHomeworkList()`. A deleted ID produces an error without
 renumbering remaining rows. Changes, archive, student rename, reset, and failed writes leave the
-selection untouched. A retained identity can become selectable again after undo, but the existing row is not
-renumbered automatically.
+selection untouched. A restored snapshot with the same identity can be selected again after undo.
 A future linked task must resolve homework indices by this same shown-ID rule, then persist UUIDs.
 
 `CommandResult.getDisplayedHomework()` exposes optional immutable typed rows for the numbered
