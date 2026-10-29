@@ -30,6 +30,7 @@ import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.exceptions.PersonNotFoundException;
 import seedu.address.model.task.Task;
 import seedu.address.testutil.AddressBookBuilder;
+import seedu.address.testutil.HomeworkBuilder;
 import seedu.address.testutil.LessonBuilder;
 
 public class ModelManagerTest {
@@ -289,9 +290,17 @@ public class ModelManagerTest {
         modelManager.addPerson(CARL);
         modelManager.addLesson(CARL_ENGLISH);
         modelManager.addPerson(GEORGE);
+        modelManager.addHomework(Homework.assign(
+                GEORGE.getId(), "Test Homework",
+                LocalDate.of(2026, 10, 31)));
+        modelManager.addTask(Task.create(
+                "Test Task",
+                LocalDate.of(2026, 10, 31), BENSON));
 
         ModelManager before = copyOfModelManager();
 
+        modelManager.clearAddressBook();
+        modelManager.clearAddressBook();
         modelManager.clearAddressBook();
 
         assertEquals(DestructiveActionType.CLEAR, modelManager.undoDestructiveAction());
@@ -327,7 +336,7 @@ public class ModelManagerTest {
     }
 
     @Test
-    public void undoDestructiveAction_failedDestruct_resetsUndo() {
+    public void undoDestructiveAction_failedDestruct_doesNotResetUndo() {
         modelManager.addPerson(BENSON);
         modelManager.addLesson(BENSON_PHYSICS);
         modelManager.addPerson(ELLE);
@@ -335,7 +344,7 @@ public class ModelManagerTest {
         ModelManager before = copyOfModelManager();
         assertThrows(PersonNotFoundException.class, () -> modelManager.deletePerson(FIONA));
 
-        assertEquals(DestructiveActionType.NONE, modelManager.undoDestructiveAction());
+        assertEquals(DestructiveActionType.DELETE_LESSON, modelManager.undoDestructiveAction());
         assertEquals(before, modelManager);
     }
 
