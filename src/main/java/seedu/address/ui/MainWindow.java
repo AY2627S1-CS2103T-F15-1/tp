@@ -6,6 +6,7 @@ import java.util.logging.Logger;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.input.KeyCombination;
@@ -38,9 +39,12 @@ public class MainWindow extends UiPart<Stage> {
     private PersonListPanel personListPanel;
     private ResultDisplay resultDisplay;
     private HelpWindow helpWindow;
+    private CommandAssist commandAssist;
 
     @FXML
     private StackPane commandBoxPlaceholder;
+    @FXML
+    private Button addStudentButton;
 
     @FXML
     private MenuItem helpMenuItem;
@@ -116,7 +120,9 @@ public class MainWindow extends UiPart<Stage> {
      * Fills up all the placeholders of this window.
      */
     void fillInnerParts() {
-        personListPanel = new PersonListPanel(logic.getFilteredPersonList());
+        CommandBox commandBox = new CommandBox(this::executeCommand);
+        commandAssist = new CommandAssist(commandBox);
+        personListPanel = new PersonListPanel(logic.getFilteredPersonList(), commandAssist);
         personListPanelPlaceholder.getChildren().add(personListPanel.getRoot());
 
         resultDisplay = new ResultDisplay();
@@ -126,8 +132,9 @@ public class MainWindow extends UiPart<Stage> {
         StatusBarFooter statusBarFooter = new StatusBarFooter(dataFilePath);
         statusbarPlaceholder.getChildren().add(statusBarFooter.getRoot());
 
-        CommandBox commandBox = new CommandBox(this::executeCommand);
         commandBoxPlaceholder.getChildren().add(commandBox.getRoot());
+        addStudentButton.setGraphic(UiIcon.plus());
+        addStudentButton.setFocusTraversable(true);
     }
 
     /**
@@ -152,6 +159,12 @@ public class MainWindow extends UiPart<Stage> {
         } else {
             helpWindow.focus();
         }
+    }
+
+    /** Populates the start of the add command without creating a student. */
+    @FXML
+    private void handleAddStudent() {
+        commandAssist.addStudent();
     }
 
     void show() {
@@ -196,6 +209,7 @@ public class MainWindow extends UiPart<Stage> {
     private CommandResult executeCommand(String commandText) throws CommandException, ParseException {
         try {
             CommandResult commandResult = logic.execute(commandText);
+            commandAssist.finishInteraction();
             logger.fine("Command succeeded");
             resultDisplay.setFeedbackToUser(commandResult.getFeedbackToUser());
 

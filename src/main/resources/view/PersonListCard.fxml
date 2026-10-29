@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Tooltip?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.GridPane?>
@@ -9,32 +11,87 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<HBox id="cardPane" fx:id="cardPane" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+<HBox id="cardPane" fx:id="cardPane" styleClass="person-card" focusTraversable="true"
+      xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
   <GridPane HBox.hgrow="ALWAYS">
     <columnConstraints>
       <ColumnConstraints hgrow="SOMETIMES" minWidth="10" prefWidth="150" />
     </columnConstraints>
-    <VBox alignment="CENTER_LEFT" minHeight="105" GridPane.columnIndex="0">
+    <VBox alignment="CENTER_LEFT" minHeight="105" spacing="2" GridPane.columnIndex="0">
       <padding>
         <Insets top="5" right="5" bottom="5" left="15" />
       </padding>
       <HBox spacing="5" alignment="CENTER_LEFT">
         <Label fx:id="id" styleClass="cell_big_label">
           <minWidth>
-            <!-- Ensures that the label text is never truncated -->
             <Region fx:constant="USE_PREF_SIZE" />
           </minWidth>
         </Label>
         <Label fx:id="name" text="\$first" styleClass="cell_big_label" />
+        <Button fx:id="nameEditButton" mnemonicParsing="false" onAction="#handleNameEdit"
+                styleClass="field-edit" visible="false" managed="false">
+          <tooltip><Tooltip text="Edit name" /></tooltip>
+        </Button>
         <Label fx:id="archived" styleClass="cell_small_label" text="(archived)" />
         <Label fx:id="level" styleClass="cell_small_label" text="\$level" />
+        <Button fx:id="levelEditButton" mnemonicParsing="false" onAction="#handleLevelEdit"
+                styleClass="field-edit" visible="false" managed="false">
+          <tooltip><Tooltip text="Edit level" /></tooltip>
+        </Button>
+        <Region HBox.hgrow="ALWAYS" />
+        <Button fx:id="cardEditButton" mnemonicParsing="false" onAction="#handleCardEdit"
+                styleClass="card-action" visible="false" managed="false">
+          <tooltip><Tooltip text="Edit fields" /></tooltip>
+        </Button>
+        <Button fx:id="cancelEditButton" mnemonicParsing="false" onAction="#handleCancelEdit"
+                styleClass="cancel-edit" text="Cancel" visible="false" managed="false">
+          <tooltip><Tooltip text="Cancel field editing" /></tooltip>
+        </Button>
+        <Button fx:id="cardArchiveButton" mnemonicParsing="false" onAction="#handleArchive"
+                styleClass="card-action" visible="false" managed="false">
+          <tooltip><Tooltip text="Archive student" /></tooltip>
+        </Button>
+        <Button fx:id="cardDeleteButton" mnemonicParsing="false" onAction="#handleDelete"
+                styleClass="card-action" visible="false" managed="false">
+          <tooltip><Tooltip text="Delete student" /></tooltip>
+        </Button>
       </HBox>
-      <FlowPane fx:id="subjects" />
-      <Label fx:id="phone" styleClass="cell_small_label" text="\$phone" />
-      <Label fx:id="rate" styleClass="cell_small_label" text="\$rate" />
-      <Label fx:id="email" styleClass="cell_small_label" text="\$email" />
-      <Label fx:id="venue" styleClass="cell_small_label" text="\$venue" />
-      <Label fx:id="remark" styleClass="cell_small_label" text="\$remark" />
+      <FlowPane fx:id="subjects" hgap="4" vgap="4" columnHalignment="LEFT" />
+      <HBox spacing="4" alignment="CENTER_LEFT">
+        <Label fx:id="phone" styleClass="cell_small_label" text="\$phone" />
+        <Button fx:id="phoneEditButton" mnemonicParsing="false" onAction="#handlePhoneEdit"
+                styleClass="field-edit" visible="false" managed="false">
+          <tooltip><Tooltip text="Edit phone number" /></tooltip>
+        </Button>
+      </HBox>
+      <HBox spacing="4" alignment="CENTER_LEFT">
+        <Label fx:id="rate" styleClass="cell_small_label" text="\$rate" />
+        <Button fx:id="rateEditButton" mnemonicParsing="false" onAction="#handleRateEdit"
+                styleClass="field-edit" visible="false" managed="false">
+          <tooltip><Tooltip text="Edit rate" /></tooltip>
+        </Button>
+      </HBox>
+      <HBox spacing="4" alignment="CENTER_LEFT">
+        <Label fx:id="email" styleClass="cell_small_label" text="\$email" />
+        <Button fx:id="emailEditButton" mnemonicParsing="false" onAction="#handleEmailEdit"
+                styleClass="field-edit" visible="false" managed="false">
+          <tooltip><Tooltip text="Edit email" /></tooltip>
+        </Button>
+      </HBox>
+      <HBox spacing="4" alignment="CENTER_LEFT">
+        <Label fx:id="venue" styleClass="cell_small_label" text="\$venue" />
+        <Button fx:id="venueEditButton" mnemonicParsing="false" onAction="#handleVenueEdit"
+                styleClass="field-edit" visible="false" managed="false">
+          <tooltip><Tooltip text="Edit venue" /></tooltip>
+        </Button>
+      </HBox>
+      <HBox spacing="4" alignment="CENTER_LEFT">
+        <Label fx:id="remark" styleClass="cell_small_label" text="\$remark" />
+        <Button fx:id="remarkEditButton" mnemonicParsing="false" onAction="#handleRemarkEdit"
+                styleClass="field-edit" visible="false" managed="false">
+          <tooltip><Tooltip text="Edit remark" /></tooltip>
+        </Button>
+      </HBox>
     </VBox>
   </GridPane>
 </HBox>

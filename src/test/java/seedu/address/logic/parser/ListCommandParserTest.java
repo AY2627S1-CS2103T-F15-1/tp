@@ -27,6 +27,7 @@ public class ListCommandParserTest {
     public void parse_filtersAndFlags_acceptedInAnyOrder() {
         assertParseSuccess(parser, " l/s3", new ListCommand(S3, null, false, false));
         assertParseSuccess(parser, " s/math", new ListCommand(null, MATH, false, false));
+        assertParseSuccess(parser, " s/MATH", new ListCommand(null, MATH, false, false));
         assertParseSuccess(parser, " s/Math l/S3", new ListCommand(S3, MATH, false, false));
         assertParseSuccess(parser, " l/S3 s/Math archived/", new ListCommand(S3, MATH, true, false));
         assertParseSuccess(parser, " archived/ l/S3", new ListCommand(S3, null, true, false));

@@ -38,6 +38,12 @@ public class SubjectTest {
     }
 
     @Test
+    public void constructor_case_isPreservedForStoredValues() {
+        assertEquals("math", new Subject("math").value);
+        assertEquals("MATH", new Subject("MATH").value);
+    }
+
+    @Test
     public void isValidSubject() {
         // null subject name
         assertThrows(NullPointerException.class, () -> Subject.isValidSubject(null));

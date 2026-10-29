@@ -6,6 +6,7 @@ import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -146,17 +147,36 @@ public class ParserUtil {
 
     /**
      * Parses a {@code String subject} into a {@code Subject}.
-     * Leading and trailing whitespaces will be trimmed.
+     * Leading and trailing whitespaces will be trimmed, and the first letter is capitalized.
      *
      * @throws ParseException if the given {@code subject} is invalid.
      */
     public static Subject parseSubject(String subject) throws ParseException {
         requireNonNull(subject);
-        String trimmedSubject = subject.trim();
+        String trimmedSubject = subject.strip();
         if (!Subject.isValidSubject(trimmedSubject)) {
             throw new ParseException(Subject.MESSAGE_CONSTRAINTS);
         }
-        return new Subject(trimmedSubject);
+        String capitalizedSubject = capitalizeFirstLetter(trimmedSubject);
+        if (!Subject.isValidSubject(capitalizedSubject)) {
+            throw new ParseException(Subject.MESSAGE_CONSTRAINTS);
+        }
+        return new Subject(capitalizedSubject);
+    }
+
+    /** Capitalizes the first letter without depending on the system locale. */
+    private static String capitalizeFirstLetter(String text) {
+        int firstLetter = 0;
+        while (firstLetter < text.length() && !Character.isLetter(text.codePointAt(firstLetter))) {
+            firstLetter += Character.charCount(text.codePointAt(firstLetter));
+        }
+        if (firstLetter == text.length()) {
+            return text;
+        }
+        int letter = text.codePointAt(firstLetter);
+        int length = Character.charCount(letter);
+        String upperCase = new String(Character.toChars(letter)).toUpperCase(Locale.ROOT);
+        return text.substring(0, firstLetter) + upperCase + text.substring(firstLetter + length);
     }
 
     /**

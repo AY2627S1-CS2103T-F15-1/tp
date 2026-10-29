@@ -232,6 +232,51 @@
     -fx-background-color: #3a3a3a;
 }
 
+.person-card .card-action,
+.person-card .field-edit,
+.person-card .cancel-edit,
+.add-action,
+.clear-command {
+    -fx-padding: 3 6 3 6;
+    -fx-min-width: 26;
+    -fx-min-height: 26;
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.person-card .card-action:hover,
+.person-card .field-edit:hover,
+.person-card .cancel-edit:hover,
+.add-action:hover,
+.clear-command:hover {
+    -fx-background-color: derive(#1d1d1d, 45%);
+}
+
+.action-icon {
+    -fx-fill: #f2f2f2;
+}
+
+.clear-command {
+    -fx-padding: 2 5 2 5;
+    -fx-min-width: 22;
+    -fx-min-height: 22;
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.clear-command .action-icon {
+    -fx-fill: #b8b8b8;
+}
+
+.command-box .text-field {
+    -fx-padding: 5 34 5 7;
+}
+
+.person-card:focused {
+    -fx-border-color: #7ab8ff;
+    -fx-border-width: 1;
+}
+
 .button:pressed, .button:default:hover:pressed {
   -fx-background-color: white;
   -fx-text-fill: #1d1d1d;

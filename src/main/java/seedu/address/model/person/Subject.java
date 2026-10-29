@@ -11,9 +11,10 @@ import java.util.Comparator;
  * Guarantees: immutable; is valid as declared in {@link #isValidSubject(String)}
  *
  * <p>Subjects are free text (1-30 characters) using letters of any language, digits, spaces,
- * {@code &} and {@code -}. Case is preserved for display but comparison is
- * case-insensitive, so {@code math} and {@code Math} are treated as the same subject. An accented letter is stored
- * in its composed form, so it does not matter how an accent was typed.
+ * {@code &} and {@code -}. New values from commands have their first letter capitalized by
+ * {@link seedu.address.logic.parser.ParserUtil#parseSubject(String)}, while values loaded from storage keep their
+ * original case. Comparison is case-insensitive, so {@code math} and {@code Math} are treated as the same subject.
+ * An accented letter is stored in its composed form, so it does not matter how an accent was typed.
  */
 public class Subject {
 

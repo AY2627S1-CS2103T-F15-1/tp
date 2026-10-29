@@ -1,7 +1,9 @@
 package seedu.address.ui;
 
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
@@ -47,13 +49,51 @@ public class PersonCard extends UiPart<Region> {
     private Label remark;
     @FXML
     private FlowPane subjects;
+    @FXML
+    private Button cardEditButton;
+    @FXML
+    private Button cardArchiveButton;
+    @FXML
+    private Button cardDeleteButton;
+    @FXML
+    private Button cancelEditButton;
+    @FXML
+    private Button nameEditButton;
+    @FXML
+    private Button levelEditButton;
+    @FXML
+    private Button phoneEditButton;
+    @FXML
+    private Button rateEditButton;
+    @FXML
+    private Button emailEditButton;
+    @FXML
+    private Button venueEditButton;
+    @FXML
+    private Button remarkEditButton;
+
+    private final int displayedIndex;
+    private final CommandAssist commandAssist;
+    private Button subjectEditButton;
+    private boolean isEditMode;
+    private boolean isTouchRevealed;
 
     /**
      * Creates a {@code PersonCard} with the given {@code Person} and index to display.
      */
     public PersonCard(Person person, int displayedIndex) {
+        this(person, displayedIndex, null);
+    }
+
+    /**
+     * Creates a card whose shortcut controls populate commands through {@code commandAssist}. A null helper keeps
+     * the card usable for presentation-only tests.
+     */
+    public PersonCard(Person person, int displayedIndex, CommandAssist commandAssist) {
         super(FXML);
         this.person = person;
+        this.displayedIndex = displayedIndex;
+        this.commandAssist = commandAssist;
         id.setText(displayedIndex + ". ");
         name.setText(person.getName().fullName);
         showIfPresent(archived, person.isArchived() ? "(archived)" : null);
@@ -63,9 +103,178 @@ public class PersonCard extends UiPart<Region> {
         showIfPresent(email, person.getEmail().map(value -> value.value).orElse(null));
         showIfPresent(venue, person.getVenue().map(value -> value.value).orElse(null));
         remark.setText(person.getRemark().value);
+        showSubjects();
+        configureActions();
+    }
+
+    /** Shows each subject followed by the shared pencil that edits the whole subject set. */
+    private void showSubjects() {
         person.getSubjects().stream()
                 .sorted(Subject.DISPLAY_ORDER)
                 .forEach(subject -> subjects.getChildren().add(new Label(subject.value)));
+        subjectEditButton = new Button();
+        subjectEditButton.setId("subjectEditButton");
+        subjectEditButton.getStyleClass().add("field-edit");
+        subjectEditButton.setOnAction(event -> handleSubjectEdit());
+        subjectEditButton.setTooltip(new Tooltip("Edit subjects"));
+        subjectEditButton.setGraphic(UiIcon.pencil());
+        subjectEditButton.setAccessibleText("Edit subjects");
+        subjectEditButton.setFocusTraversable(true);
+        subjectEditButton.setVisible(false);
+        subjectEditButton.setManaged(false);
+        subjects.getChildren().add(subjectEditButton);
+    }
+
+    private void configureActions() {
+        cardEditButton.setGraphic(UiIcon.pencil());
+        cardArchiveButton.setGraphic(UiIcon.archive());
+        cardDeleteButton.setGraphic(UiIcon.trash());
+        nameEditButton.setGraphic(UiIcon.pencil());
+        levelEditButton.setGraphic(UiIcon.pencil());
+        phoneEditButton.setGraphic(UiIcon.pencil());
+        rateEditButton.setGraphic(UiIcon.pencil());
+        emailEditButton.setGraphic(UiIcon.pencil());
+        venueEditButton.setGraphic(UiIcon.pencil());
+        remarkEditButton.setGraphic(UiIcon.pencil());
+
+        for (Button button : new Button[]{cardEditButton, cardArchiveButton, cardDeleteButton,
+            nameEditButton, levelEditButton, subjectEditButton, phoneEditButton, rateEditButton,
+            emailEditButton, venueEditButton, remarkEditButton, cancelEditButton}) {
+            button.setFocusTraversable(true);
+        }
+
+        cardEditButton.setAccessibleText("Edit fields");
+        cardArchiveButton.setAccessibleText("Archive student");
+        cardDeleteButton.setAccessibleText("Delete student");
+        nameEditButton.setAccessibleText("Edit name");
+        levelEditButton.setAccessibleText("Edit level");
+        phoneEditButton.setAccessibleText("Edit phone number");
+        rateEditButton.setAccessibleText("Edit rate");
+        emailEditButton.setAccessibleText("Edit email");
+        venueEditButton.setAccessibleText("Edit venue");
+        remarkEditButton.setAccessibleText("Edit remark");
+        cancelEditButton.setAccessibleText("Cancel field editing");
+
+        cardPane.setOnMouseEntered(event -> updateActionVisibility());
+        cardPane.setOnMouseExited(event -> updateActionVisibility());
+        cardPane.setOnTouchPressed(event -> {
+            isTouchRevealed = true;
+            updateActionVisibility();
+        });
+        cardPane.focusedProperty().addListener((observable, wasFocused, isFocused) ->
+                updateActionVisibility());
+        for (Button button : new Button[]{cardEditButton, cardArchiveButton, cardDeleteButton}) {
+            button.focusedProperty().addListener((observable, wasFocused, isFocused) ->
+                    updateActionVisibility());
+        }
+    }
+
+    private void updateActionVisibility() {
+        boolean isVisible = isEditMode || isTouchRevealed || cardPane.isHover() || cardPane.isFocused()
+                || cardEditButton.isFocused() || cardArchiveButton.isFocused() || cardDeleteButton.isFocused();
+        setCardActionVisibility(isVisible);
+    }
+
+    private void setCardActionVisibility(boolean isVisible) {
+        cardEditButton.setVisible(isVisible);
+        cardArchiveButton.setVisible(isVisible);
+        cardDeleteButton.setVisible(isVisible);
+        cancelEditButton.setVisible(isVisible && isEditMode);
+        cancelEditButton.setManaged(isVisible && isEditMode);
+        cardEditButton.setManaged(isVisible);
+        cardArchiveButton.setManaged(isVisible);
+        cardDeleteButton.setManaged(isVisible);
+    }
+
+    private void showFieldEditors(boolean isVisible) {
+        isEditMode = isVisible;
+        for (Button button : new Button[]{nameEditButton, levelEditButton, subjectEditButton, phoneEditButton,
+            rateEditButton, emailEditButton, venueEditButton, remarkEditButton}) {
+            button.setVisible(isVisible);
+            button.setManaged(isVisible);
+        }
+        cancelEditButton.setVisible(isVisible);
+        cancelEditButton.setManaged(isVisible);
+        updateActionVisibility();
+    }
+
+    @FXML
+    private void handleCardEdit() {
+        if (commandAssist != null) {
+            commandAssist.beginEditInteraction(() -> showFieldEditors(false));
+            showFieldEditors(true);
+        } else {
+            showFieldEditors(true);
+        }
+    }
+
+    @FXML
+    private void handleNameEdit() {
+        edit(CommandAssist.Field.NAME);
+    }
+
+    @FXML
+    private void handleLevelEdit() {
+        edit(CommandAssist.Field.LEVEL);
+    }
+
+    @FXML
+    private void handleSubjectEdit() {
+        edit(CommandAssist.Field.SUBJECT);
+    }
+
+    @FXML
+    private void handlePhoneEdit() {
+        edit(CommandAssist.Field.PHONE);
+    }
+
+    @FXML
+    private void handleRateEdit() {
+        edit(CommandAssist.Field.RATE);
+    }
+
+    @FXML
+    private void handleEmailEdit() {
+        edit(CommandAssist.Field.EMAIL);
+    }
+
+    @FXML
+    private void handleVenueEdit() {
+        edit(CommandAssist.Field.VENUE);
+    }
+
+    @FXML
+    private void handleRemarkEdit() {
+        edit(CommandAssist.Field.REMARK);
+    }
+
+    private void edit(CommandAssist.Field field) {
+        if (commandAssist != null) {
+            commandAssist.editField(displayedIndex, field);
+        }
+    }
+
+    @FXML
+    private void handleArchive() {
+        if (commandAssist != null) {
+            commandAssist.archive(displayedIndex);
+        }
+    }
+
+    @FXML
+    private void handleDelete() {
+        if (commandAssist != null) {
+            commandAssist.delete(displayedIndex);
+        }
+    }
+
+    @FXML
+    private void handleCancelEdit() {
+        if (commandAssist != null) {
+            commandAssist.cancelEditInteraction(displayedIndex);
+        } else {
+            showFieldEditors(false);
+        }
     }
 
     /**

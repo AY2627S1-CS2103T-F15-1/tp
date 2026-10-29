@@ -80,6 +80,14 @@ public class HelpCommandTest {
     }
 
     @Test
+    public void execute_archiveHelp_pointsToListingsThatShowArchivedStudents() throws Exception {
+        String help = helpFor("archive");
+
+        assertTrue(help.contains("list archived/"));
+        assertTrue(help.contains("list all/"));
+    }
+
+    @Test
     public void execute_everyListedCommand_showsAnExampleBeyondItsUsageLine() throws Exception {
         List<String> names = helpFor("").lines().filter(line -> line.startsWith("  "))
                 .map(line -> line.substring(2).split("  ", 2)[0].trim()).toList();
