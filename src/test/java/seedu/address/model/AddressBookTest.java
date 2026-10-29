@@ -542,7 +542,7 @@ public class AddressBookTest {
     }
 
     @Test
-    public void isEmpty_emptyOrReset_True() {
+    public void isEmpty_emptyOrReset_true() {
         assertTrue(new AddressBook().isEmpty());
         addressBook.addPerson(ALICE);
         addressBook.addLesson(ALICE_MATH);
