@@ -73,7 +73,6 @@ public class VersionedAddressBook extends AddressBook {
         resetDestructiveAction();
     }
 
-    // Overrides
     @Override
     public void resetData(ReadOnlyAddressBook newData) {
         this.resetDestructiveAction();
@@ -82,9 +81,12 @@ public class VersionedAddressBook extends AddressBook {
 
     @Override
     public void clearData() {
-        saveState();
-        super.clearData();
-        saveDestructiveAction(DestructiveActionType.CLEAR);
+        // Don't clear if already empty
+        if (!isEmpty()) {
+            saveState();
+            super.clearData();
+            saveDestructiveAction(DestructiveActionType.CLEAR);
+        }
     }
 
     @Override
