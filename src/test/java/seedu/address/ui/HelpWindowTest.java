@@ -117,6 +117,39 @@ public class HelpWindowTest {
     }
 
     @Test
+    public void clearCommandButton_isVisibleOnlyWithTextAndClearsTheDraft() throws Exception {
+        onFx(() -> {
+            JsonAddressBookStorage addressStorage =
+                    new JsonAddressBookStorage(temporaryFolder.resolve("clear-shortcut.json"));
+            LogicManager logic = new LogicManager(new ModelManager(), new StorageManager(addressStorage,
+                    new JsonUserPrefsStorage(temporaryFolder.resolve("clear-prefs.json"))));
+            MainWindow main = new MainWindow(new Stage(), logic, addressStorage.getAddressBookFilePath());
+            main.fillInnerParts();
+            main.show();
+            try {
+                TextField input = (TextField) main.getRoot().getScene().lookup("#commandTextField");
+                Button clear = (Button) main.getRoot().getScene().lookup("#clearCommandButton");
+
+                assertFalse(clear.isVisible());
+                input.setText("add n/Alice");
+                assertTrue(clear.isVisible());
+                assertEquals("add n/Alice", input.getText());
+                input.requestFocus();
+                input.positionCaret(input.getText().length());
+                clear.fire();
+
+                assertEquals("", input.getText());
+                assertFalse(clear.isVisible());
+                assertTrue(input.isFocused());
+                assertTrue(logic.getFilteredPersonList().isEmpty());
+            } finally {
+                main.getRoot().hide();
+            }
+            return null;
+        });
+    }
+
+    @Test
     public void execute_successRejectionAndMalformedFile_logsNoPrivatePayload() throws Exception {
         String marker = "PrivateContactAlpha";
         String phone = "98765432101234";

@@ -14,6 +14,9 @@ final class UiIcon {
     private static final String TRASH =
             "M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z";
     private static final String PLUS = "M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z";
+    private static final String CROSS =
+            "M18.3 5.71 12 12l6.3 6.29-1.41 1.42L10.59 13.4l-6.3 6.3-1.41-1.41 6.29-6.3"
+                    + "-6.29-6.29L4.3 4.3l6.3 6.29 6.29-6.29z";
 
     private UiIcon() {
     }
@@ -32,6 +35,10 @@ final class UiIcon {
 
     static SVGPath plus() {
         return icon(PLUS);
+    }
+
+    static SVGPath cross() {
+        return icon(CROSS);
     }
 
     private static SVGPath icon(String content) {

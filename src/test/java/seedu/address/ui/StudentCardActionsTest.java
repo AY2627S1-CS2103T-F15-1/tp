@@ -103,9 +103,11 @@ public class StudentCardActionsTest {
             Button edit = (Button) root.lookup("#cardEditButton");
             Button phone = (Button) root.lookup("#phoneEditButton");
             Button cancel = (Button) root.lookup("#cancelEditButton");
+            Button subject = (Button) root.lookup("#subjectEditButton");
 
             edit.fire();
             assertTrue(phone.isVisible());
+            assertTrue(subject.isVisible());
             assertTrue(cancel.isVisible());
             phone.fire();
             assertEquals("edit 2 p/", input.getText());
@@ -115,6 +117,20 @@ public class StudentCardActionsTest {
             cancel.fire();
             assertEquals("", input.getText());
             assertFalse(phone.isVisible());
+        });
+    }
+
+    @Test
+    public void subjectPencil_populatesTheCorrectEditDraft() throws Exception {
+        onFx(() -> {
+            Node root = new PersonCard(student, 2, assist).getRoot();
+            Button edit = (Button) root.lookup("#cardEditButton");
+            Button subject = (Button) root.lookup("#subjectEditButton");
+
+            edit.fire();
+            subject.fire();
+
+            assertEquals("edit 2 s/", input.getText());
         });
     }
 

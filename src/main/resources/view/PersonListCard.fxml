@@ -43,6 +43,10 @@
                 styleClass="card-action" visible="false" managed="false">
           <tooltip><Tooltip text="Edit fields" /></tooltip>
         </Button>
+        <Button fx:id="cancelEditButton" mnemonicParsing="false" onAction="#handleCancelEdit"
+                styleClass="cancel-edit" text="Cancel" visible="false" managed="false">
+          <tooltip><Tooltip text="Cancel field editing" /></tooltip>
+        </Button>
         <Button fx:id="cardArchiveButton" mnemonicParsing="false" onAction="#handleArchive"
                 styleClass="card-action" visible="false" managed="false">
           <tooltip><Tooltip text="Archive student" /></tooltip>
@@ -52,13 +56,7 @@
           <tooltip><Tooltip text="Delete student" /></tooltip>
         </Button>
       </HBox>
-      <HBox spacing="4" alignment="CENTER_LEFT">
-        <FlowPane fx:id="subjects" />
-        <Button fx:id="subjectEditButton" mnemonicParsing="false" onAction="#handleSubjectEdit"
-                styleClass="field-edit" visible="false" managed="false">
-          <tooltip><Tooltip text="Edit subjects" /></tooltip>
-        </Button>
-      </HBox>
+      <FlowPane fx:id="subjects" hgap="4" vgap="4" columnHalignment="LEFT" />
       <HBox spacing="4" alignment="CENTER_LEFT">
         <Label fx:id="phone" styleClass="cell_small_label" text="\$phone" />
         <Button fx:id="phoneEditButton" mnemonicParsing="false" onAction="#handlePhoneEdit"
@@ -92,12 +90,6 @@
         <Button fx:id="remarkEditButton" mnemonicParsing="false" onAction="#handleRemarkEdit"
                 styleClass="field-edit" visible="false" managed="false">
           <tooltip><Tooltip text="Edit remark" /></tooltip>
-        </Button>
-      </HBox>
-      <HBox fx:id="editFooter" spacing="8" alignment="CENTER_LEFT" visible="false" managed="false">
-        <Button fx:id="cancelEditButton" mnemonicParsing="false" onAction="#handleCancelEdit"
-                styleClass="cancel-edit" text="Cancel">
-          <tooltip><Tooltip text="Cancel field editing" /></tooltip>
         </Button>
       </HBox>
     </VBox>

@@ -3,6 +3,7 @@ package seedu.address.ui;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
@@ -55,13 +56,11 @@ public class PersonCard extends UiPart<Region> {
     @FXML
     private Button cardDeleteButton;
     @FXML
-    private HBox editFooter;
+    private Button cancelEditButton;
     @FXML
     private Button nameEditButton;
     @FXML
     private Button levelEditButton;
-    @FXML
-    private Button subjectEditButton;
     @FXML
     private Button phoneEditButton;
     @FXML
@@ -72,11 +71,10 @@ public class PersonCard extends UiPart<Region> {
     private Button venueEditButton;
     @FXML
     private Button remarkEditButton;
-    @FXML
-    private Button cancelEditButton;
 
     private final int displayedIndex;
     private final CommandAssist commandAssist;
+    private Button subjectEditButton;
     private boolean isEditMode;
     private boolean isTouchRevealed;
 
@@ -105,10 +103,26 @@ public class PersonCard extends UiPart<Region> {
         showIfPresent(email, person.getEmail().map(value -> value.value).orElse(null));
         showIfPresent(venue, person.getVenue().map(value -> value.value).orElse(null));
         remark.setText(person.getRemark().value);
+        showSubjects();
+        configureActions();
+    }
+
+    /** Shows each subject followed by the shared pencil that edits the whole subject set. */
+    private void showSubjects() {
         person.getSubjects().stream()
                 .sorted(Subject.DISPLAY_ORDER)
                 .forEach(subject -> subjects.getChildren().add(new Label(subject.value)));
-        configureActions();
+        subjectEditButton = new Button();
+        subjectEditButton.setId("subjectEditButton");
+        subjectEditButton.getStyleClass().add("field-edit");
+        subjectEditButton.setOnAction(event -> handleSubjectEdit());
+        subjectEditButton.setTooltip(new Tooltip("Edit subjects"));
+        subjectEditButton.setGraphic(UiIcon.pencil());
+        subjectEditButton.setAccessibleText("Edit subjects");
+        subjectEditButton.setFocusTraversable(true);
+        subjectEditButton.setVisible(false);
+        subjectEditButton.setManaged(false);
+        subjects.getChildren().add(subjectEditButton);
     }
 
     private void configureActions() {
@@ -117,7 +131,6 @@ public class PersonCard extends UiPart<Region> {
         cardDeleteButton.setGraphic(UiIcon.trash());
         nameEditButton.setGraphic(UiIcon.pencil());
         levelEditButton.setGraphic(UiIcon.pencil());
-        subjectEditButton.setGraphic(UiIcon.pencil());
         phoneEditButton.setGraphic(UiIcon.pencil());
         rateEditButton.setGraphic(UiIcon.pencil());
         emailEditButton.setGraphic(UiIcon.pencil());
@@ -135,7 +148,6 @@ public class PersonCard extends UiPart<Region> {
         cardDeleteButton.setAccessibleText("Delete student");
         nameEditButton.setAccessibleText("Edit name");
         levelEditButton.setAccessibleText("Edit level");
-        subjectEditButton.setAccessibleText("Edit subjects");
         phoneEditButton.setAccessibleText("Edit phone number");
         rateEditButton.setAccessibleText("Edit rate");
         emailEditButton.setAccessibleText("Edit email");
@@ -167,6 +179,8 @@ public class PersonCard extends UiPart<Region> {
         cardEditButton.setVisible(isVisible);
         cardArchiveButton.setVisible(isVisible);
         cardDeleteButton.setVisible(isVisible);
+        cancelEditButton.setVisible(isVisible && isEditMode);
+        cancelEditButton.setManaged(isVisible && isEditMode);
         cardEditButton.setManaged(isVisible);
         cardArchiveButton.setManaged(isVisible);
         cardDeleteButton.setManaged(isVisible);
@@ -179,8 +193,8 @@ public class PersonCard extends UiPart<Region> {
             button.setVisible(isVisible);
             button.setManaged(isVisible);
         }
-        editFooter.setVisible(isVisible);
-        editFooter.setManaged(isVisible);
+        cancelEditButton.setVisible(isVisible);
+        cancelEditButton.setManaged(isVisible);
         updateActionVisibility();
     }
 

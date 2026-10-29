@@ -2,6 +2,7 @@ package seedu.address.ui;
 
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -23,6 +24,8 @@ public class CommandBox extends UiPart<Region> implements CommandDraftTarget {
 
     @FXML
     private TextField commandTextField;
+    @FXML
+    private Button clearCommandButton;
 
     /**
      * Creates a {@code CommandBox} with the given {@code CommandExecutor}.
@@ -31,8 +34,14 @@ public class CommandBox extends UiPart<Region> implements CommandDraftTarget {
         super(FXML);
         this.commandExecutor = commandExecutor;
         // calls #setStyleToDefault() whenever there is a change to the text of the command box.
-        commandTextField.textProperty().addListener((unused1, unused2, unused3) -> setStyleToDefault());
+        commandTextField.textProperty().addListener((unused1, unused2, newText) -> {
+            setStyleToDefault();
+            updateClearButton(newText);
+        });
         commandTextField.addEventFilter(KeyEvent.KEY_PRESSED, this::handleHistoryKey);
+        clearCommandButton.setGraphic(UiIcon.cross());
+        clearCommandButton.setFocusTraversable(true);
+        updateClearButton(commandTextField.getText());
     }
 
     /** Returns the current command text. */
@@ -72,6 +81,19 @@ public class CommandBox extends UiPart<Region> implements CommandDraftTarget {
     private void showInTextField(String text) {
         commandTextField.setText(text);
         commandTextField.positionCaret(text.length());
+    }
+
+    /** Shows the clear control only when there is text to clear. */
+    private void updateClearButton(String text) {
+        boolean isPresent = text != null && !text.isEmpty();
+        clearCommandButton.setVisible(isPresent);
+        clearCommandButton.setManaged(isPresent);
+    }
+
+    /** Clears the current command text and returns focus to the input. */
+    @FXML
+    private void handleClearCommand() {
+        clearAndFocus();
     }
 
     /**
