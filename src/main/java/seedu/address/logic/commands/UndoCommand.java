@@ -25,7 +25,7 @@ public class UndoCommand extends Command {
         if (type == DestructiveActionType.NONE) {
             throw new CommandException(MESSAGE_NOTHING);
         }
-        return new CommandResult(String.format(MESSAGE_SUCCESS, type.description), false, false);
+        return new CommandResult(String.format(MESSAGE_SUCCESS, type.description));
     }
 
     @Override
