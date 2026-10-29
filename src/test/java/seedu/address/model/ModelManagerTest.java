@@ -33,7 +33,6 @@ import seedu.address.model.person.StudentOrder;
 import seedu.address.model.person.exceptions.PersonNotFoundException;
 import seedu.address.model.task.Task;
 import seedu.address.testutil.AddressBookBuilder;
-import seedu.address.testutil.HomeworkBuilder;
 import seedu.address.testutil.LessonBuilder;
 
 public class ModelManagerTest {
