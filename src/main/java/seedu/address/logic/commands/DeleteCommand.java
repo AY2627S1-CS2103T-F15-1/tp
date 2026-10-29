@@ -24,7 +24,7 @@ import seedu.address.model.task.Task;
  * A student with lessons, homework, follow-up tasks or financial events requires confirmation, because deleting
  * a student also deletes all of those records and this cannot be undone.
  */
-public class DeleteCommand extends Command {
+public class DeleteCommand extends DestructiveCommand {
 
     public static final String COMMAND_WORD = "delete";
     public static final String CONFIRM_KEYWORD = "confirm";
@@ -65,6 +65,11 @@ public class DeleteCommand extends Command {
         requireNonNull(targetIndex);
         this.targetIndex = targetIndex;
         this.isConfirmed = isConfirmed;
+    }
+
+    @Override
+    public String getDestructDescription() {
+        return "student deletion";
     }
 
     @Override

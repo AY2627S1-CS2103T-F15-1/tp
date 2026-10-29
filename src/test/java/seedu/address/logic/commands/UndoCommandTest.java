@@ -40,18 +40,31 @@ public class UndoCommandTest {
     @Test
     public void execute_add_failure() {
         // GEORGE is the last person, so this does not affect the order of persons.
+        model.beforeCommand(true);
         model.deletePerson(GEORGE);
+        model.afterCommand("student deletion", true);
+        model.beforeCommand(false);
         model.addPerson(GEORGE);
+        model.afterCommand(null, true);
         assertCommandFailure(new UndoCommand(), model, MESSAGE_NOTHING);
     }
 
     @Test
-    public void execute_deleteAndUndo_successAndFailure() {
+    public void execute_deleteAndThreeUndo_successThenFailureThenFailure() {
+        model.beforeCommand(true);
         model.deleteHomework(hw);
+        model.afterCommand("homework deletion", true);
         CommandResult expected = new CommandResult(
                 String.format(MESSAGE_SUCCESS, "homework deletion"),
                 false, false);
+        model.beforeCommand(false);
         assertCommandSuccess(new UndoCommand(), model, expected, expectedModel);
-        assertCommandFailure(new UndoCommand(), model, MESSAGE_NOTHING);
+        model.afterCommand(null, true);
+        // repeat
+        for (int i = 0; i <= 1; i++) {
+            model.beforeCommand(false);
+            assertCommandFailure(new UndoCommand(), model, MESSAGE_NOTHING);
+            model.afterCommand(null, false);
+        }
     }
 }

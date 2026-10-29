@@ -4,7 +4,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.logic.commands.CommandTestUtil.LEVEL_DESC_AMY;
+import static seedu.address.logic.commands.CommandTestUtil.NAME_DESC_AMY;
+import static seedu.address.logic.commands.CommandTestUtil.PHONE_DESC_AMY;
+import static seedu.address.logic.commands.CommandTestUtil.RATE_DESC_AMY;
+import static seedu.address.logic.commands.CommandTestUtil.SUBJECT_DESC_MATH;
 import static seedu.address.testutil.TypicalPersons.BENSON;
+import static seedu.address.testutil.TypicalPersons.CARL;
 import static seedu.address.testutil.TypicalPersons.ELLE;
 import static seedu.address.testutil.TypicalPersons.GEORGE;
 
@@ -89,5 +95,26 @@ public class UndoIntegrationTest {
         assertFalse(logic.hasUnsavedChanges());
         assertTrue(logic.getFilteredPersonList().contains(ELLE));
         assertTrue(logic.getFilteredPersonList().contains(BENSON));
+    }
+
+    @Test
+    public void execute_nonDestructive_undoFails() throws CommandException, ParseException {
+        willSaveFail = false;
+
+        Model model = new ModelManager();
+        model.addPerson(GEORGE);
+        model.addPerson(CARL);
+        LogicManager logic = createLogic(model);
+
+        logic.execute("list");
+
+        CommandException ex = assertThrows(CommandException.class, () -> logic.execute("undo"));
+        assertTrue(ex.getMessage().contains("Nothing to undo"));
+
+        logic.execute("add" + NAME_DESC_AMY + PHONE_DESC_AMY
+                + LEVEL_DESC_AMY + SUBJECT_DESC_MATH + RATE_DESC_AMY);
+
+        ex = assertThrows(CommandException.class, () -> logic.execute("undo"));
+        assertTrue(ex.getMessage().contains("Nothing to undo"));
     }
 }

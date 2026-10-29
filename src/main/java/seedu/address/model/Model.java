@@ -25,6 +25,12 @@ public interface Model {
     /** {@code Predicate} that always evaluates to true for lessons */
     Predicate<Lesson> PREDICATE_SHOW_ALL_LESSONS = unused -> true;
 
+    /** Hook, called before any command execution. */
+    default void beforeCommand(boolean isDestructive) {}
+
+    /** Hook, called after any command execution. */
+    default void afterCommand(String destructiveDescription, boolean isSuccessful) {}
+
     /**
      * Returns the user prefs.
      */
@@ -199,5 +205,5 @@ public interface Model {
     /**
      * Undoes the latest destructive action during this session, if any.
      */
-    DestructiveActionType undoDestructiveAction();
+    String undoDestructiveAction();
 }

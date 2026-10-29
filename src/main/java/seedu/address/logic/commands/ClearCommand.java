@@ -9,7 +9,7 @@ import seedu.address.model.Model;
  * Clears all students, lessons, homework, tasks, and financial history from TutorFlow, but only once
  * the user has confirmed.
  */
-public class ClearCommand extends Command {
+public class ClearCommand extends DestructiveCommand {
 
     public static final String COMMAND_WORD = "clear";
     public static final String CONFIRM_KEYWORD = "confirm";
@@ -39,6 +39,11 @@ public class ClearCommand extends Command {
      */
     public ClearCommand(boolean isConfirmed) {
         this.isConfirmed = isConfirmed;
+    }
+
+    @Override
+    public String getDestructDescription() {
+        return "clear";
     }
 
     @Override

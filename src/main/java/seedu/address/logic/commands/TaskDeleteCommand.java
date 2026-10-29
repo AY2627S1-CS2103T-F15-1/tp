@@ -12,7 +12,7 @@ import seedu.address.model.task.Task;
 /**
  * Deletes a task that is shown, once the user has confirmed it.
  */
-public class TaskDeleteCommand extends Command {
+public class TaskDeleteCommand extends DestructiveCommand {
 
     public static final String COMMAND_WORD = TaskCommandParser.COMMAND_WORD + " delete";
     public static final String CONFIRM_KEYWORD = "confirm";
@@ -38,6 +38,11 @@ public class TaskDeleteCommand extends Command {
         requireNonNull(index);
         this.index = index;
         this.isConfirmed = isConfirmed;
+    }
+
+    @Override
+    public String getDestructDescription() {
+        return "task deletion";
     }
 
     @Override

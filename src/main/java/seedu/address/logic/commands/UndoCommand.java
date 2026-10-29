@@ -1,7 +1,6 @@
 package seedu.address.logic.commands;
 
 import seedu.address.logic.commands.exceptions.CommandException;
-import seedu.address.model.DestructiveActionType;
 import seedu.address.model.Model;
 
 /**
@@ -21,11 +20,11 @@ public class UndoCommand extends Command {
 
     @Override
     public CommandResult execute(Model model) throws CommandException {
-        DestructiveActionType type = model.undoDestructiveAction();
-        if (type == DestructiveActionType.NONE) {
+        String desc = model.undoDestructiveAction();
+        if (desc == null) {
             throw new CommandException(MESSAGE_NOTHING);
         }
-        return new CommandResult(String.format(MESSAGE_SUCCESS, type.description));
+        return new CommandResult(String.format(MESSAGE_SUCCESS, desc));
     }
 
     @Override

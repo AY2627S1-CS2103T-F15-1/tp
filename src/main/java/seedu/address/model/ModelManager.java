@@ -56,6 +56,16 @@ public class ModelManager implements Model {
         this(new AddressBook(), new UserPrefs());
     }
 
+    @Override
+    public void beforeCommand(boolean isDestructive) {
+        this.addressBook.beforeCommand(isDestructive);
+    }
+
+    @Override
+    public void afterCommand(String destructiveDescription, boolean isSuccessful) {
+        this.addressBook.afterCommand(destructiveDescription, isSuccessful);
+    }
+
     //=========== UserPrefs ==================================================================================
 
     @Override
@@ -230,7 +240,7 @@ public class ModelManager implements Model {
 
     //=========== Undo ============================================================
     @Override
-    public DestructiveActionType undoDestructiveAction() {
+    public String undoDestructiveAction() {
         return this.addressBook.undoDestructiveAction();
     }
 
