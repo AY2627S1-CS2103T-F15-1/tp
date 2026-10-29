@@ -176,8 +176,11 @@ public class AgendaCommandTest {
 
         String[] lines = new AgendaCommand(MONDAY, true).execute(model).getFeedbackToUser().split("\n");
 
+        long shownWarnings = java.util.Arrays.stream(lines)
+                .filter(line -> line.startsWith("Travel warning:")).count();
+        assertEquals(50, shownWarnings, String.join("\n", lines));
         assertTrue(java.util.Arrays.stream(lines)
-                .anyMatch(line -> line.matches("Showing \\d+ of \\d+ travel warnings.")),
+                .anyMatch(line -> line.equals("Showing 50 of 110 travel warnings.")),
                 String.join("\n", lines));
     }
 

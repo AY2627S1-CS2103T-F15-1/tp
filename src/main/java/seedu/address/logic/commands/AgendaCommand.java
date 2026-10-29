@@ -100,7 +100,8 @@ public class AgendaCommand extends Command {
                 String warnings = LessonCommandUtil.getTravelWarnings(model,
                         lesson -> lesson.getDate().value.equals(currentDay), "", remainingWarnings);
                 week.append(warnings);
-                remainingWarnings -= (int) warnings.lines().count();
+                remainingWarnings -= LessonCommandUtil.countTravelWarnings(model,
+                        lesson -> lesson.getDate().value.equals(currentDay), remainingWarnings);
             }
         }
         int totalWarnings = LessonCommandUtil.countTravelWarnings(model,

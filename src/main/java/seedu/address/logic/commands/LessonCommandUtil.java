@@ -238,6 +238,13 @@ final class LessonCommandUtil {
         return formatTravelWarnings(model, gap -> destinations.test(gap.next()), indentation, limit);
     }
 
+    /** Counts the destination warnings that {@link #getTravelWarnings} would render for a limit. */
+    static int countTravelWarnings(Model model, Predicate<Lesson> destinations, int limit) {
+        return (int) TravelGap.find(model.getAddressBook().getLessonList(),
+                model.getAddressBook().getTravelBuffer()).stream()
+                .filter(gap -> destinations.test(gap.next())).limit(limit).count();
+    }
+
     /** Counts the destination warnings that the same selector would report without a display limit. */
     static int countTravelWarnings(Model model, Predicate<Lesson> destinations) {
         return (int) TravelGap.find(model.getAddressBook().getLessonList(),
