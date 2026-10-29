@@ -415,13 +415,19 @@ The activity diagram below shows what `delete INDEX [confirm]` does.
 #### Current Implementation
 A new class `VersionedAddressBook` extends `AddressBook` with undo functionality. 
 `ModelManager` converts any `AddressBook`s given into this new class, enabling undo functionality throughout the codebase.
-This new class adds two fields.
-`lastState` stores a snapshot of the `AddressBook` before any destructive action. After an `undo` call, the state is restored from here.
-`lastDestructiveAction` stores what the action was.
+This new class adds three new fields.
+`transitionState` stores a snapshot of the `AddressBook` before any destructive action. 
+`lastState` stores a snapshot of the `AddressBook` before the last destructive action.
+It is populated from `transitionState` after a successful destructive command.
+After an `undoDestructiveAction` call, the state is restored from here.
+`lastDestructiveAction` stores what the description of the action.
+
+`VersionedAddressBook` depends on `beforeCommand` and `afterCommand` hooks to manage `transitionState`, `lastState`, and `lastDestructiveAction`.
+It exposes these hooks through `Model` to allow the command execution logic to activate them.
 
 `VersionedAddressBook` provides an `undoDestructiveAction` method to restore to a previous state. This is exposed by `Model` as well.
 
-
+The undo command simply uses this `undoDestructiveAction` method and shows the results to the user.
 
 #### Old Implementation
 The current ModelManager implementation adds three fields.

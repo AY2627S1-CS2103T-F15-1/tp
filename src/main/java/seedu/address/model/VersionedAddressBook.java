@@ -25,7 +25,7 @@ public class VersionedAddressBook extends AddressBook {
 
     /**
      * Hook to be run after commands execute,
-     * allowing us to change our snapshot states based on the outcome of the command.
+     * allowing us to update our snapshot states based on the outcome of the command.
      */
     public void afterCommand(String destructiveDescription, boolean isSuccessful) {
         if (isSuccessful) {
