@@ -540,4 +540,14 @@ public class AddressBookTest {
         addressBook.setTask(addressBook.getTaskList().get(0), addressBook.getTaskList().get(0).markDone());
         assertFalse(source.equals(addressBook));
     }
+
+    @Test
+    public void isEmpty_emptyOrReset_True() {
+        assertTrue(new AddressBook().isEmpty());
+        addressBook.addPerson(ALICE);
+        addressBook.addLesson(ALICE_MATH);
+        assertFalse(addressBook.isEmpty());
+        addressBook.clearData();
+        assertTrue(addressBook.isEmpty());
+    }
 }
