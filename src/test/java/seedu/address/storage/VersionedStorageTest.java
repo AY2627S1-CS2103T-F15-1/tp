@@ -89,7 +89,7 @@ public class VersionedStorageTest {
     }
 
     @Test
-    public void save_withTasks_writesSchema18AndABuildThatStopsAt17WouldRefuseIt() throws Exception {
+    public void save_withTasks_writesSchema19AndABuildThatStopsAt18WouldRefuseIt() throws Exception {
         Path current = directory.resolve("tutorflow-v14.json");
         AddressBook book = TypicalPersons.getTypicalAddressBook();
         book.addTask(new TaskBuilder().build());
@@ -98,10 +98,10 @@ public class VersionedStorageTest {
         JsonNode saved = new ObjectMapper().readTree(Files.readString(current));
         int savedVersion = saved.get("schemaVersion").intValue();
 
-        assertEquals(VERSION_BEFORE_TASKS + 2, StorageSchema.CURRENT_VERSION);
+        assertEquals(VERSION_BEFORE_TASKS + 3, StorageSchema.CURRENT_VERSION);
         assertEquals(StorageSchema.CURRENT_VERSION, savedVersion);
         assertEquals(1, saved.get("tasks").size());
-        // A v17 build accepts only versions up to 17 (StorageSchema.requireSupported), so it refuses this file
+        // A v18 build accepts only versions up to 18 (StorageSchema.requireSupported), so it refuses this file
         // instead of loading it without the tasks and then erasing them on its next save.
         assertTrue(savedVersion > VERSION_BEFORE_TASKS);
         assertEquals(book, new VersionedAddressBookStorage(current, directory.resolve("addressbook.json"))

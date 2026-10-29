@@ -128,6 +128,12 @@ class JsonSerializableAddressBook {
             throw new IllegalValueException("Task's paymentId field requires schema version "
                     + StorageSchema.TASK_PAYMENT_VERSION + " or later.");
         }
+        if ((schemaVersion == null || schemaVersion < StorageSchema.WITHDRAWAL_VERSION)
+                && ledgerEntries.stream().filter(java.util.Objects::nonNull)
+                        .anyMatch(JsonAdaptedLedgerEntry::isWithdrawal)) {
+            throw new IllegalValueException("Ledger entry kind WITHDRAWAL requires schema version "
+                    + StorageSchema.WITHDRAWAL_VERSION + " or later.");
+        }
         Set<UUID> studentIds = new HashSet<>();
         Set<UUID> lessonIds = new HashSet<>();
         AddressBook addressBook = new AddressBook();

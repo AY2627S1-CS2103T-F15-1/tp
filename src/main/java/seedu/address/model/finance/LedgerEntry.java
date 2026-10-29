@@ -11,9 +11,9 @@ import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
 
 /**
- * An immutable charge, payment or reversal. Amounts are captured when recorded, independently of later rate changes.
- * A mistake is never deleted: a reversal is a further entry that cancels the entry named by {@code reverses}, so the
- * history shows that a correction happened.
+ * An immutable charge, payment, withdrawal or reversal. Amounts are captured when recorded, independently of later
+ * rate changes. A mistake is never deleted: a reversal is a further entry that cancels the entry named by
+ * {@code reverses}, so the history shows that a correction happened.
  */
 public record LedgerEntry(UUID id, UUID studentId, UUID lessonId, Kind kind,
         BigDecimal amount, LocalDate date, String notes, UUID reverses) {
@@ -22,7 +22,7 @@ public record LedgerEntry(UUID id, UUID studentId, UUID lessonId, Kind kind,
 
     /** The financial effect of a record. */
     public enum Kind {
-        CHARGE, PAYMENT, CHARGE_REVERSAL, PAYMENT_REVERSAL;
+        CHARGE, PAYMENT, CHARGE_REVERSAL, PAYMENT_REVERSAL, WITHDRAWAL;
 
         /** Returns whether this kind cancels an earlier entry. */
         public boolean isReversal() {
@@ -34,9 +34,9 @@ public record LedgerEntry(UUID id, UUID studentId, UUID lessonId, Kind kind,
             return this == CHARGE || this == CHARGE_REVERSAL;
         }
 
-        /** Returns whether entries of this kind add to what the student owes. */
+        /** Returns whether entries of this kind increase what the student owes or decrease available credit. */
         public boolean increasesBalance() {
-            return this == CHARGE || this == PAYMENT_REVERSAL;
+            return this == CHARGE || this == PAYMENT_REVERSAL || this == WITHDRAWAL;
         }
     }
 
@@ -116,6 +116,16 @@ public record LedgerEntry(UUID id, UUID studentId, UUID lessonId, Kind kind,
     /** Creates a payment with optional one-line notes, such as a transfer reference. */
     public static LedgerEntry payment(Person student, BigDecimal amount, LocalDate date, String notes) {
         return new LedgerEntry(UUID.randomUUID(), student.getId(), null, Kind.PAYMENT, amount, date, notes);
+    }
+
+    /** Creates a withdrawal from a student's available credit. */
+    public static LedgerEntry withdrawal(Person student, BigDecimal amount, LocalDate date) {
+        return withdrawal(student, amount, date, null);
+    }
+
+    /** Creates a withdrawal from a student's available credit with optional notes. */
+    public static LedgerEntry withdrawal(Person student, BigDecimal amount, LocalDate date, String notes) {
+        return new LedgerEntry(UUID.randomUUID(), student.getId(), null, Kind.WITHDRAWAL, amount, date, notes);
     }
 
     /** Returns whether optional payment notes meet the specification's separate 200-character limit. */

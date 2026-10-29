@@ -13,7 +13,8 @@ public class Phone {
     public static final String MESSAGE_CONSTRAINTS = "Phone numbers must contain 8 to 15 digits, optionally "
             + "starting with '+'. Spaces and hyphens between the digits are allowed.";
     public static final String VALIDATION_REGEX = "\\+?\\d{8,15}";
-    private static final String INPUT_REGEX = "\\+?\\d[\\d -]*";
+    private static final String INPUT_REGEX = "\\+?\\d+(?:[ -]\\d+)*";
+    private static final String LEGACY_INPUT_REGEX = "\\+?\\d[\\d -]*";
     public final String value;
 
     /**
@@ -46,7 +47,7 @@ public class Phone {
 
     /** Accepts the old three-digit minimum only when restoring stored data. */
     public static boolean isValidStoredPhone(String value) {
-        return value.matches(INPUT_REGEX) && value.replaceAll("[ -]", "").matches("\\+?\\d{3,15}");
+        return value.matches(LEGACY_INPUT_REGEX) && value.replaceAll("[ -]", "").matches("\\+?\\d{3,15}");
     }
 
     /** Restores a phone accepted by v1.3 or the current input policy. */

@@ -11,7 +11,7 @@ import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
 
-/** Formats the account of one student: every charge and payment in date order, with a running balance. */
+/** Formats the account of one student: every charge, payment and withdrawal in date order, with a running balance. */
 public final class AccountStatement {
     public static final String MESSAGE_NO_ACTIVITY = "No charges or payments recorded for %1$s.";
 
@@ -34,11 +34,14 @@ public final class AccountStatement {
         BigDecimal running = Ledger.ZERO;
         BigDecimal charged = Ledger.ZERO;
         BigDecimal paid = Ledger.ZERO;
+        BigDecimal withdrawn = Ledger.ZERO;
         for (LedgerEntry entry : entries) {
             BigDecimal signed = entry.kind().increasesBalance() ? entry.amount() : entry.amount().negate();
             running = running.add(signed);
             if (entry.kind().refersToLesson()) {
                 charged = charged.add(signed);
+            } else if (entry.kind() == LedgerEntry.Kind.WITHDRAWAL) {
+                withdrawn = withdrawn.add(entry.amount());
             } else {
                 paid = paid.subtract(signed);
             }
@@ -47,7 +50,8 @@ public final class AccountStatement {
         }
         return statement.append("\nTotal charged ").append(Ledger.format(charged))
                 .append(" · total paid ").append(Ledger.format(paid))
-                .append(" (after reversals) · ").append(Ledger.describeBalance(running)).toString();
+                .append(" (after reversals) · total withdrawn ").append(Ledger.format(withdrawn))
+                .append(" · ").append(Ledger.describeBalance(running)).toString();
     }
 
     /**
@@ -60,6 +64,9 @@ public final class AccountStatement {
         }
         if (entry.kind() == LedgerEntry.Kind.PAYMENT) {
             return "payment -" + Ledger.format(entry.amount());
+        }
+        if (entry.kind() == LedgerEntry.Kind.WITHDRAWAL) {
+            return "withdrawal -" + Ledger.format(entry.amount());
         }
         Optional<Lesson> lesson = book.getLessonList().stream()
                 .filter(candidate -> candidate.getId().equals(entry.lessonId())).findFirst();

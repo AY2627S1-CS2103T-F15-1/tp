@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
 import java.math.BigDecimal;
+import java.util.Locale;
 
 /**
  * Represents a student's lesson rate in TutorFlow, in dollars.
@@ -54,7 +55,7 @@ public class Rate {
      * Returns the rate formatted as a dollar amount with 2 decimal places.
      */
     public String toDisplayString() {
-        return String.format("$%.2f", value);
+        return String.format(Locale.ROOT, "$%.2f", value);
     }
 
     @Override

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
 import java.math.BigDecimal;
+import java.util.Locale;
 
 import org.junit.jupiter.api.Test;
 
@@ -59,6 +60,18 @@ public class RateTest {
     public void toDisplayString_formatsWithTwoDecimalPlaces() {
         assertEquals("$50.00", new Rate("50").toDisplayString());
         assertEquals("$62.50", new Rate("62.5").toDisplayString());
+    }
+
+    @Test
+    public void toDisplayString_commaDecimalLocale_stillUsesPeriod() {
+        Locale previous = Locale.getDefault();
+        try {
+            Locale.setDefault(Locale.GERMANY);
+            assertEquals("$50.00", new Rate("50").toDisplayString());
+            assertEquals("$62.50", new Rate("62.5").toDisplayString());
+        } finally {
+            Locale.setDefault(previous);
+        }
     }
 
     @Test

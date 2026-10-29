@@ -36,6 +36,13 @@ public class PhoneTest {
         assertFalse(Phone.isValidPhone("9123+4567")); // plus sign within digits
         assertFalse(Phone.isValidPhone("- 9123 4567")); // starts with a separator
         assertFalse(Phone.isValidPhone("1234567890123456")); // more than 15 digits
+        assertFalse(Phone.isValidPhone("91234567-")); // trailing hyphen
+        assertFalse(Phone.isValidPhone("9--1234567")); // repeated hyphens
+        assertFalse(Phone.isValidPhone("9123 4567 ")); // trailing space
+        assertFalse(Phone.isValidPhone("+65- 9123 4567")); // repeated mixed separators
+        assertFalse(Phone.isValidPhone(" "));
+        assertFalse(Phone.isValidPhone(" - "));
+        assertFalse(Phone.isValidPhone("+"));
 
         // valid phone numbers
         assertFalse(Phone.isValidPhone("911")); // fewer than eight digits
@@ -45,6 +52,8 @@ public class PhoneTest {
         assertTrue(Phone.isValidPhone("9312 1534")); // spaces within digits
         assertTrue(Phone.isValidPhone("9312-1534")); // hyphens within digits
         assertTrue(Phone.isValidPhone("+65 9123-4567")); // plus sign with separators
+        assertTrue(Phone.isValidPhone("+65 9123 4567")); // separators between all digit groups
+        assertTrue(Phone.isValidPhone("91234567")); // a single digit group
     }
 
     @Test
@@ -52,6 +61,13 @@ public class PhoneTest {
         assertEquals("91234567", new Phone("9123 4567").value);
         assertEquals("+6591234567", new Phone("+65 9123-4567").value);
         assertEquals(new Phone("91234567"), new Phone("9123-4567"));
+    }
+
+    @Test
+    public void storedPhone_oldPermissiveSeparators_stillLoads() {
+        assertEquals("91234567", Phone.fromStored("91234567-").value);
+        assertEquals("91234567", Phone.fromStored("9--1234567").value);
+        assertEquals("91234567", Phone.fromStored("9123 4567 ").value);
     }
 
     @Test

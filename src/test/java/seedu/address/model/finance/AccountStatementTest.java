@@ -44,7 +44,8 @@ public class AccountStatementTest {
                 + "2026-10-17 charge Chemistry lesson $90.00 bal $90.00\n"
                 + "2026-10-19 payment -$90.00 bal $0.00\n"
                 + "2026-10-19 payment -$10.50 bal IN CREDIT $10.50\n"
-                + "Total charged $90.00 · total paid $100.50 (after reversals) · IN CREDIT $10.50",
+                + "Total charged $90.00 · total paid $100.50 (after reversals) · total withdrawn $0.00"
+                + " · IN CREDIT $10.50",
                 AccountStatement.format(book, bob));
     }
 
@@ -60,7 +61,8 @@ public class AccountStatementTest {
         assertEquals("Account — Lee Bob\n"
                 + "2026-10-17 charge Chemistry lesson $90.00 bal $90.00\n"
                 + "2026-10-18 payment -$20.00 bal $70.00\n"
-                + "Total charged $90.00 · total paid $20.00 (after reversals) · OUTSTANDING $70.00",
+                + "Total charged $90.00 · total paid $20.00 (after reversals) · total withdrawn $0.00"
+                + " · OUTSTANDING $70.00",
                 AccountStatement.format(book, bob));
     }
 
@@ -77,7 +79,8 @@ public class AccountStatementTest {
                 + "2026-10-17 charge Chemistry lesson $90.00 bal $90.00\n"
                 + "2026-10-19 payment -$90.00 bal $0.00\n"
                 + "2026-10-19 reversal of payment (2026-10-19) $90.00 bal $90.00\n"
-                + "Total charged $90.00 · total paid $0.00 (after reversals) · OUTSTANDING $90.00",
+                + "Total charged $90.00 · total paid $0.00 (after reversals) · total withdrawn $0.00"
+                + " · OUTSTANDING $90.00",
                 AccountStatement.format(book, bob));
     }
 
@@ -92,7 +95,23 @@ public class AccountStatementTest {
         assertEquals("Account — Lee Bob\n"
                 + "2026-10-17 charge Chemistry lesson $90.00 bal $90.00\n"
                 + "2026-10-18 reversal of charge (2026-10-17) $90.00 bal $0.00\n"
-                + "Total charged $0.00 · total paid $0.00 (after reversals) · OUTSTANDING $0.00",
+                + "Total charged $0.00 · total paid $0.00 (after reversals) · total withdrawn $0.00"
+                + " · OUTSTANDING $0.00",
+                AccountStatement.format(book, bob));
+    }
+
+    @Test
+    public void format_withdrawal_listsAndReducesCredit() {
+        AddressBook book = new AddressBook();
+        book.addPerson(bob);
+        book.addLedgerEntry(LedgerEntry.payment(bob, new BigDecimal("100"), DAY));
+        book.addLedgerEntry(LedgerEntry.withdrawal(bob, new BigDecimal("30"), DAY.plusDays(1), "cash"));
+
+        assertEquals("Account — Lee Bob\n"
+                + "2026-10-17 payment -$100.00 bal IN CREDIT $100.00\n"
+                + "2026-10-18 withdrawal -$30.00 bal IN CREDIT $70.00\n"
+                + "Total charged $0.00 · total paid $100.00 (after reversals) · total withdrawn $30.00"
+                + " · IN CREDIT $70.00",
                 AccountStatement.format(book, bob));
     }
 
