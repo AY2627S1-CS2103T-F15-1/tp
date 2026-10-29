@@ -77,6 +77,10 @@ The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDi
 
 `CommandBox` also lets the user step through the commands entered in the session with the `Up` and `Down` keys. The steps are kept by `CommandHistory`, a plain class with no JavaFX dependency, so it can be unit tested. It keeps the latest 100 commands, ignores blank commands and a repeat of the previous command, and remembers what the user had typed before stepping back so that `Down` returns to it. A command is recorded when it is entered, whether it succeeds or not. A failed command is left in the text field, and `CommandHistory` does not offer it again on the first `Up`, because it is already shown.
 
+`CommandAssist` is the shared layer for the student-card shortcuts. It formats drafts using `CliSyntax` prefixes and command words, writes them through the small `CommandDraftTarget` interface implemented by `CommandBox`, and never calls `Logic`. `PersonCard` only reports the card's displayed index and the chosen field; it does not construct command strings or change model data. Field-editing mode is closed through a callback owned by `CommandAssist`, so a successful command, a new action on another card, and a change to the displayed list all leave the card and command box in a consistent state.
+
+The shortcut draft uses the same displayed index as the indexed commands. `PersonListPanel` observes its filtered list; when that list changes, an unchanged prepared draft is cleared and field-editing mode is closed, because the old number could now identify another student. A draft that the user edited is kept, as required for predictable cancellation. `CommandAssist` also prints `help COMMAND` to standard output for each shortcut, allowing the existing help command to own the usage text instead of duplicating it in the UI.
+
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-F15-1/tp/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-F15-1/tp/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
 
 The `UI` component,
@@ -1095,6 +1099,29 @@ testers are expected to do more *exploratory* testing.
 
    1. Press `Up` repeatedly, then `Down` repeatedly<br>
       Expected: `find alex`, then `list`, and `Up` again changes nothing. `Down` walks forward and the last `Down` shows `bogus` again.
+
+1. Student-card command shortcuts
+
+   1. Hover over a student card, or move keyboard focus into the card.<br>
+      Expected: Edit, Archive and Delete buttons appear and are reachable by keyboard. On a touch screen, tap the card once to reveal them.
+
+   1. Click the card's Edit button, then the pencil beside the phone number.<br>
+      Expected: `edit INDEX p/` is in the command box and focused, and `help edit` appears on standard output. No student is changed.
+
+   1. Type a replacement phone number after the prefix, then click the pencil beside the name.<br>
+      Expected: The draft is replaced by `edit INDEX n/`; the earlier partial phone draft is discarded.
+
+   1. Click Cancel, then repeat with a field pencil and change some of the prepared text before clicking Cancel.<br>
+      Expected: The unchanged prepared command is cleared. A command you edited is kept.
+
+   1. Click Archive, then Cancel on a card that is still in field-editing mode.<br>
+      Expected: The `archive INDEX` draft is kept, because Cancel closes editing mode without erasing a newer shortcut.
+
+   1. Click the plus button beside the command box.<br>
+      Expected: `add n/` is in the command box and focused. No student is created until you complete the command and press Enter.
+
+   1. With a prepared shortcut still in the command box, run `list`, a search, or another command that changes the displayed list.<br>
+      Expected: An unchanged prepared command is cleared and editing mode closes. Text you typed yourself is kept, because it may be unrelated to the old list.
 
 ### Deleting a student
 
