@@ -354,35 +354,36 @@ Travel warnings for the lessons shown are included after `TODAY'S LESSONS`. The 
 ### Follow-up tasks
 
 A follow-up task (user story 31) is a short reminder, with an optional due date, that is about a student and,
-optionally, one of that student's lessons or homework items. The `task` commands (`add`, `list`, `edit`, `done`,
+optionally, one of that student's lessons, homework items or payments. The `task` commands (`add`, `list`, `edit`, `done`,
 `delete`) live in `logic/commands/Task*Command` and `logic/parser/Task*CommandParser`.
 
 **Model.** `Task` (in `model/task`) is immutable and holds a task id, a description (at most 200 printable
 characters), an optional due date, a done flag and its links: `studentId` (always present), and at most one of
-`lessonId` or `homeworkId`. All three links are the permanent UUIDs of `Person`, `Lesson` and `Homework`. A task never
-copies a name, phone number or lesson slot, so editing or renaming a student, moving, cancelling or rebooking a lesson
-and editing homework never changes what a task is about. This matters because TutorFlow lets a cancelled lesson and a
-new booking share the same slot: only the lesson UUID tells them apart. `Task#isAbout(Person | Lesson | Homework)` is a
-plain UUID comparison. `AddressBook` owns the list of tasks (task ids are unique) and exposes `addTask`, `findTask`, `setTask` and
+`lessonId`, `homeworkId` or `paymentId`. All four links are the permanent UUIDs of `Person`, `Lesson`, `Homework` and
+`LedgerEntry`. A task never copies a name, phone number, lesson slot or amount, so editing or renaming a student,
+moving, cancelling or rebooking a lesson, editing homework and reversing a payment never changes what a task is about.
+This matters because TutorFlow lets a cancelled lesson and a new booking share the same slot: only the lesson UUID
+tells them apart. `Task#isAbout(Person | Lesson | Homework | LedgerEntry)` is a plain UUID comparison. `AddressBook`
+owns the list of tasks (task ids are unique) and exposes `addTask`, `findTask`, `setTask` and
 `removeTask`.
 
 **Cascade rules.** `AddressBook` is the only place that deletes tasks, so a task cannot be orphaned by a command:
 
 | Record removed | Tasks removed |
 |----------------|---------------|
-| Student (`delete`) | every task about the student, including those linked to the student's lessons or homework |
+| Student (`delete`) | every task about the student, including those linked to the student's lessons, homework or payments |
 | Lesson (`Model#deleteLesson`; no command calls it yet) | only tasks whose `lessonId` is that lesson. A rebooking in the same slot is a different lesson and keeps its tasks |
 | Homework (`hw delete`) | only tasks whose `homeworkId` is that item |
 | `clear confirm` | all tasks |
 
-Edits (`edit`, archiving a student, `lesson move`, `lesson cancel`, `hw edit`) leave tasks untouched, because the UUIDs do not
-change. `delete INDEX` counts the linked tasks in its confirmation prompt, using the same list of linked-record counts
-as lessons, so a later feature adds one more count instead of a new message.
+Edits (`edit`, archiving a student, `lesson move`, `lesson cancel`, `hw edit`, `pay reverse`) leave tasks untouched,
+because the UUIDs do not change. `delete INDEX` counts the linked tasks in its confirmation prompt, using the same list
+of linked-record counts as lessons, so a later feature adds one more count instead of a new message.
 
 **Storage.** Tasks are saved in an optional top-level `tasks` array of `JsonAdaptedTask`, beside `persons`, `lessons`,
-`homework` and `ledgerEntries`. A file without `tasks` (schema 16 or older) loads with no tasks. Adding the array bumped
-`StorageSchema.CURRENT_VERSION` to 17, so that a build that stops at schema 16 refuses a schema 17 file rather than loading it
-without the tasks and then deleting them on its next save.
+`homework` and `ledgerEntries`. A file without `tasks` (schema 16 or older) loads with no tasks. Adding the array
+bumped `StorageSchema.CURRENT_VERSION` to 17, and the optional `paymentId` bumped it to 18, so that older builds
+refuse a newer file rather than loading it without those links and then deleting them on the next save.
 
 ```json
 {
@@ -399,17 +400,16 @@ without the tasks and then deleting them on its next save.
 }
 ```
 
-`done`, `due`, `lessonId` and `homeworkId` may be omitted. `JsonSerializableAddressBook#toModelType` rejects the data
-file as invalid if a task id is duplicated, a link is not a UUID, or a
-task has both a lesson and a homework link. A task whose link does not resolve (the student, lesson or homework is missing,
-or a lesson or homework item belongs to another student) is stale: it is skipped and logged, without its text, instead of
+`done`, `due`, `lessonId`, `homeworkId` and `paymentId` may be omitted. `JsonSerializableAddressBook#toModelType`
+rejects the data file as invalid if a task id is duplicated, a link is not a UUID, or a task has more than one lesson,
+homework or payment link. A task whose link does not resolve (the student, lesson, homework or payment is missing,
+or a linked record belongs to another student) is stale: it is skipped and logged, without its text, instead of
 rejecting the whole file, because AddressBook already deletes the tasks of a record that is deleted. Tasks from an earlier development build that
 stored a student name and phone instead of ids are not migrated.
 
-**Selection by index.** `task add lesson/N` and `hw/N` use the numbering of the last `lesson list`/`agenda` and
-`hw list`, exactly like the lesson and homework commands, and store the UUID of the row that was shown. `task
-list` numbers the tasks it displays, and `task edit|done|delete N` use that numbering. `pay/N` is parsed but rejected
-until a payment list exists to number against; the model has no payment link yet.
+**Selection by index.** `task add lesson/N`, `hw/N` and `pay/N` use the numbering of the last `lesson list`/`agenda`,
+`hw list` and `pay list`, exactly like the lesson, homework and payment commands, and store the UUID of the row that
+was shown. `task list` numbers the tasks it displays, and `task edit|done|delete N` use that numbering.
 
 **Not in this feature.** Undo of task commands (spec section 4.36) is part of the undo work, not of the task commands.
 
@@ -596,7 +596,6 @@ updated balance, and save performed by `LogicManager`:
 
 Integration follow-ups before full alpha sign-off:
 * Finance: implement the running account statement in specification section 4.29.
-* Tasks: `task add pay/INDEX` (specification section 4.31) is not implemented. It still answers `Invalid payment index. Run 'pay list' first.`, because linking a task to a payment needs a new task link and storage field. `pay list` and `pay reverse` are done, so this is the last open piece of the payment-index feature.
 Move, cancellation and series cancellation already reject changes to billed lessons and preserve lesson and series UUIDs. Series cancellation checks the whole batch before replacing the address book.
 
 `LogicManager(Model, Storage, Clock)` passes a shared date source to the finance and relevant lesson
@@ -1280,9 +1279,9 @@ precreates the current destination, so an interrupted first save leaves legacy f
 on restart. The storage writeSnapshot seam passes the actual serialized bytes to this writer.
 Unreadable source protection is retained until positive absence or successful preservation.
 
-`StorageSchema.MINIMUM_VERSION` and `CURRENT_VERSION` centralize the supported range (14 through 17 now).
+`StorageSchema.MINIMUM_VERSION` and `CURRENT_VERSION` centralize the supported range (14 through 18 now).
 The shared `tutorflow-v14.json` path stays fixed as later domains are added. Homework uses
-schema 15, finance uses schema 16 and follow-up tasks use schema 17; the next domain must advance it to 18. Each build accepts unversioned legacy
+schema 15, finance uses schema 16, follow-up tasks use schema 17, and task payment links use schema 18; the next domain must advance it to 19. Each build accepts unversioned legacy
 data and versions 14 through its current version, with explicit defaults for missing older fields.
 Add prior-version loading and future-version refusal tests alongside each schema increment.
 

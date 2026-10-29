@@ -20,6 +20,7 @@ import seedu.address.logic.Messages;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.task.Task;
 import seedu.address.testutil.LessonBuilder;
@@ -97,6 +98,18 @@ public class TaskListCommandTest {
 
         assertTrue(message.contains("| lesson Math " + lesson.getDate() + " " + lesson.getTimeRange()
                 + " (completed)"), message);
+    }
+
+    @Test
+    public void execute_paymentTask_showsPaymentAsItNowReads() throws Exception {
+        LedgerEntry payment = LedgerEntry.payment(ALICE, new java.math.BigDecimal("25.00"),
+                LocalDate.of(2026, 10, 18), "PayNow");
+        model.addLedgerEntry(payment);
+        model.addTask(new TaskBuilder().withPayment(payment, ALICE).withDescription("Remind about fees").build());
+
+        String message = new TaskListCommand(false, null).execute(model).getFeedbackToUser();
+
+        assertTrue(message.contains("| payment $25.00 on 2026-10-18 - PayNow"), message);
     }
 
     @Test

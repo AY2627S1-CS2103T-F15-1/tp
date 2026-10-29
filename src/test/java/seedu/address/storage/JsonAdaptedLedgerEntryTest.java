@@ -141,7 +141,7 @@ public class JsonAdaptedLedgerEntryTest {
         assertEquals(charge, restored.getLedgerEntries().getFirst());
         assertTrue(restored.getLedgerEntries().getFirst().isWith(student));
         assertEquals(lesson.getId(), restored.getLedgerEntries().getFirst().lessonId());
-        assertTrue(json.contains("\"schemaVersion\" : 17"));
+        assertTrue(json.contains("\"schemaVersion\" : 18"));
     }
 
     @Test
@@ -152,7 +152,7 @@ public class JsonAdaptedLedgerEntryTest {
             assertTrue(book.getLedgerEntries().isEmpty());
         }
         assertThrows(UnsupportedSchemaException.class, () -> JsonUtil.fromJsonString(
-                "{\"schemaVersion\":18,\"persons\":[]}", JsonSerializableAddressBook.class).toModelType());
+                "{\"schemaVersion\":19,\"persons\":[]}", JsonSerializableAddressBook.class).toModelType());
     }
 
     @Test

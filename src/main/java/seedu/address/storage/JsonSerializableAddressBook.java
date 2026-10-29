@@ -34,7 +34,7 @@ class JsonSerializableAddressBook {
     public static final String MESSAGE_DUPLICATE_LESSON = "Lessons list contains duplicate lesson(s).";
     public static final String MESSAGE_DUPLICATE_TASK = "Tasks list contains tasks with the same id.";
     public static final String MESSAGE_STALE_TASK_SKIPPED =
-            "Skipped a task whose student, lesson or homework is not in the data.";
+            "Skipped a task whose student, lesson, homework or payment is not in the data.";
     public static final String MESSAGE_INVALID_STUDENT_ORDER =
             "The student order must be ASCENDING or DESCENDING.";
     public static final String MESSAGE_LESSON_WITHOUT_STUDENT =
@@ -123,6 +123,11 @@ class JsonSerializableAddressBook {
      */
     public AddressBook toModelType() throws IllegalValueException {
         StorageSchema.requireSupported(schemaVersion);
+        if ((schemaVersion == null || schemaVersion < StorageSchema.TASK_PAYMENT_VERSION)
+                && tasks.stream().filter(java.util.Objects::nonNull).anyMatch(JsonAdaptedTask::hasPaymentLink)) {
+            throw new IllegalValueException("Task's paymentId field requires schema version "
+                    + StorageSchema.TASK_PAYMENT_VERSION + " or later.");
+        }
         Set<UUID> studentIds = new HashSet<>();
         Set<UUID> lessonIds = new HashSet<>();
         AddressBook addressBook = new AddressBook();
@@ -202,7 +207,7 @@ class JsonSerializableAddressBook {
     /**
      * Adds the tasks to {@code addressBook}, whose students, lessons and homework must already be added.
      *
-     * A task whose student, lesson or homework item is not in {@code addressBook}, or does not belong to the
+     * A task whose student, lesson, homework item or payment is not in {@code addressBook}, or does not belong to the
      * student of the task, is stale: it is skipped (and logged without its text) rather than rejecting the whole
      * data file, so that one dangling link never sets aside every other record.
      *
@@ -224,7 +229,11 @@ class JsonSerializableAddressBook {
                             .anyMatch(lesson -> task.isAbout(lesson) && lesson.isWith(student.get()));
             boolean hasHomework = task.getHomeworkId().isEmpty() || addressBook.getHomeworkList().stream()
                     .anyMatch(item -> task.isAbout(item) && item.getStudentId().equals(task.getStudentId()));
-            if (student.isEmpty() || !hasLesson || !hasHomework) {
+            boolean hasPayment = task.getPaymentId().isEmpty() || student.isPresent()
+                    && addressBook.getLedgerEntries().stream()
+                            .anyMatch(entry -> entry.kind() == LedgerEntry.Kind.PAYMENT
+                                    && task.isAbout(entry) && entry.isWith(student.get()));
+            if (student.isEmpty() || !hasLesson || !hasHomework || !hasPayment) {
                 logger.warning(MESSAGE_STALE_TASK_SKIPPED);
                 continue;
             }

@@ -7,7 +7,9 @@ import seedu.address.commons.exceptions.UnsupportedSchemaException;
 /** Defines the supported version range for the shared TutorFlow data file. */
 public final class StorageSchema {
     public static final int MINIMUM_VERSION = 14;
-    public static final int CURRENT_VERSION = 17;
+    public static final int CURRENT_VERSION = 18;
+    /** The first schema version that can contain a task payment link. */
+    public static final int TASK_PAYMENT_VERSION = 18;
 
     private StorageSchema() {
     }
