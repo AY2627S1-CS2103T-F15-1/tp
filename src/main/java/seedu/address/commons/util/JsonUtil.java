@@ -10,8 +10,10 @@ import java.util.logging.Logger;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
+import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.StreamReadConstraints;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -26,9 +28,16 @@ import seedu.address.commons.exceptions.DataLoadingException;
  */
 public class JsonUtil {
 
+    private static final int MAX_NESTING_DEPTH = 100;
+    private static final int MAX_STRING_LENGTH = 1_000_000;
     private static final Logger logger = LogsCenter.getLogger(JsonUtil.class);
 
-    private static ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules()
+    private static ObjectMapper objectMapper = new ObjectMapper(JsonFactory.builder()
+            .streamReadConstraints(StreamReadConstraints.builder()
+                    .maxNestingDepth(MAX_NESTING_DEPTH)
+                    .maxStringLength(MAX_STRING_LENGTH)
+                    .build())
+            .build()).findAndRegisterModules()
             .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             .setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE)
@@ -67,9 +76,10 @@ public class JsonUtil {
             if (jsonFile == null) {
                 throw JsonMappingException.from((JsonParser) null, "JSON data must not be null.");
             }
-        } catch (IOException e) {
+        } catch (IOException | StackOverflowError e) {
             logger.warning("Data file read failed: " + e.getClass().getSimpleName());
-            throw new DataLoadingException(e);
+            throw new DataLoadingException(e instanceof IOException ioException ? ioException
+                    : new IOException("JSON nesting is too deep.", e));
         }
 
         return Optional.of(jsonFile);
