@@ -74,4 +74,28 @@ public class InputDiagnosticsTest {
             assertThrows(ParseException.class, () -> parser.parseCommand("edit 1 v/Home" + control));
         }
     }
+
+    @Test
+    public void parse_retiredAddressPrefix_namesTheRetiredPrefixInsteadOfMisreportingTheEmail() {
+        String command = "add n/josh p/78787878 l/S3 s/Math r/120 e/josh@gmail.com a/2902 Yishun";
+
+        ParseException error = assertThrows(ParseException.class, () -> parser.parseCommand(command));
+
+        assertEquals("Unknown prefix for this command: a/. Use v/ for a student's venue.", error.getMessage());
+    }
+
+    @Test
+    public void parse_retiredAddressPrefixInEdit_namesTheRetiredPrefix() {
+        ParseException error = assertThrows(ParseException.class, () ->
+                parser.parseCommand("edit 1 e/josh@gmail.com a/2902 Yishun"));
+
+        assertEquals("Unknown prefix for this command: a/. Use v/ for a student's venue.", error.getMessage());
+    }
+
+    @Test
+    public void parse_addressLikeTextInsideAValue_isNotMistakenForTheRetiredPrefix() throws Exception {
+        parser.parseCommand("add n/Priya s/o Kumar p/91234567 l/S3 s/Math r/50 v/Room c/o Guard");
+        parser.parseCommand("task add st/1 desc/Read n/a notes due/tmr");
+        parser.parseCommand("find a/Home");
+    }
 }

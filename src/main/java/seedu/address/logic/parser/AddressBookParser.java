@@ -6,7 +6,9 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.commands.AddCommand;
@@ -41,8 +43,18 @@ public class AddressBookParser {
 
     public static final String MESSAGE_TAKES_NO_PARAMETERS = "The '%1$s' command takes no parameters.";
     public static final String MESSAGE_NOT_PRINTABLE = "Commands must contain printable text on one line.";
+    public static final String MESSAGE_RETIRED_ADDRESS_PREFIX =
+            "Unknown prefix for this command: a/. Use v/ for a student's venue.";
 
     private static final Logger logger = LogsCenter.getLogger(AddressBookParser.class);
+    private static final Pattern RETIRED_ADDRESS_TOKEN = Pattern.compile("(?<=\\s)a/");
+    private static final Set<String> PREFIX_GRAMMAR_COMMANDS = Set.of(
+            AddCommand.COMMAND_WORD, EditCommand.COMMAND_WORD, ListCommand.COMMAND_WORD,
+            LessonCommandParser.COMMAND_WORD, TaskCommandParser.COMMAND_WORD, HomeworkCommandParser.COMMAND_WORD,
+            ArchiveCommand.COMMAND_WORD_ARCHIVE, ArchiveCommand.COMMAND_WORD_RESTORE,
+            PaymentCommand.COMMAND_WORD, WithdrawCommand.COMMAND_WORD, ChargeCommand.COMMAND_WORD,
+            BalanceCommand.COMMAND_WORD, AgendaCommand.COMMAND_WORD, TravelCommand.COMMAND_WORD,
+            RemarkCommand.COMMAND_WORD, SortCommand.COMMAND_WORD);
     private final Clock clock;
 
     /** Uses the local system date for interactive commands. */
@@ -71,6 +83,9 @@ public class AddressBookParser {
 
         final String commandWord = input.get().getWord();
         final String arguments = input.get().getArguments();
+        if (PREFIX_GRAMMAR_COMMANDS.contains(commandWord) && RETIRED_ADDRESS_TOKEN.matcher(arguments).find()) {
+            throw new ParseException(MESSAGE_RETIRED_ADDRESS_PREFIX);
+        }
 
         // Note to developers: Change LOG_LEVEL in LogsCenter to enable lower level (i.e., FINE, FINER and lower)
         // log messages such as the one below.

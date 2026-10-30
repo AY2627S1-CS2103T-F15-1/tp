@@ -5,6 +5,9 @@ package seedu.address.logic.parser;
  */
 public class CliSyntax {
 
+    /** The retired AddressBook address prefix. Use {@link #PREFIX_VENUE} instead. */
+    public static final Prefix PREFIX_RETIRED_ADDRESS = new Prefix("a/");
+
     /* Prefix definitions */
     public static final Prefix PREFIX_NAME = new Prefix("n/");
     public static final Prefix PREFIX_PHONE = new Prefix("p/");
