@@ -6,7 +6,9 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.commands.AddCommand;
@@ -42,6 +44,9 @@ public class AddressBookParser {
     public static final String MESSAGE_TAKES_NO_PARAMETERS = "The '%1$s' command takes no parameters.";
     public static final String MESSAGE_NOT_PRINTABLE = "Commands must contain printable text on one line.";
     private static final Logger logger = LogsCenter.getLogger(AddressBookParser.class);
+    private static final Pattern RETIRED_ADDRESS_TOKEN = Pattern.compile("(?<=\\s)a/");
+    private static final Set<String> NON_PREFIX_COMMAND_PATHS = Set.of(
+            "hw delete", "lesson missed", "lesson series", "pay reverse", "task delete", "task done");
 
     private final Clock clock;
 
@@ -71,6 +76,10 @@ public class AddressBookParser {
 
         final String commandWord = input.get().getWord();
         final String arguments = input.get().getArguments();
+        if (NON_PREFIX_COMMAND_PATHS.contains(commandPath(commandWord, arguments))
+                && RETIRED_ADDRESS_TOKEN.matcher(arguments).find()) {
+            throw new ParseException(CliSyntax.MESSAGE_RETIRED_ADDRESS_PREFIX);
+        }
 
         // Note to developers: Change LOG_LEVEL in LogsCenter to enable lower level (i.e., FINE, FINER and lower)
         // log messages such as the one below.
@@ -136,6 +145,13 @@ public class AddressBookParser {
         if (!arguments.isBlank()) {
             throw new ParseException(String.format(MESSAGE_TAKES_NO_PARAMETERS, commandWord));
         }
+    }
+
+    /** Returns the command and its first sub-command, if any, for matching a non-prefix command path. */
+    private static String commandPath(String commandWord, String arguments) {
+        return CommandInput.split(arguments)
+                .map(input -> commandWord + " " + input.getWord())
+                .orElse(commandWord);
     }
 
 }

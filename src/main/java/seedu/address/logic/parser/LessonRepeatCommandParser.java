@@ -55,10 +55,10 @@ public class LessonRepeatCommandParser implements Parser<LessonRepeatCommand> {
             throw new ParseException(LessonRepeatCommand.MESSAGE_PAST_NOT_ACCEPTED + "\n"
                     + LessonRepeatCommand.MESSAGE_USAGE);
         }
-        ParserUtil.requirePrefixesPresent(argMultimap, LessonRepeatCommand.MESSAGE_USAGE, PREFIX_STUDENT,
-                PREFIX_DATE, PREFIX_TIME, PREFIX_COUNT);
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_STUDENT, PREFIX_SUBJECT, PREFIX_DATE, PREFIX_TIME,
                 PREFIX_DURATION, PREFIX_VENUE, PREFIX_COUNT, PREFIX_EVERY);
+        ParserUtil.requirePrefixesPresent(argMultimap, LessonRepeatCommand.MESSAGE_USAGE, PREFIX_STUDENT,
+                PREFIX_DATE, PREFIX_TIME, PREFIX_COUNT);
         argMultimap.verifyNoEmptyValuesFor(PREFIX_STUDENT, PREFIX_SUBJECT, PREFIX_DATE, PREFIX_TIME,
                 PREFIX_DURATION, PREFIX_VENUE, PREFIX_COUNT, PREFIX_EVERY);
 

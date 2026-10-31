@@ -93,6 +93,25 @@ public class InputDiagnosticsTest {
     }
 
     @Test
+    public void parse_retiredAddressPrefixInNonPrefixSubcommands_namesTheRetiredPrefix() {
+        String[] commands = {
+            "pay reverse 1 a/Home",
+            "PAY REVERSE 1 a/Home",
+            "hw delete 1 a/Home",
+            "lesson missed 1 a/Home",
+            "lesson series cancel 1 confirm a/Home",
+            "task done 1 a/Home",
+            "task delete 1 confirm a/Home",
+        };
+
+        for (String command : commands) {
+            ParseException error = assertThrows(ParseException.class, () -> parser.parseCommand(command));
+            assertEquals("Unknown prefix for this command: a/. Use v/ for a student's venue.",
+                    error.getMessage(), command);
+        }
+    }
+
+    @Test
     public void parse_addressLikeTextInsideAValue_isNotMistakenForTheRetiredPrefix() throws Exception {
         parser.parseCommand("add n/Priya s/o Kumar p/91234567 l/S3 s/Math r/50 v/Room c/o Guard");
         parser.parseCommand("task add st/1 desc/Read n/a notes due/tmr");
