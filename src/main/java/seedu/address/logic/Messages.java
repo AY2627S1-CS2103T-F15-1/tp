@@ -22,6 +22,8 @@ public class Messages {
     public static final String MESSAGE_INVALID_PERSON_DISPLAYED_INDEX = "The student index provided is invalid.";
     public static final String MESSAGE_INVALID_LESSON_DISPLAYED_INDEX =
             "The lesson index provided is invalid. Use 'agenda' or 'lesson list' to see the lesson numbers.";
+    /** Most rows listed when a command renumbers lessons; a 52-lesson series would otherwise print 100+ rows. */
+    public static final int MAX_RENUMBERED_LESSONS_SHOWN = 30;
     public static final String MESSAGE_NO_VENUE = "\u2014";
     public static final String MESSAGE_PERSONS_LISTED_OVERVIEW = "%1$d student(s) listed!";
     public static final String MESSAGE_DUPLICATE_FIELDS =
@@ -107,12 +109,17 @@ public class Messages {
 
     /** Formats the current numbered lesson selection after a mutation changes its rows. */
     public static String formatLessonList(List<Lesson> lessons) {
+        int shown = Math.min(lessons.size(), MAX_RENUMBERED_LESSONS_SHOWN);
+        String more = lessons.size() > shown
+                ? "\n... and " + (lessons.size() - shown) + " more. Run 'lesson list' or 'agenda' to see every number."
+                : "";
         return "\n\nLesson numbers have changed. Current lesson list:"
                 + (lessons.isEmpty() ? "\nNo lessons in the current list." : "")
-                + IntStream.range(0, lessons.size())
+                + IntStream.range(0, shown)
                         .mapToObj(i -> "\n" + (i + 1) + ". " + format(lessons.get(i)) + ", "
                                 + formatVenue(lessons.get(i)) + "  (" + lessons.get(i).getStatus() + ")")
-                        .collect(Collectors.joining());
+                        .collect(Collectors.joining())
+                + more;
     }
 
     /**

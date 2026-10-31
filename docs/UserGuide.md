@@ -146,6 +146,7 @@ Format: `add n/NAME p/PHONE_NUMBER l/LEVEL s/SUBJECT... r/RATE [e/EMAIL] [v/VENU
 * `SUBJECT` is free text of up to 30 letters in any language, digits, spaces, `&` and `-`, such as `Math`, `English & Literature` or `华文`. Subjects are not case-sensitive. When you enter one, its first letter is capitalized automatically, so `math` is saved and shown as `Math`. The rest of what you type keeps its case.
 * `RATE` is the amount charged per hour in SGD, from `0` to `9999.99` with at most 2 decimal places. A leading `$` is accepted, so `50`, `50.00` and `$50` are the same rate.
 * `VENUE` is where the student is usually taught, up to 100 characters.
+* `EMAIL` can be at most 254 characters.
 * The old address prefix `a/` is no longer supported. Use `v/` for a student's venue, such as `v/2902 Yishun`. An `a/` parameter is rejected as an unknown prefix instead of being read as part of the preceding email or venue.
 * A mistyped prefix such as `name/`, `phone/`, `sub/`, `email/` or `venue/` is named in an `Unknown prefix for this command` error. Correct the spelling instead of looking for a fault in the preceding field.
 * Extra spaces in a `NAME` are ignored, so `John  Tan` is stored as `John Tan`.
@@ -278,7 +279,7 @@ Sets a free-text remark on a student, such as a preference or something to remem
 Format: `remark INDEX r/REMARK`
 
 * Sets the remark of the student at the specified `INDEX`, which is the index number shown in the displayed student list and **must be a positive integer** 1, 2, 3, ...
-* The new remark replaces the old one. Writing `r/` with nothing after it removes the remark.
+* The new remark replaces the old one and can be at most 1000 characters. Writing `r/` with nothing after it removes the remark.
 * Surrounding spaces are removed and repeated spaces inside the remark are collapsed into one, as for other free text.
 * A remark is shown in the student's card and in [`view`](#viewing-a-students-overview-view).
 
@@ -361,7 +362,7 @@ Format: `lesson repeat st/STUDENT_INDEX [s/SUBJECT] d/START_DATE t/TIME [dur/MIN
 * The first lesson is on `START_DATE`. Each later lesson is at the same time of day, `WEEKS` weeks after the one before it.
 * The series is **all or nothing**. TutorFlow checks every lesson first, and if any of them is invalid or is a duplicate of a lesson that already exists, it adds none of them and says `This exact lesson already exists. No occurrences were added.`
 * Each lesson is a full, independent lesson: you can move, cancel, complete or bill it on its own. The lessons are linked only so that a series can be cancelled together.
-* The new lessons are not added to the lesson list that is displayed, so run `agenda` or `lesson list st/STUDENT_INDEX` to see and number them. If adding the series changes the numbers on screen, the result ends with `Lesson numbers have changed. Current lesson list:` and the new numbering, as `lesson add` does.
+* The new lessons are not added to the lesson list that is displayed, so run `agenda` or `lesson list st/STUDENT_INDEX` to see and number them. If adding the series changes the numbers on screen, the result ends with `Lesson numbers have changed. Current lesson list:` and the new numbering, as `lesson add` does. If more than 30 lessons are listed, only the first 30 are shown, followed by how many more there are; run `lesson list` or `agenda` to see every number.
 * Lessons that overlap another lesson only produce a warning, as for `lesson add`. If many lessons of the series overlap, the warning is summarised in one line.
 
 Examples:
@@ -624,7 +625,7 @@ Records money received from a student and shows the updated outstanding balance 
 Format: `pay st/STUDENT_INDEX amt/AMOUNT [d/DATE] [n/NOTES]`
 
 * `STUDENT_INDEX` is the positive student number in the displayed student list. After `find`, use that filtered list's numbers. It is independent of lesson numbers, so payment can follow `lesson done` immediately without running `agenda` or `list` again.
-* `AMOUNT` must be greater than zero with at most two decimal places, such as `50`, `50.00` or `0.50`. Dollar signs, negative amounts, zero, commas and scientific notation are rejected.
+* `AMOUNT` must be greater than zero with at most two decimal places, such as `50`, `50.00` or `0.50`. Dollar signs, negative amounts, zero, commas and scientific notation are rejected, as is an amount written with more than 30 characters.
 * A payment of $10,000.00 or more is recorded, but TutorFlow adds a warning such as `Warning: $100000.00 is an unusually large payment. Check that the amount has no extra digits.`
 * `DATE` defaults to today using your computer's local date. Accepts `YYYY-MM-DD`, `DD/MM/YYYY`, `today` and `tmr`; future dates are rejected with `Payment dates cannot be in the future.`
 * `NOTES` is optional printable text of 1–200 characters on one line, such as a transfer reference. Extra spaces are collapsed and the notes are saved with the payment.

@@ -3,6 +3,7 @@ package seedu.address.logic.parser;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.HashSet;
@@ -18,6 +19,7 @@ import java.util.stream.Stream;
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.StringUtil;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonDate;
 import seedu.address.model.lesson.LessonDuration;
@@ -124,10 +126,36 @@ public class ParserUtil {
     public static Email parseEmail(String email) throws ParseException {
         requireNonNull(email);
         String trimmedEmail = email.trim();
+        if (trimmedEmail.length() > Email.MAX_LENGTH) {
+            throw new ParseException(Email.MESSAGE_TOO_LONG);
+        }
         if (!Email.isValidEmail(trimmedEmail)) {
             throw new ParseException(Email.MESSAGE_CONSTRAINTS);
         }
         return new Email(trimmedEmail);
+    }
+
+    /**
+     * Parses a money amount of digits with at most two decimal places that is above zero and at most
+     * {@link LedgerEntry#MAX_AMOUNT_LENGTH} characters long.
+     *
+     * @param constraintsMessage the message used when the text is not such an amount
+     * @throws ParseException if {@code text} is not a valid amount
+     */
+    public static BigDecimal parseAmount(String text, String constraintsMessage) throws ParseException {
+        requireNonNull(text);
+        if (text.length() > LedgerEntry.MAX_AMOUNT_LENGTH) {
+            // Checked first so that a very long digit string is never matched or turned into a BigDecimal.
+            throw new ParseException(LedgerEntry.MESSAGE_AMOUNT_TOO_LONG);
+        }
+        if (!text.matches("[0-9]+(?:\\.[0-9]{1,2})?")) {
+            throw new ParseException(constraintsMessage);
+        }
+        BigDecimal amount = new BigDecimal(text);
+        if (amount.signum() <= 0) {
+            throw new ParseException(constraintsMessage);
+        }
+        return amount;
     }
 
     /**

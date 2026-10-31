@@ -10,6 +10,10 @@ import static java.util.Objects.requireNonNull;
  */
 public class Remark {
 
+    /** Longest remark accepted from a command; it keeps one saved text value far below the loader's limit. */
+    public static final int MAX_LENGTH = 1000;
+    public static final String MESSAGE_TOO_LONG = "Remarks can be at most " + MAX_LENGTH + " characters.";
+
     public final String value;
 
     /**
