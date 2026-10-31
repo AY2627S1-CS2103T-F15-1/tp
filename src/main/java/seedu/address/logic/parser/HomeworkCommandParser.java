@@ -11,6 +11,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_STUDENT;
 
 import java.time.Clock;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Locale;
 
 import seedu.address.commons.core.index.Index;
@@ -67,6 +68,7 @@ public class HomeworkCommandParser implements Parser<Command> {
     /** Parses a persisted lifecycle status; overdue is deliberately excluded. */
     private Command parseStatus(String args) throws ParseException {
         ArgumentMultimap values = ArgumentTokenizer.tokenize(args, PREFIX_STATUS);
+        values.verifyNoUnexpectedPrefixes(List.of(), List.of());
         values.verifyNoDuplicatePrefixesFor(PREFIX_STATUS);
         values.verifyNoEmptyValuesFor(PREFIX_STATUS);
         ParserUtil.requirePrefixesFound(values, HomeworkStatusCommand.MESSAGE_USAGE, PREFIX_STATUS);
@@ -79,6 +81,7 @@ public class HomeworkCommandParser implements Parser<Command> {
     /** Parses printable feedback; an explicitly empty f/ clears feedback without deleting the assignment. */
     private Command parseFeedback(String args) throws ParseException {
         ArgumentMultimap values = ArgumentTokenizer.tokenize(args, PREFIX_FEEDBACK);
+        values.verifyNoUnexpectedPrefixes(List.of(PREFIX_FEEDBACK), List.of(PREFIX_FEEDBACK));
         values.verifyNoDuplicatePrefixesFor(PREFIX_FEEDBACK);
         ParserUtil.requirePrefixesFound(values, HomeworkFeedbackCommand.MESSAGE_USAGE, PREFIX_FEEDBACK);
         Index index = ParserUtil.parseIndex(values.getPreamble(), HomeworkFeedbackCommand.MESSAGE_USAGE);
@@ -95,6 +98,7 @@ public class HomeworkCommandParser implements Parser<Command> {
     /** Parses required assignment fields without treating prose as unrelated command prefixes. */
     private Command parseAdd(String args) throws ParseException {
         ArgumentMultimap values = ArgumentTokenizer.tokenize(args, PREFIX_STUDENT, PREFIX_DESCRIPTION, PREFIX_DUE);
+        values.verifyNoUnexpectedPrefixes(List.of(PREFIX_DESCRIPTION), List.of());
         values.verifyNoDuplicatePrefixesFor(PREFIX_STUDENT, PREFIX_DESCRIPTION, PREFIX_DUE);
         values.verifyNoEmptyValuesFor(PREFIX_STUDENT, PREFIX_DESCRIPTION, PREFIX_DUE);
         ParserUtil.requirePrefixesPresent(values, HomeworkAddCommand.MESSAGE_USAGE, PREFIX_STUDENT,
@@ -108,6 +112,7 @@ public class HomeworkCommandParser implements Parser<Command> {
     /** Parses optional corrections, requiring at least one changed field. */
     private Command parseEdit(String args) throws ParseException {
         ArgumentMultimap values = ArgumentTokenizer.tokenize(args, PREFIX_DESCRIPTION, PREFIX_DUE);
+        values.verifyNoUnexpectedPrefixes(List.of(PREFIX_DESCRIPTION), List.of());
         values.verifyNoDuplicatePrefixesFor(PREFIX_DESCRIPTION, PREFIX_DUE);
         values.verifyNoEmptyValuesFor(PREFIX_DESCRIPTION, PREFIX_DUE);
         if (values.getValue(PREFIX_DESCRIPTION).isEmpty() && values.getValue(PREFIX_DUE).isEmpty()) {
@@ -140,6 +145,7 @@ public class HomeworkCommandParser implements Parser<Command> {
     /** Parses only the supported value prefix and two mutually exclusive flags. */
     private Command parseList(String args) throws ParseException {
         ArgumentMultimap values = ArgumentTokenizer.tokenize(args, PREFIX_STUDENT, PREFIX_OVERDUE, PREFIX_OUTSTANDING);
+        values.verifyNoUnexpectedPrefixes(List.of(), List.of());
         values.verifyNoDuplicatePrefixesFor(PREFIX_STUDENT, PREFIX_OVERDUE, PREFIX_OUTSTANDING);
         values.verifyNoEmptyValuesFor(PREFIX_STUDENT);
         if (!values.getPreamble().isEmpty()) {

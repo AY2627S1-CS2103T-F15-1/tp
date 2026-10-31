@@ -4,6 +4,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_ALL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_STUDENT;
 
 import java.time.Clock;
+import java.util.List;
 import java.util.Objects;
 
 import seedu.address.commons.core.index.Index;
@@ -33,6 +34,7 @@ public class LessonListCommandParser implements Parser<LessonListCommand> {
      */
     public LessonListCommand parse(String args) throws ParseException {
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_STUDENT, PREFIX_ALL);
+        argMultimap.verifyNoUnexpectedPrefixes(List.of(), List.of());
         ParserUtil.requirePrefixesPresent(argMultimap, LessonListCommand.MESSAGE_USAGE, PREFIX_STUDENT);
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_STUDENT);
         argMultimap.verifyNoEmptyValuesFor(PREFIX_STUDENT);

@@ -12,6 +12,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_VENUE;
 
 import java.time.Clock;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.IntPredicate;
 
@@ -49,14 +50,15 @@ public class LessonRepeatCommandParser implements Parser<LessonRepeatCommand> {
     public LessonRepeatCommand parse(String args) throws ParseException {
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_STUDENT, PREFIX_SUBJECT, PREFIX_DATE,
                 PREFIX_TIME, PREFIX_DURATION, PREFIX_VENUE, PREFIX_COUNT, PREFIX_EVERY, PREFIX_PAST);
+        argMultimap.verifyNoUnexpectedPrefixes(List.of(), List.of());
         if (argMultimap.getValue(PREFIX_PAST).isPresent()) {
             throw new ParseException(LessonRepeatCommand.MESSAGE_PAST_NOT_ACCEPTED + "\n"
                     + LessonRepeatCommand.MESSAGE_USAGE);
         }
-        ParserUtil.requirePrefixesPresent(argMultimap, LessonRepeatCommand.MESSAGE_USAGE, PREFIX_STUDENT,
-                PREFIX_DATE, PREFIX_TIME, PREFIX_COUNT);
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_STUDENT, PREFIX_SUBJECT, PREFIX_DATE, PREFIX_TIME,
                 PREFIX_DURATION, PREFIX_VENUE, PREFIX_COUNT, PREFIX_EVERY);
+        ParserUtil.requirePrefixesPresent(argMultimap, LessonRepeatCommand.MESSAGE_USAGE, PREFIX_STUDENT,
+                PREFIX_DATE, PREFIX_TIME, PREFIX_COUNT);
         argMultimap.verifyNoEmptyValuesFor(PREFIX_STUDENT, PREFIX_SUBJECT, PREFIX_DATE, PREFIX_TIME,
                 PREFIX_DURATION, PREFIX_VENUE, PREFIX_COUNT, PREFIX_EVERY);
 

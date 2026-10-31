@@ -9,6 +9,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_STUDENT;
 
 import java.time.Clock;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -45,6 +46,7 @@ public class TaskAddCommandParser implements Parser<TaskAddCommand> {
     public TaskAddCommand parse(String args) throws ParseException {
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_STUDENT, PREFIX_LESSON,
                 PREFIX_HOMEWORK, PREFIX_PAYMENT, PREFIX_DESCRIPTION, PREFIX_DUE);
+        argMultimap.verifyNoUnexpectedPrefixes(List.of(PREFIX_DESCRIPTION), List.of());
         if (!argMultimap.getPreamble().isEmpty()) {
             throw new ParseException(String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT,
                     TaskAddCommand.MESSAGE_USAGE));

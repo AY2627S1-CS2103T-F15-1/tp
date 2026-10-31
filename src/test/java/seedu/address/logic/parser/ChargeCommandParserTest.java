@@ -30,7 +30,7 @@ public class ChargeCommandParserTest {
         ChargeCommand expected = new ChargeCommand(INDEX_FIRST_PERSON, null, true, Clock.systemDefaultZone());
         assertParseSuccess(parser, " reverse l/1", expected);
         assertParseSuccess(parser, "   reverse   l/1  ", expected);
-        assertParseFailure(parser, " reverse l/1 amt/5", invalidFormat);
+        assertParseFailure(parser, " reverse l/1 amt/5", "Unknown prefix for this command: amt/.");
     }
 
     @Test

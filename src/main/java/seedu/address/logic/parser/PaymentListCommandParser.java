@@ -2,6 +2,8 @@ package seedu.address.logic.parser;
 
 import static seedu.address.logic.parser.CliSyntax.PREFIX_STUDENT;
 
+import java.util.List;
+
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.PaymentListCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -12,6 +14,7 @@ public class PaymentListCommandParser implements Parser<PaymentListCommand> {
     @Override
     public PaymentListCommand parse(String args) throws ParseException {
         ArgumentMultimap arguments = ArgumentTokenizer.tokenize(args, PREFIX_STUDENT);
+        arguments.verifyNoUnexpectedPrefixes(List.of(), List.of());
         if (!arguments.getPreamble().isEmpty()) {
             throw ParserUtil.invalidFormat(PaymentListCommand.MESSAGE_USAGE);
         }

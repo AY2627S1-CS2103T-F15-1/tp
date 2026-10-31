@@ -6,6 +6,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_WEEK;
 
 import java.time.Clock;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Objects;
 
 import seedu.address.logic.commands.AgendaCommand;
@@ -35,6 +36,7 @@ public class AgendaCommandParser implements Parser<AgendaCommand> {
      */
     public AgendaCommand parse(String args) throws ParseException {
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_DATE, PREFIX_WEEK);
+        argMultimap.verifyNoUnexpectedPrefixes(List.of(), List.of());
         if (!argMultimap.getPreamble().isEmpty()) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, AgendaCommand.MESSAGE_USAGE));
         }
