@@ -242,7 +242,7 @@ Examples:
 * `find John` returns `john` and `John Doe`
 * `find alex david` lists `Alex Yeoh` and `David Li` if those students are recorded. If only those two students match, the result says `2 student(s) listed!` and the student list shows their current details with new index numbers.
 
-### Viewing a student's overview: `view`
+### Viewing the overview of a student: `view`
 
 Shows what you need to prepare for one student, on one screen.
 
@@ -275,7 +275,7 @@ Format: `remark INDEX r/REMARK`
 * Sets the remark of the student at the specified `INDEX`, which is the index number shown in the displayed student list and **must be a positive integer** 1, 2, 3, ...
 * The new remark replaces the old one. Writing `r/` with nothing after it removes the remark.
 * Surrounding spaces are removed and repeated spaces inside the remark are collapsed into one, as for other free text.
-* A remark is shown in the student's card and in [`view`](#viewing-a-students-overview-view).
+* A remark is shown in the student's card and in [`view`](#viewing-the-overview-of-a-student-view).
 
 Examples:
 * `remark 1 r/Prefers morning lessons` sets the remark of the 1st student.
@@ -392,6 +392,7 @@ Format: `today`
 * The second section, `LESSONS AWAITING NOTES`, shows the scheduled lessons from earlier days that were not marked completed, the most recent first.
 * The third section, `OVERDUE HOMEWORK`, shows assigned work due before today, or `No overdue homework.`. Run `hw list overdue/` to get selectable numbers.
 * The fourth section, `DUES`, is the list that [`dues`](#viewing-all-outstanding-balances-dues) shows: how many students owe money and the total, then each student's amount and the age of their oldest unpaid charge, such as `oldest unpaid 2 days` or `oldest unpaid 1 day`, the oldest first. If nobody owes money, it shows `No outstanding balances. Everyone is up to date.`
+* The lessons on the dashboard are not numbered. To complete, move or cancel one of them, first run [`agenda`](#viewing-the-agenda-agenda) for today's lessons, or [`lesson list st/STUDENT_INDEX all/`](#listing-the-lessons-of-a-student-lesson-list) for a lesson awaiting notes, and use the number shown there. Right after TutorFlow starts, no lesson has a number yet, so a command such as `lesson done 1` is refused with a message that tells you to run `agenda` or `lesson list`.
 * All four sections are always shown. An empty section is not an error: it shows `No lessons today.`, `All past lessons are recorded.`, `No overdue homework.` or `No outstanding balances. Everyone is up to date.`
 * To keep the result box responsive, each lesson section lists at most 200 rows. The heading still gives the complete count and total time.
 * Today is the date on your computer, so a wrong system clock shows the wrong day.
@@ -512,7 +513,7 @@ Marks a lesson completed and optionally records what was taught.
 
 Format: `lesson done INDEX [n/NOTES]`
 
-* `INDEX` is the lesson number from the current `agenda` or `lesson list`, not the student number. It must be a positive integer.
+* `INDEX` is the lesson number from the current `agenda` or `lesson list`, not the student number. It must be a positive integer. The `today` dashboard does not number lessons, so run `agenda` or `lesson list` first.
 * The first completion adds the hourly lesson fee to the student’s balance and shows `Charge of $X.XX recorded.` Updating notes never charges again. A fee that is zero, including after cent rounding, completes the lesson without creating a charge and explains why: for a rate of $0.00 it says `No automatic charge: This student's rate is $0.00.` and how to specify an amount. Use [`charge`](#charging-a-lesson-charge) to bill a lesson by hand.
 * Only lessons dated today or earlier can be completed, using your computer's local date. A cancelled lesson cannot be completed.
 * `NOTES` is optional free text of 1–1000 printable characters on one line. Leading/trailing whitespace is trimmed and repeated spaces are collapsed. An empty `n/`, line breaks and repeated `n/` parameters are rejected.
