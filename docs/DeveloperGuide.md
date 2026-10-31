@@ -1192,6 +1192,145 @@ testers are expected to do more *exploratory* testing.
    1. Other incorrect commands to try: completion of a future or cancelled lesson, `lesson done 0`, `lesson done INDEX n/`, or `lesson done INDEX n/First n/Second`<br>
       Expected: Rejected without changing the lesson or notes.
 
+1. Marking a lesson as missed
+
+   1. Prerequisites: Run `lesson add st/1 d/<a date last week> t/16:00 past/`, then `lesson list st/1 all/` and note the lesson number.
+
+   1. Test case: `lesson missed INDEX`<br>
+      Expected: The lesson is marked as missed. `view 1` counts it under lesson history, and no charge is added to `balance st/1`.
+
+   1. Test case: `lesson missed INDEX` again<br>
+      Expected: The result says that the lesson is already marked as missed, and nothing changes.
+
+   1. Test case: `lesson done INDEX`<br>
+      Expected: The missed lesson is changed to completed and charged once.
+
+   1. Other incorrect commands to try: `lesson missed` on a lesson in the future or a cancelled lesson, `lesson missed 0`, `lesson missed INDEX extra`<br>
+      Expected: Rejected without changing the lesson.
+
+### Follow-up tasks
+
+1. Adding a task
+
+   1. Prerequisites: Use `list`, with at least one student. Schedule one lesson and run `lesson list st/1`.
+
+   1. Test case: `task add st/1 desc/Call parent due/<a date next week>`<br>
+      Expected: `Added task: Call parent. Run 'task list' to display its index.`
+
+   1. Test case: `task add lesson/1 desc/Prepare mock paper`<br>
+      Expected: The task is added without a due date. `task list` shows it as `(no due date)` with the lesson it is about.
+
+   1. Test case: the same command again<br>
+      Expected: Added again. Two tasks may have the same text.
+
+   1. Other incorrect commands to try: `task add st/1 lesson/1 desc/Both` (two links), `task add desc/No link`, `task add st/1 desc/` (empty text), `task add st/1 desc/` followed by 201 characters, `task add st/1 desc/Late due/<yesterday>`, `task add st/99 desc/No such student`, `task add pay/1 desc/No payment list yet`<br>
+      Expected: Nothing is added. The result shows an error message. The late due date gives `Due dates must be today or later.`
+
+1. Listing, editing and completing tasks
+
+   1. Prerequisites: Add three tasks, two of them with due dates, then run `task list`.
+
+   1. Test case: `task list`<br>
+      Expected: Open tasks are shown with the earliest due date first and the tasks without a due date last.
+
+   1. Test case: `task edit 1 desc/Call parent again due/-`<br>
+      Expected: The text changes and the due date is removed.
+
+   1. Test case: `task done 1`, then `task done 1` again<br>
+      Expected: The first completes the task. The second says that the task is already done. `task list` hides it and `task list all/` shows it.
+
+   1. Test case: after `task done 1`, run `task edit 2 desc/Changed` without running `task list`<br>
+      Expected: Task 2 of the last list is changed. The numbers stay fixed until the next `task list`.
+
+1. Deleting a task
+
+   1. Prerequisites: Run `task list` with at least one task.
+
+   1. Test case: `task delete 1`<br>
+      Expected: Nothing is deleted. TutorFlow asks you to type `task delete 1 confirm`.
+
+   1. Test case: `task delete 1 confirm`, then `task delete 1 confirm` again<br>
+      Expected: The first deletes the task. The second says that the task was deleted and to run `task list` to refresh.
+
+1. Tasks follow what they are about
+
+   1. Prerequisites: A task on the 1st student and a task on a lesson of that student.
+
+   1. Test case: `edit 1 n/<a new name>`, then `task list`<br>
+      Expected: Both tasks show the new name.
+
+   1. Test case: `lesson list st/1`, `lesson cancel 1`, then book a new lesson in the same slot and run `task list`<br>
+      Expected: The lesson task still points to the cancelled lesson. The new lesson does not take it over.
+
+   1. Test case: `delete 1 confirm`, then `undo`<br>
+      Expected: The tasks of the student are restored together with the student.
+
+### Edge-case and adversarial testing
+
+These checks go beyond the example cases above. Each was also run by script (see "Testing approach" below), so a failure here is a regression.
+
+1. Boundary values
+
+   1. Test case: `lesson add st/1 d/<today> t/23:45 dur/15`, `lesson add st/1 d/<a date next week> t/23:00 dur/120`<br>
+      Expected: The first is scheduled. The second is rejected because it passes midnight.
+
+   1. Test case: `lesson repeat st/1 d/<a date next week> t/16:00 count/52 every/3`<br>
+      Expected: Rejected, because the series would pass two years. `count/52` with the default every week is accepted, as is `count/2`.
+
+   1. Test case: `lesson repeat st/1 d/<a date next week> t/16:00 count/52` where every lesson clashes with existing ones<br>
+      Expected: A one-line overlap warning, then at most 30 rows of the renumbered list followed by `... and N more.`
+
+1. Inputs that must be rejected without crashing
+
+   1. Test case: `view ١`, `lesson add st/1 d/<next week> t/09:00 dur/٦٠` (non-English digits), `pay st/1 amt/1e2`, `pay st/1 amt/-5`, `task add st/1 st/2 desc/Twice`<br>
+      Expected: Each shows an error message. Nothing changes and TutorFlow keeps running.
+
+   1. Test case: `remark 1 r/` followed by 1,001 characters, or `edit 1 e/` followed by an email longer than 254 characters<br>
+      Expected: Rejected with a message about the maximum length.
+
+   1. Test case: `pay st/1 amt/` followed by 31 digits<br>
+      Expected: Rejected at once with a message about the maximum length.
+
+1. State that must survive a restart
+
+   1. Test case: After each of `lesson done`, `task done`, `pay`, `charge reverse`, close and reopen TutorFlow.<br>
+      Expected: The same data is shown as before closing.
+
+   1. Test case: `pay st/1 amt/100`, `pay list`, `withdraw st/1 amt/100`, `pay reverse 1`, then `dues`<br>
+      Expected: The student is listed as owing $100.00, and no error appears.
+
+1. Edited data files
+
+   1. Prerequisites: Close TutorFlow and edit `data/tutorflow-v14.json`.
+
+   1. Test case: Set a student's `"rate"` to `"abc"`, a lesson's `"duration"` to `0`, or a ledger entry's `"amount"` to `"-20.00"`, then launch.<br>
+      Expected: TutorFlow starts with an empty list, and the result box says that the file was set aside as `.corrupt`.
+
+   1. Test case: Delete the `"tasks"` list, then launch.<br>
+      Expected: TutorFlow starts normally with the students and lessons and no tasks.
+
+### Testing approach
+
+I tested my features (lesson scheduling, series and agenda, lesson status changes, and follow-up tasks) in three ways.
+
+**1. Manual testing from the User Guide.** I ran every example in the UG and the manual-testing appendix, in the GUI, with typical data, and compared the result with the specification in the tP notes.
+
+**2. Automated unit and integration tests.** JUnit tests cover each parser and command, and workflow tests cover several commands in a row (for example `lesson add`, `lesson move`, `lesson cancel`, `task add` and `undo`).
+
+**3. Edge-case and adversarial testing on 1 Nov 2026.** To find what the earlier tests missed, I ran a script that drives the real command logic with a fixed clock (1 Nov 2026). After every successful command it reloads the saved file and compares it with the data in memory. It ran about 17,000 checks:
+
+| Area | What was tried |
+|---|---|
+| Students | valid and invalid values at each limit, duplicate names, other languages, delete, clear and undo |
+| Lessons | every date, time and duration limit, overlaps, series up to the two-year limit, all-or-nothing series, done, missed, cancel and move |
+| Tasks | exactly one link, text limits, due dates, stable numbers after done and delete, links after edit, cancel and undo |
+| Payments and charges | rounding of 100 rate and duration pairs, reversals, withdrawals, and 40 random sequences checked against a separate calculation of the balance |
+| Data files | about 2,000 edited copies of a saved file (empty, wrong type, missing, duplicated or unknown links, huge values), each loaded and then used |
+| Long input | up to 1,000,000 characters in each field, with timing |
+| Random commands | 60 sessions of 400 random commands each |
+
+The run found one crash (`dues` after a payment was reversed) and a data-loss risk (a field of more than 1,000,000 characters could be saved but not loaded again). Both are fixed and covered by regression tests. Cases in this section are kept as manual tests so that they are not lost.
+
 ### Saving data
 
 1. Dealing with missing/corrupted data files
