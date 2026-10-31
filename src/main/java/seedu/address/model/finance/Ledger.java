@@ -97,7 +97,9 @@ public final class Ledger {
             }
             credit = credit.subtract(charge.amount());
         }
-        throw new IllegalStateException("A positive balance must have an unpaid charge.");
+        // A debt can exist without an active charge, e.g. after a payment that was already withdrawn is reversed.
+        // Such a debt dates from the latest entry of the account rather than from a charge.
+        return entries.stream().map(LedgerEntry::date).max(Comparator.naturalOrder()).orElseThrow();
     }
 
     /** Shared account label for balance, payment, student details, and dashboards. */

@@ -54,10 +54,7 @@ public class ChargeCommandParser implements Parser<ChargeCommand> {
         BigDecimal amount = null;
         if (arguments.getValue(PREFIX_AMOUNT).isPresent()) {
             String amountText = arguments.getValue(PREFIX_AMOUNT).get();
-            if (!amountText.matches("[0-9]+(?:\\.[0-9]{1,2})?") || new BigDecimal(amountText).signum() <= 0) {
-                throw new ParseException(PaymentCommand.MESSAGE_AMOUNT_CONSTRAINTS);
-            }
-            amount = new BigDecimal(amountText);
+            amount = ParserUtil.parseAmount(amountText, PaymentCommand.MESSAGE_AMOUNT_CONSTRAINTS);
         }
         return new ChargeCommand(index, amount, isReversal, clock);
     }

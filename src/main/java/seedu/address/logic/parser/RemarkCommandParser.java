@@ -40,6 +40,9 @@ public class RemarkCommandParser implements Parser<RemarkCommand> {
         }
 
         Remark remark = new Remark(argMultimap.getValue(PREFIX_REMARK).get());
+        if (remark.value.length() > Remark.MAX_LENGTH) {
+            throw new ParseException(Remark.MESSAGE_TOO_LONG);
+        }
         return new RemarkCommand(index, remark);
     }
 }
