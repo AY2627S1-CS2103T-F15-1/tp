@@ -66,7 +66,8 @@ For power-users, TutorFlow can help you manage your students and lessons faster 
   For example, `exit now` is rejected, so a mistyped command cannot close the app.
 
 * Command words are not case-sensitive: `LIST`, `List` and `list` are the same command, and so are `LESSON ADD` and `lesson add`. The same goes for the keyword `confirm`. Parameter prefixes such as `n/` and `st/` must still be in lower case, and the values you type keep their case.
-* A mistyped parameter prefix is reported as `Unknown prefix for this command: name/.` instead of being absorbed into the previous value and blamed on that field. This includes a prefix that belongs to a different command, such as `amt/` in `lesson add`, and an upper-case spelling such as `N/`. Free text can still contain ordinary slash-bearing words such as `c/o`, `d/o`, `s/o`, `n/a`, `w/o`, `Blk/123` and `p/3`.
+* A mistyped parameter prefix is reported as `Unknown prefix for this command: name/.` instead of being absorbed into the previous value and blamed on that field. This includes a prefix that belongs to a different command, such as `amt/` in `lesson add`, and an upper-case spelling such as `N/`.
+* Slash-bearing text is still allowed where it is ordinary content. A name or venue accepts `c/o`, `d/o`, `s/o`, `n/a`, `w/o` and `Blk/123`. Notes, feedback, reasons and remarks may quote a full command, including tokens such as `n/` or `desc/`. A description accepts an unaccepted short prefix such as `p/3` as prose, but still rejects a field-name spelling such as `name/` and the retired `a/`.
 
 * The command box remembers the commands you have entered in this session. Press `Up` to bring back an earlier command and `Down` to move forward again, as in a terminal. Down past the newest command returns to what you were typing.<br>
   When a command fails, it stays in the command box, so you can correct it instead of typing it all again.
@@ -139,6 +140,7 @@ Adds a student to TutorFlow.
 Format: `add n/NAME p/PHONE_NUMBER l/LEVEL s/SUBJECT... r/RATE [e/EMAIL] [v/VENUE]`
 
 * `NAME` is 1-100 printable characters after trimming and must contain at least one letter. It may contain letters in any language (such as `José Álvarez` or `陈伟明`), digits, spaces and `. , ' ( ) / - @`, such as `Tan Wei Ming (twin A)`, `Priya d/o Kumar` or `John @ Tan`. It does not matter how an accent is typed, so `José` written with one character and with a letter and a separate accent is the same name. Avoid typing a `/` right after a space when it would look like a prefix, such as `s/o`, because TutorFlow reads it as the start of the next parameter.
+* `NAME` and `VENUE` reject a field-name typo such as `name/` or `email/` instead of absorbing it into the value. Ordinary relationship or address forms such as `s/o`, `d/o`, `c/o`, `n/a`, `w/o` and `Blk/123` remain valid.
 * `LEVEL` is one of `P1` to `P6` (primary), `S1` to `S5` (secondary) or `J1` to `J2` (junior college). It is not case-sensitive, so `s3` is the same as `S3`.
 * `PHONE_NUMBER` has 8 to 15 digits and can start with `+`, for example `91234567` or `+6591234567`. Spaces and hyphens between the digits are allowed and are removed, so `9123 4567` is stored as `91234567`.
 * `SUBJECT` is free text of up to 30 letters in any language, digits, spaces, `&` and `-`, such as `Math`, `English & Literature` or `华文`. Subjects are not case-sensitive. When you enter one, its first letter is capitalized automatically, so `math` is saved and shown as `Math`. The rest of what you type keeps its case.
@@ -940,10 +942,7 @@ Numbers are session-local, so display a new list after restarting.
 | Clear mistaken feedback | `hw feedback INDEX f/` |
 | Delete | `hw delete INDEX [confirm]` |
 
-* Descriptions contain 1-200 printable characters on one line. Feedback contains 1-1000.
-  Surrounding spaces are trimmed and repeated spaces are collapsed. Empty values are rejected except that
-  an explicitly empty `f/` clears feedback. Duplicate prefixes are rejected.
-  Free text may contain unrelated prefix-like words, such as `n/` or `desc/x`.
+* Descriptions contain 1-200 printable characters on one line. Feedback contains 1-1000. Surrounding spaces are trimmed and repeated spaces are collapsed. Empty values are rejected except that an explicitly empty `f/` clears feedback. Duplicate prefixes are rejected. Descriptions accept an unaccepted short prefix such as `p/3` as prose, but reject a field name such as `name/` and the retired `a/`. Feedback may quote a full command, including prefixes.
 * Due dates accept any of the [ways to write a date](#writing-dates), `today`, or `tmr`. Assignment dates and changed due
   dates must be today through one calendar year ahead, inclusive, using the local computer date.
   Editing another field preserves an old due date; explicitly supplying the same old date also works.

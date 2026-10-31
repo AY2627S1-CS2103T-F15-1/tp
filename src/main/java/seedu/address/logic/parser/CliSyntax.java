@@ -7,6 +7,10 @@ import java.util.List;
  */
 public class CliSyntax {
 
+    /** The diagnostic for the retired address prefix. */
+    public static final String MESSAGE_RETIRED_ADDRESS_PREFIX =
+            "Unknown prefix for this command: a/. Use v/ for a student's venue.";
+
     /** The retired AddressBook address prefix. Use {@link #PREFIX_VENUE} instead. */
     public static final Prefix PREFIX_RETIRED_ADDRESS = new Prefix("a/");
 

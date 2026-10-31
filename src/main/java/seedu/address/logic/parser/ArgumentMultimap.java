@@ -126,6 +126,9 @@ public class ArgumentMultimap {
             if (ALLOWED_SLASH_WORDS.contains(wordWithSlash.toLowerCase(Locale.ROOT))) {
                 continue;
             }
+            if (!isInPermissiveText && tokenPrefix.equals(CliSyntax.PREFIX_RETIRED_ADDRESS)) {
+                throw unknownPrefix(prefixToken);
+            }
             String word = lowerCaseToken.substring(0, lowerCaseToken.length() - 1);
             boolean isLikelyPrefix = LIKELY_PREFIX_WORDS.contains(word) || isKnownPrefix(lowerCaseToken);
             if (!isLikelyPrefix) {
@@ -151,7 +154,7 @@ public class ArgumentMultimap {
     /** Builds the diagnostic, retaining the retired address prefix's venue suggestion. */
     private static ParseException unknownPrefix(String token) {
         if (token.equals(CliSyntax.PREFIX_RETIRED_ADDRESS.toString())) {
-            return new ParseException(AddressBookParser.MESSAGE_RETIRED_ADDRESS_PREFIX);
+            return new ParseException(CliSyntax.MESSAGE_RETIRED_ADDRESS_PREFIX);
         }
         return new ParseException("Unknown prefix for this command: " + token + ".");
     }

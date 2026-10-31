@@ -148,6 +148,9 @@ public class InputDiagnosticsTest {
             "task add student/1 desc/Call",
             "task edit 1 description/Call",
             "task list student/1",
+            "archive 1 name/Alice",
+            "restore student/1",
+            "sort name/asc",
         };
 
         for (String command : commands) {
@@ -187,7 +190,13 @@ public class InputDiagnosticsTest {
             "edit 1 v/Blk/123",
             "edit 1 n/Priya s/o Kumar",
             "task add st/1 desc/Read n/a notes due/tmr",
+            "task add st/1 desc/Read p/3 notes due/tmr",
             "hw add st/1 desc/Read n/a notes and s/o p/3 due/tmr",
+            "hw edit 1 desc/Read p/3 today",
+            "hw feedback 1 f/Quote add n/Alice a/Home",
+            "lesson done 1 n/Quote add st/1 a/Home",
+            "remark 1 r/Quote add n/Alice a/Home",
+            "lesson cancel 1 r/Quote add n/Alice a/Home",
             "hw feedback 1 f/Check st/1 and desc/x",
             "lesson done 1 n/s/p/d/f orbitals",
             "lesson done 1 n/Review unknown/ prefix",
@@ -202,8 +211,14 @@ public class InputDiagnosticsTest {
     @Test
     public void parse_mistypedOptionalFieldInsideDescription_namesTheUnknownPrefix() {
         String[] commands = {
+            "hw add st/1 desc/Read name/tmr",
+            "hw add st/1 desc/Read a/Home due/tmr",
             "hw edit 1 desc/Read name/tmr",
+            "hw edit 1 desc/Read a/Home",
+            "task add st/1 desc/Call name/tmr",
+            "task add st/1 desc/Call a/Home",
             "task edit 1 desc/Call name/tmr",
+            "task edit 1 desc/Call a/Home",
         };
 
         for (String command : commands) {
