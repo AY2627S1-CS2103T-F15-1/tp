@@ -8,6 +8,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_VENUE;
 
 import java.time.Clock;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Objects;
 
 import seedu.address.commons.core.index.Index;
@@ -43,6 +44,7 @@ public class LessonMoveCommandParser implements Parser<LessonMoveCommand> {
     public LessonMoveCommand parse(String args) throws ParseException {
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_DATE, PREFIX_TIME, PREFIX_DURATION,
                 PREFIX_VENUE);
+        argMultimap.verifyNoUnexpectedPrefixes(List.of(), List.of());
 
         Index index;
         try {

@@ -4,6 +4,7 @@ import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NOTES;
 
 import java.time.Clock;
+import java.util.List;
 import java.util.Objects;
 
 import seedu.address.commons.core.index.Index;
@@ -29,6 +30,7 @@ public class LessonDoneCommandParser implements Parser<LessonDoneCommand> {
     @Override
     public LessonDoneCommand parse(String args) throws ParseException {
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_NOTES);
+        argMultimap.verifyNoUnexpectedPrefixes(List.of(PREFIX_NOTES), List.of(PREFIX_NOTES));
         Index index;
         try {
             index = ParserUtil.parseIndex(argMultimap.getPreamble());

@@ -4,6 +4,8 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_ALL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_LEVEL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 
+import java.util.List;
+
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 
@@ -15,6 +17,7 @@ public class ListCommandParser implements Parser<ListCommand> {
     public ListCommand parse(String args) throws ParseException {
         ArgumentMultimap values = ArgumentTokenizer.tokenize(args,
                 PREFIX_LEVEL, PREFIX_SUBJECT, PREFIX_ARCHIVED, PREFIX_ALL);
+        values.verifyNoUnexpectedPrefixes(List.of(), List.of());
         values.verifyNoDuplicatePrefixesFor(PREFIX_LEVEL, PREFIX_SUBJECT, PREFIX_ARCHIVED, PREFIX_ALL);
         values.verifyNoEmptyValuesFor(PREFIX_LEVEL, PREFIX_SUBJECT);
         if (!values.getPreamble().isBlank()) {

@@ -8,6 +8,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_STUDENT;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Objects;
 
 import seedu.address.commons.core.index.Index;
@@ -33,6 +34,7 @@ public class WithdrawCommandParser implements Parser<WithdrawCommand> {
     public WithdrawCommand parse(String args) throws ParseException {
         ArgumentMultimap arguments = ArgumentTokenizer.tokenize(args, PREFIX_STUDENT, PREFIX_AMOUNT,
                 PREFIX_DATE, PREFIX_NOTES);
+        arguments.verifyNoUnexpectedPrefixes(List.of(PREFIX_NOTES), List.of(PREFIX_NOTES));
         ParserUtil.requirePrefixesPresent(arguments, WithdrawCommand.MESSAGE_USAGE, PREFIX_STUDENT, PREFIX_AMOUNT);
         arguments.verifyNoDuplicatePrefixesFor(PREFIX_STUDENT, PREFIX_AMOUNT, PREFIX_DATE, PREFIX_NOTES);
         arguments.verifyNoEmptyValuesFor(PREFIX_STUDENT, PREFIX_AMOUNT, PREFIX_DATE, PREFIX_NOTES);

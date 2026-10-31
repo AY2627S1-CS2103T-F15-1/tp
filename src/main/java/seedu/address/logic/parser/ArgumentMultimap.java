@@ -3,8 +3,13 @@ package seedu.address.logic.parser;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import seedu.address.logic.Messages;
@@ -19,8 +24,34 @@ import seedu.address.logic.parser.exceptions.ParseException;
  */
 public class ArgumentMultimap {
 
+    private static final Pattern PREFIX_TOKEN =
+            Pattern.compile("(?<!\\S)(?<token>\\p{L}+/(?:\\p{L}+)?)");
+    private static final Set<String> KNOWN_PREFIX_TOKENS = CliSyntax.ALL_PREFIXES.stream()
+            .map(prefix -> prefix.toString().toLowerCase(Locale.ROOT))
+            .collect(Collectors.toUnmodifiableSet());
+    private static final Set<String> LIKELY_PREFIX_WORDS = Set.of(
+            "name", "phone", "email", "level", "subject", "subjects", "sub", "rate", "venue", "address",
+            "remark", "note", "notes", "date", "time", "duration", "amount", "student", "students", "description",
+            "assignment", "homework", "payment", "payments", "count", "every", "week", "buffer", "past", "status",
+            "feedback", "overdue", "outstanding", "all", "reason", "archived", "deadline", "duedate", "text",
+            "minutes", "weeks");
+    private static final Set<String> ALLOWED_SLASH_WORDS = Set.of("c/o", "d/o", "s/o", "n/a", "w/o");
+
     /** Prefixes mapped to their respective arguments */
     private final Map<Prefix, List<String>> argMultimap = new HashMap<>();
+    private final String rawArguments;
+    private final Set<Prefix> acceptedPrefixes;
+
+    /** Creates an empty multimap without arguments to diagnose. */
+    public ArgumentMultimap() {
+        this("", List.of());
+    }
+
+    /** Creates a multimap that remembers what its tokenizer accepted and the text it read. */
+    ArgumentMultimap(String rawArguments, List<Prefix> acceptedPrefixes) {
+        this.rawArguments = rawArguments;
+        this.acceptedPrefixes = Set.copyOf(acceptedPrefixes);
+    }
 
     /**
      * Associates the specified argument value with {@code prefix} key in this map.
@@ -60,6 +91,69 @@ public class ArgumentMultimap {
      */
     public String getPreamble() {
         return getValue(new Prefix("")).orElse("");
+    }
+
+    /**
+     * Rejects an unaccepted prefix-shaped word that would otherwise be folded into a value and reported as a
+     * misleading field error or as a missing required prefix.
+     *
+     * <p>Free text may contain slash-bearing prose such as {@code c/o}, {@code n/a} and {@code p/3}. Names and venues
+     * are short identifiers where a field name is almost certainly a typo, so they are not exempt. A structured free
+     * text field such as a description also tolerates short real prefixes that commonly occur in prose, while a note,
+     * feedback or remark is fully permissive because it may quote a command.
+     *
+     * @param textPrefixes accepted parameters whose values are free text
+     * @param permissiveTextPrefixes values that may contain any likely prefix as prose
+     * @throws ParseException if a token cannot be accepted by this command
+     */
+    public void verifyNoUnexpectedPrefixes(List<Prefix> textPrefixes, List<Prefix> permissiveTextPrefixes)
+            throws ParseException {
+        Prefix enclosingPrefix = null;
+        Matcher matcher = PREFIX_TOKEN.matcher(rawArguments);
+        while (matcher.find()) {
+            String wordWithSlash = matcher.group("token");
+            int slash = wordWithSlash.indexOf('/');
+            String prefixToken = wordWithSlash.substring(0, slash + 1);
+            String lowerCaseToken = prefixToken.toLowerCase(Locale.ROOT);
+            Prefix tokenPrefix = new Prefix(prefixToken);
+            if (acceptedPrefixes.contains(tokenPrefix)) {
+                enclosingPrefix = tokenPrefix;
+                continue;
+            }
+            boolean isInText = enclosingPrefix != null && textPrefixes.contains(enclosingPrefix);
+            boolean isInPermissiveText = enclosingPrefix != null
+                    && permissiveTextPrefixes.contains(enclosingPrefix);
+            if (ALLOWED_SLASH_WORDS.contains(wordWithSlash.toLowerCase(Locale.ROOT))) {
+                continue;
+            }
+            String word = lowerCaseToken.substring(0, lowerCaseToken.length() - 1);
+            boolean isLikelyPrefix = LIKELY_PREFIX_WORDS.contains(word) || isKnownPrefix(lowerCaseToken);
+            if (!isLikelyPrefix) {
+                continue;
+            }
+            if (isInPermissiveText || (isInText && isShortKnownPrefix(lowerCaseToken))) {
+                continue;
+            }
+            throw unknownPrefix(prefixToken);
+        }
+    }
+
+    /** Returns whether {@code token} is a parameter of at least one command. */
+    private static boolean isKnownPrefix(String token) {
+        return KNOWN_PREFIX_TOKENS.contains(token);
+    }
+
+    /** Returns whether a known prefix is short enough to be ordinary prose inside a free-text value. */
+    private static boolean isShortKnownPrefix(String token) {
+        return isKnownPrefix(token) && token.length() <= 4;
+    }
+
+    /** Builds the diagnostic, retaining the retired address prefix's venue suggestion. */
+    private static ParseException unknownPrefix(String token) {
+        if (token.equals(CliSyntax.PREFIX_RETIRED_ADDRESS.toString())) {
+            return new ParseException(AddressBookParser.MESSAGE_RETIRED_ADDRESS_PREFIX);
+        }
+        return new ParseException("Unknown prefix for this command: " + token + ".");
     }
 
     /** Names empty values using only the prefixes recognized by the current command's tokenizer. */

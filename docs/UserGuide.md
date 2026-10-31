@@ -66,6 +66,7 @@ For power-users, TutorFlow can help you manage your students and lessons faster 
   For example, `exit now` is rejected, so a mistyped command cannot close the app.
 
 * Command words are not case-sensitive: `LIST`, `List` and `list` are the same command, and so are `LESSON ADD` and `lesson add`. The same goes for the keyword `confirm`. Parameter prefixes such as `n/` and `st/` must still be in lower case, and the values you type keep their case.
+* A mistyped parameter prefix is reported as `Unknown prefix for this command: name/.` instead of being absorbed into the previous value and blamed on that field. This includes a prefix that belongs to a different command, such as `amt/` in `lesson add`, and an upper-case spelling such as `N/`. Free text can still contain ordinary slash-bearing words such as `c/o`, `d/o`, `s/o`, `n/a`, `w/o`, `Blk/123` and `p/3`.
 
 * The command box remembers the commands you have entered in this session. Press `Up` to bring back an earlier command and `Down` to move forward again, as in a terminal. Down past the newest command returns to what you were typing.<br>
   When a command fails, it stays in the command box, so you can correct it instead of typing it all again.
@@ -144,6 +145,7 @@ Format: `add n/NAME p/PHONE_NUMBER l/LEVEL s/SUBJECT... r/RATE [e/EMAIL] [v/VENU
 * `RATE` is the amount charged per hour in SGD, from `0` to `9999.99` with at most 2 decimal places. A leading `$` is accepted, so `50`, `50.00` and `$50` are the same rate.
 * `VENUE` is where the student is usually taught, up to 100 characters.
 * The old address prefix `a/` is no longer supported. Use `v/` for a student's venue, such as `v/2902 Yishun`. An `a/` parameter is rejected as an unknown prefix instead of being read as part of the preceding email or venue.
+* A mistyped prefix such as `name/`, `phone/`, `sub/`, `email/` or `venue/` is named in an `Unknown prefix for this command` error. Correct the spelling instead of looking for a fault in the preceding field.
 * Extra spaces in a `NAME` are ignored, so `John  Tan` is stored as `John Tan`.
 * A student can have at most 10 different subjects, so a command with more than 10 `s/SUBJECT` values is rejected. The same limit applies when you [edit](#editing-a-student-edit) a student.
 * Two students are duplicates if they have the same phone number and a name that matches when letter case and extra spaces are ignored. A duplicate is not added.
@@ -941,7 +943,7 @@ Numbers are session-local, so display a new list after restarting.
 * Descriptions contain 1-200 printable characters on one line. Feedback contains 1-1000.
   Surrounding spaces are trimmed and repeated spaces are collapsed. Empty values are rejected except that
   an explicitly empty `f/` clears feedback. Duplicate prefixes are rejected.
-  Free text may contain unrelated prefix-like words, such as `n/`.
+  Free text may contain unrelated prefix-like words, such as `n/` or `desc/x`.
 * Due dates accept any of the [ways to write a date](#writing-dates), `today`, or `tmr`. Assignment dates and changed due
   dates must be today through one calendar year ahead, inclusive, using the local computer date.
   Editing another field preserves an old due date; explicitly supplying the same old date also works.
