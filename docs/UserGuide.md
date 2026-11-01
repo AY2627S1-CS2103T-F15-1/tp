@@ -1052,6 +1052,7 @@ Action     | Format, Examples
 **Undo** | `undo`
 **Save** | `save`
 **Exit** | `exit`
+
 ## Upgrading from an older data file
 
 V1.5 reads `data/tutorflow-v14.json`. If it is absent, TutorFlow reads the legacy `data/addressbook.json`, assigns stable internal student and lesson identifiers, and saves a new `tutorflow-v14.json`. The legacy file is left untouched; if both files exist, the v1.4 file takes precedence. Keep both in your backup.
