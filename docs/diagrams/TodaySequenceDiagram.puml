@@ -67,6 +67,15 @@ activate ReadOnlyAddressBook
 ReadOnlyAddressBook --> TodayCommand : lessons
 deactivate ReadOnlyAddressBook
 
+TodayCommand -> TodayCommand : travelWarnings(lessons, today)
+activate TodayCommand
+note right
+  TravelGap#find checks the gaps
+  between today's physical venues.
+end note
+TodayCommand --> TodayCommand : warnings
+deactivate TodayCommand
+
 loop for each lesson today
     TodayCommand -> Model : getConflictingLessons(lesson)
     activate Model

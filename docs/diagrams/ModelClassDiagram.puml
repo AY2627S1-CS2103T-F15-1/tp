@@ -9,6 +9,7 @@ Class "<<interface>>\nReadOnlyAddressBook" as ReadOnlyAddressBook
 Class "<<interface>>\nReadOnlyUserPrefs" as ReadOnlyUserPrefs
 Class "<<interface>>\nModel" as Model
 Class AddressBook
+Class VersionedAddressBook
 Class ModelManager
 Class UserPrefs
 
@@ -29,6 +30,9 @@ Class LessonDate
 Class LessonTime
 Class LessonDuration
 Class LessonStatus
+Class Homework
+Class HomeworkStatus
+Class Task
 
 package Finance {
 Class LedgerEntry
@@ -53,7 +57,10 @@ UserPrefs .up.|> ReadOnlyUserPrefs
 
 AddressBook *--> "1" UniquePersonList
 AddressBook *--> "1" UniqueLessonList
+AddressBook *--> "0..*" Homework : records
+AddressBook *--> "0..*" Task : records
 AddressBook *--> "0..*" LedgerEntry : records
+VersionedAddressBook --|> AddressBook
 UniquePersonList --> "~* all" Person
 Person *--> Name
 Person *--> Phone
@@ -70,7 +77,14 @@ Lesson *--> LessonTime
 Lesson *--> LessonDuration
 Lesson *--> LessonStatus
 Lesson *--> "0..1" Venue
-Lesson ..> Person : refers to its\nstudent by name\nand phone
+Lesson ..> Person : studentId
+Lesson ..> Subject : subject
+Homework *--> HomeworkStatus
+Homework ..> Person : studentId
+Task ..> Person : studentId
+Task ..> Lesson : optional lessonId
+Task ..> Homework : optional homeworkId
+Task ..> LedgerEntry : optional paymentId
 
 LedgerEntry ..> Person : studentId
 LedgerEntry ..> Lesson : optional lessonId\n(charges only)
@@ -84,12 +98,16 @@ note right of LedgerEntry
   id, studentId, optional lessonId,
   kind, positive amount, date,
   optional notes
-  CHARGE entries reference a lesson;
-  PAYMENT entries do not.
+  CHARGE and CHARGE_REVERSAL entries
+  reference a lesson; PAYMENT,
+  PAYMENT_REVERSAL and WITHDRAWAL
+  entries do not.
 end note
 
 note right of Ledger
-  balance = charges - payments
+  balance = charges + payment reversals
+          + withdrawals - payments
+          - charge reversals
   dues allocates payments FIFO
   and returns positive unpaid rows.
 end note
@@ -107,4 +125,5 @@ Venue -[hidden]right-> Remark
 
 ModelManager --> "~* filtered" Person
 ModelManager --> "~* filtered" Lesson
+ModelManager --> "~* filtered" Homework
 @enduml

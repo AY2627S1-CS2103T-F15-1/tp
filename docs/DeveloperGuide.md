@@ -142,7 +142,7 @@ How the parsing works:
 The `Model` component,
 
 * stores the address book data i.e., all `Person` objects, each of which represents a student with a name, phone number, level, subjects and rate, and optionally an email, a venue and a remark (the `Person` objects are contained in a `UniquePersonList` object). Two `Person` objects are the same student if they have the same phone number and the same name, ignoring case.
-* stores the `Lesson` objects, each of which is a lesson with a student, a subject, a date, a start time, a duration, a status and optionally a venue (the `Lesson` objects are contained in a `UniqueLessonList` object). A `Lesson` refers to its student by the student's name and phone number, which together identify a `Person`. Deleting a student deletes their lessons, and editing the name or phone number of a student keeps their lessons attached.
+* stores the `Lesson` objects, each of which is a lesson with a student, a subject, a date, a start time, a duration, a status and optionally a venue (the `Lesson` objects are contained in a `UniqueLessonList` object). A `Lesson` refers to its student by the student's permanent UUID; the name and phone number are kept only as a display snapshot for older data. Deleting a student deletes their lessons, and editing the name or phone number of a student keeps their lessons attached.
 * stores immutable `LedgerEntry` records for lesson charges, student payments, withdrawals and the reversals of charges or payments. Each record refers to a permanent student UUID and, for charges and charge reversals, a lesson UUID; a reversal also refers to the entry it cancels. `Ledger` derives balances and unpaid dues from those records; those calculations do not mutate the ledger.
 * stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
 * stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
@@ -157,7 +157,7 @@ The `Model` component,
 The `Storage` component,
 * can save both address book data and user preference data in JSON format, and read them back into corresponding objects.
 * is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonAddressBookStorage` and `JsonUserPrefsStorage` (one class per data file).
-* saves the students and the lessons in the same data file. A data file written before lessons existed has no lesson list, and still loads with no lessons.
+* saves the students, lessons, homework, ledger entries, follow-up tasks and travel/sort settings in the same data file. A data file written before a later domain existed has no records for that domain and still loads with empty records for it.
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
 
 ### Common classes
@@ -197,17 +197,15 @@ and feedback already use the existing optional JSON fields. Regression tests cov
 
 ### Lesson scheduling, agenda and conflict detection
 
-The lesson commands are `lesson add`, `lesson repeat`, `lesson list`, `lesson move`, `lesson cancel`, `lesson done` and `lesson missed`. They share the `lesson` command word, which `AddressBookParser` hands to `LessonCommandParser`. That parser reads the next word and passes the rest of the arguments to the parser of that command. `agenda` is its own command word.
+The lesson commands are `lesson add`, `lesson repeat`, `lesson list`, `lesson prep`, `lesson move`, `lesson cancel`, `lesson series cancel`, `lesson done` and `lesson missed`. They share the `lesson` command word, which `AddressBookParser` hands to `LessonCommandParser`. That parser reads the next word and passes the rest of the arguments to the parser of that command. `agenda` is its own command word.
 
 The sequence diagram below shows the successful changed-data path for `execute("lesson move 1 d/2026-12-24")`. It focuses on the Logic component; parser internals and the internal workings of Model and Storage are omitted. The command resolves the displayed index, validates and replaces the lesson, and reports overlaps without blocking the move. `LogicManager` then refreshes changed lesson numbers once and saves the updated data before returning success. A save failure retains the in-memory change and asks the tutor to retry `save`.
 
-![Lesson rescheduling through Logic, with Model and Storage shown as black boxes](images/LessonMoveSequenceDiagram.svg)
-
-Diagram source: [LessonMoveSequenceDiagram.puml](diagrams/LessonMoveSequenceDiagram.puml). Regenerate the SVG with `java -jar plantuml.jar -tsvg -o ../images docs/diagrams/LessonMoveSequenceDiagram.puml` from the repository root.
+<puml src="diagrams/LessonMoveSequenceDiagram.puml" alt="Lesson rescheduling through Logic, with Model and Storage shown as black boxes" />
 
 How the pieces fit together:
 
-* **Lesson indices.** `Model#getFilteredLessonList()` returns the lessons that `agenda` or `lesson list` last chose, sorted by date, then start time, then student name. Lesson mutations retain the active filter. `LogicManager` compares the displayed identities and rows before and after a mutation and appends the refreshed numbered list when those rows change. Commands do not append a second list; `lesson add` marks its already-formatted list with `CommandResult#withDisplayedLessons`, so the central handler can reuse it. This prevents both stale numbers and duplicate numbering messages.
+* **Lesson indices.** `Model#getFilteredLessonList()` returns the lessons that `agenda` or `lesson list` last chose, sorted by date, then start time, then student name. Lesson mutations retain the active filter. `LogicManager` compares the displayed lesson identities and rows before and after a mutation and appends the refreshed numbered list when those rows change. Commands do not append a second list; `lesson add` marks its already-formatted list with `CommandResult#withDisplayedLessons`, so the central handler can reuse it. This prevents both stale numbers and duplicate numbering messages.
 * **Overlaps.** `Lesson#overlaps(Lesson)` is true when both lessons are scheduled, are on the same date, and each starts before the other ends. It compares minutes since the start of the day, so back-to-back lessons are not an overlap and a lesson that ends at midnight can still be compared. `Model#getConflictingLessons(Lesson)` returns the other lessons that overlap a lesson, and `lesson add` and `lesson move` append the result to their message as a warning. `agenda` marks every lesson that has at least one overlap.
 * **Cancelling.** `Lesson#cancel(String)` returns a copy with the status `CANCELLED` and the reason. The lesson is kept, so it stays in the agenda for billing, but it is no longer scheduled and so it never overlaps.
 * **Immutability.** `Lesson` is immutable. `lesson move` and `lesson cancel` build a changed copy and ask the model to replace the old lesson with it, in the same way that `edit` replaces a `Person`.
@@ -231,12 +229,12 @@ Move, single cancellation and series cancellation use `LessonCommandUtil#require
 
 **Aspect: how a lesson refers to its student**
 
-* **Alternative 1 (current choice):** store the student's name and phone number in the lesson.
-    * Pros: The saved file stays flat and a lesson can be validated without loading students. A name and phone number already identify a student in TutorFlow.
-    * Cons: `AddressBook` must update the lessons when it edits or deletes a student. This is done in `setPerson` and `removePerson`, so no command has to remember it.
-* **Alternative 2:** store a reference to the `Person` object.
-    * Pros: No update is needed when a student is edited.
-    * Cons: `Person` is immutable and is replaced on every edit, so the reference would have to be replaced as well, and the saved file would need ids that students do not have.
+* **Alternative 1 (current choice):** store a permanent student UUID, with the name and phone number only as a display snapshot.
+    * Pros: Renaming a student never detaches their lessons, and a lesson can still be displayed when the profile is unavailable during migration.
+    * Cons: The saved file needs UUIDs, and a lesson and its student must be checked together when a file is loaded.
+* **Alternative 2 (former design):** store the student's name and phone number as the link.
+    * Pros: The saved file stays flat and a lesson can be validated without loading students.
+    * Cons: `AddressBook` must update every lesson when a student is edited, and a rename can silently detach history.
 
 **Aspect: what to do when lessons overlap**
 
@@ -285,9 +283,9 @@ The command replaces a scheduled lesson with the immutable copy returned by `Les
 
 ### Weekly lesson series and back-dated lessons
 
-`lesson repeat` (user story 9) and the `past/` flag of `lesson add` (user story 8) are routed through `LessonCommandParser` like the other lesson commands. `LessonRepeatCommandParser` tokenises the lesson prefixes together with `count/` and `every/`, and also tokenises `past/` so that it can reject it with a clear message, because a series starts today or later. It reads `count/` and `every/` with one pattern check, at most 3 digits, before parsing, so a huge or non-numeric value is rejected as a range error and cannot overflow.
+`lesson repeat` and the `past/` flag of `lesson add` are routed through `LessonCommandParser` like the other lesson commands. `LessonRepeatCommandParser` tokenises the lesson prefixes together with `count/` and `every/`, and also tokenises `past/` so that it can reject it with a clear message, because a series starts today or later. It reads `count/` and `every/` with one pattern check, at most 3 digits, before parsing, so a huge or non-numeric value is rejected as a range error and cannot overflow.
 
-The sequence diagram below shows `execute("lesson repeat st/1 d/2026-10-29 t/16:00 count/4")`. The parser creates the command, and the command then builds the four lessons, checks every one of them for duplicates and overlaps, and only then adds them to the model.
+The sequence diagram below shows `execute("lesson repeat st/3 d/2026-12-03 t/16:00 count/4")`. The parser creates the command, and the command then builds the four lessons, checks every one of them for duplicates and overlaps, and only then adds them to the model.
 
 <puml src="diagrams/LessonRepeatSequenceDiagram.puml" alt="Interactions Inside the Logic and Model Components for the `lesson repeat` Command" />
 
@@ -361,7 +359,7 @@ Travel warnings for the lessons shown are included after `TODAY'S LESSONS`. The 
 
 ### Follow-up tasks
 
-A follow-up task (user story 31) is a short reminder, with an optional due date, that is about a student and,
+A follow-up task is a short reminder, with an optional due date, that is about a student and,
 optionally, one of that student's lessons, homework items or payments. The `task` commands (`add`, `list`, `edit`, `done`,
 `delete`) live in `logic/commands/Task*Command` and `logic/parser/Task*CommandParser`.
 
@@ -455,19 +453,21 @@ Undo is deliberately a single-action, session-only safety net, not a general und
 * `lastState` is the snapshot promoted from `transitionState` only after that command succeeds.
 * `lastDestructiveAction` is the message fragment used by `UndoCommand`.
 
-`LogicManager` calls `Model#beforeCommand(boolean)` before command execution and `Model#afterCommand(String, boolean)` in its `finally` path. The boolean tells the model whether the parsed command extends `DestructiveCommand`; the description comes from `DestructiveCommand#getDestructDescription()`. A failed command discards `transitionState`, leaving any earlier successful undo point available.
+`LogicManager` calls `Model#beforeCommand(boolean)` before command execution and `Model#afterCommand(String, boolean)` in its `finally` path. The first boolean tells the model whether the parsed command extends `DestructiveCommand`; the description comes from `DestructiveCommand#getDestructDescription()`. The second boolean is true only when the command succeeded and the serialized state changed, so a failed command or a no-op clears `transitionState` without promoting a new undo point.
 
 `UndoCommand` calls `Model#undoDestructiveAction()`, which restores `lastState` through `resetData`. The `LogicManager` then saves the restored state through the normal changed-data path. A save failure retains the restored in-memory state so `save` can retry, matching every other mutating command.
 
 Only one undo point is retained. A successful non-destructive command clears it in `afterCommand`, as does a successful destructive command replacing it. This is intentional: undo must never silently roll back later work. Read-only commands do not clear it. The state is not persisted, so closing TutorFlow ends the undo opportunity.
 
-`VersionedAddressBookTest` exercises the hooks and failed-destructive path directly. `UndoCommandTest` and `UndoIntegrationTest` cover the command and persistence behaviour. Future changes to command execution must keep `afterCommand` on the failure path; otherwise a rejected confirmation can consume the valid undo point.
+`VersionedAddressBookTest` exercises the hooks and failed-destructive path directly. `UndoCommandTest` and `UndoIntegrationTest` cover the command and persistence behaviour. Keep `afterCommand` in the `finally` path: it must run on failure so that a rejected confirmation discards the temporary transition snapshot without consuming a valid undo point.
 
 
 ### Student balances and dues
 
+#### Ledger records and balance arithmetic
+
 `LedgerEntry` is immutable and records its UUID, permanent student UUID, optional lesson UUID, kind,
-positive exact `BigDecimal` amount, date and notes. There are four kinds. `CHARGE` and `CHARGE_REVERSAL` require a lesson UUID; `PAYMENT` and `PAYMENT_REVERSAL` have none. A reversal also records the UUID of the entry it cancels (`reverses`), has the same student, lesson and amount as that entry, and can be added only once per entry. Entries are never deleted: `charge reverse` adds a `CHARGE_REVERSAL`.
+positive exact `BigDecimal` amount, date and notes. There are five kinds. `CHARGE` and `CHARGE_REVERSAL` require a lesson UUID; `PAYMENT`, `PAYMENT_REVERSAL` and `WITHDRAWAL` have none. A reversal also records the UUID of the entry it cancels (`reverses`), has the same student, lesson and amount as that entry, and can be added only once per entry. Entries are never deleted: `charge reverse` adds a `CHARGE_REVERSAL`.
 `AddressBook` owns the unmodifiable list and validates student/lesson references, unique entry IDs,
 and at most one active (not reversed) charge per lesson. Profile edits never rewrite financial records. Copy/reset,
 equality, student deletion, clear, and the real JSON snapshot include both finance and homework.
@@ -488,7 +488,7 @@ rather than scanning the growing list once per entry. Other domains keep their e
 `removeLesson` refuses to delete a billed lesson, including detached equal-value lookup, so a saved
 charge cannot point at a deleted lesson. Student deletion still cascades all of that student's history.
 
-`Ledger.balance(book, student)` adds charges and payment reversals and subtracts payments, withdrawals and charge reversals, returning a negative value for credit. `Ledger.activeCharge(book, lessonId)` returns the charge of a lesson that no reversal cancels; the lesson move/cancel guard and the one-charge-per-lesson rule use it. `ChargeCommand` records a manual charge or a reversal. `PaymentListCommand` lists `PAYMENT` entries oldest first, and stores them with `Model#setShownPayments`. It builds a student-name map and the set from `Ledger.reversedIds` once per listing, so listing stays linear in the number of entries instead of scanning the ledger for every row; `PaymentReverseCommand` takes its index from that stored list (like `task list` and the task commands), so the numbers stay fixed until the next `pay list`. It refuses a payment that is gone from the ledger or that `Ledger.isReversed` finds already cancelled, and otherwise adds `LedgerEntry.reversalOf(payment, today)`. `PayCommandParser` routes `pay list` and `pay reverse` to their parsers and everything else to `PaymentCommandParser`. `WithdrawCommand` records an append-only `WITHDRAWAL` against available credit and refuses amounts above it. The automatic charge raised by `lesson done` keeps the lesson's UUID as its entry ID, so a charge raised again after a reversal gets a random ID; a charge made with `charge` always gets a random ID. `AddressBook#chargeLesson` raises no automatic charge when `Ledger.activeCharge` already finds one, so completing a missed lesson that was billed by hand does not bill it twice.
+`Ledger.balance(book, student)` adds charges, payment reversals and withdrawals and subtracts payments and charge reversals, returning a negative value for credit. `Ledger.activeCharge(book, lessonId)` returns the charge of a lesson that no reversal cancels; the lesson move/cancel guard and the one-charge-per-lesson rule use it. `ChargeCommand` records a manual charge or a reversal. `PaymentListCommand` lists `PAYMENT` entries oldest first, and stores them with `Model#setShownPayments`. It builds a student-name map and the set from `Ledger.reversedIds` once per listing, so listing stays linear in the number of entries instead of scanning the ledger for every row; `PaymentReverseCommand` takes its index from that stored list (like `task list` and the task commands), so the numbers stay fixed until the next `pay list`. It refuses a payment that is gone from the ledger or that `Ledger.isReversed` finds already cancelled, and otherwise adds `LedgerEntry.reversalOf(payment, today)`. `PayCommandParser` routes `pay list` and `pay reverse` to their parsers and everything else to `PaymentCommandParser`. `WithdrawCommand` records an append-only `WITHDRAWAL` against available credit and refuses amounts above it. The automatic charge raised by `lesson done` keeps the lesson's UUID as its entry ID, so a charge raised again after a reversal gets a random ID; a charge made with `charge` always gets a random ID. `AddressBook#chargeLesson` raises no automatic charge when `Ledger.activeCharge` already finds one, so completing a missed lesson that was billed by hand does not bill it twice.
 `Ledger.describeBalance(amount)` shares the `OUTSTANDING $X.XX` / `IN CREDIT $X.XX` labels.
 `Ledger.dues(book, today)` returns immutable `Due(student, amount, oldestUnpaidDate)` rows, oldest first,
 breaking ties by name then phone. Payments cover charges FIFO by charge date, including partial payments
@@ -500,7 +500,7 @@ and adds the header above the up-to-date message. `view` shows `describeBalance`
 BALANCE. Credit from one account never reduces another student's debt. Queries include archived/filtered
 students and never mutate data.
 
-`BalanceCommand` parses `balance st/INDEX` and shows the displayed student's account as alpha §4.29 specifies.
+`BalanceCommand` parses `balance st/INDEX` and shows the displayed student's account.
 `AccountStatement.format` lists the student's ledger entries in date order, keeping the recorded order within a
 day, with a running balance on each row and a closing line of totals. It reads the ledger and lessons and never
 mutates them. `DuesCommand` reports all debtors
@@ -512,15 +512,17 @@ rules (day first or year first with several separators, numeric or named months,
 rejects future dates. Notes are optional 1–200 printable one-line characters and persist in the JSON
 adapter; absent notes in existing finance files default to null. Missing JSON fields are named in errors.
 The response confirms the amount, student, date and updated balance. Payment list/reverse, manual charge,
-and running account statements are follow-up increments; no success message points to unavailable commands.
+running account statements and credit withdrawals are all available in this version.
+
+#### Recording a payment
 
 The following sequence diagram shows the `pay st/1 amt/50.00` flow, including the ledger update,
 updated balance, and save performed by `LogicManager`:
 
 <puml src="diagrams/PaymentSequenceDiagram.puml" alt="Sequence diagram for recording a student payment and saving the updated ledger" />
 
-Integration follow-ups before full alpha sign-off:
-* Finance: implement the running account statement in specification section 4.29.
+#### Reversals, withdrawals and dues
+
 Move, cancellation and series cancellation already reject changes to billed lessons and preserve lesson and series UUIDs. Series cancellation checks the whole batch before replacing the address book.
 
 `LogicManager(Model, Storage, Clock)` passes a shared date source to the finance and relevant lesson
@@ -672,8 +674,8 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 1.  Tutor requests to list students
 2.  TutorFlow shows a list of students
-3.  Tutor requests to schedule a lesson for a specific student, providing the subject, date, time and duration, and optionally a venue
-4.  TutorFlow adds the lesson and shows its details
+3.  Tutor requests to schedule a lesson for a specific student, providing the date and time, and optionally the subject, duration and venue
+4.  TutorFlow adds the lesson and shows its details, warning if it overlaps another scheduled lesson
 
     Use case ends.
 
@@ -707,6 +709,12 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
       Use case ends.
 
+* 3e. The student takes several subjects and no subject was given.
+
+    * 3e1. TutorFlow names the student's subjects and asks for one with `s/SUBJECT`.
+
+      Use case resumes at step 3.
+
 * 4a. The new lesson overlaps another scheduled lesson.
 
     * 4a1. TutorFlow keeps the newly scheduled lesson and warns the tutor of the overlapping lesson.
@@ -721,7 +729,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 1.  Tutor requests to view the lessons of a specific student
 2.  TutorFlow shows a numbered list of the student's lessons
-3.  Tutor requests to reschedule a specific lesson, providing the new date, time, duration and/or venue
+3.  Tutor requests to reschedule a specific scheduled lesson, providing the new date, time, duration and/or venue
 4.  TutorFlow updates the lesson, keeping the details that were not changed, and shows the old and new details
 
     Use case ends.
@@ -738,9 +746,9 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
       Use case resumes at step 2.
 
-* 3b. The lesson is already completed or cancelled.
+* 3b. The lesson is already completed, cancelled or missed.
 
-    * 3b1. TutorFlow tells the tutor that the lesson can no longer be rescheduled.
+    * 3b1. TutorFlow tells the tutor that the lesson can no longer be rescheduled. A missed lesson should be replaced with a make-up booking.
 
       Use case ends.
 
@@ -749,6 +757,12 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
     * 3c1. TutorFlow shows an error message stating which detail is wrong.
 
       Use case resumes at step 3.
+
+* 3d. The lesson has an active charge.
+
+    * 3d1. TutorFlow asks the tutor to reverse the charge before rescheduling.
+
+      Use case ends.
 
 * 4a. The new time overlaps another scheduled lesson.
 
@@ -765,7 +779,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 1.  Tutor requests to view the agenda for a day
 2.  TutorFlow shows the lessons on that day
 3.  Tutor requests to mark a specific lesson as completed, and provides teaching notes
-4.  TutorFlow marks the lesson as completed, saves the notes and confirms the update
+4.  TutorFlow marks the lesson as completed, records the automatic charge when the rate is above zero, saves both and confirms the update
 
     Use case ends.
 
@@ -790,6 +804,12 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 * 3c. The lesson is already completed.
 
     * 3c1. TutorFlow replaces the existing notes with the new notes and confirms the update.
+
+      Use case ends.
+
+* 3e. The student's rate is zero.
+
+    * 3e1. TutorFlow completes the lesson without a charge and explains how to use `charge` to bill it by hand.
 
       Use case ends.
 
@@ -876,7 +896,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 1.  Tutor requests to list students
 2.  TutorFlow shows a list of students
 3.  Tutor requests to delete a specific student in the list
-4.  TutorFlow tells the tutor which lessons, homework and payment records will be deleted along with the student, and asks for confirmation
+4.  TutorFlow shows the counts of lessons, homework, follow-up tasks and financial records that will be deleted with the student, but lists no individual record details, and asks for confirmation
 5.  Tutor confirms the deletion
 6.  TutorFlow deletes the student and all of their records, and confirms the deletion
 
@@ -894,7 +914,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
       Use case resumes at step 2.
 
-* 4a. The student has no lessons, homework or payments.
+* 4a. The student has no linked records.
 
     * 4a1. TutorFlow deletes the student without asking for confirmation.
 
@@ -903,6 +923,12 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 * 5a. The tutor does not confirm the deletion.
 
     * 5a1. TutorFlow keeps the student and all of their records.
+
+      Use case ends.
+
+* 6a. The tutor runs `undo` immediately afterwards.
+
+    * 6a1. TutorFlow restores the student and all of the deleted records.
 
       Use case ends.
 
@@ -960,9 +986,9 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 * **Tutor**: The user of TutorFlow, an independent private tutor who teaches multiple students
 * **Student**: A person the tutor teaches, recorded with contact details, academic level, subjects, lesson rate and an optional usual venue
 * **Level**: A student's academic level in the Singapore education system: `P1` to `P6` (primary), `S1` to `S5` (secondary) or `J1` to `J2` (junior college)
-* **Rate**: The amount a student is charged for one hour of lesson, in Singapore dollars (SGD)
+* **Rate**: The amount a student is charged for one hour of lesson, stored as a plain amount and displayed in dollars
 * **Duplicate student**: A student with the same name and phone number as another student, after ignoring letter case and extra spaces
-* **Lesson**: A teaching session with one student, with a subject, date, start time, duration and venue
+* **Lesson**: A teaching session with one student, with a subject, date, start time, duration and an optional venue
 * **Lesson status**: The state of a lesson: _scheduled_ (has not happened yet), _completed_ (took place), _cancelled_ (called off in advance) or _missed_ (the student did not attend)
 * **Overlap**: Two scheduled lessons on the same date whose time ranges share at least one minute. Lessons that end exactly when the next one starts do not overlap
 * **Agenda**: A view of the tutor's lessons in time order for a day or a week
@@ -972,7 +998,17 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 * **Homework status**: The state of a homework item: _assigned_, _submitted_ or _reviewed_. Homework that is still assigned after its due date is _overdue_
 * **Charge**: The fee for one completed lesson, calculated from the student's rate and the lesson duration unless the tutor specifies another amount
 * **Payment**: Money received from a student, recorded against the student rather than against a particular lesson
-* **Balance**: The total charges minus the total payments of a student. A positive balance is _outstanding_, and a negative balance means the student is _in credit_
+* **Withdrawal**: Money returned to a student from their available credit. It increases the amount the student owes
+* **Reversal**: An opposite ledger entry that cancels a charge or payment without deleting either one
+* **Weekly series**: A group of lessons scheduled together by `lesson repeat`, at the same time on dates that are a fixed number of weeks apart
+* **Travel buffer**: The minimum number of minutes TutorFlow expects between lessons at different physical venues before it shows a travel warning
+* **Archived student**: A student hidden from the active list while their lessons, homework, payments and history are retained
+* **Follow-up task**: A to-do linked to one student, lesson, homework item or payment
+* **Dues**: The students with a positive balance, ordered by their oldest unpaid charge
+* **Ledger entry**: One immutable charge, payment, withdrawal or reversal in a student's financial history
+* **Displayed list**: The numbered rows most recently shown by a list command; indexed commands take their numbers from it
+* **Undo point**: The single pre-change snapshot that `delete`, `hw delete`, `task delete` or `clear confirm` leaves available to `undo`
+* **Balance**: The total charges, payment reversals and withdrawals minus the total payments and charge reversals of a student. A positive balance is _outstanding_, and a negative balance means the student is _in credit_
 * **Index**: The position of an item in the list currently shown on screen, used by commands to refer to that item
 * **Prefix**: A short label ending in `/`, such as `n/` or `d/`, that marks the start of a command parameter
 * **Data file**: The local file in which TutorFlow saves all of its data
@@ -1027,7 +1063,7 @@ testers are expected to do more *exploratory* testing.
       Expected: Edit, Archive and Delete buttons appear and are reachable by keyboard. On a touch screen, tap the card once to reveal them.
 
    1. Click the card's Edit button, then the pencil beside the phone number.<br>
-      Expected: `edit INDEX p/` is in the command box and focused, and `help edit` appears on standard output. No student is changed.
+      Expected: `edit INDEX p/` is in the command box and focused, and `help edit` appears in the terminal where TutorFlow was launched. No student is changed.
 
    1. Type a replacement phone number after the prefix, then click the pencil beside the name.<br>
       Expected: The draft is replaced by `edit INDEX n/`; the earlier partial phone draft is discarded.
@@ -1035,8 +1071,8 @@ testers are expected to do more *exploratory* testing.
    1. Click Cancel, then repeat with a field pencil and change some of the prepared text before clicking Cancel.<br>
       Expected: The unchanged prepared command is cleared. A command you edited is kept.
 
-   1. Click Archive, then Cancel on a card that is still in field-editing mode.<br>
-      Expected: The `archive INDEX` draft is kept, because Cancel closes editing mode without erasing a newer shortcut.
+   1. Click Archive on one card, then click the pencil on another card.<br>
+      Expected: The `archive INDEX` draft is replaced by the field command for the second card, and no data changes.
 
    1. Click the plus button beside the command box.<br>
       Expected: `add n/` is in the command box and focused. No student is created until you complete the command and press Enter.
@@ -1220,7 +1256,7 @@ testers are expected to do more *exploratory* testing.
 
    1. Prerequisites: Make `data/tutorflow-v14.json` read-only, as a user who is not an administrator.
 
-   1. Test case: Run any command, such as `list`.<br>
+   1. Test case: Run a command that changes data, such as `add n/Test Two p/98765432 l/S1 s/Math r/40`.<br>
       Expected: The result box says that the change was applied in this session but could not be saved, and why. `exit` does not close TutorFlow until the file can be written again.
 
 

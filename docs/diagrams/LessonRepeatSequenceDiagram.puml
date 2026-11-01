@@ -14,7 +14,7 @@ box Model MODEL_COLOR_T1
 participant "m:Model" as Model MODEL_COLOR
 end box
 
-[-> LogicManager : execute("lesson repeat st/1 d/2026-10-29 t/16:00 count/4")
+[-> LogicManager : execute("lesson repeat st/3 d/2026-12-03 t/16:00 count/4")
 activate LogicManager
 
 LogicManager -> AddressBookParser : parseCommand("lesson repeat ...")
@@ -23,11 +23,11 @@ activate AddressBookParser
 AddressBookParser -> LessonCommandParser : parse(" repeat st/1 ...")
 activate LessonCommandParser
 
-LessonCommandParser -> LessonRepeatCommandParser : parse(" st/1 d/2026-10-29 t/16:00 count/4")
+LessonCommandParser -> LessonRepeatCommandParser : parse(" st/3 d/2026-12-03 t/16:00 count/4")
 activate LessonRepeatCommandParser
 
 create LessonRepeatCommand
-LessonRepeatCommandParser -> LessonRepeatCommand : LessonRepeatCommand(1, ..., count = 4, every = 1)
+LessonRepeatCommandParser -> LessonRepeatCommand : LessonRepeatCommand(3, ..., count = 4, every = 1)
 activate LessonRepeatCommand
 LessonRepeatCommand --> LessonRepeatCommandParser
 deactivate LessonRepeatCommand

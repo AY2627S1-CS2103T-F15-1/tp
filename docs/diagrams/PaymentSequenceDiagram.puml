@@ -5,6 +5,7 @@ skinparam ArrowFontStyle plain
 box Logic LOGIC_COLOR_T1
 participant ":LogicManager" as LogicManager LOGIC_COLOR
 participant ":AddressBookParser" as AddressBookParser LOGIC_COLOR
+participant ":PayCommandParser" as PayCommandParser LOGIC_COLOR
 participant ":PaymentCommandParser" as PaymentCommandParser LOGIC_COLOR
 participant "p:PaymentCommand" as PaymentCommand LOGIC_COLOR
 participant "r:CommandResult" as CommandResult LOGIC_COLOR
@@ -25,15 +26,19 @@ end box
 activate LogicManager
 LogicManager -> AddressBookParser : parseCommand("pay st/1 amt/50.00")
 activate AddressBookParser
-AddressBookParser -> PaymentCommandParser : parse("st/1 amt/50.00")
+AddressBookParser -> PayCommandParser : parse("st/1 amt/50.00")
+activate PayCommandParser
+PayCommandParser -> PaymentCommandParser : parse("st/1 amt/50.00")
 activate PaymentCommandParser
 create PaymentCommand
 PaymentCommandParser -> PaymentCommand : PaymentCommand(index, amount, date, notes, clock)
 activate PaymentCommand
 PaymentCommand --> PaymentCommandParser
 deactivate PaymentCommand
-PaymentCommandParser --> AddressBookParser : p
+PaymentCommandParser --> PayCommandParser : p
 deactivate PaymentCommandParser
+PayCommandParser --> AddressBookParser : p
+deactivate PayCommandParser
 AddressBookParser --> LogicManager : p
 deactivate AddressBookParser
 

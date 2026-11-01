@@ -16,6 +16,9 @@ Class PersonCard
 Class StatusBarFooter
 Class CommandBox
 Class CommandHistory
+Class CommandAssist
+Class CommandDraftTarget
+Class GuideView
 }
 
 package Model <<Rectangle>> {
@@ -33,10 +36,13 @@ UiManager .left.|> Ui
 UiManager -down-> "1" MainWindow
 MainWindow *-down->  "1" CommandBox
 CommandBox *-down-> "1" CommandHistory
+CommandBox .right.|> CommandDraftTarget
+MainWindow *-down-> "1" CommandAssist
 MainWindow *-down-> "1" ResultDisplay
 MainWindow *-down-> "1" PersonListPanel
 MainWindow *-down-> "1" StatusBarFooter
 MainWindow --> "0..1" HelpWindow
+HelpWindow *-down-> "1" GuideView
 
 PersonListPanel -down-> "*" PersonCard
 
