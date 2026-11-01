@@ -1359,7 +1359,7 @@ testers are expected to do more *exploratory* testing.
 
 1. Deleting a student who has no lessons, homework, tasks or payments
 
-   1. Prerequisites: Use `list`, with multiple students in the list. The 1st student has no linked records.
+   1. Prerequisites: `clear confirm`, `demo`, `demo confirm`. The sample students have no lessons.
 
    1. Test case: `delete 1`<br>
       Expected: The 1st student is deleted at once and disappears from the list. The result box shows `Deleted student:` and the student's details.
@@ -1418,7 +1418,7 @@ Start each group with `clear confirm`, then `demo`, then `demo confirm`, so the 
 
 1. Delete and undo
 
-   1. Prerequisites: `clear confirm`, `demo`, `demo confirm`, then `delete 1` for a student with no linked records.
+   1. Prerequisites: `clear confirm`, `demo`, `demo confirm`.
 
    1. Test case: `delete 1`, then `undo`<br>
       Expected: The student disappears, then returns; a second `undo` reports that there is nothing to undo.
