@@ -14,6 +14,8 @@
 ## **Acknowledgements**
 
 * This project is based on the [AddressBook-Level3](https://github.com/se-edu/addressbook-level3) project created by the [SE-EDU initiative](https://se-education.org). The architecture, the command and parser design and the testing approach are adapted from it.
+* The edit, archive, delete and add icons in the student-card controls are from [Material Design Icons](https://github.com/google/material-design-icons), licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
+* The TutorFlow application icon was supplied by the project team.
 * Libraries used: [JavaFX](https://openjfx.io/) (user interface), [Jackson](https://github.com/FasterXML/jackson) (JSON storage), [commonmark-java](https://github.com/commonmark/commonmark-java) (showing the bundled User Guide in the Help window), [JUnit5](https://github.com/junit-team/junit5) (testing), [Monocle](https://github.com/TestFX/Monocle) (running the user interface tests without a screen), [Checkstyle](https://checkstyle.sourceforge.io/) and [JaCoCo](https://www.jacoco.org/jacoco/) (code quality and coverage).
 * Documentation is built with [MarkBind](https://markbind.org/) and the diagrams are drawn with [PlantUML](https://plantuml.com/).
 
@@ -953,7 +955,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 * 2b. The saved data cannot be read.
 
-    * 2b1. TutorFlow keeps the unreadable file aside, starts with an empty data set and warns the tutor.
+    * 2b1. TutorFlow does not start, explains why the file could not be opened, and leaves it unchanged for the next successful start.
 
       Use case ends.
 
