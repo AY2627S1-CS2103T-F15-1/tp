@@ -436,6 +436,17 @@ Edits (`edit`, archiving a student, `lesson move`, `lesson cancel`, `hw edit`, `
 because the UUIDs do not change. `delete INDEX` counts the linked tasks in its confirmation prompt, using the same list
 of linked-record counts as lessons, so a later feature adds one more count instead of a new message.
 
+#### Design considerations
+
+**Aspect: how a task stays attached to what it describes**
+
+* **Alternative 1 (current choice):** store the permanent UUID of the parent record.
+    * Pros: Renames, reschedules and reversals do not detach the task, and a cancelled lesson cannot be confused with a new booking in the same slot.
+    * Cons: Loading must validate every parent link and skip stale tasks when a parent has already been deleted.
+* **Alternative 2:** store a displayed index or a copied name and slot.
+    * Pros: The task is easy to display without another lookup.
+    * Cons: Renumbering, filtering or editing the parent can silently change what the task means.
+
 **Storage.** Tasks are saved in an optional top-level `tasks` array of `JsonAdaptedTask`, beside `persons`, `lessons`,
 `homework` and `ledgerEntries`. A file without `tasks` (schema 16 or older) loads with no tasks. Adding the array
 bumped `StorageSchema.CURRENT_VERSION` to 17; task payment links then bumped it to 18 and withdrawals to 19, so
