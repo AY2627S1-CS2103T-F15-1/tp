@@ -1578,8 +1578,8 @@ Start each group with `clear confirm`, then `demo`, then `demo confirm`, so the 
    1. Test case: `pay list`, then `pay reverse 1`, then `balance st/3`<br>
       Expected: The payment is marked reversed and the balance returns to its earlier amount.
 
-   1. Test case: `charge l/1 amt/50`, then `charge reverse l/1`, then `charge reverse l/1`<br>
-      Expected: The manual charge is added and reversed; the second reversal reports that there is no active charge.
+   1. Test case: `charge l/1 amt/50` (rejected, because completing the lesson already charged it), then `charge reverse l/1`, then `charge l/1 amt/50`, then `charge reverse l/1` twice<br>
+      Expected: The first charge is rejected as a duplicate. After the reversal, the $50 charge is added and reversed, and the second reversal reports that there is no active charge.
 
    1. Test case: `withdraw st/3 amt/1` when the student has no credit<br>
       Expected: Rejected because there is no available credit.
@@ -1625,6 +1625,13 @@ Start each group with `clear confirm`, then `demo`, then `demo confirm`, so the 
 ### Data file versioning and domain extension
 
 #### Data format appendix
+
+Validation rules for stored text (moved from the User Guide):
+
+Names, venues, reasons and notes must be printable text on one line; repeated spaces are collapsed. Email local parts may include `%`, the terminal domain label must contain at least two letters, and comparison ignores case.
+
+Previously accepted names, short phone numbers, email terminal labels and venues remain readable when an older data file is loaded. Invalid subject counts (outside 1-10 distinct subjects) and invalid cancellation reasons reject the whole data file and use the recovery process below; individual records are never silently discarded.
+
 
 The real JSON root is `JsonSerializableAddressBook`. Its saved form has these top-level keys:
 

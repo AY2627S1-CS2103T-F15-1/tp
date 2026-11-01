@@ -63,7 +63,7 @@ TutorFlow is a desktop application for independent private tutors who teach arou
 * `list` accepts academic filters and archive flags; invalid or extra arguments are rejected.<br>
   For example, `student list l/S4 s/Math` shows active S4 Math students.
 
-* `today` and `exit` take no parameters. If you type anything after them, TutorFlow shows an error and does not run them.<br>
+* `today`, `dues`, `save`, `undo` and `exit` take no parameters. If you type anything after them, TutorFlow shows an error and does not run them.<br>
   For example, `exit now` is rejected, so a mistyped command cannot close the app.
 
 * Command words are not case-sensitive: `LIST`, `List` and `list` are the same command, and so are `LESSON ADD` and `lesson add`. The same goes for the keyword `confirm`. Parameter prefixes such as `n/` and `st/` must still be in lower case, and the values you type keep their case.
@@ -919,9 +919,7 @@ Read-only commands do not routinely save. After a failed save, they display an u
 
 Only open one instance for a data file: concurrent instances use last-write-wins and can overwrite each other's changes.
 
-Names, venues, reasons and notes must be printable text on one line; repeated spaces are collapsed. Email local parts may include `%`, the terminal domain label must contain at least two letters, and comparison ignores case.
-
-Previously accepted names, short phone numbers, email terminal labels and venues remain readable when an older data file is loaded. Invalid subject counts (outside 1-10 distinct subjects) and invalid cancellation reasons reject the whole data file and use the recovery process below; individual records are never silently discarded.
+Names, venues, reasons and notes must be printable text on one line; repeated spaces are collapsed. Values that an older version accepted stay readable when an older data file is loaded.
 
 ### Editing the data file
 
@@ -940,7 +938,7 @@ Furthermore, certain edits can cause TutorFlow to behave in unexpected ways (e.g
 
 </box>
 
-### Archiving data files `[coming in v2.0]`
+### Archiving data files
 
 Archiving whole data files is not supported in this version. Use [`archive`](#archiving-a-student-archive) to keep a student out of the active list, or copy the data file while TutorFlow is closed if you need a backup.
 
