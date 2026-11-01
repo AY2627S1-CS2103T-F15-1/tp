@@ -104,7 +104,7 @@ public class HelpCommand extends Command {
                             + "Example: hw delete 2 confirm"),
             new CommandHelp("agenda", "Shows the lessons of a day or a week", AgendaCommand.MESSAGE_USAGE),
             new CommandHelp("today", "Shows today's lessons, overdue homework and dues", TodayCommand.MESSAGE_USAGE),
-            new CommandHelp("task add", "Adds a follow-up task to a student, lesson or homework item",
+            new CommandHelp("task add", "Adds a follow-up task to a student, lesson, homework item or payment",
                     TaskAddCommand.MESSAGE_USAGE),
             new CommandHelp("task list", "Lists the open tasks", TaskListCommand.MESSAGE_USAGE),
             new CommandHelp("task edit", "Changes a task's text or due date", TaskEditCommand.MESSAGE_USAGE),

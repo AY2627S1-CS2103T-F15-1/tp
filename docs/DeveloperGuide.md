@@ -15,7 +15,7 @@
 
 * This project is based on the [AddressBook-Level3](https://github.com/se-edu/addressbook-level3) project created by the [SE-EDU initiative](https://se-education.org). The architecture, the command and parser design and the testing approach are adapted from it.
 * The edit, archive, delete and add icons in the student-card controls are from [Material Design Icons](https://github.com/google/material-design-icons), licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
-* The TutorFlow application icon was supplied by the project team.
+* The TutorFlow application icon was supplied by the project team in a6891d76; 4e576c20 resized that asset for use as the window icon.
 * Libraries used: [JavaFX](https://openjfx.io/) (user interface), [Jackson](https://github.com/FasterXML/jackson) (JSON storage), [commonmark-java](https://github.com/commonmark/commonmark-java) (showing the bundled User Guide in the Help window), [JUnit5](https://github.com/junit-team/junit5) (testing), [Monocle](https://github.com/TestFX/Monocle) (running the user interface tests without a screen), [Checkstyle](https://checkstyle.sourceforge.io/) and [JaCoCo](https://www.jacoco.org/jacoco/) (code quality and coverage).
 * Documentation is built with [MarkBind](https://markbind.org/) and the diagrams are drawn with [PlantUML](https://plantuml.com/).
 
@@ -85,8 +85,6 @@ The card's action buttons are rendered from `PersonListCard.fxml`. The subject p
 
 The shortcut draft uses the same displayed index as the indexed commands. `PersonListPanel` observes its filtered list; when that list changes, an unchanged prepared draft is cleared and field-editing mode is closed, because the old number could now identify another student. A draft that the user edited is kept, as required for predictable cancellation. `CommandAssist` also prints `help COMMAND` to standard output for each shortcut, allowing the existing help command to own the usage text instead of duplicating it in the UI.
 
-All subject values entered through commands go through `ParserUtil#parseSubject`. It normalizes the text, capitalizes the first Unicode letter with an uppercase mapping under `Locale.ROOT`, and then creates the immutable `Subject`. This keeps `add`, `edit`, lesson subject selection and subject filters consistent. Stored values loaded by `Subject` and `JsonAdaptedSubject` keep their original case, so existing data files and historical lessons are not rewritten.
-
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-F15-1/tp/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-F15-1/tp/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
 
 The `UI` component,
@@ -105,6 +103,12 @@ Here's a (partial) class diagram of the `Logic` component:
 <puml src="diagrams/LogicClassDiagram.puml" width="550"/>
 
 The sequence diagram below illustrates the interactions within the `Logic` component, taking `execute("delete 1")` API call as an example.
+
+All subject values entered through commands go through `ParserUtil#parseSubject`. It normalizes the text,
+capitalizes the first Unicode letter with an uppercase mapping under `Locale.ROOT`, and then creates the immutable
+`Subject`. This keeps `add`, `edit`, lesson subject selection and subject filters consistent. Stored values loaded by
+`Subject` and `JsonAdaptedSubject` keep their original case, so existing data files and historical lessons are not
+rewritten.
 
 <puml src="diagrams/DeleteSequenceDiagram.puml" alt="Interactions Inside the Logic Component for the `delete 1` Command" />
 
@@ -197,6 +201,38 @@ and the same identity, due date and status. Clearing is also allowed after a sta
 recording non-empty feedback still requires submission. No data-schema change is needed: absent email, venue
 and feedback already use the existing optional JSON fields. Regression tests cover saving and reloading them.
 
+### Command parsing, aliases and list filters
+
+`AddressBookParser` lower-cases only the command word and dispatches it through `CommandInput`; each
+sub-command parser then reads its own first word, so `LIST` and `LESSON ADD` work without making prefixes
+case-insensitive. `confirm` is compared with `equalsIgnoreCase` by the parsers that accept it.
+
+The `student` command word is an alias for the student commands: `student add`, `edit`, `delete`, `find`,
+`view`, `list`, `archive` and `restore`. It is routed in `AddressBookParser` and reaches the same command
+objects as the unprefixed form, so validation and displayed-index rules are shared.
+
+`ListCommand` applies the optional level, subject and archive scope in one predicate. It does not change the
+saved `StudentOrder`; it only replaces the filtered view and renumbers the displayed students. `SortCommand`
+chooses `StudentOrder.ASCENDING` or `DESCENDING`, and `AddressBook` reapplies that comparator whenever a student
+is added, replaced or the whole book is reset. `RemarkCommand` replaces the optional remark and accepts an empty
+`r/` to clear it.
+
+`DemoCommand` checks `AddressBook#isEmpty` before loading the sample data, and only after `confirm`. `ClearCommand`
+clears every domain and resets the travel buffer and `StudentOrder`; both operations are reflected in the saved
+JSON. See the User Guide for their confirmation requirements.
+
+### Offline help and command assistance
+
+`HelpCommand` returns either the searchable command list or the usage text registered in its `CommandHelp`
+entries. It never executes the command it describes. `HelpWindow` is a separate JavaFX stage that loads
+`docs/UserGuide.md` from the JAR through `UserGuide` and renders it with commonmark. Heading anchors, table
+extensions and the bundled `Ui.png` are resolved locally; external links are disabled, so the guide works
+without a network connection.
+
+`CommandAssist` is the shared UI layer behind the card shortcuts. It writes command drafts into the
+`CommandDraftTarget` implemented by `CommandBox` and never calls `Logic`. `PersonCard` supplies only the
+displayed index and field, and the draft is cleared or replaced when the displayed list changes.
+
 ### Lesson scheduling, agenda and conflict detection
 
 The lesson commands are `lesson add`, `lesson repeat`, `lesson list`, `lesson prep`, `lesson move`, `lesson cancel`, `lesson series cancel`, `lesson done` and `lesson missed`. They share the `lesson` command word, which `AddressBookParser` hands to `LessonCommandParser`. That parser reads the next word and passes the rest of the arguments to the parser of that command. `agenda` is its own command word.
@@ -282,6 +318,18 @@ When notes are supplied again on a completed lesson, they replace the existing n
 The command replaces a scheduled lesson with the immutable copy returned by `Lesson#miss`, which retains all booking details, notes and identity fields. Repeating it on an already-missed lesson returns an informative message without replacing the record. Existing lesson filters, overlap checks, `view` history counts and JSON storage already support `LessonStatus.MISSED`; no new storage format is needed. A missed lesson can disappear from an upcoming-only filter, but remains accessible with `lesson list st/INDEX all/`. The existing `lesson done` command can correct a missed status to completed. `lesson move` rejects a missed lesson, because the moved copy would keep `MISSED` on its new date and the record of the missed slot would be lost. A make-up lesson is scheduled with `lesson add` instead.
 
 `LessonMissedIntegrationTest` exercises command parsing, status changes, student history and JSON reload together. It also verifies that invalid arguments, invalid indices and rejected status/date changes leave the saved file unchanged.
+
+### Lesson preparation
+
+`lesson prep INDEX n/NOTES` is routed through `LessonCommandParser` to `LessonPrepCommandParser`. The parser
+requires one displayed lesson index and one non-empty `n/` value, uses the shared printable-notes policy, and
+rejects duplicate or empty prefixes. `LessonPrepCommand` replaces the preparation through `Lesson#prepare`,
+which returns an immutable copy and preserves the lesson's status, teaching notes, student snapshot and series
+identity.
+
+Preparation works for a lesson in any status and does not complete or reclassify it. It appears in `lesson list`
+and in the next-lesson section of `view`; it cannot be cleared in this version. Repeating the command replaces the
+stored text. Because preparation does not change lesson ordering, it does not renumber the displayed list.
 
 ### Weekly lesson series and back-dated lessons
 
@@ -459,6 +507,8 @@ Undo is deliberately a single-action, session-only safety net, not a general und
 
 `UndoCommand` calls `Model#undoDestructiveAction()`, which restores `lastState` through `resetData`. The `LogicManager` then saves the restored state through the normal changed-data path. A save failure retains the restored in-memory state so `save` can retry, matching every other mutating command.
 
+<puml src="diagrams/UndoSequenceDiagram.puml" alt="Sequence diagram for restoring the latest deletion with undo" />
+
 Only one undo point is retained. A successful non-destructive command clears it in `afterCommand`, as does a successful destructive command replacing it. This is intentional: undo must never silently roll back later work. Read-only commands do not clear it. The state is not persisted, so closing TutorFlow ends the undo opportunity.
 
 `VersionedAddressBookTest` exercises the hooks and failed-destructive path directly. `UndoCommandTest` and `UndoIntegrationTest` cover the command and persistence behaviour. Keep `afterCommand` in the `finally` path: it must run on failure so that a rejected confirmation discards the temporary transition snapshot without consuming a valid undo point.
@@ -525,7 +575,23 @@ updated balance, and save performed by `LogicManager`:
 
 #### Reversals, withdrawals and dues
 
-Move, cancellation and series cancellation already reject changes to billed lessons and preserve lesson and series UUIDs. Series cancellation checks the whole batch before replacing the address book.
+`ChargeCommand` records a manual charge or a charge reversal. `WithdrawCommand` appends a withdrawal only when
+the student has enough available credit, so the withdrawal never creates a negative balance by itself.
+`PaymentReverseCommand` and `charge reverse` append reversal entries rather than deleting the original row.
+The account statement shows each reversal with the date of the entry it cancels. Move, single cancellation
+and series cancellation reject changes to a billed lesson and preserve lesson and series UUIDs; series
+cancellation validates the whole batch before replacing the address book.
+
+#### Design considerations
+
+**Aspect: how to correct a financial entry**
+
+* **Alternative 1 (current choice):** append an opposite ledger entry.
+    * Pros: The original mistake remains visible, the balance can be recomputed, and a task can still refer to the original payment.
+    * Cons: The ledger grows with corrections and every calculation must treat reversals consistently.
+* **Alternative 2:** edit or delete the original entry.
+    * Pros: The ledger has fewer rows.
+    * Cons: It hides that a correction happened and can break saved task links or audit expectations.
 
 `LogicManager(Model, Storage, Clock)` passes a shared date source to the finance and relevant lesson
 parsers/commands. Interactive constructors default to the system clock. Finance workflow tests use a
@@ -573,63 +639,75 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 **Student management**
 
-| Priority | As a …                                    | I want to …                                                                                          | So that I can…                                                                               |
-|----------|--------------------------------------------|-------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|
-| `* * *`  | private tutor                              | create a student profile with contact details, subjects, academic level and lesson rate               | keep the information needed to teach them in one place                                        |
-| `* * *`  | private tutor                              | view a student overview with their next lesson, outstanding homework, recent lesson notes and unpaid balance | prepare for the student without checking multiple sections                             |
-| `* * *`  | private tutor                              | search for students by name                                                                           | access a student's record quickly                                                             |
-| `* *`    | private tutor                              | filter students by subject or academic level                                                          | find relevant groups of students                                                              |
-| `* * *`  | private tutor                              | update a student's profile                                                                            | keep their information accurate when their circumstances change                               |
-| `*`      | private tutor                              | archive a student who has stopped taking lessons                                                      | keep them out of my active list while their teaching and payment history remains available    |
-| `* * *`  | private tutor                              | be warned about a possible duplicate when creating a student                                          | avoid maintaining multiple records for the same person                                        |
+| No. | Priority | As a … | I want to … | So that I can… |
+|-----|----------|--------|-------------|----------------|
+| 1 | `* * *` | private tutor | create a student profile with contact details, subjects, academic level and lesson rate | keep the information needed to teach them in one place |
+| 2 | `* * *` | private tutor | view a student overview with their next lesson, outstanding homework, recent lesson notes and unpaid balance | prepare for the student without checking multiple sections |
+| 3 | `* * *` | private tutor | search for students by name | access a student's record quickly |
+| 4 | `* *` | private tutor | filter students by subject or academic level | find relevant groups of students |
+| 5 | `* * *` | private tutor | update a student's profile | keep their information accurate when their circumstances change |
+| 6 | `* *` | private tutor | archive a student who has stopped taking lessons | keep them out of my active list while their teaching and payment history remains available |
+| 7 | `* * *` | private tutor | be warned about a possible duplicate when creating a student | avoid maintaining multiple records for the same person |
 
 **Lesson scheduling**
 
-| Priority | As a …                                    | I want to …                                                                                          | So that I can…                                                                               |
-|----------|--------------------------------------------|-------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|
-| `* * *`  | private tutor                              | schedule a lesson with its student, subject, date, time, duration and venue                           | have all the information needed to conduct the lesson                                         |
-| `* *`    | private tutor                              | schedule recurring lessons                                                                            | avoid entering regular weekly lessons individually                                            |
-| `* * *`  | private tutor                              | view my lessons in a daily or weekly agenda                                                           | plan my teaching schedule and travel                                                          |
-| `* * *`  | private tutor                              | view all upcoming lessons for a specific student                                                      | review my commitments with them                                                               |
-| `* * *`  | private tutor                              | reschedule a lesson while retaining its existing details                                              | record timetable changes efficiently                                                          |
-| `* * *`  | private tutor                              | cancel a lesson and record its cancellation status                                                    | keep my schedule and payment records accurate                                                 |
-| `* * *`  | private tutor                              | be warned when a lesson conflicts with another commitment                                             | avoid double-booking myself                                                                   |
-| `*`      | travelling tutor                           | see consecutive lessons with insufficient travel time between their venues                            | identify schedules that may be impractical                                                    |
-| `* * *`  | private tutor                              | mark a lesson as completed, cancelled or missed                                                       | have an accurate record of what happened                                                      |
-| `* * *`  | private tutor                              | record preparation notes before a lesson and teaching notes afterward                                 | continue effectively from one lesson to the next                                              |
+| No. | Priority | As a … | I want to … | So that I can… |
+|-----|----------|--------|-------------|----------------|
+| 8 | `* * *` | private tutor | schedule a lesson with its student, subject, date, time, duration and venue | have all the information needed to conduct the lesson |
+| 9 | `* *` | private tutor | schedule recurring lessons | avoid entering regular weekly lessons individually |
+| 10 | `* * *` | private tutor | view my lessons in a daily or weekly agenda | plan my teaching schedule and travel |
+| 11 | `* * *` | private tutor | view all upcoming lessons for a specific student | review my commitments with them |
+| 12 | `* * *` | private tutor | reschedule a lesson while retaining its existing details | record timetable changes efficiently |
+| 13 | `* * *` | private tutor | cancel a lesson and record its cancellation status | keep my schedule and payment records accurate |
+| 14 | `* * *` | private tutor | be warned when a lesson conflicts with another commitment | avoid double-booking myself |
+| 15 | `* *` | travelling tutor | see consecutive lessons with insufficient travel time between their venues | identify schedules that may be impractical |
+| 16 | `* * *` | private tutor | mark a lesson as completed, cancelled or missed | have an accurate record of what happened |
+| 17 | `* * *` | private tutor | record preparation notes before a lesson and teaching notes afterward | continue effectively from one lesson to the next |
 
 **Homework management**
 
-| Priority | As a …                                    | I want to …                                                                                          | So that I can…                                                                               |
-|----------|--------------------------------------------|-------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|
-| `* *`    | private tutor                              | assign homework to a student with a description and due date                                          | know what the student is expected to complete                                                 |
-| `* *`    | private tutor                              | view all outstanding and overdue homework across my students                                          | identify which students require follow-up                                                     |
-| `* *`    | private tutor                              | update homework as assigned, submitted, reviewed or overdue                                           | see its current status at a glance                                                            |
-| `* *`    | private tutor                              | edit an assignment's details                                                                          | correct mistakes or accommodate changes                                                       |
-| `* *`    | private tutor                              | record feedback on submitted homework                                                                 | remember the issues to discuss during the next lesson                                         |
-| `*`      | private tutor                              | view a student's homework history                                                                     | identify patterns in their completion and progress                                            |
+| No. | Priority | As a … | I want to … | So that I can… |
+|-----|----------|--------|-------------|----------------|
+| 18 | `* *` | private tutor | assign homework to a student with a description and due date | know what the student is expected to complete |
+| 19 | `* *` | private tutor | view all outstanding and overdue homework across my students | identify which students require follow-up |
+| 20 | `* *` | private tutor | update homework as assigned, submitted or reviewed, with overdue derived automatically | see its current status at a glance |
+| 21 | `* *` | private tutor | edit an assignment's details | correct mistakes or accommodate changes |
+| 22 | `* *` | private tutor | record feedback on submitted homework | remember the issues to discuss during the next lesson |
+| 23 | `*` | private tutor | view a student's homework history | identify patterns in their completion and progress |
 
 **Payments**
 
-| Priority | As a …                                    | I want to …                                                                                          | So that I can…                                                                               |
-|----------|--------------------------------------------|-------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|
-| `* *`    | private tutor                              | record the fee charged for each completed lesson                                                      | calculate what each student owes                                                              |
-| `* *`    | private tutor                              | record a payment and associate it with the relevant student                                           | keep their balance accurate                                                                   |
-| `* *`    | private tutor                              | view each student's charges, payments and current balance                                             | answer payment questions clearly                                                              |
-| `* *`    | private tutor                              | view all outstanding payments ordered by how long they have been unpaid                               | prioritise payment follow-ups                                                                 |
-| `* *`    | private tutor                              | correct or reverse an incorrectly entered payment                                                     | prevent errors from permanently distorting my records                                         |
-| `*`      | private tutor                              | export payment records for a selected period                                                          | use them for accounting and tax reporting                                                     |
+| No. | Priority | As a … | I want to … | So that I can… |
+|-----|----------|--------|-------------|----------------|
+| 24 | `* *` | private tutor | record the fee charged for each completed lesson | calculate what each student owes |
+| 25 | `* *` | private tutor | record a payment and associate it with the relevant student | keep their balance accurate |
+| 26 | `* *` | private tutor | view each student's charges, payments and current balance | answer payment questions clearly |
+| 27 | `* *` | private tutor | view all outstanding payments ordered by how long they have been unpaid | prioritise payment follow-ups |
+| 28 | `* *` | private tutor | correct or reverse an incorrectly entered payment | prevent errors from permanently distorting my records |
+| 29 | `*` | private tutor | export payment records for a selected period | use them for accounting and tax reporting |
 
 **Daily workflow**
 
-| Priority | As a …                                    | I want to …                                                                                          | So that I can…                                                                               |
-|----------|--------------------------------------------|-------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|
-| `* * *`  | private tutor                              | view a dashboard showing today's lessons, overdue homework and outstanding payments                   | know what requires my attention                                                               |
-| `*`      | private tutor                              | create follow-up tasks linked to students, lessons, homework or payments                              | make sure important actions are not forgotten                                                 |
-| `* *`    | private tutor                              | undo a recent destructive action                                                                      | recover from an accidental change                                                             |
-| `* * *`  | new user                                   | access in-app guidance and examples                                                                   | learn TutorFlow without relying on external documentation                                     |
-| `*`      | new user                                   | experiment with sample records and remove them when I am ready                                        | learn the application before entering real information                                        |
-| `*`      | private tutor moving from another tracking system | import student records from a common file format                                               | avoid re-entering all my existing information manually                                        |
+| No. | Priority | As a … | I want to … | So that I can… |
+|-----|----------|--------|-------------|----------------|
+| 30 | `* * *` | private tutor | view a dashboard showing today's lessons, overdue homework and outstanding payments | know what requires my attention |
+| 31 | `* *` | private tutor | create follow-up tasks linked to students, lessons, homework or payments | make sure important actions are not forgotten |
+| 32 | `* *` | private tutor | undo a recent destructive action | recover from an accidental change |
+| 33 | `* * *` | new user | access in-app guidance and examples | learn TutorFlow without relying on external documentation |
+| 34 | `* *` | new user | experiment with sample records and remove them when I am ready | learn the application before entering real information |
+| 35 | `*` | private tutor moving from another tracking system | import student records from a common file format | avoid re-entering all my existing information manually |
+
+**Workflow tools**
+
+| No. | Priority | As a … | I want to … | So that I can… |
+|-----|----------|--------|-------------|----------------|
+| 36 | `* *` | private tutor | sort students by name | scan the list in a predictable order |
+| 37 | `* *` | private tutor | record a remark about a student | keep useful personal context with the student |
+| 38 | `* *` | private tutor | withdraw a student's available credit | return an overpayment without rewriting history |
+| 39 | `* *` | private tutor | reverse a charge or payment | correct a mistaken financial entry without deleting it |
+| 40 | `* *` | private tutor | cancel the future occurrences of a weekly series | stop regular bookings without cancelling them one by one |
+| 41 | `* *` | private tutor | recall earlier commands with the Up and Down keys | correct or repeat a command without retyping it |
+| 42 | `* *` | private tutor | use student-card shortcuts to prepare commands | avoid memorising every command prefix |
 
 ### Use cases
 
@@ -965,6 +1043,171 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
       Use case resumes at step 3.
 
+**Use case: UC9 - Undo the latest deletion or clear**
+
+**MSS**
+
+1.  Tutor deletes a student, homework item or task, or confirms `clear`.
+2.  Tutor requests to undo the latest destructive action.
+3.  TutorFlow restores the complete state from before that action and saves it.
+
+    Use case ends.
+
+**Extensions**
+
+* 1a. The destructive command fails or is rejected without confirmation.
+
+    * 1a1. TutorFlow keeps the previous undo point.
+
+      Use case resumes at step 2.
+
+* 2a. There is no eligible undo point.
+
+    * 2a1. TutorFlow reports that there is nothing to undo.
+
+      Use case ends.
+
+* 2b. Another successful change was made after the deletion.
+
+    * 2b1. TutorFlow reports that there is nothing to undo; the later change is not rolled back.
+
+      Use case ends.
+
+**Use case: UC10 - Schedule and cancel a weekly series**
+
+**MSS**
+
+1.  Tutor requests a weekly series for a student, giving the first date, time, count and optional gap.
+2.  TutorFlow validates every occurrence, adds the whole series, and reports the number scheduled.
+3.  Tutor later selects a displayed occurrence and requests `lesson series cancel INDEX confirm`.
+4.  TutorFlow cancels each future occurrence that is still scheduled and reports the number cancelled.
+
+    Use case ends.
+
+**Extensions**
+
+* 1a. Any occurrence is invalid or duplicates an existing lesson.
+
+    * 1a1. TutorFlow adds no occurrences and reports the first problem.
+
+      Use case ends.
+
+* 2a. An occurrence overlaps another lesson.
+
+    * 2a1. TutorFlow schedules the series and reports the overlaps as warnings.
+
+      Use case resumes at step 3.
+
+* 3a. The selected occurrence does not belong to a series, or no eligible occurrence remains.
+
+    * 3a1. TutorFlow reports that nothing was cancelled.
+
+      Use case ends.
+
+* 3b. An eligible occurrence has an active charge.
+
+    * 3b1. TutorFlow leaves the whole series unchanged.
+
+      Use case ends.
+
+**Use case: UC11 - Track homework and follow-up tasks**
+
+**MSS**
+
+1.  Tutor assigns homework with a description and due date.
+2.  Tutor updates its status and records feedback, then creates a follow-up task linked to it.
+3.  Tutor views the homework and task history and marks the task done.
+
+    Use case ends.
+
+**Extensions**
+
+* 1a. The due date is before today or beyond one year.
+
+    * 1a1. TutorFlow rejects the assignment and states the accepted range.
+
+      Use case ends.
+
+* 1b. The same student already has the same description and due date.
+
+    * 1b1. TutorFlow rejects the duplicate.
+
+      Use case ends.
+
+* 2a. Feedback is requested before submission.
+
+    * 2a1. TutorFlow asks the tutor to mark the homework submitted or reviewed first.
+
+      Use case resumes at step 2.
+
+* 2b. The homework is deleted while linked tasks exist.
+
+    * 2b1. TutorFlow requires confirmation and deletes the linked tasks with the homework.
+
+      Use case ends.
+
+**Use case: UC12 - Correct a payment, charge or withdrawal**
+
+**MSS**
+
+1.  Tutor lists payments or views a student's balance.
+2.  Tutor selects a payment or lesson charge to correct.
+3.  TutorFlow records a reversal, keeps the original entry, recalculates the balance and saves the result.
+4.  Tutor optionally records a replacement payment or charge.
+
+    Use case ends.
+
+**Extensions**
+
+* 1a. No payment list has been shown, or the selected payment index is invalid.
+
+    * 1a1. TutorFlow asks the tutor to run `pay list` first.
+
+      Use case ends.
+
+* 2a. The selected entry was already reversed.
+
+    * 2a1. TutorFlow refuses to reverse it again.
+
+      Use case ends.
+
+* 2b. A withdrawal is requested above available credit.
+
+    * 2b1. TutorFlow rejects the withdrawal and reports the available credit.
+
+      Use case ends.
+
+**Use case: UC13 - Archive and restore a student**
+
+**MSS**
+
+1.  Tutor selects an active student and requests archive.
+2.  TutorFlow hides the student from the active list while retaining all history.
+3.  Tutor later lists archived students, selects the student and requests restore.
+4.  TutorFlow returns the student to the active list.
+
+    Use case ends.
+
+**Extensions**
+
+* 1a. The student is already archived.
+
+    * 1a1. TutorFlow reports that no change was made.
+
+      Use case ends.
+
+* 2a. The tutor tries to schedule new work for the archived student.
+
+    * 2a1. TutorFlow asks the tutor to restore the student first.
+
+      Use case ends.
+
+* 3a. The student is already active.
+
+    * 3a1. TutorFlow reports that no change was made.
+
+      Use case ends.
+
 ### Non-Functional Requirements
 
 1.  Should work on any _mainstream OS_ as long as it has Java `25` or above installed.
@@ -1112,13 +1355,13 @@ testers are expected to do more *exploratory* testing.
 
 1. Deleting a student who has lessons
 
-   1. Prerequisites: Use `list`. Schedule a future lesson for the 1st student, such as `lesson add st/1 d/tmr t/16:00`.
+   1. Prerequisites: `clear confirm`, `demo`, `demo confirm`, `lesson add st/1 s/Math d/tmr t/16:00`, then `agenda d/tmr`.
 
    1. Test case: `delete 1`<br>
       Expected: Nothing is deleted. The result box shows the student's name and phone number, the number of lessons, a warning about the upcoming lesson, and `Type 'delete 1 confirm' to proceed.`
 
    1. Test case: `delete 1 confirm`<br>
-      Expected: The student and their lessons are deleted. `agenda d/DATE` for the lesson's date no longer shows the lesson.
+      Expected: The student and their lessons are deleted. Run `agenda d/tmr` and check that the lesson is gone.
 
 1. Incorrect delete commands
 
@@ -1136,81 +1379,105 @@ testers are expected to do more *exploratory* testing.
 
 1. Different ways of writing a date
 
-   1. Prerequisites: At least one student in the list.
+   1. Prerequisites: `clear confirm`, then `demo confirm` if the data set is empty.
 
-   1. Test case: `lesson add st/1 d/22-Dec-26 t/16:30`, then `lesson add st/1 d/2026/12/23 t/16:30`, then `lesson add st/1 d/24 December 2026 t/16:30`<br>
+   1. Test case: `lesson add st/3 s/Math d/22-Dec-26 t/16:30`, then `lesson add st/3 s/Math d/2026/12/23 t/16:30`, then `lesson add st/3 s/Math d/24 December 2026 t/16:30`<br>
       Expected: Lessons are scheduled on 22, 23 and 24 December 2026, each shown in full in the reply.
 
-   1. Test case: `lesson add st/1 d/12/22/2026 t/16:30`, then `lesson add st/1 d/30/02/2026 t/16:30`<br>
+   1. Test case: `lesson add st/3 s/Math d/12/22/2026 t/16:30`, then `lesson add st/3 s/Math d/30/02/2026 t/16:30`<br>
       Expected: Both rejected with the message that explains how a date is written.
+
+### Students
+
+Start each group with `clear confirm`, then `demo`, then `demo confirm`, so the sample students are known.
+
+1. Add, list, filter and find
+
+   1. Test case: `add n/Test Student p/98765432 l/S1 s/Math r/40`<br>
+      Expected: The student is added and appears in the active list.
+
+   1. Test case: `list l/S3 s/Math`, then `find charlotte`<br>
+      Expected: The first command shows active S3 Math students; the second shows Charlotte Oliveiro with its new number.
+
+   1. Test case: `remark 1 r/Prefers mornings`, then `view 1`<br>
+      Expected: The remark appears on the overview; `remark 1 r/` clears it.
+
+   1. Test case: `archive 1`, then `list archived/`, then `restore 1`<br>
+      Expected: The student is hidden from the active list, shown by `list archived/`, and restored to the active list.
+
+1. Delete and undo
+
+   1. Prerequisites: `list`; delete a student with no linked records, then run `undo`.
+
+   1. Test case: `delete 1`, then `undo`<br>
+      Expected: The student disappears, then returns; a second `undo` reports that there is nothing to undo.
 
 ### Lessons
 
+Start each group with `clear confirm`, then `demo`, then `demo confirm`, so the sample students and empty lesson history are known.
+
 1. Scheduling a lesson
 
-   1. Prerequisites: Use `list`, with at least two students in the list. The 1st student takes one subject and the 2nd student takes more than one.
+   1. Prerequisites: `demo confirm`. Student 1 takes Math and Physics; student 3 takes Math only.
 
-   1. Test case: `lesson add st/1 d/<a date next week> t/16:30 dur/90`<br>
-      Expected: A lesson is scheduled in the student's only subject at the student's venue. The result shows `Scheduled: ...`.
+   1. Test case: `lesson add st/3 d/tmr t/16:30 dur/90`<br>
+      Expected: A lesson is scheduled in Math at the student's venue. The result shows `Scheduled: ...`.
 
-   1. Test case: the same command again<br>
+   1. Test case: `lesson add st/3 d/tmr t/16:30 dur/90` again<br>
       Expected: The lesson is rejected as an exact duplicate.
 
-   1. Test case: `lesson add st/2 d/<the same date> t/17:00` (without `s/`)<br>
+   1. Test case: `lesson add st/1 d/tmr t/17:00`<br>
       Expected: Rejected, because the student takes several subjects. The result names the subjects.
 
-   1. Test case: `lesson add st/2 s/<a subject of the student> d/<the same date> t/17:00`<br>
+   1. Test case: `lesson add st/1 s/Math d/tmr t/17:00`<br>
       Expected: Scheduled, and the result warns that it overlaps the first lesson.
 
-   1. Other incorrect commands to try: `lesson add st/1 d/2020-01-01 t/16:30` (past date), `lesson add st/1 d/<next week> t/23:00 dur/120` (past midnight), `lesson add st/0 d/<next week> t/16:30`, `lesson add st/1`<br>
+   1. Other incorrect commands to try: `lesson add st/3 d/2020-01-01 t/16:30`, `lesson add st/3 d/tmr t/23:00 dur/120`, `lesson add st/0 d/tmr t/16:30`, `lesson add st/3`<br>
       Expected: Nothing is scheduled. The result shows an error message.
 
 1. Scheduling a weekly series
 
-   1. Prerequisites: Use `list`, with at least one student who takes one subject.
+   1. Prerequisites: `clear confirm`, then `demo`, then `demo confirm`.
 
-   1. Test case: `lesson repeat st/1 d/<a date next week> t/16:00 count/4`<br>
-      Expected: The result says `Scheduled 4 weekly occurrences.` and, on the next line, that the new lessons are not in the displayed list. `lesson list st/1` then shows 4 lessons, each with the student's level at booking.
+   1. Test case: `lesson repeat st/3 d/tmr t/16:00 count/4`<br>
+      Expected: The result says `Scheduled 4 weekly occurrences.` and that the new lessons are not in the displayed list. `lesson list st/3` then shows 4 lessons.
 
-   1. Test case: `lesson repeat st/1 d/<a date next week> t/16:00 count/4 past/`<br>
-      Expected: Rejected with a message that `past/` is not accepted for a series.
+   1. Test case: `lesson repeat st/3 d/tmr t/16:00 count/4 past/`<br>
+      Expected: Rejected because `past/` is not accepted for a series.
 
-   1. Test case: `lesson repeat st/1 d/<a date next week> t/16:00 count/53`<br>
+   1. Test case: `lesson repeat st/3 d/tmr t/16:00 count/53`<br>
       Expected: Rejected with the range message for `count/` and `every/`.
-
-   1. Test case: `lesson add st/1 d/<a date next week> t/09:00 past/`<br>
-      Expected: Rejected, because `past/` is only for a lesson that has already taken place. Using a date from last week succeeds.
 
 1. Viewing lessons
 
-   1. Prerequisites: Schedule the two lessons above.
+   1. Prerequisites: `clear confirm`, then `demo`, then `demo confirm`; schedule `lesson add st/3 s/Math d/tmr t/16:30 dur/90` and `lesson add st/1 s/Math d/tmr t/17:00`.
 
-   1. Test case: `agenda d/<the same date>`<br>
+   1. Test case: `agenda d/tmr`<br>
       Expected: Both lessons are listed in time order, each marked `⚠ overlaps`.
 
-   1. Test case: `agenda week/ d/<the same date>`<br>
+   1. Test case: `agenda week/ d/tmr`<br>
       Expected: Seven days are shown, and days without lessons show `— no lessons —`.
 
    1. Test case: `agenda week/yes`<br>
       Expected: An error that the flag takes no value.
 
-   1. Test case: `lesson list st/1`<br>
-      Expected: The upcoming lessons of the 1st student are listed and numbered.
+   1. Test case: `lesson list st/3`<br>
+      Expected: The upcoming lessons of student 3 are listed and numbered.
 
 1. Rescheduling and cancelling a lesson
 
-   1. Prerequisites: Run `agenda` for the date of the lessons, so that the lessons are numbered.
+   1. Prerequisites: `clear confirm`, then `demo`, then `demo confirm`; schedule `lesson add st/3 d/tmr t/16:30`, then run `agenda d/tmr`.
 
    1. Test case: `lesson move 1 t/20:00`<br>
-      Expected: The 1st lesson moves to 20:00 and keeps its subject and venue. The result shows the old and the new slot.
+      Expected: The 1st lesson moves to 20:00 and keeps its subject and venue. Run `agenda d/tmr` again before another indexed command.
 
    1. Test case: `lesson move 1`<br>
       Expected: An error that at least one of `d/`, `t/`, `dur/` or `v/` is needed.
 
    1. Test case: `lesson cancel 1 r/Student unwell`<br>
-      Expected: The lesson is cancelled with its reason. Run `agenda` again to see it listed as cancelled and no longer overlapping.
+      Expected: The lesson is cancelled with its reason. Run `agenda d/tmr` again to see it listed as cancelled.
 
-   1. Test case: `lesson cancel 1` again, then `lesson move 1 d/<next week>`<br>
+   1. Test case: `lesson cancel 1` again, then `lesson move 1 d/tmr`<br>
       Expected: Both are rejected because the lesson is already cancelled.
 
    1. Test case: `lesson cancel 99`<br>
@@ -1218,16 +1485,60 @@ testers are expected to do more *exploratory* testing.
 
 1. Completing a lesson
 
-   1. Prerequisites: Schedule a lesson dated today, then run `agenda` and note its lesson number.
+   1. Prerequisites: `clear confirm`, then `demo`, then `demo confirm`; run `lesson add st/3 d/2026-10-12 t/16:30 past/`, then `agenda d/2026-10-12` and note the lesson number.
 
-   1. Test case: `lesson done INDEX n/Covered algebra`<br>
-      Expected: `Completed: ...`. Run `view STUDENT_INDEX` to see the notes and completed count. Reopen the app and check they are still present.
+   1. Test case: `lesson done 1 n/Covered algebra`<br>
+      Expected: `Completed: ...`. Run `view 3` to see the notes and completed count. Reopen the app and check they are still present.
 
-   1. Test case: Run `lesson list st/STUDENT_INDEX all/`, check the current lesson number, then run `lesson done INDEX n/Revised notes` followed by `lesson done INDEX`<br>
+   1. Test case: `lesson list st/3 all/`, then `lesson done 1 n/Revised notes`, then `lesson done 1`<br>
       Expected: Notes change to `Revised notes`, then remain unchanged. No extra lesson is created.
 
-   1. Other incorrect commands to try: completion of a future or cancelled lesson, `lesson done 0`, `lesson done INDEX n/`, or `lesson done INDEX n/First n/Second`<br>
+   1. Other incorrect commands to try: completion of a future or cancelled lesson, `lesson done 0`, `lesson done 1 n/`, or `lesson done 1 n/First n/Second`<br>
       Expected: Rejected without changing the lesson or notes.
+
+### Homework, tasks and finance
+
+1. Homework lifecycle
+
+   1. Prerequisites: `clear`, `clear confirm`, then `demo`, then `demo confirm`.
+
+   1. Test case: `hw add st/1 desc/Algebra Q1-10 due/tmr`, then `hw list`<br>
+      Expected: The homework is listed as assigned and numbered.
+
+   1. Test case: `hw status 1 s/submitted`, then `hw feedback 1 f/Sign errors`, then `hw status 1 s/reviewed`<br>
+      Expected: The status becomes submitted, feedback is recorded, then the homework becomes reviewed.
+
+   1. Test case: `hw edit 1 due/tmr`, then `hw delete 1` and `hw delete 1 confirm`<br>
+      Expected: The due date changes; deletion asks for confirmation and removes the item.
+
+1. Follow-up tasks
+
+   1. Test case: `task add st/1 desc/Call parent due/tmr`, then `task list`<br>
+      Expected: The task is listed and numbered.
+
+   1. Test case: `task edit 1 desc/Call parent again due/-`, `task done 1`, then `task list all/`<br>
+      Expected: The text changes, the due date is removed, and the completed task is shown with `all/`.
+
+1. Payments, charges, withdrawals and dues
+
+   1. Prerequisites: `clear confirm`; `demo`; `demo confirm`; `lesson add st/3 d/2026-10-12 t/16:30 past/`; `agenda d/2026-10-12`; `lesson done 1`.
+
+   1. Test case: `pay st/3 amt/20`, then `balance st/3`, then `dues`<br>
+      Expected: The payment reduces the balance; `dues` lists any remaining debtor.
+
+   1. Test case: `pay list`, then `pay reverse 1`, then `balance st/3`<br>
+      Expected: The payment is marked reversed and the balance returns to its earlier amount.
+
+   1. Test case: `charge l/1 amt/50`, then `charge reverse l/1`, then `charge reverse l/1`<br>
+      Expected: The manual charge is added and reversed; the second reversal reports that there is no active charge.
+
+   1. Test case: `withdraw st/3 amt/1` when the student has no credit<br>
+      Expected: Rejected because there is no available credit.
+
+1. Clear and demo
+
+   1. Test case: `clear`, then `clear confirm`, then `demo`, then `demo confirm`<br>
+      Expected: `clear` only asks for confirmation; `clear confirm` empties the data; `demo` previews loading; `demo confirm` loads the sample students.
 
 ### Saving data
 
@@ -1350,3 +1661,20 @@ orphaned tasks.
 Focused regression tests cover historical feedback, schema progression and refusal, duplicate/orphan
 rejection, due-date boundaries, lifecycle correction, guarded deletion, filtered numbering, archive,
 rename, actual JSON restart, failed saves, protected original bytes, and retry before exit.
+
+--------------------------------------------------------------------------------------------------------------------
+
+## **Appendix: Effort**
+
+TutorFlow started from AB3's one entity and command pipeline. It now has six persisted domains: students,
+lessons, homework, follow-up tasks, finance and the saved travel/sort settings. Each domain has its own
+model validation, immutable records, command and parser layer, JSON adapter, cascade rules and focused tests.
+The team also added undo, offline help, a CLI-driven GUI, schema migration and failure-recovery handling.
+
+The main difficulty was keeping numbered selections stable when the displayed rows changed, while still
+keeping the models and storage snapshots consistent. The finance ledger required exact decimal arithmetic,
+reversals and dues without rewriting history. Daily scheduling added overlap checks, travel warnings,
+weekly-series rollback and date boundaries.
+
+Reused work is limited to the AB3 architecture and testing approach, JavaFX, Jackson, commonmark-java,
+Material Design Icons, JUnit 5, Monocle, Checkstyle, JaCoCo, MarkBind and PlantUML.
