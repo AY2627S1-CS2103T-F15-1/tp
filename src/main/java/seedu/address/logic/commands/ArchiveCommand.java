@@ -25,9 +25,9 @@ public class ArchiveCommand extends Command {
     public static final String MESSAGE_ALREADY_ACTIVE =
             "This student is already active. Use student list archived/ before restoring.";
     public static final String MESSAGE_ARCHIVED = "Archived: %1$s. Lessons and history are retained. "
-            + "The student list has refreshed.";
+            + "Run 'list' to refresh the student list.";
     public static final String MESSAGE_RESTORED = "Restored: %1$s. Lessons and history are retained. "
-            + "The student list has refreshed.";
+            + "Run 'list' to refresh the student list.";
 
     private static final Logger logger = LogsCenter.getLogger(ArchiveCommand.class);
 

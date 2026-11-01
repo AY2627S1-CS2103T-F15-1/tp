@@ -193,7 +193,7 @@ Format: `archive INDEX`
 * `student archive INDEX` works the same way.
 
 Examples:
-* `archive 3` Archives the 3rd student and replies, for example, `Archived: Chen Hao. Lessons and history are retained. The student list has refreshed.`
+* `archive 3` Archives the 3rd student and replies, for example, `Archived: Chen Hao. Lessons and history are retained. Run 'list' to refresh the student list.`
 
 ### Restoring an archived student: `restore`
 
@@ -206,7 +206,7 @@ Format: `restore INDEX`
 * `student restore INDEX` works the same way.
 
 Examples:
-* `list archived/`, then `restore 1` Restores the first archived student, for example `Restored: Amy Tan. Lessons and history are retained. The student list has refreshed.`
+* `list archived/`, then `restore 1` Restores the first archived student, for example `Restored: Amy Tan. Lessons and history are retained. Run 'list' to refresh the student list.`
 
 ### Editing a student: `edit`
 

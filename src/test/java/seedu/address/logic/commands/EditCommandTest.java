@@ -36,6 +36,14 @@ public class EditCommandTest {
     private Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
 
     @Test
+    public void execute_filteredList_keepsDisplayedList() throws Exception {
+        showPersonAtIndex(model, INDEX_SECOND_PERSON);
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withRate("75").build();
+        new EditCommand(INDEX_FIRST_PERSON, descriptor).execute(model);
+        assertEquals(1, model.getFilteredPersonList().size());
+    }
+
+    @Test
     public void execute_allFieldsSpecifiedUnfilteredList_success() {
         Person editedPerson = new PersonBuilder().build();
         EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder(editedPerson).build();
@@ -94,6 +102,7 @@ public class EditCommandTest {
         String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson));
 
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
+        showPersonAtIndex(expectedModel, INDEX_FIRST_PERSON);
         expectedModel.setPerson(model.getFilteredPersonList().get(0), editedPerson);
 
         assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
