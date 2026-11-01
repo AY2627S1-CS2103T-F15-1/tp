@@ -1379,7 +1379,7 @@ testers are expected to do more *exploratory* testing.
 
 1. Different ways of writing a date
 
-   1. Prerequisites: `clear confirm`, then `demo confirm` if the data set is empty.
+   1. Prerequisites: `clear confirm`, `demo`, `demo confirm`.
 
    1. Test case: `lesson add st/3 s/Math d/22-Dec-26 t/16:30`, then `lesson add st/3 s/Math d/2026/12/23 t/16:30`, then `lesson add st/3 s/Math d/24 December 2026 t/16:30`<br>
       Expected: Lessons are scheduled on 22, 23 and 24 December 2026, each shown in full in the reply.
