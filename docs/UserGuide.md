@@ -79,61 +79,6 @@ TutorFlow is a desktop application for independent private tutors who teach arou
 
 ## Students
 
-### Student card shortcuts
-
-The student cards provide shortcuts that fill the command box for you. They do not run the command or change any data; you still review or complete the command and press Enter.
-
-* Hover over a card, or move keyboard focus into it, to reveal the edit, archive and delete buttons. On a touch screen, tap the card once to reveal them. Each button has a tooltip and is reachable by keyboard.
-* Click the pencil on a card to show a pencil beside each editable field. This includes the name, level, subjects, phone number, rate, email, usual venue and remark. The subject pencil follows the last subject. Fields that the command system does not support are not shown as editable.
-* Click a field's pencil to fill the command box with that field's command, such as `edit 1 n/` or `edit 1 s/`. Type the new value after the prefix and press Enter. Selecting another field replaces the prepared command. For subjects, the existing `edit` command replaces the whole subject list, so add every subject you want to keep.
-* The archive and delete buttons fill in `archive INDEX` and `delete INDEX` for that card. Archiving and deletion keep their normal confirmation behaviour, so nothing happens until you submit the command.
-* While editing fields, `Cancel` appears beside the card's top-right pencil. Click it to leave field-editing mode; it then disappears with the field pencils. It clears the prepared command only if you have not changed it and another shortcut has not replaced it. A command you typed yourself is left alone.
-* The plus button beside the command box starts an add command with `add n/` and puts the cursor there. Complete the remaining required prefixes and press Enter.
-* Each shortcut also prints the matching help command, such as `help edit` or `help archive`, in the terminal where TutorFlow was launched. Run that command in TutorFlow to read the full usage.
-
-The number in a prepared command is the number shown on the card in the current list. Commands use the same numbering as every other indexed command, so run `list`, `list archived/` or a search first when you need to choose the numbering. If the displayed list changes, TutorFlow clears an unchanged prepared command and closes field-editing mode so that an old number is not submitted by mistake. Text you changed yourself is never overwritten.
-
-### Writing dates
-
-Every date parameter, such as `d/` in `lesson add`, `agenda` and `pay`, `due/` in `hw add` and `task add`, accepts the same ways of writing a date, so you can type the one you find quickest.
-
-* The **day, month and year** are separated by `/`, `-`, `.` or a space, the same one between all three.
-* The date is written **day first** or **year first**. A month is never written first, so `12/22/2026` is not accepted.
-* The **month** is a number, such as `9` or `09`, or its English name in full or short, such as `Sep`, `Sept` or `September`, in any letter case.
-* The **year** has four digits, or two digits for a year from 2000 to 2099. A two-digit year is read last when that makes a real date, or first when it does not.
-* `today` and `tmr` also work wherever a date is accepted, in any letter case.
-* A date that does not exist, such as `30/02/2026`, is rejected. It is never moved to a nearby date.
-
-| You can write | Meaning |
-|---------------|---------|
-| `2026-12-22`, `2026/12/22`, `2026.12.22`, `2026 Dec 22` | 22 December 2026, year first |
-| `22/12/2026`, `22-12-2026`, `22.12.2026`, `22 December 2026` | 22 December 2026, day first |
-| `22/12/26`, `22-Dec-26`, `22 Dec 26`, `22.12.26` | 22 December 2026, with a two-digit year |
-| `35-12-31` | 31 December 2035, because 35 December is not a date |
-
-<box type="warning" seamless>
-
-**Two-digit years are read day first:** a date such as `05/10/26` is read as 5 October 2026, never as 26 October 2005. A year-first reading is used only when the day-first reading is not a real date, as in `35-12-31`, which is 31 December 2035. Write the year with four digits when you want to be certain. Most commands that take a date show it in full in their reply, such as `Tue 22 Dec 2026`; some list-style replies use the stored `YYYY-MM-DD` form instead.
-</box>
-
-### Viewing help: `help`
-
-Shows every command, or how to use one command, without leaving TutorFlow.
-
-Format: `help [COMMAND]`
-
-* `help` shows every command with a one-line summary.
-* `help COMMAND` shows what the command does, its parameters and an example. `COMMAND` is the command as you type it, so for the lesson commands write both words, such as `help lesson add`.
-* `help lesson` lists the commands that start with `lesson`.
-* `COMMAND` is not case-sensitive, like every command word, so `help LESSON ADD` works like `help lesson add`. For a name that is not a command, such as `help foo`, TutorFlow says `No help available for 'foo'. Type 'help' for the full list.`
-* To read this guide inside TutorFlow, use the `Help` menu or press `F1`. The guide opens in a resizable window and works offline. Use its Contents links to jump to any feature. External links are disabled inside the offline viewer, which shows a message when you activate one. It shows the User Guide bundled with your version of the app. Click `Reload guide` to return to that bundled guide.
-* The command list and `help COMMAND` are short syntax references. The full guide includes the field limits, examples and behavior rules.
-* The Help window shows the guide bundled with your version of TutorFlow. Documentation changes appear in the next build of the app; `Reload guide` does not download newer documentation into an older JAR.
-
-Examples:
-* `help` lists all commands.
-* `help lesson move` shows how to reschedule a lesson.
-
 ### Adding a student: `add`
 
 Adds a student to TutorFlow.
@@ -858,6 +803,61 @@ Format: `dues`
 * Takes no parameters. If nobody owes money, shows `No outstanding balances. Everyone is up to date.`
 
 ## General
+
+### Student card shortcuts
+
+The student cards provide shortcuts that fill the command box for you. They do not run the command or change any data; you still review or complete the command and press Enter.
+
+* Hover over a card, or move keyboard focus into it, to reveal the edit, archive and delete buttons. On a touch screen, tap the card once to reveal them. Each button has a tooltip and is reachable by keyboard.
+* Click the pencil on a card to show a pencil beside each editable field. This includes the name, level, subjects, phone number, rate, email, usual venue and remark. The subject pencil follows the last subject. Fields that the command system does not support are not shown as editable.
+* Click a field's pencil to fill the command box with that field's command, such as `edit 1 n/` or `edit 1 s/`. Type the new value after the prefix and press Enter. Selecting another field replaces the prepared command. For subjects, the existing `edit` command replaces the whole subject list, so add every subject you want to keep.
+* The archive and delete buttons fill in `archive INDEX` and `delete INDEX` for that card. Archiving and deletion keep their normal confirmation behaviour, so nothing happens until you submit the command.
+* While editing fields, `Cancel` appears beside the card's top-right pencil. Click it to leave field-editing mode; it then disappears with the field pencils. It clears the prepared command only if you have not changed it and another shortcut has not replaced it. A command you typed yourself is left alone.
+* The plus button beside the command box starts an add command with `add n/` and puts the cursor there. Complete the remaining required prefixes and press Enter.
+* Each shortcut also prints the matching help command, such as `help edit` or `help archive`, in the terminal where TutorFlow was launched. Run that command in TutorFlow to read the full usage.
+
+The number in a prepared command is the number shown on the card in the current list. Commands use the same numbering as every other indexed command, so run `list`, `list archived/` or a search first when you need to choose the numbering. If the displayed list changes, TutorFlow clears an unchanged prepared command and closes field-editing mode so that an old number is not submitted by mistake. Text you changed yourself is never overwritten.
+
+### Writing dates
+
+Every date parameter, such as `d/` in `lesson add`, `agenda` and `pay`, `due/` in `hw add` and `task add`, accepts the same ways of writing a date, so you can type the one you find quickest.
+
+* The **day, month and year** are separated by `/`, `-`, `.` or a space, the same one between all three.
+* The date is written **day first** or **year first**. A month is never written first, so `12/22/2026` is not accepted.
+* The **month** is a number, such as `9` or `09`, or its English name in full or short, such as `Sep`, `Sept` or `September`, in any letter case.
+* The **year** has four digits, or two digits for a year from 2000 to 2099. A two-digit year is read last when that makes a real date, or first when it does not.
+* `today` and `tmr` also work wherever a date is accepted, in any letter case.
+* A date that does not exist, such as `30/02/2026`, is rejected. It is never moved to a nearby date.
+
+| You can write | Meaning |
+|---------------|---------|
+| `2026-12-22`, `2026/12/22`, `2026.12.22`, `2026 Dec 22` | 22 December 2026, year first |
+| `22/12/2026`, `22-12-2026`, `22.12.2026`, `22 December 2026` | 22 December 2026, day first |
+| `22/12/26`, `22-Dec-26`, `22 Dec 26`, `22.12.26` | 22 December 2026, with a two-digit year |
+| `35-12-31` | 31 December 2035, because 35 December is not a date |
+
+<box type="warning" seamless>
+
+**Two-digit years are read day first:** a date such as `05/10/26` is read as 5 October 2026, never as 26 October 2005. A year-first reading is used only when the day-first reading is not a real date, as in `35-12-31`, which is 31 December 2035. Write the year with four digits when you want to be certain. Most commands that take a date show it in full in their reply, such as `Tue 22 Dec 2026`; some list-style replies use the stored `YYYY-MM-DD` form instead.
+</box>
+
+### Viewing help: `help`
+
+Shows every command, or how to use one command, without leaving TutorFlow.
+
+Format: `help [COMMAND]`
+
+* `help` shows every command with a one-line summary.
+* `help COMMAND` shows what the command does, its parameters and an example. `COMMAND` is the command as you type it, so for the lesson commands write both words, such as `help lesson add`.
+* `help lesson` lists the commands that start with `lesson`.
+* `COMMAND` is not case-sensitive, like every command word, so `help LESSON ADD` works like `help lesson add`. For a name that is not a command, such as `help foo`, TutorFlow says `No help available for 'foo'. Type 'help' for the full list.`
+* To read this guide inside TutorFlow, use the `Help` menu or press `F1`. The guide opens in a resizable window and works offline. Use its Contents links to jump to any feature. External links are disabled inside the offline viewer, which shows a message when you activate one. It shows the User Guide bundled with your version of the app. Click `Reload guide` to return to that bundled guide.
+* The command list and `help COMMAND` are short syntax references. The full guide includes the field limits, examples and behavior rules.
+* The Help window shows the guide bundled with your version of TutorFlow. Documentation changes appear in the next build of the app; `Reload guide` does not download newer documentation into an older JAR.
+
+Examples:
+* `help` lists all commands.
+* `help lesson move` shows how to reschedule a lesson.
 
 ### Clearing all entries: `clear`
 
