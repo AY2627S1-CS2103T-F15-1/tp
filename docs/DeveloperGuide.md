@@ -1339,7 +1339,7 @@ testers are expected to do more *exploratory* testing.
 
 1. Undo is cleared by a later change
 
-   1. Prerequisites: Delete a student, then run `add n/Chris p/91234567 l/J1 s/Math r/50`.
+   1. Prerequisites: `clear confirm`, `demo`, `demo confirm`, `delete 1`, then `add n/Chris p/91234567 l/J1 s/Math r/50`.
 
    1. Test case: `undo`<br>
       Expected: It fails with the "Nothing to undo" message; the deleted student is not restored and Chris remains.
@@ -1407,7 +1407,7 @@ Start each group with `clear confirm`, then `demo`, then `demo confirm`, so the 
 
 1. Delete and undo
 
-   1. Prerequisites: `list`; delete a student with no linked records, then run `undo`.
+   1. Prerequisites: `clear confirm`, `demo`, `demo confirm`, then `delete 1` for a student with no linked records.
 
    1. Test case: `delete 1`, then `undo`<br>
       Expected: The student disappears, then returns; a second `undo` reports that there is nothing to undo.
