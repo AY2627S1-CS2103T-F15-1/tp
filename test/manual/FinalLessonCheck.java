@@ -285,6 +285,51 @@ public class FinalLessonCheck {
                 "dotless-i search matches stored student");
     }
 
+    /** Blocks saving by putting a directory where the data file belongs, so it also fails for administrators. */
+    static void blockSaving(Session s) throws Exception {
+        Path file = s.storage.getAddressBookFilePath();
+        Files.move(file, file.resolveSibling("saved-copy.json"));
+        Files.createDirectory(file);
+    }
+
+    static void unblockSaving(Session s) throws Exception {
+        Path file = s.storage.getAddressBookFilePath();
+        Files.delete(file);
+        Files.move(file.resolveSibling("saved-copy.json"), file);
+    }
+
+    static void expectFailure(Session s, String command, String name) throws Exception {
+        commands++;
+        log.println("\n> EXPECT SAVE FAILURE " + abbreviated(command));
+        try {
+            s.logic.execute(command);
+            throw new AssertionError("Unexpected success: " + name);
+        } catch (CommandException expected) {
+            log.println(expected.getClass().getSimpleName() + ": " + abbreviated(expected.getMessage()));
+            check(expected.getMessage().contains(LogicManager.UNSAVED_WARNING), name);
+        }
+    }
+
+    static void saveFailure() throws Exception {
+        Session s = new Session("save-failure-and-retry", "60");
+        String savedBytes = s.file();
+        blockSaving(s);
+        expectFailure(s, "add n/Bob p/98765432 l/S1 s/Math r/40", "failed save reports unsaved changes");
+        check(s.model.getAddressBook().getPersonList().size() == 2, "failed save keeps the change in this session");
+        check(s.logic.hasUnsavedChanges(), "failed save leaves changes marked unsaved");
+        commands++;
+        check(s.logic.execute("list").getFeedbackToUser().endsWith(LogicManager.UNSAVED_WARNING),
+                "read-only command repeats the unsaved reminder");
+        expectFailure(s, "exit", "exit is refused while the change cannot be saved");
+        expectFailure(s, "save", "save fails while the file is still blocked");
+        unblockSaving(s);
+        check(savedBytes.equals(s.file()), "failed saves did not alter the previously saved bytes");
+        s.ok("save");
+        check(s.file().contains("Bob"), "save after the problem is fixed writes the change");
+        s.reopen();
+        check(s.model.getAddressBook().getPersonList().size() == 2, "reopened data contains the retried change");
+    }
+
     public static void main(String[] args) throws Exception {
         root = Path.of(args[0]);
         Files.createDirectories(root);
@@ -299,6 +344,7 @@ public class FinalLessonCheck {
             charging();
             selection();
             corrections();
+            saveFailure();
             log.println("\nSUMMARY: " + checks + " assertions; " + commands + " commands; 0 failures.");
             System.out.println("PASS: " + checks + " assertions; " + commands + " commands; " + args[1]);
         }
