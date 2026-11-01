@@ -1,7 +1,6 @@
 # TutorFlow User Guide
 
-TutorFlow is a **desktop application that keeps your students and lessons in one place, optimized for use through a Command Line Interface (CLI)** while retaining the benefits of a Graphical User Interface (GUI).
-For power-users, TutorFlow can help you manage your students and lessons faster than traditional GUI applications.
+TutorFlow is a desktop application for independent private tutors who teach around 20 students at several venues. It keeps students, lessons, homework, follow-up tasks and payments in one place, and answers "what does today require, what does each student need, and who still owes me" through a Command Line Interface (CLI) while retaining the benefits of a Graphical User Interface (GUI).
 
 <!-- * Table of Contents -->
 <page-nav-print />
@@ -22,13 +21,13 @@ For power-users, TutorFlow can help you manage your students and lessons faster 
    ![Ui](images/Ui.png)
 
 1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to see the list of commands.<br>
-   Some example commands you can try:
+   To explore a new data set, load the sample students with `demo confirm`. Some example commands you can try:
 
-   * `list` : Lists all students.
+   * `demo confirm` : Loads sample students into an empty data set.
 
    * `add n/John Doe p/98765432 l/S4 s/Math r/50` : Adds a student named `John Doe`, who is in Secondary 4, learns Math and pays $50 per hour.
 
-   * `delete 3` : Deletes the 3rd student shown in the current list.
+   * `delete 1` : Deletes the 1st student shown in the current list.
 
    * `clear confirm` : Deletes all students, lessons, homework, tasks, and financial history.
 
@@ -50,8 +49,8 @@ For power-users, TutorFlow can help you manage your students and lessons faster 
 * Items in square brackets are optional.<br>
   For example, `n/NAME [e/EMAIL]` can be used as `n/John Doe e/john@example.com` or as `n/John Doe`.
 
-* Items followed by `...` can appear zero or more times.<br>
-  For example, `s/SUBJECT...` can be written as `s/Math` or `s/Math s/Physics`.
+* Items followed by `...` can appear at least once and, where the command allows it, additional times.<br>
+  For example, `s/SUBJECT...` in `add` must be written at least once, such as `s/Math` or `s/Math s/Physics`.
 
 * Items such as `week/` and `all/` are flags: write them on their own, without a value.<br>
   For example, `agenda week/` is accepted, but `agenda week/yes` is rejected.
@@ -86,7 +85,7 @@ The student cards provide shortcuts that fill the command box for you. They do n
 * The archive and delete buttons fill in `archive INDEX` and `delete INDEX` for that card. Archiving and deletion keep their normal confirmation behaviour, so nothing happens until you submit the command.
 * While editing fields, `Cancel` appears beside the card's top-right pencil. Click it to leave field-editing mode; it then disappears with the field pencils. It clears the prepared command only if you have not changed it and another shortcut has not replaced it. A command you typed yourself is left alone.
 * The plus button beside the command box starts an add command with `add n/` and puts the cursor there. Complete the remaining required prefixes and press Enter.
-* Each shortcut also prints the matching help command, such as `help edit` or `help archive`, to standard output. Run that command in TutorFlow to read the full usage.
+* Each shortcut also prints the matching help command, such as `help edit` or `help archive`, in the terminal where TutorFlow was launched. Run that command in TutorFlow to read the full usage.
 
 The number in a prepared command is the number shown on the card in the current list. Commands use the same numbering as every other indexed command, so run `list`, `list archived/` or a search first when you need to choose the numbering. If the displayed list changes, TutorFlow clears an unchanged prepared command and closes field-editing mode so that an old number is not submitted by mistake. Text you changed yourself is never overwritten.
 
@@ -110,7 +109,7 @@ Every date parameter, such as `d/` in `lesson add`, `agenda` and `pay`, `due/` i
 
 <box type="warning" seamless>
 
-**Two-digit years are read day first:** a date such as `05/10/26` is read as 5 October 2026, never as 26 October 2005. A year-first reading is used only when the day-first reading is not a real date, as in `35-12-31`, which is 31 December 2035. Write the year with four digits when you want to be certain. Every command that takes a date shows the date in full in its reply, such as `Tue 22 Dec 2026`.
+**Two-digit years are read day first:** a date such as `05/10/26` is read as 5 October 2026, never as 26 October 2005. A year-first reading is used only when the day-first reading is not a real date, as in `35-12-31`, which is 31 December 2035. Write the year with four digits when you want to be certain. Most commands that take a date show it in full in their reply, such as `Tue 22 Dec 2026`; some list-style replies use the stored `YYYY-MM-DD` form instead.
 </box>
 
 ### Viewing help: `help`
@@ -125,7 +124,7 @@ Format: `help [COMMAND]`
 * `COMMAND` is not case-sensitive, like every command word, so `help LESSON ADD` works like `help lesson add`. For a name that is not a command, such as `help foo`, TutorFlow says `No help available for 'foo'. Type 'help' for the full list.`
 * To read this guide inside TutorFlow, use the `Help` menu or press `F1`. The guide opens in a resizable window and works offline. Use its Contents links to jump to any feature. External links are disabled inside the offline viewer, which shows a message when you activate one. It shows the User Guide bundled with your version of the app. Click `Reload guide` to return to that bundled guide.
 * The command list and `help COMMAND` are short syntax references. The full guide includes the field limits, examples and behavior rules.
-* Documentation changes appear in the next build of the app. When running from source, restart with `./gradlew run` (Windows: `.\gradlew.bat run`) to bundle the current `docs/UserGuide.md`. For a JAR, rebuild with `./gradlew shadowJar` or download an updated release, then restart with that JAR. `Reload guide` does not download newer documentation into an older JAR.
+* The Help window shows the guide bundled with your version of TutorFlow. Documentation changes appear in the next build of the app; `Reload guide` does not download newer documentation into an older JAR.
 
 Examples:
 * `help` lists all commands.
@@ -137,11 +136,11 @@ Adds a student to TutorFlow.
 
 Format: `add n/NAME p/PHONE_NUMBER l/LEVEL s/SUBJECT... r/RATE [e/EMAIL] [v/VENUE]`
 
-* `NAME` is 1-100 printable characters after trimming and must contain at least one letter. It may contain letters in any language (such as `José Álvarez` or `陈伟明`), digits, spaces and `. , ' ( ) / - @`, such as `Tan Wei Ming (twin A)`, `Priya d/o Kumar` or `John @ Tan`. It does not matter how an accent is typed, so `José` written with one character and with a letter and a separate accent is the same name. Avoid typing a `/` right after a space when it would look like a prefix, such as `s/o`, because TutorFlow reads it as the start of the next parameter.
+* `NAME` is 1-100 printable characters after trimming and must contain at least one letter. It may contain letters in any language (such as `José Álvarez` or `陈伟明`), digits, spaces and `. , ' ( ) / - @`, such as `Tan Wei Ming (twin A)`, `Priya d/o Kumar` or `John @ Tan`. It does not matter how an accent is typed, so `José` written with one character and with a letter and a separate accent is the same name. `s/o` and `d/o` are supported. Avoid other prefix-like text after a space, such as ` p/`, because TutorFlow reads it as the start of the next parameter.
 * `LEVEL` is one of `P1` to `P6` (primary), `S1` to `S5` (secondary) or `J1` to `J2` (junior college). It is not case-sensitive, so `s3` is the same as `S3`.
 * `PHONE_NUMBER` has 8 to 15 digits and can start with `+`, for example `91234567` or `+6591234567`. Spaces and hyphens between the digits are allowed and are removed, so `9123 4567` is stored as `91234567`.
-* `SUBJECT` is free text of up to 30 letters in any language, digits, spaces, `&` and `-`, such as `Math`, `English & Literature` or `华文`. Subjects are not case-sensitive. When you enter one, its first letter is capitalized automatically, so `math` is saved and shown as `Math`. The rest of what you type keeps its case.
-* `RATE` is the amount charged per hour in SGD, from `0` to `9999.99` with at most 2 decimal places. A leading `$` is accepted, so `50`, `50.00` and `$50` are the same rate.
+* `SUBJECT` is free text of up to 30 characters in any language, digits, spaces, `&` and `-`, such as `Math`, `English & Literature` or `华文`. Subjects are not case-sensitive. When you enter one, its first letter is capitalized automatically, so `math` is saved and shown as `Math`. The rest of what you type keeps its case.
+* `RATE` is the amount charged per hour, from `0` to `9999.99` with at most 2 decimal places. It is shown in dollars. A leading `$` is accepted, so `50`, `50.00` and `$50` are the same rate.
 * `VENUE` is where the student is usually taught, up to 100 characters.
 * Extra spaces in a `NAME` are ignored, so `John  Tan` is stored as `John Tan`.
 * A student can have at most 10 different subjects, so a command with more than 10 `s/SUBJECT` values is rejected. The same limit applies when you [edit](#editing-a-student-edit) a student.
@@ -275,7 +274,7 @@ Format: `remark INDEX r/REMARK`
 * Sets the remark of the student at the specified `INDEX`, which is the index number shown in the displayed student list and **must be a positive integer** 1, 2, 3, ...
 * The new remark replaces the old one. Writing `r/` with nothing after it removes the remark.
 * Surrounding spaces are removed and repeated spaces inside the remark are collapsed into one, as for other free text.
-* A remark is shown in the student's card and in [`view`](#viewing-a-students-overview-view).
+* A remark is shown in the student's card and in [`view`](#viewing-a-student-s-overview-view).
 
 Examples:
 * `remark 1 r/Prefers morning lessons` sets the remark of the 1st student.
@@ -290,13 +289,13 @@ Format: `delete INDEX [confirm]`
 * Deletes the student at the specified `INDEX`.
 * The index refers to the index number shown in the displayed student list.
 * The index **must be a positive integer** 1, 2, 3, ...
-* A student with no lessons, no homework and no [follow-up tasks](#adding-a-follow-up-task-task-add) is deleted immediately.
-* Deleting a student also deletes **all of their lessons, homework (including feedback) and follow-up tasks**. If the student has any linked records, TutorFlow does not delete anything yet. It shows the student's name, phone number, linked counts and, if there are any, a warning about upcoming lessons and commitments, and asks you to repeat the command with `confirm`.
+* A student with no lessons, homework, follow-up tasks, charges or payments is deleted immediately.
+* Deleting a student also deletes **all of their lessons, homework (including feedback), follow-up tasks and financial history**. If the student has any linked records, TutorFlow does not delete anything yet. It shows the student's name, phone number, linked counts and, if there are any, a warning about upcoming lessons and commitments, and asks you to repeat the command with `confirm`.
 * The keyword `confirm` can be written in any letter case, such as `CONFIRM`.
 * One deletion action can be reversed with the `undo` command.
 
 Examples:
-* `list` followed by `delete 2` deletes the 2nd student, if they have no lessons or homework.
+* `list` followed by `delete 2` deletes the 2nd student, if they have no linked records.
 * `delete 3` on a student with 12 lessons shows a prompt; `delete 3 confirm` then deletes the student and the 12 lessons.
 * `find Betsy` followed by `delete 1` deletes the 1st student in the results of the `find` command.
 
@@ -307,7 +306,7 @@ Sorts all students by name, ignoring upper and lower case.
 Format: `sort [asc|desc]`
 
 * `asc` sorts from A to Z and `desc` sorts from Z to A. If no order is given, `asc` is used.
-* All students are shown after sorting, even if the list was filtered by an earlier `find` command.
+* All active students are shown after sorting, even if the list was filtered by an earlier `find` command. Archived students stay hidden; use `list all/` to show them.
 * TutorFlow keeps this order. A student you add later, or whose name you change, takes their place in it, so the list stays sorted.
 * The order is saved, so it is still used the next time you open the app. Until you first use `sort`, new students are added at the end of the list.
 
@@ -340,9 +339,9 @@ Format: `lesson add st/STUDENT_INDEX [s/SUBJECT] d/DATE t/TIME [dur/MINUTES] [v/
 
 Examples:
 * `lesson add st/1 s/Math d/2026-12-22 t/16:30 dur/90` Schedules a 90-minute Math lesson for the 1st student at the student's usual venue.
-* `lesson add st/2 d/2026-12-23 t/19:00 v/Online` Schedules a 60-minute lesson online for the 2nd student, in the only subject that student takes.
-* `lesson add st/2 d/tmr t/19:00 dur/60 v/Online` Schedules a lesson for tomorrow.
-* `lesson add st/1 d/2026-10-12 t/16:30 past/` Records a lesson on 12 October 2026 that has already happened, even though that date is past.
+* `lesson add st/3 d/2026-12-23 t/19:00 v/Online` Schedules a 60-minute lesson online for the 3rd student, in the only subject that student takes.
+* `lesson add st/3 d/tmr t/19:00 dur/60 v/Online` Schedules a lesson for tomorrow.
+* `lesson add st/1 d/2026-10-12 t/16:30 past/` Records a lesson on 12 October 2026 that has already happened, even though that date is past. This example works only when today is after that date.
 
 ### Scheduling a weekly series: `lesson repeat`
 
@@ -360,8 +359,8 @@ Format: `lesson repeat st/STUDENT_INDEX [s/SUBJECT] d/START_DATE t/TIME [dur/MIN
 * Lessons that overlap another lesson only produce a warning, as for `lesson add`. If many lessons of the series overlap, the warning is summarised in one line.
 
 Examples:
-* `lesson repeat st/4 d/2026-10-29 t/16:00 count/4` Schedules four weekly lessons, starting on 29 October 2026.
-* `lesson repeat st/1 d/tmr t/17:00 dur/90 count/10 every/2` Schedules ten lessons two weeks apart, starting tomorrow. The result says `Scheduled 10 occurrences, every 2 weeks.`
+* `lesson repeat st/3 d/2026-12-03 t/16:00 count/4` Schedules four weekly lessons, starting on 3 December 2026.
+* `lesson repeat st/3 d/tmr t/17:00 dur/90 count/10 every/2` Schedules ten lessons two weeks apart, starting tomorrow. The result says `Scheduled 10 occurrences, every 2 weeks.`
 
 ### Viewing the agenda: `agenda`
 
@@ -470,6 +469,8 @@ Examples:
 * `lesson cancel 1` Cancels the 1st lesson.
 * `lesson cancel 3 r/Student unwell` Cancels the 3rd lesson and records the reason.
 
+There is no command to delete a lesson; cancel it instead. Deleting lessons is not supported in this version.
+
 ### Cancelling future occurrences of a series: `lesson series cancel`
 
 Ends a recurring series without erasing its history.
@@ -542,6 +543,76 @@ Examples:
 * `agenda` followed by `lesson missed 1` marks today's 1st displayed lesson as missed.
 * `lesson list st/1 all/` followed by `lesson missed 2` marks the 2nd displayed lesson as missed, provided it is scheduled for today or earlier.
 
+### Assigning homework: `hw add`
+
+Assigns homework to an active student.
+
+Format: `hw add st/STUDENT_INDEX desc/DESCRIPTION due/DATE`
+
+* `STUDENT_INDEX` is a number from the displayed student list. Archived students must be restored first.
+* `DESCRIPTION` is 1-200 printable characters on one line. `DATE` accepts any way of writing a date and must be from today through one calendar year ahead.
+* The same normalized description and due date for the same student is rejected as a duplicate.
+* New homework starts as `assigned`.
+
+Example: `hw add st/1 desc/Algebra Q1-10 due/tmr`
+
+### Listing homework: `hw list`
+
+Shows homework history in a numbered list.
+
+Format: `hw list [st/STUDENT_INDEX] [overdue/|outstanding/]`
+
+* Without `st/`, every student's homework is shown. `overdue/` shows assigned work past its due date, while `outstanding/` shows assigned and submitted work.
+* `overdue/` and `outstanding/` cannot be combined. The list shows the first 200 rows and then `Showing 200 of N homework item(s)`.
+* Numbers come from the last `hw list` and stay fixed until the next one.
+
+Examples: `hw list`, `hw list st/1 overdue/`
+
+### Editing homework: `hw edit`
+
+Corrects a homework description or due date without changing its status or feedback.
+
+Format: `hw edit INDEX [desc/DESCRIPTION] [due/DATE]`
+
+* `INDEX` is a number from the last `hw list`, and at least one of `desc/` or `due/` is required.
+* A changed due date must be today or later, up to one year ahead. Supplying an unchanged older due date is allowed.
+
+Example: `hw edit 1 due/tmr`
+
+### Updating homework status: `hw status`
+
+Changes the lifecycle state of a homework item.
+
+Format: `hw status INDEX s/assigned|submitted|reviewed`
+
+* `INDEX` is a number from the last `hw list`. Status values are case-insensitive.
+* `overdue` is derived from an assigned item's due date and cannot be set directly. Repeating the current status reports that it is already set.
+
+Example: `hw status 1 s/submitted`
+
+### Recording homework feedback: `hw feedback`
+
+Records, replaces or clears feedback on homework.
+
+Format: `hw feedback INDEX f/[FEEDBACK]`
+
+* `INDEX` is a number from the last `hw list`. `FEEDBACK` is 1-1000 printable characters.
+* Non-empty feedback requires `submitted` or `reviewed` homework. An empty `f/` clears feedback at any status.
+
+Examples: `hw feedback 1 f/Revisit negative indices`, `hw feedback 1 f/`
+
+### Deleting homework: `hw delete`
+
+Deletes a homework item and any follow-up tasks linked to it.
+
+Format: `hw delete INDEX [confirm]`
+
+* `INDEX` is a number from the last `hw list`.
+* When the item has feedback or linked tasks, `confirm` is required; without it nothing is deleted.
+* If the homework was already deleted, TutorFlow says `That homework was deleted. Run 'hw list' to refresh.`
+
+Examples: `hw delete 2`, `hw delete 2 confirm`
+
 ### Adding a follow-up task: `task add`
 
 Keeps a to-do attached to the student, lesson, homework item or payment that it is about, so that you do not forget it.
@@ -554,11 +625,27 @@ Format: `task add st/INDEX|lesson/INDEX|hw/INDEX|pay/INDEX desc/TEXT [due/DATE]`
 * `DATE` is written as for [`lesson add`](#scheduling-a-lesson-lesson-add). It is optional, and a task without one is shown as `(no due date)`. A due date must be today or later (`today` and `tmr` work), otherwise TutorFlow answers `Due dates must be today or later.`
 * Two tasks may have the same text. That is not a duplicate.
 * A task is linked to its student, lesson, homework or payment by their permanent identifiers, not by name, phone, time or amount. Editing a student, moving, cancelling or rebooking a lesson, editing homework, or reversing a payment never changes what a task is about, and a new booking in the slot of a cancelled lesson does not take over that lesson's tasks. When a student, a lesson or a homework item is deleted, the tasks about it are deleted with it.
+* Exactly one of `st/`, `lesson/`, `hw/` or `pay/` may be given. A task has no other link, so a linked record cannot be changed later.
 
 Examples:
 * `task add st/1 desc/Call parent due/2026-12-01` adds a task to the 1st student, due on 1 December 2026.
 * `task add lesson/1 desc/Prepare mock paper` adds a task to the 1st lesson in the current agenda.
 * `task add pay/1 desc/Remind about fees` adds a task to the 1st payment in the last `pay list`.
+
+### Recording lesson preparation: `lesson prep`
+
+Records what to bring or prepare before a lesson, separately from the notes taken after it.
+
+Format: `lesson prep INDEX n/NOTES`
+
+* `INDEX` is the lesson number from the current `agenda` or `lesson list`.
+* `NOTES` is 1-1000 printable characters on one line. A new preparation replaces the previous one.
+* Preparation works for a lesson in any status. It does not complete the lesson or change its teaching notes, and it cannot be cleared in this version.
+* The preparation is shown by `lesson list` and in the next-lesson section of `view`.
+* No data index changes, because preparation does not add, remove or reorder a lesson.
+
+Examples:
+* `agenda` followed by `lesson prep 1 n/Bring the mock paper` records preparation for the 1st lesson on display.
 
 ### Listing tasks: `task list`
 
@@ -621,7 +708,7 @@ Format: `pay st/STUDENT_INDEX amt/AMOUNT [d/DATE] [n/NOTES]`
 * `STUDENT_INDEX` is the positive student number in the displayed student list. After `find`, use that filtered list's numbers. It is independent of lesson numbers, so payment can follow `lesson done` immediately without running `agenda` or `list` again.
 * `AMOUNT` must be greater than zero with at most two decimal places, such as `50`, `50.00` or `0.50`. Dollar signs, negative amounts, zero, commas and scientific notation are rejected.
 * A payment of $10,000.00 or more is recorded, but TutorFlow adds a warning such as `Warning: $100000.00 is an unusually large payment. Check that the amount has no extra digits.`
-* `DATE` defaults to today using your computer's local date. Accepts `YYYY-MM-DD`, `DD/MM/YYYY`, `today` and `tmr`; future dates are rejected with `Payment dates cannot be in the future.`
+* `DATE` defaults to today using your computer's local date. It accepts any of the [ways to write a date](#writing-dates), and cannot be in the future. A future date is rejected with `Payment dates cannot be in the future.`
 * `NOTES` is optional printable text of 1–200 characters on one line, such as a transfer reference. Extra spaces are collapsed and the notes are saved with the payment.
 * Each prefix can appear once, in any order. Both `st/` and `amt/` are required. Empty or repeated fields are rejected.
 * Payments are saved automatically. Partial payments reduce the amount owed; excess payments and advance payments are accepted as credit. Archived students can receive payments.
@@ -707,11 +794,11 @@ Shows a student's account: every charge and payment in date order with a running
 Format: `balance st/INDEX`
 
 * `INDEX` is the positive student number in the displayed student list. After `find`, it refers to that filtered list.
-* Charges increase the balance and payments reduce it. A withdrawal also reduces available credit and is shown as `withdrawal -$X.XX`. A reversal (see `charge reverse` and `pay reverse`) is shown as its own row, `reversal of charge (DATE) $X.XX` or `reversal of payment (DATE) $X.XX` with the date of the entry it cancels, and is taken out of the totals. Events on the same day keep the order in which they were recorded. The last line gives the total charged, the total paid, the total withdrawn and the balance. Debt is shown as `OUTSTANDING $X.XX`; an overpayment is shown as `IN CREDIT $X.XX`, and a running balance that has gone into credit is shown the same way instead of as a negative number.
-* A student with no charges or payments shows `No charges or payments recorded for NAME.`
+* Charges, payment reversals and withdrawals increase the balance; payments and charge reversals reduce it. A withdrawal is shown as `withdrawal -$X.XX`. A reversal (see `charge reverse` and `pay reverse`) is shown as its own row, `reversal of charge (DATE) $X.XX` or `reversal of payment (DATE) $X.XX` with the date of the entry it cancels, and is taken out of the totals. Events on the same day keep the order in which they were recorded. The last line gives the total charged, the total paid, the total withdrawn and the balance. Debt is shown as `OUTSTANDING $X.XX`; an overpayment is shown as `IN CREDIT $X.XX`, and a running balance that has gone into credit is shown the same way instead of as a negative number.
+* A student with no financial history shows `No charges or payments recorded for NAME.`
 * The first time a lesson is completed with `lesson done`, TutorFlow records the student's current hourly rate × the lesson duration in minutes ÷ 60, rounded to cents using HALF_UP, as one charge. For example, $60/hour for 90 minutes costs $90.00. Updating the notes later does not charge again. Changing the student's rate does not change earlier charges.
-* Scheduled, cancelled and missed lessons do not create charges. A missed lesson creates a charge only if subsequently completed.
-* Existing completed lessons in older data files are not charged retroactively. Accounts start with no financial records when the file has no ledger.
+* Scheduled and cancelled lessons do not create charges. A missed lesson creates a charge only if it is subsequently completed; it can also be billed by hand with [`charge`](#charging-a-lesson-charge).
+* Existing completed lessons in older data files are not charged retroactively. Accounts start with no financial records when the file has no financial history.
 * Charges and payments use permanent student identifiers, so editing the student’s name or phone retains their balance.
 * Charges, payments and withdrawals are saved with the rest of the data. Use `pay st/INDEX amt/AMOUNT` to record money received, and `withdraw` to return available credit.
 
@@ -732,7 +819,7 @@ Format: `withdraw st/STUDENT_INDEX amt/AMOUNT [d/DATE] [n/NOTES]`
 * `STUDENT_INDEX` is the positive student number in the displayed student list. Archived students with credit can be selected from `list archived/`.
 * `AMOUNT` must be greater than zero with at most two decimal places, and cannot exceed the student's available credit. Withdrawing the full credit is allowed.
 * A student who owes money, or has no credit, gets an error and no withdrawal is recorded.
-* `DATE` defaults to today and cannot be in the future. `NOTES` is optional printable text of 1-200 characters on one line.
+* `DATE` defaults to today, accepts any of the [ways to write a date](#writing-dates), and cannot be in the future. `NOTES` is optional printable text of 1-200 characters on one line.
 * A withdrawal is saved automatically. It appears on the account statement as `withdrawal -$X.XX` and reduces the available credit.
 
 Examples:
@@ -790,11 +877,11 @@ Format: `exit`
 
 ### Saving the data
 
-TutorFlow automatically saves after a command changes data. If saving fails, fix the reported problem and use `save` to retry before closing. Read-only commands do not write the data file.
+TutorFlow automatically saves after a command changes data. If saving fails, fix the reported problem and use `save` to retry before closing.
 
 Each save is written completely to a temporary file beside the data file before replacing the previous save. If writing fails, the previous saved contents remain intact. If your file system cannot replace files atomically, TutorFlow reports a save error; move the app to a local folder that supports atomic file replacement and retry.
 
-If a change cannot be saved, for example because the disk is full or the file is read-only, TutorFlow says `Your change was applied in this session but could not be saved`, and the reason. The change is still in the running app, so fix the problem (free some space, or make the file writable) and run `save` to retry saving. Read-only commands do not write the data file. Closing TutorFlow with `exit`, the window close button, or File > Exit retries saving and is refused if saving still fails, so that you do not lose the change.
+If a change cannot be saved, for example because the disk is full or the file is read-only, TutorFlow says `Your change was applied in this session but could not be saved`, and the reason. The change is still in the running app, so fix the problem (free some space, or make the file writable) and run `save` to retry saving. Closing TutorFlow with `exit`, the window close button, or File > Exit retries saving and is refused if saving still fails, so that you do not lose the change.
 
 Read-only commands do not routinely save. After a failed save, they display an unsaved-changes reminder. Run `save` after fixing the problem; a successful retry clears that reminder.
 
@@ -802,7 +889,7 @@ Only open one instance for a data file: concurrent instances use last-write-wins
 
 Names, venues, reasons and notes must be printable text on one line; repeated spaces are collapsed. Email local parts may include `%`, the terminal domain label must contain at least two letters, and comparison ignores case.
 
-Previously accepted names, short phone numbers, email terminal labels and venues remain readable through explicit legacy loading. Invalid subject counts (outside 1-10 distinct subjects) and invalid cancellation reasons reject the whole data file and use the recovery process below; individual records are never silently discarded.
+Previously accepted names, short phone numbers, email terminal labels and venues remain readable when an older data file is loaded. Invalid subject counts (outside 1-10 distinct subjects) and invalid cancellation reasons reject the whole data file and use the recovery process below; individual records are never silently discarded.
 
 ### Editing the data file
 
@@ -823,7 +910,7 @@ Furthermore, certain edits can cause TutorFlow to behave in unexpected ways (e.g
 
 ### Archiving data files `[coming in v2.0]`
 
-_Details coming soon ..._
+Archiving whole data files is not supported in this version. Use [`archive`](#archiving-a-student-archive) to keep a student out of the active list, or copy the data file while TutorFlow is closed if you need a backup.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -831,6 +918,21 @@ _Details coming soon ..._
 
 **Q**: How do I transfer my data to another computer?<br>
 **A**: Install the app on the other computer and overwrite the data file it creates with the data file from your previous TutorFlow home folder.
+
+**Q**: How do I load the sample students?<br>
+**A**: Run `demo confirm` on a new data set. It does not replace existing records; use `clear confirm` first if you have already entered data.
+
+**Q**: Why does `lesson done 1` say the lesson index is invalid after start-up or `today`?<br>
+**A**: Lesson numbers come from the last list shown. Run `agenda` or `lesson list st/INDEX` first, then use the number shown there.
+
+**Q**: How do I correct a payment entered by mistake?<br>
+**A**: Run `pay list` to display the payment numbers, then `pay reverse PAYMENT_INDEX`. Record the payment again if it was reversed by mistake.
+
+**Q**: Where is my data file?<br>
+**A**: It is `data/tutorflow-v14.json` inside the folder from which TutorFlow is launched.
+
+**Q**: How do I correct a charge?<br>
+**A**: Run `charge reverse l/LESSON_INDEX`, then use `charge l/LESSON_INDEX` again if a different amount is needed.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -865,7 +967,7 @@ Action     | Format, Examples
 **Remark** | `remark INDEX r/REMARK`<br> e.g., `remark 1 r/Prefers morning lessons`
 **Help**   | `help [COMMAND]`<br> e.g., `help`, `help lesson add`
 **Lesson add** | `lesson add st/STUDENT_INDEX [s/SUBJECT] d/DATE t/TIME [dur/MINUTES] [v/VENUE] [past/]`<br> e.g., `lesson add st/1 s/Math d/2026-12-22 t/16:30 dur/90`, `lesson add st/1 d/tmr t/16:30`, `lesson add st/1 d/2026-10-12 t/16:30 past/`
-**Lesson repeat** | `lesson repeat st/STUDENT_INDEX [s/SUBJECT] d/START_DATE t/TIME [dur/MINUTES] [v/VENUE] count/COUNT [every/WEEKS]`<br> e.g., `lesson repeat st/4 d/2026-10-29 t/16:00 count/4`, `lesson repeat st/1 d/tmr t/17:00 dur/90 count/10 every/2`
+**Lesson repeat** | `lesson repeat st/STUDENT_INDEX [s/SUBJECT] d/START_DATE t/TIME [dur/MINUTES] [v/VENUE] count/COUNT [every/WEEKS]`<br> e.g., `lesson repeat st/3 d/2026-12-03 t/16:00 count/4`, `lesson repeat st/3 d/tmr t/17:00 dur/90 count/10 every/2`
 **Agenda** | `agenda [d/DATE] [week/]`<br> e.g., `agenda d/2026-12-22 week/`
 **Today** | `today`
 **Lesson list** | `lesson list st/STUDENT_INDEX [all/]`<br> e.g., `lesson list st/1 all/`
@@ -878,7 +980,7 @@ Action     | Format, Examples
 **Lesson prep** | `lesson prep INDEX n/NOTES`<br> e.g., `lesson prep 1 n/Bring the mock paper`
 **Homework add** | `hw add st/STUDENT_INDEX desc/DESCRIPTION due/DATE`<br> e.g., `hw add st/1 desc/Algebra Q1-10 due/tmr`
 **Homework list** | `hw list [st/STUDENT_INDEX] [overdue/\|outstanding/]`<br> e.g., `hw list`, `hw list st/1 overdue/`
-**Homework edit** | `hw edit INDEX [desc/DESCRIPTION] [due/DATE]`<br> e.g., `hw edit 1 due/2026-10-21`
+**Homework edit** | `hw edit INDEX [desc/DESCRIPTION] [due/DATE]`<br> e.g., `hw edit 1 due/tmr`
 **Homework status** | `hw status INDEX s/assigned\|submitted\|reviewed`<br> e.g., `hw status 1 s/submitted`
 **Homework feedback** | `hw feedback INDEX f/[FEEDBACK]`<br> e.g., `hw feedback 1 f/Revisit negative indices`, `hw feedback 1 f/` to clear
 **Homework delete** | `hw delete INDEX [confirm]`<br> e.g., `hw delete 2`, `hw delete 2 confirm`
@@ -893,31 +995,26 @@ Action     | Format, Examples
 **Exit** | `exit`
 
 
-## Student continuity in v1.4 alpha
+## Student commands and lesson numbering
 
-The existing student commands remain available. You can also write `student add`, `student edit`,
-`student delete`, `student find`, `student view`, and `student list` with the same arguments.
+The student commands can also be written as `student add`, `student edit`, `student delete`,
+`student find`, `student view`, `student list`, `student archive` and `student restore`.
 
 * [`list`](#listing-students-list), [`archive`](#archiving-a-student-archive) and
   [`restore`](#restoring-an-archived-student-restore) have their own sections above. All student
   commands use the currently visible student numbers; the student panel refreshes after changes.
-* `lesson prep INDEX n/NOTES` records 1-1000 printable characters of preparation. It neither
-  completes the lesson nor changes teaching notes. Preparation appears in `lesson list` and
-  in the next-lesson section of `view`.
 * New lessons snapshot the student's academic level at booking. Changing a student's level
   preserves those historical details. `lesson list st/INDEX all/` displays the recorded level.
   Older lessons show `unknown (not recorded)` because their past academic level cannot be
   reconstructed from the current profile.
-* Rates are SGD per hour. For example, `r/50` is $50.00/hour.
-* `demo` previews the sample-data action; `demo confirm` loads the existing sample students
-  only if the dataset is empty. It never replaces existing records.
+* Rates are shown in dollars per hour. For example, `r/50` is shown as $50.00/hour.
 
 Lesson numbers belong to the last displayed lesson selection. When a matching insertion,
 rename, reschedule, cancellation, or deletion shifts that selection, the result shows the
 current numbered list before another indexed command is accepted. This refresh also appears
 in a save-error message if the session changed but the write failed.
 
-### Homework assignments and history
+## Homework assignments and history
 
 Use `hw list` before an indexed homework command. Homework numbers belong to that displayed
 list until you explicitly run `hw list` again. Adding homework, changing due dates or status,
@@ -987,7 +1084,7 @@ v1.4 writes `data/tutorflow-v14.json`. If this file is absent, it reads legacy
 an initial v1.4 copy. The legacy file remains untouched so an older application cannot erase
 v1.4 fields. If both files exist, the v1.4 file takes precedence. Keep both in your backup.
 This alpha writes schema 19 and accepts unversioned legacy files plus schemas 14 through 19.
-Older files without homework, a ledger or follow-up tasks start with empty records for those features. Older builds
+Older files without homework, financial history or follow-up tasks start with empty records for those features. Older builds
 refuse schema 19, protecting withdrawals, task payment links and follow-up tasks (and any charges and payments)
 from being dropped when saving.
 An unsupported schema version stops startup and leaves the original file in place. Open that data
