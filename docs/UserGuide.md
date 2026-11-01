@@ -273,6 +273,7 @@ Format: `remark INDEX r/REMARK`
 
 * Sets the remark of the student at the specified `INDEX`, which is the index number shown in the displayed student list and **must be a positive integer** 1, 2, 3, ...
 * The new remark replaces the old one. Writing `r/` with nothing after it removes the remark.
+* A remark has no length limit in this version.
 * Surrounding spaces are removed and repeated spaces inside the remark are collapsed into one, as for other free text.
 * A remark is shown in the student's card and in [`view`](#viewing-a-student-s-overview-view).
 
@@ -324,11 +325,12 @@ Format: `lesson add st/STUDENT_INDEX [s/SUBJECT] d/DATE t/TIME [dur/MINUTES] [v/
 * `DATE` is written in any of the [ways to write a date](#writing-dates), such as `2026-12-22`, `22/12/2026` or `22 Dec 26`, or as the word `today` or `tmr` (tomorrow), in any letter case, which TutorFlow works out from the date on your computer. It must be today or later, and no more than 2 years ahead, which catches a mistyped year.
 * `past/` is a flag that records a lesson that has **already taken place**, so that you can complete it and bill it. With `past/`, a date before today is accepted, up to 2 years ago, but a date after today is rejected, so use `past/` only for a lesson that has already taken place. Without it, a date in the past is rejected, because that is usually a mistyped year. Every other rule still applies.
 * Each lesson remembers the student's **level at the time of booking**, so that `lesson list` can still show it after the student moves up a level. Lessons that were booked before this version show `unknown (not recorded)`.
-* `TIME` is written in 24-hour time, such as `16:30`. `4:30pm` and `1630` are also accepted.
+* `TIME` is written in 24-hour time, such as `16:30`. `4:30pm` and `1630` are also accepted; `4pm` and `16.30` are not.
 * `MINUTES` is the length of the lesson, from `15` to `480` in steps of `15`. If it is left out, it is `60`.
 * `SUBJECT` must be one of the student's subjects, and is not case-sensitive. If the student has only one subject, it can be left out. If the student has several, it must be given.
 * `VENUE` is up to 100 characters. If it is left out, the student's usual venue is used, or `—` if the student has none.
 * A lesson must end on the day it starts, so `t/23:00 dur/120` is rejected. Split it into two lessons.
+* Each prefix can appear once, in any order. The exception is `s/` in `add` and `edit`, which can be repeated to give several subjects.
 * Two lessons are duplicates if they have the same student, subject, date, time and duration. A duplicate is rejected.
 * Adding a lesson keeps the current day, week or student lesson filter. If the new lesson shifts existing lesson numbers, the result shows the complete current lesson list with fresh numbers. Use those numbers for your next lesson command.
 
@@ -393,6 +395,7 @@ Format: `today`
 * The fourth section, `DUES`, is the list that [`dues`](#viewing-all-outstanding-balances-dues) shows: how many students owe money and the total, then each student's amount and the age of their oldest unpaid charge, such as `oldest unpaid 2 days` or `oldest unpaid 1 day`, the oldest first. If nobody owes money, it shows `No outstanding balances. Everyone is up to date.`
 * All four sections are always shown. An empty section is not an error: it shows `No lessons today.`, `All past lessons are recorded.`, `No overdue homework.` or `No outstanding balances. Everyone is up to date.`
 * To keep the result box responsive, each lesson section lists at most 200 rows. The heading still gives the complete count and total time.
+* `today` does not number lessons. Run `agenda` or `lesson list st/INDEX` before using a lesson number in a later command.
 * Today is the date on your computer, so a wrong system clock shows the wrong day.
 
 Examples:
@@ -440,6 +443,7 @@ Format: `lesson move INDEX [d/DATE] [t/TIME] [dur/MINUTES] [v/VENUE]`
 * At least one of the optional fields must be given. Fields that are not given stay as they were.
 * The values follow the same rules as for [`lesson add`](#scheduling-a-lesson-lesson-add). A new date must be today or later. Only a date that you give is checked, so you can still change the time of a lesson that has already passed.
 * A completed, cancelled or missed lesson cannot be rescheduled. Moving a missed lesson would lose the record that it was missed, so schedule a make-up lesson with [`lesson add`](#scheduling-a-lesson-lesson-add) instead.
+* `lesson move` can change the date, time, duration and venue, but cannot clear the venue or change the subject.
 * If the move makes the lesson identical to another lesson, it is rejected. If it makes the lesson overlap another lesson, it is moved and the result warns you.
 
 Examples:
@@ -453,7 +457,7 @@ Cancels a lesson but keeps its record, so that you can still see that the slot w
 Format: `lesson cancel INDEX [r/REASON]`
 
 * `INDEX` is the lesson number in the list that is currently shown by `agenda` or `lesson list`.
-* `REASON` is up to 200 characters on one line, such as `Student unwell`.
+* `REASON` is up to 200 characters on one line, such as `Student unwell`. Reasons are free text and may contain prefix-like words.
 * The lesson stays in the agenda as cancelled and no longer overlaps other lessons.
 * A lesson that is already cancelled or already completed cannot be cancelled.
 * A cancelled lesson does not block its slot. To book that time again, use `lesson add` with the same details. The cancelled record stays in your history.
@@ -514,6 +518,7 @@ Marks a lesson completed and optionally records what was taught.
 Format: `lesson done INDEX [n/NOTES]`
 
 * `INDEX` is the lesson number from the current `agenda` or `lesson list`, not the student number. It must be a positive integer.
+* Run `agenda` or `lesson list st/INDEX` first; lesson numbers come from the last list shown.
 * The first completion adds the hourly lesson fee to the student’s balance and shows `Charge of $X.XX recorded.` Updating notes never charges again. A fee that is zero, including after cent rounding, completes the lesson without creating a charge and explains why: for a rate of $0.00 it says `No automatic charge: This student's rate is $0.00.` and how to specify an amount. Use [`charge`](#charging-a-lesson-charge) to bill a lesson by hand.
 * Only lessons dated today or earlier can be completed, using your computer's local date. A cancelled lesson cannot be completed.
 * `NOTES` is optional free text of 1–1000 printable characters on one line. Leading/trailing whitespace is trimmed and repeated spaces are collapsed. An empty `n/`, line breaks and repeated `n/` parameters are rejected.
@@ -709,6 +714,7 @@ Format: `pay st/STUDENT_INDEX amt/AMOUNT [d/DATE] [n/NOTES]`
 * `AMOUNT` must be greater than zero with at most two decimal places, such as `50`, `50.00` or `0.50`. Dollar signs, negative amounts, zero, commas and scientific notation are rejected.
 * A payment of $10,000.00 or more is recorded, but TutorFlow adds a warning such as `Warning: $100000.00 is an unusually large payment. Check that the amount has no extra digits.`
 * `DATE` defaults to today using your computer's local date. It accepts any of the [ways to write a date](#writing-dates), and cannot be in the future. A future date is rejected with `Payment dates cannot be in the future.`
+* Payment dates have no lower bound, so an old date such as `1990-01-01` is accepted.
 * `NOTES` is optional printable text of 1–200 characters on one line, such as a transfer reference. Extra spaces are collapsed and the notes are saved with the payment.
 * Each prefix can appear once, in any order. Both `st/` and `amt/` are required. Empty or repeated fields are rejected.
 * Payments are saved automatically. Partial payments reduce the amount owed; excess payments and advance payments are accepted as credit. Archived students can receive payments.
@@ -818,6 +824,7 @@ Format: `withdraw st/STUDENT_INDEX amt/AMOUNT [d/DATE] [n/NOTES]`
 
 * `STUDENT_INDEX` is the positive student number in the displayed student list. Archived students with credit can be selected from `list archived/`.
 * `AMOUNT` must be greater than zero with at most two decimal places, and cannot exceed the student's available credit. Withdrawing the full credit is allowed.
+* Withdrawals have no lower date bound and no upper amount limit beyond the student's available credit.
 * A student who owes money, or has no credit, gets an error and no withdrawal is recorded.
 * `DATE` defaults to today, accepts any of the [ways to write a date](#writing-dates), and cannot be in the future. `NOTES` is optional printable text of 1-200 characters on one line.
 * A withdrawal is saved automatically. It appears on the account statement as `withdrawal -$X.XX` and reduces the available credit.
@@ -848,11 +855,22 @@ Format: `clear confirm`
 * `confirm` can be written in any letter case. Anything else after `clear` is rejected, so a mistyped command can never wipe your data.
 * TutorFlow saves the empty data straight away. An `undo` immediately after the clear can restore it in this session, but it is still wise to keep a backup.
 * Clearing data that is already empty works and does nothing.
+* `clear confirm` also resets the travel buffer to 30 minutes and the saved student sort order.
 * If you clear data and make no other change, `undo` restores it. Closing TutorFlow or making another change removes that undo opportunity.
 
 Examples:
 * `clear` shows `This deletes ALL students, lessons, homework, tasks, and financial history. Type 'clear confirm' to proceed.`
 * `clear confirm` deletes everything.
+
+### Loading sample data: `demo`
+
+Loads sample students into a new data set so you can explore TutorFlow without entering your own records.
+
+Format: `demo [confirm]`
+
+* `demo` previews the sample-data action. `demo confirm` loads the bundled sample students.
+* It works only on a completely new data set. Run `clear confirm` first if you have already entered data, used `sort` or changed the travel buffer.
+* It never replaces existing records. Use `clear confirm` to remove the sample data afterwards.
 
 ### Undoing your latest deletion or clear: `undo`
 
@@ -860,7 +878,7 @@ Reverses the latest deletion or clear made in this session.
 
 Format: `undo`
 
-* It applies to `delete`, `hw delete`, `task delete` and `clear confirm`; it does not restore lesson cancellations or other edits.
+* It applies to `delete`, `hw delete`, `task delete` and `clear confirm`; it does not restore lesson cancellations, lesson prep, payments or other edits.
 * It undoes one destructive action, in the current session only. Undoing one action uses up the available undo point.
 * Any later successful change clears the undo opportunity: adding, editing or sorting leaves nothing to undo, while another deletion replaces it with a new undo point. Read-only commands such as `list` and `view` do not.
 * If the restoration cannot be saved, the restored data stays in memory and `save` can retry the write.
