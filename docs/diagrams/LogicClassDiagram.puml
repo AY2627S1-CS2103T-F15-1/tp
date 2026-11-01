@@ -8,7 +8,7 @@ package Logic as LogicPackage {
 
 package "Parser Classes" as ParserClasses{
 Class AddressBookParser
-Class PayCommandParser
+Class CommandInput
 }
 Class XYZCommand
 Class CommandResult
@@ -42,6 +42,7 @@ LogicManager --> Storage
 Storage --[hidden] Model
 Command .[hidden]up.> Storage
 Command .right.> Model
+AddressBookParser --> CommandInput : lower-cases one word
 AddressBookParser ..> XYZCommand : <<create>>
 note right of XYZCommand: XYZCommand = AddCommand, \nFindCommand, etc
 

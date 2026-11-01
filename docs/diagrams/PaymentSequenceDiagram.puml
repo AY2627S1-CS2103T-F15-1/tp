@@ -26,8 +26,10 @@ end box
 activate LogicManager
 LogicManager -> AddressBookParser : parseCommand("pay st/1 amt/50.00")
 activate AddressBookParser
+create PayCommandParser
 AddressBookParser -> PayCommandParser : parse("st/1 amt/50.00")
 activate PayCommandParser
+create PaymentCommandParser
 PayCommandParser -> PaymentCommandParser : parse("st/1 amt/50.00")
 activate PaymentCommandParser
 create PaymentCommand

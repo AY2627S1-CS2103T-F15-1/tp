@@ -1,0 +1,58 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+
+box Logic LOGIC_COLOR_T1
+participant ":LogicManager" as Logic LOGIC_COLOR
+participant ":UndoCommand" as Undo LOGIC_COLOR
+end box
+
+box Model MODEL_COLOR_T1
+participant "m:Model" as Model MODEL_COLOR
+end box
+
+box Storage STORAGE_COLOR_T1
+participant ":Storage" as Storage STORAGE_COLOR
+end box
+
+[-> Logic : execute("undo")
+activate Logic
+Logic -> Model : beforeCommand(false)
+activate Model
+deactivate Model
+
+Logic -> Undo : execute(m)
+activate Undo
+Undo -> Model : undoDestructiveAction()
+activate Model
+Model -> Model : resetData(lastState)
+Model --> Undo : lastDestructiveAction
+deactivate Model
+Undo --> Logic : result
+deactivate Undo
+
+Logic -> Model : afterCommand(null, succeeded and changed)
+activate Model
+Model -> Model : clear the used undo point
+deactivate Model
+
+Logic -> Model : getAddressBook()
+activate Model
+Model --> Logic : restored book
+deactivate Model
+
+Logic -> Storage : saveAddressBook(restored book)
+activate Storage
+Storage --> Logic : saved
+deactivate Storage
+
+Logic -->[ : result
+deactivate Logic
+
+note over Model, Storage
+  Destructive command before undo:
+  beforeCommand -> execute -> afterCommand
+  publishes the pre-change snapshot only after a
+  successful, changed command.
+end note
+@enduml
