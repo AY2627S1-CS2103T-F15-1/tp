@@ -333,7 +333,7 @@ The sequence diagram below shows `execute("today")`. For simplicity, it leaves o
 
 **At start-up.** `MainWindow#fillInnerParts` puts `Logic#getStartupMessage()` in the result box. `LogicManager#getStartupMessage()` returns the start-up warning, if there is one (the first-run welcome, a data file that could not be read, or a migration that could not be saved), followed by `getDashboard()`, which executes a new `TodayCommand` directly on the model, without the parser or the snapshots.
 
-**Student overview.** `ViewCommand#execute` takes the student at `INDEX` in the displayed student list, and that student's lessons from the address book in time order. It returns five sections, in this order:
+**Student overview.** `ViewCommand#execute` takes the student at `INDEX` in the displayed student list, and that student's lessons from the address book in time order. It returns six sections, in this order:
 
 1. the student's details: `Viewing:` with the name, then the level, subjects, rate, contact details and any remark
 1. `NEXT LESSON`: the first scheduled lesson from today onwards, with any preparation notes
@@ -378,7 +378,7 @@ owns the list of tasks (task ids are unique) and exposes `addTask`, `findTask`, 
 | Record removed | Tasks removed |
 |----------------|---------------|
 | Student (`delete`) | every task about the student, including those linked to the student's lessons, homework or payments |
-| Lesson (`Model#deleteLesson`; no command calls it yet) | only tasks whose `lessonId` is that lesson. A rebooking in the same slot is a different lesson and keeps its tasks |
+| Lesson (`Model#deleteLesson`; a series rollback also uses it) | only tasks whose `lessonId` is that lesson. A rebooking in the same slot is a different lesson and keeps its tasks |
 | Homework (`hw delete`) | only tasks whose `homeworkId` is that item |
 | `clear confirm` | all tasks |
 
@@ -1260,7 +1260,7 @@ testers are expected to do more *exploratory* testing.
       Expected: The result box says that the change was applied in this session but could not be saved, and why. `exit` does not close TutorFlow until the file can be written again.
 
 
-### v1.4 continuity and domain extension contract
+### Data file versioning and domain extension
 
 `Person.getId()` and `Lesson.getId()` are persisted UUIDs, distinct from visible indices and
 from value equality. `Lesson.getStudentId()` links records across profile edits. Legacy lessons
@@ -1273,7 +1273,7 @@ Equal cancelled lessons remain separate records and exact-ID lookup chooses the 
 All domain extensions must update `ReadOnlyAddressBook`, `AddressBook.resetData` and its copy
 constructor/equality, the real JSON root/adapters, and focused round-trip tests together.
 `Storage.snapshotAddressBook` uses that exact persisted representation for dirty detection,
-so UI-only equality must never decide whether a write is required. Schema 17 is written to
+so UI-only equality must never decide whether a write is required. Schema 19 is written to
 `tutorflow-v14.json`; `VersionedAddressBookStorage` reads legacy data only when the current
 path is positively absent. The logic constructor's initial-save flag explicitly persists
 migrated IDs even before a command mutates the model. Failed initial writes remain dirty.
@@ -1288,6 +1288,12 @@ schema 15, finance uses schema 16, follow-up tasks use schema 17, task payment l
 use schema 19; the next domain must advance it to 20. Each build accepts unversioned legacy
 data and versions 14 through its current version, with explicit defaults for missing older fields.
 Add prior-version loading and future-version refusal tests alongside each schema increment.
+
+The data file's top-level keys are `schemaVersion`, `travelBuffer`, `studentOrder`, `persons`,
+`lessons`, `homework`, `ledgerEntries` and `tasks`. `studentOrder` and the later arrays are
+omitted when they have no value or no records. `JsonSerializableAddressBook` is the single
+source for those keys, and `Storage#snapshotAddressBook` serializes the same representation for
+change detection and saves.
 
 Storage checks the raw JSON schema before binding current student/lesson fields. An unsupported
 version produces `UnsupportedSchemaException` as the cause of `DataLoadingException`; `MainApp.init`
@@ -1304,17 +1310,12 @@ start in the same way as for an unsupported schema, with a message that names th
 reason, and `JsonAddressBookStorage#requireOpenedSource` makes every save refuse to replace the file.
 The next start that can open the file loads or migrates it.
 
-The command-result seam for later detail-pane integration is
-`CommandResult.getDisplayedLessons()`: when present, it is an immutable typed snapshot in the
-same order as rendered lesson numbers. `withDisplayedLessons` and `withFeedback` retain it
-across numbering refreshes and unsaved warnings. The logic layer uses this data to avoid
-rendering duplicate refreshes; it does not parse command feedback. Task 7 can render these
-rows directly and add typed student/dashboard views. No unused UI components are introduced.
-Later homework/payment/task lists must likewise snapshot shown stable IDs or visibly refresh
-the numbered list when a mutation changes the mapping, including when persistence fails.
+`CommandResult.getDisplayedLessons()` carries an immutable typed snapshot in the same order as
+the rendered lesson numbers. `withDisplayedLessons` and `withFeedback` retain it across numbering
+refreshes and unsaved warnings, so `LogicManager` can avoid rendering duplicate refreshes without
+parsing command feedback. Homework, payment and task lists use the same shown-ID rule.
 
-
-### Homework domain and integration seams
+### Homework model and storage
 
 `Homework` is immutable and persists its UUID, student UUID, normalized description, due date,
 `HomeworkStatus`, and optional feedback. Its full equality includes identity and all persisted
@@ -1336,13 +1337,13 @@ resolve it against `getAddressBook().getHomeworkList()`. A deleted ID produces a
 renumbering remaining rows. Changes, archive, student rename, reset, and failed writes leave the
 selection untouched. A retained identity can become selectable again after undo, but the existing row is not
 renumbered automatically.
-A future linked task must resolve homework indices by this same shown-ID rule, then persist UUIDs.
+Linked tasks resolve homework indices by the same shown-ID rule, then persist the row's UUID.
 
 `CommandResult.getDisplayedHomework()` exposes optional immutable typed rows for the numbered
-list. `withFeedback` retains them across unsaved warnings. Task 7 can render those rows directly;
-non-indexed overview/dashboard summaries deliberately do not replace the selection. No unused UI
-component or feedback-string parsing is required. Finance can extend summaries independently.
-Future task-parent guards must wrap homework/student deletion before removing any record to avoid orphaned tasks.
+list. `withFeedback` retains them across unsaved warnings. Non-indexed overview and dashboard
+summaries deliberately do not replace the selection, so no feedback-string parsing is required.
+Task-parent guards wrap homework and student deletion before removing any record, preventing
+orphaned tasks.
 
 Focused regression tests cover historical feedback, schema progression and refusal, duplicate/orphan
 rejection, due-date boundaries, lifecycle correction, guarded deletion, filtered numbering, archive,
