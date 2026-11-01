@@ -1005,7 +1005,6 @@ Action     | Format, Examples
 **Lesson move** | `lesson move INDEX [d/DATE] [t/TIME] [dur/MINUTES] [v/VENUE]`<br> e.g., `lesson move 1 d/2026-12-24 t/17:00`
 **Lesson cancel** | `lesson cancel INDEX [r/REASON]`<br> e.g., `lesson cancel 1 r/Student unwell`
 **Lesson series cancel** | `lesson series cancel LESSON_INDEX confirm`<br> e.g., `lesson series cancel 3 confirm`
-**Travel** | `travel buffer/MINUTES`<br> e.g., `travel buffer/30`
 **Lesson done** | `lesson done INDEX [n/NOTES]`<br> e.g., `lesson done 1 n/Covered quadratic roots`
 **Lesson missed** | `lesson missed INDEX`<br> e.g., `lesson missed 1`
 **Lesson prep** | `lesson prep INDEX n/NOTES`<br> e.g., `lesson prep 1 n/Bring the mock paper`
@@ -1052,6 +1051,7 @@ Action     | Format, Examples
 **Undo** | `undo`
 **Save** | `save`
 **Exit** | `exit`
+**Travel** | `travel buffer/MINUTES`<br> e.g., `travel buffer/30`
 
 ## Upgrading from an older data file
 
