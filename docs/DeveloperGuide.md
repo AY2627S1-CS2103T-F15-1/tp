@@ -1418,7 +1418,7 @@ Start each group with `clear confirm`, then `demo`, then `demo confirm`, so the 
 
 1. Scheduling a lesson
 
-   1. Prerequisites: `demo confirm`. Student 1 takes Math and Physics; student 3 takes Math only.
+   1. Prerequisites: `clear confirm`, `demo`, `demo confirm`. Student 1 takes Math and Physics; student 3 takes Math only.
 
    1. Test case: `lesson add st/3 d/tmr t/16:30 dur/90`<br>
       Expected: A lesson is scheduled in Math at the student's venue. The result shows `Scheduled: ...`.
