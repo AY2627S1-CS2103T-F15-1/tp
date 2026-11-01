@@ -1416,13 +1416,6 @@ Start each group with `clear confirm`, then `demo`, then `demo confirm`, so the 
    1. Test case: `archive 1`, then `list archived/`, then `restore 1`<br>
       Expected: The student is hidden from the active list, shown by `list archived/`, and restored to the active list.
 
-1. Delete and undo
-
-   1. Prerequisites: `clear confirm`, `demo`, `demo confirm`.
-
-   1. Test case: `delete 1`, then `undo`<br>
-      Expected: The student disappears, then returns; a second `undo` reports that there is nothing to undo.
-
 ### Lessons
 
 Start each group with `clear confirm`, then `demo`, then `demo confirm`, so the sample students and empty lesson history are known.
