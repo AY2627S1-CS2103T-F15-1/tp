@@ -224,8 +224,9 @@ The following results are from **programmatic command journeys against packaged 
 claim that every step was clicked in the GUI. The runner invokes the real parser and `LogicManager`,
 uses actual JSON files in separate disposable folders, compares saved and live snapshots after each
 successful command, and checks both live records and saved bytes after rejected commands. Reopening
-checks construct fresh model and logic instances from the saved file. GUI layout, operating-system
-launch behaviour and other owners' full feature sets still require their separate checks.
+checks construct fresh model and logic instances from the saved file. The additional GUI checks below
+cover selected rendered workflows; operating-system launch behaviour and other owners' full feature
+sets still require their separate checks.
 
 | Target | Result |
 |---|---|
@@ -238,6 +239,60 @@ The selected JUnit classes were `*LessonDone*`, `*LessonMissed*`, `LessonStatusT
 `JsonAdaptedLessonTest`, `AlphaReportedIssuesTest` and `HomeworkFeedbackCommandTest`.
 Passing these checks does not establish that all of TutorFlow is bug-free. In particular, the separate
 finance/startup defect in issue #252 is outside these passing lesson/correction journeys.
+
+### Additional GUI verification on 1 November 2026
+
+The unmodified published v1.5 JAR was also launched with its real `MainApp`, FXML controls and
+visible JavaFX windows on macOS using Java 25.0.3 FX Zulu. An external GUI integration harness
+entered text in the command box and dispatched synthetic Enter key events through its normal
+event handling. It inspected the actual result area, card labels and error styles after render
+pulses, and captured the rendered scenes. It did **not** call `LogicManager.execute` directly.
+These are automated GUI integration checks, not a claim of human mouse/keyboard testing.
+
+| GUI run | Command scenarios | Assertions | Result |
+|---|---:|---:|---|
+| Empty launch and lesson/correction journeys | 46 | 319 | Passed |
+| Separate process reopening the saved records | 6 | 51 | Passed |
+| Card controls and offline help | 2 | 26 | Passed |
+
+The runs checked completion charges, no duplicate billing, missed-to-completed correction, refreshed
+lesson numbers, future/cancelled rejections, student-card refresh after clearing optional fields,
+homework feedback clearing, Unicode filtering, command history, and retaining failed input with
+error styling. A 1,000-character note was accepted through the GUI; 1,001 and 200,000 characters
+were rejected without changing the saved bytes, and a subsequent valid command succeeded.
+
+Separate process startup restored the notes, lesson states, $150.00 balance, submitted homework
+without feedback, and cleared contact fields. The normal window-close handler and the `exit`
+command both closed the window. Card shortcuts prepared drafts without changing data; Cancel
+cleared an unchanged generated draft while preserving text edited by the user. F1 opened the
+bundled offline guide. The command/result controls remained usable at the 450-by-600 minimum
+window size. No uncaught application/UI exception was observed in these runs.
+
+These are unedited captures of the JavaFX scene, excluding the operating-system window frame:
+
+![Completion result and refreshed lesson number](../images/testing/LessonOutcomeGui.png)
+
+![Rejected duplicate notes with retained command and error styling](../images/testing/LessonValidationGui.png)
+
+![Overview and student cards at minimum window size](../images/testing/LessonMinimumWindowGui.png)
+
+To repeat the GUI checks, use a new empty folder containing `tutorflow.jar`. With a Java 25 JDK
+that includes JavaFX, compile the external runner from
+[`test/manual/GuiJourney.java`](https://github.com/AY2627S1-CS2103T-F15-1/tp/blob/master/test/manual/GuiJourney.java)
+into that folder's `gui-check-classes` directory, then run the three phases in order from that
+same folder. Each phase opens and closes the real application:
+
+```text
+mkdir gui-check-classes
+javac -cp tutorflow.jar -d gui-check-classes /absolute/path/to/repository/test/manual/GuiJourney.java
+java -ea -cp "tutorflow.jar:gui-check-classes" GuiJourney exercise
+java -ea -cp "tutorflow.jar:gui-check-classes" GuiJourney reopen
+java -ea -cp "tutorflow.jar:gui-check-classes" GuiJourney controls
+```
+
+On Windows, use `;` instead of `:` in the classpath. The reported GUI results are from macOS;
+Windows/Linux operation was not verified by these runs. The runner writes separate transcripts
+and scene captures into `evidence-exercise`, `evidence-reopen` and `evidence-controls`.
 
 ### Reproduce the packaged-JAR checks
 
