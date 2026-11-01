@@ -1340,7 +1340,7 @@ testers are expected to do more *exploratory* testing.
 
 1. Undo a deletion, then try to use it again
 
-   1. Prerequisites: `clear confirm`, `demo`, `demo confirm`, `delete 1`.
+   1. Prerequisites: `clear confirm`, `demo`, `demo confirm`, then `delete 2 confirm` for a sample student with no linked records.
 
    1. Test case: `undo`<br>
       Expected: The student returns, and the result says the deletion was undone.
