@@ -224,10 +224,10 @@ JSON. See the User Guide for their confirmation requirements.
 ### Offline help and command assistance
 
 `HelpCommand` returns either the searchable command list or the usage text registered in its `CommandHelp`
-entries. It never executes the command it describes. `HelpWindow` is a separate JavaFX stage that loads
-`docs/UserGuide.md` from the JAR through `UserGuide` and renders it with commonmark. Heading anchors, table
-extensions and the bundled `Ui.png` are resolved locally; external links are disabled, so the guide works
-without a network connection.
+entries. It never executes the command it describes. `HelpWindow` is a separate JavaFX stage. `UserGuide` loads
+`docs/UserGuide.md` from the JAR and converts it to HTML with commonmark; `GuideView` then renders that HTML with
+JavaFX controls and the JDK HTML parser. Heading anchors, table content and the bundled `Ui.png` are resolved
+locally; external links are disabled, so the guide works without a network connection.
 
 `CommandAssist` is the shared UI layer behind the card shortcuts. It writes command drafts into the
 `CommandDraftTarget` implemented by `CommandBox` and never calls `Logic`. `PersonCard` supplies only the
@@ -492,6 +492,17 @@ The activity diagram below shows what `hw delete INDEX [confirm]` does. Homework
 
 <puml src="diagrams/HomeworkDeleteActivityDiagram.puml" alt="Activity Diagram for the `hw delete INDEX [confirm]` Command" />
 
+#### Design considerations: homework numbering
+
+**Aspect: how a deleted homework number is handled**
+
+* **Alternative 1 (current choice):** keep the numbered snapshot until the next `hw list`.
+    * Pros: A number always means the row the tutor saw, and a deleted row reports that it is gone instead of silently selecting another assignment.
+    * Cons: The tutor must run `hw list` after a deletion to get a compact, current numbering.
+* **Alternative 2:** remove the row and renumber immediately.
+    * Pros: The next command sees a compact list without another listing command.
+    * Cons: A pending number can silently point at a different assignment after deletion.
+
 ### Archiving and deleting students
 
 `archive INDEX` and `restore INDEX` replace a student with a copy whose archived flag is changed, so the lessons and homework of the student are kept. The default student list hides archived students. `delete INDEX` removes a student together with their lessons, homework, financial events and follow-up tasks, and asks for `confirm` first when the student has any.
@@ -503,6 +514,17 @@ The sequence diagram below shows `execute("archive 1")`.
 The activity diagram below shows what `delete INDEX [confirm]` does.
 
 <puml src="diagrams/DeleteStudentActivityDiagram.puml" alt="Activity Diagram for the `delete INDEX [confirm]` Command" />
+
+#### Design considerations: student history
+
+**Aspect: what to do with a student who has history**
+
+* **Alternative 1 (current choice):** keep archive and delete as separate actions, and require `confirm` for a destructive delete.
+    * Pros: The tutor can stop teaching a student without losing lessons, homework or financial history, while a deliberate delete still removes the records the tutor asked to remove.
+    * Cons: A student with old records cannot be deleted in one unconfirmed command.
+* **Alternative 2:** make delete always remove the student and all history immediately.
+    * Pros: Fewer steps.
+    * Cons: An accidental deletion loses the financial and teaching record, with no confirmation or archive alternative.
 
 ### Undo of the latest deletion or clear
 
@@ -523,6 +545,17 @@ Undo is deliberately a single-action, session-only safety net, not a general und
 Only one undo point is retained. A successful non-destructive command clears it in `afterCommand`, as does a successful destructive command replacing it. This is intentional: undo must never silently roll back later work. Read-only commands do not clear it. The state is not persisted, so closing TutorFlow ends the undo opportunity.
 
 `VersionedAddressBookTest` exercises the hooks and failed-destructive path directly. `UndoCommandTest` and `UndoIntegrationTest` cover the command and persistence behaviour. Keep `afterCommand` in the `finally` path: it must run on failure so that a rejected confirmation discards the temporary transition snapshot without consuming a valid undo point.
+
+#### Design considerations: undo scope
+
+**Aspect: how much history undo should retain**
+
+* **Alternative 1 (current choice):** retain one destructive-action undo point for the current session.
+    * Pros: Undo is predictable and cannot silently roll back later edits, while the saved state remains the normal source of truth.
+    * Cons: A second destructive action replaces the first undo point, and closing the app ends the opportunity.
+* **Alternative 2:** keep a full undo history across sessions.
+    * Pros: Any number of destructive actions can be reversed later.
+    * Cons: The file grows, later changes complicate what a stored undo point means, and the behaviour is much harder to explain and test.
 
 
 ### Student balances and dues
@@ -1315,20 +1348,22 @@ testers are expected to do more *exploratory* testing.
 
 1. Student-card command shortcuts
 
+   1. Prerequisites: `clear confirm`, `demo`, `demo confirm`.
+
    1. Hover over a student card, or move keyboard focus into the card.<br>
       Expected: Edit, Archive and Delete buttons appear and are reachable by keyboard. On a touch screen, tap the card once to reveal them.
 
    1. Click the card's Edit button, then the pencil beside the phone number.<br>
-      Expected: `edit INDEX p/` is in the command box and focused, and `help edit` appears in the terminal where TutorFlow was launched. No student is changed.
+      Expected: `edit 1 p/` is in the command box and focused, and `help edit` appears in the terminal where TutorFlow was launched. No student is changed.
 
    1. Type a replacement phone number after the prefix, then click the pencil beside the name.<br>
-      Expected: The draft is replaced by `edit INDEX n/`; the earlier partial phone draft is discarded.
+      Expected: The draft is replaced by `edit 1 n/`; the earlier partial phone draft is discarded.
 
    1. Click Cancel, then repeat with a field pencil and change some of the prepared text before clicking Cancel.<br>
       Expected: The unchanged prepared command is cleared. A command you edited is kept.
 
-   1. Click Archive on one card, then click the pencil on another card.<br>
-      Expected: The `archive INDEX` draft is replaced by the field command for the second card, and no data changes.
+   1. Click Archive on the first card, then click the pencil on the second card.<br>
+      Expected: The `archive 1` draft is replaced by the field command for the second card, and no data changes.
 
    1. Click the plus button beside the command box.<br>
       Expected: `add n/` is in the command box and focused. No student is created until you complete the command and press Enter.
@@ -1486,6 +1521,16 @@ Start each group with `clear confirm`, then `demo`, then `demo confirm`, so the 
 
    1. Test case: `lesson cancel 99`<br>
       Expected: An error that the lesson index is invalid.
+
+1. Travel warnings
+
+   1. Prerequisites: `clear confirm`, `demo`, `demo confirm`; add `lesson add st/3 s/Math d/tmr t/09:00 dur/60` and `lesson add st/1 s/Math d/tmr t/10:10 dur/60`.
+
+   1. Test case: `travel buffer/30`<br>
+      Expected: The result includes `10 min available; 30 min required`, naming both students and their venues.
+
+   1. Test case: `travel buffer/0`<br>
+      Expected: Travel warnings are disabled while overlap warnings remain.
 
 1. Completing a lesson
 

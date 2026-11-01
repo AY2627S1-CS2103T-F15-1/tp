@@ -20,9 +20,11 @@ activate LogicManager
 LogicManager -> AddressBookParser : parseCommand("lesson repeat ...")
 activate AddressBookParser
 
-AddressBookParser -> LessonCommandParser : parse(" repeat st/1 ...")
+create LessonCommandParser
+AddressBookParser -> LessonCommandParser : parse(" repeat st/3 ...")
 activate LessonCommandParser
 
+create LessonRepeatCommandParser
 LessonCommandParser -> LessonRepeatCommandParser : parse(" st/3 d/2026-12-03 t/16:00 count/4")
 activate LessonRepeatCommandParser
 
