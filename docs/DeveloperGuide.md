@@ -1575,6 +1575,24 @@ Start each group with `clear confirm`, then `demo`, then `demo confirm`, so the 
 
 ### Data file versioning and domain extension
 
+#### Data format appendix
+
+The real JSON root is `JsonSerializableAddressBook`. Its saved form has these top-level keys:
+
+| Key | Contents |
+|-----|----------|
+| `schemaVersion` | The integer schema version, currently 19. |
+| `travelBuffer` | The saved travel buffer in minutes. |
+| `studentOrder` | `ASCENDING` or `DESCENDING` once `sort` has been used; omitted otherwise. |
+| `persons` | Student records, including stable IDs, archive state and contact details. |
+| `lessons` | Lesson records with student and series IDs and booking snapshots. |
+| `homework` | Homework records with their student IDs and feedback. |
+| `ledgerEntries` | Charges, payments, withdrawals and reversals. |
+| `tasks` | Follow-up tasks and their optional record links. |
+
+Optional arrays are omitted when empty. Their shape is defined by the corresponding `JsonAdapted*` classes, and
+`Storage#snapshotAddressBook` uses the same representation for dirty detection and atomic saves.
+
 `Person.getId()` and `Lesson.getId()` are persisted UUIDs, distinct from visible indices and
 from value equality. `Lesson.getStudentId()` links records across profile edits. Legacy lessons
 are linked during loading; their missing academic level remains `Optional.empty()`. Newly
