@@ -35,7 +35,7 @@ public class ArgumentMultimap {
             "assignment", "homework", "payment", "payments", "count", "every", "week", "buffer", "past", "status",
             "feedback", "overdue", "outstanding", "all", "reason", "archived", "deadline", "duedate", "text",
             "minutes", "weeks");
-    private static final Set<String> ALLOWED_SLASH_WORDS = Set.of("c/o", "d/o", "s/o", "n/a", "w/o");
+    private static final Set<String> ALLOWED_SLASH_WORDS = Set.of("c/o", "d/o", "s/o", "n/a", "w/o", "h/o", "m/o");
 
     /** Prefixes mapped to their respective arguments */
     private final Map<Prefix, List<String>> argMultimap = new HashMap<>();
