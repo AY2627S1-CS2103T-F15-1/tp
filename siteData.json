@@ -76,6 +76,8 @@
         "glossary": "Glossary",
         "appendix-instructions-for-manual-testing": "Appendix: Instructions for manual testing",
         "launch-and-shutdown": "Launch and shutdown",
+        "dashboard-student-overview-and-main-window": "Dashboard, student overview and main window",
+        "testing-approach-dashboard-student-overview-and-main-window": "Testing approach: dashboard, student overview and main window",
         "command-box": "Command box",
         "undo": "Undo",
         "deleting-a-student": "Deleting a student",
