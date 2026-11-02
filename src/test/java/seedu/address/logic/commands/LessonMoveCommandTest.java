@@ -12,7 +12,10 @@ import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BENSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 
 import org.junit.jupiter.api.Test;
 
@@ -164,6 +167,16 @@ public class LessonMoveCommandTest {
 
         assertCommandFailure(new LessonMoveCommand(INDEX_FIRST_PERSON, yesterday, null, null, null), model,
                 LessonMoveCommand.MESSAGE_DATE_IN_PAST);
+    }
+
+    @Test
+    public void execute_newDateInPastOfInjectedClock_throwsCommandException() {
+        model.addLesson(lesson);
+        Clock clock = Clock.fixed(Instant.parse("2030-06-01T00:00:00Z"), ZoneOffset.UTC);
+        LessonDate beforeClockDate = new LessonDate("2030-05-31");
+
+        assertCommandFailure(new LessonMoveCommand(INDEX_FIRST_PERSON, beforeClockDate, null, null, null, clock),
+                model, LessonMoveCommand.MESSAGE_DATE_IN_PAST);
     }
 
     @Test

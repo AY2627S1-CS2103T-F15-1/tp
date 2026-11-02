@@ -106,14 +106,14 @@ public class AddressBookParser {
             case ArchiveCommand.COMMAND_WORD_RESTORE -> new ArchiveCommandParser(false).parse(arguments);
             case AddCommand.COMMAND_WORD -> new AddCommandParser().parse(arguments);
             case EditCommand.COMMAND_WORD -> new EditCommandParser().parse(arguments);
-            case DeleteCommand.COMMAND_WORD -> new DeleteCommandParser().parse(arguments);
+            case DeleteCommand.COMMAND_WORD -> new DeleteCommandParser(clock).parse(arguments);
             case ClearCommand.COMMAND_WORD -> new ClearCommandParser().parse(arguments);
             case FindCommand.COMMAND_WORD -> new FindCommandParser().parse(arguments);
             case ListCommand.COMMAND_WORD -> new ListCommandParser().parse(arguments);
             case RemarkCommand.COMMAND_WORD -> new RemarkCommandParser().parse(arguments);
             case SortCommand.COMMAND_WORD -> new SortCommandParser().parse(arguments);
             case AgendaCommand.COMMAND_WORD -> new AgendaCommandParser(clock).parse(arguments);
-            case ViewCommand.COMMAND_WORD -> new ViewCommandParser().parse(arguments);
+            case ViewCommand.COMMAND_WORD -> new ViewCommandParser(clock).parse(arguments);
             case TodayCommand.COMMAND_WORD -> {
                 requireNoArguments(commandWord, arguments);
                 yield new TodayCommand(LocalDate.now(clock));

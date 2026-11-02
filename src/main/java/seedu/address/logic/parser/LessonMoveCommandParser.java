@@ -66,7 +66,7 @@ public class LessonMoveCommandParser implements Parser<LessonMoveCommand> {
         if (date == null && time == null && duration == null && venue == null) {
             throw new ParseException(LessonMoveCommand.MESSAGE_NOT_MOVED + "\n" + LessonMoveCommand.MESSAGE_USAGE);
         }
-        return new LessonMoveCommand(index, date, time, duration, venue);
+        return new LessonMoveCommand(index, date, time, duration, venue, clock);
     }
 
 }
