@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -177,16 +178,12 @@ public class UniqueLessonList implements Iterable<Lesson> {
     }
 
     /**
-     * Returns true if {@code lessons} contains only unique lessons.
+     * Returns true if {@code lessons} contains only unique lessons. Duplicates share a date and time, so only lessons
+     * with the same date and time are compared.
      */
     private boolean lessonsAreUnique(List<Lesson> lessons) {
-        for (int i = 0; i < lessons.size() - 1; i++) {
-            for (int j = i + 1; j < lessons.size(); j++) {
-                if (lessons.get(i).isDuplicateOf(lessons.get(j))) {
-                    return false;
-                }
-            }
-        }
-        return true;
+        return lessons.stream().collect(Collectors.groupingBy(lesson -> List.of(lesson.getDate(), lesson.getTime())))
+                .values().stream().allMatch(sameSlot -> IntStream.range(0, sameSlot.size()).noneMatch(i ->
+                        sameSlot.subList(i + 1, sameSlot.size()).stream().anyMatch(sameSlot.get(i)::isDuplicateOf)));
     }
 }
