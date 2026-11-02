@@ -120,34 +120,42 @@ public class Task {
                         || character == '\u2028' || character == '\u2029');
     }
 
+    /** Returns the id. */
     public UUID getId() {
         return id;
     }
 
+    /** Returns the description. */
     public String getDescription() {
         return description;
     }
 
+    /** Returns the due date, if any. */
     public Optional<LocalDate> getDue() {
         return Optional.ofNullable(due);
     }
 
+    /** Returns true if the task is done. */
     public boolean isDone() {
         return isDone;
     }
 
+    /** Returns the student id. */
     public UUID getStudentId() {
         return studentId;
     }
 
+    /** Returns the lesson id, if any. */
     public Optional<UUID> getLessonId() {
         return Optional.ofNullable(lessonId);
     }
 
+    /** Returns the homework id, if any. */
     public Optional<UUID> getHomeworkId() {
         return Optional.ofNullable(homeworkId);
     }
 
+    /** Returns the payment id, if any. */
     public Optional<UUID> getPaymentId() {
         return Optional.ofNullable(paymentId);
     }

@@ -20,6 +20,7 @@ public class JsonUserPrefsStorage {
         this.filePath = filePath;
     }
 
+    /** Returns the path of the preferences file. */
     public Path getUserPrefsFilePath() {
         return filePath;
     }

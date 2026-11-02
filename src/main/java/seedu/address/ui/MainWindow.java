@@ -78,6 +78,7 @@ public class MainWindow extends UiPart<Stage> {
         helpWindow = new HelpWindow();
     }
 
+    /** Returns the primary stage of the application. */
     public Stage getPrimaryStage() {
         return primaryStage;
     }
@@ -197,6 +198,7 @@ public class MainWindow extends UiPart<Stage> {
         primaryStage.hide();
     }
 
+    /** Returns the student list panel. */
     public PersonListPanel getPersonListPanel() {
         return personListPanel;
     }

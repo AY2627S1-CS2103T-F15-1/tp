@@ -147,18 +147,22 @@ public class Lesson {
                         || character == '\u2028' || character == '\u2029');
     }
 
+    /** Returns the id. */
     public UUID getId() {
         return id;
     }
 
+    /** Returns the id of the student this record belongs to, if linked. */
     public Optional<UUID> getStudentId() {
         return Optional.ofNullable(studentId);
     }
 
+    /** Returns the level the student had when the lesson was booked, if recorded. */
     public Optional<Level> getAcademicLevel() {
         return Optional.ofNullable(academicLevel);
     }
 
+    /** Returns the preparation notes, if any. */
     public Optional<String> getPreparation() {
         return Optional.ofNullable(preparation);
     }
@@ -187,26 +191,32 @@ public class Lesson {
                 time, duration, venue, status, notes, cancelReason);
     }
 
+    /** Returns the name of the student this lesson is for. */
     public Name getStudentName() {
         return studentName;
     }
 
+    /** Returns the phone number of the student this lesson is for. */
     public Phone getStudentPhone() {
         return studentPhone;
     }
 
+    /** Returns the subject. */
     public Subject getSubject() {
         return subject;
     }
 
+    /** Returns the date. */
     public LessonDate getDate() {
         return date;
     }
 
+    /** Returns the time. */
     public LessonTime getTime() {
         return time;
     }
 
+    /** Returns the duration. */
     public LessonDuration getDuration() {
         return duration;
     }
@@ -218,22 +228,27 @@ public class Lesson {
         return time.value.plusMinutes(duration.value);
     }
 
+    /** Returns the venue, if any. */
     public Optional<Venue> getVenue() {
         return Optional.ofNullable(venue);
     }
 
+    /** Returns the status. */
     public LessonStatus getStatus() {
         return status;
     }
 
+    /** Returns the teaching notes, if any. */
     public Optional<String> getNotes() {
         return Optional.ofNullable(notes);
     }
 
+    /** Returns the reason the lesson was cancelled, if any. */
     public Optional<String> getCancelReason() {
         return Optional.ofNullable(cancelReason);
     }
 
+    /** Returns true if this lesson is cancelled. */
     public boolean isCancelled() {
         return status == LessonStatus.CANCELLED;
     }
@@ -247,6 +262,7 @@ public class Lesson {
         return isSameLesson(otherLesson) && !isCancelled() && !otherLesson.isCancelled();
     }
 
+    /** Returns true if this lesson is scheduled. */
     public boolean isScheduled() {
         return status == LessonStatus.SCHEDULED;
     }

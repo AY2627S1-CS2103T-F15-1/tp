@@ -51,26 +51,32 @@ public final class Homework {
         return normalized;
     }
 
+    /** Returns the id. */
     public UUID getId() {
         return id;
     }
 
+    /** Returns the student id. */
     public UUID getStudentId() {
         return studentId;
     }
 
+    /** Returns the description. */
     public String getDescription() {
         return description;
     }
 
+    /** Returns the due date. */
     public LocalDate getDueDate() {
         return dueDate;
     }
 
+    /** Returns the status. */
     public HomeworkStatus getStatus() {
         return status;
     }
 
+    /** Returns the feedback, if any. */
     public Optional<String> getFeedback() {
         return Optional.ofNullable(feedback);
     }

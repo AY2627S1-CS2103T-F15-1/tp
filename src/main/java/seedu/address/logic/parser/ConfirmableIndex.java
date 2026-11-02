@@ -35,10 +35,12 @@ public final class ConfirmableIndex {
         return new ConfirmableIndex(ParserUtil.parseIndex(words[0], usage), isConfirmed);
     }
 
+    /** Returns the index. */
     public Index getIndex() {
         return index;
     }
 
+    /** Returns true if the user typed {@code confirm}. */
     public boolean isConfirmed() {
         return isConfirmed;
     }

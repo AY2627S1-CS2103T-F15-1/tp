@@ -75,10 +75,12 @@ public class Person {
         return size >= 1 && size <= MAX_SUBJECTS;
     }
 
+    /** Returns the id. */
     public UUID getId() {
         return id;
     }
 
+    /** Returns true if this student is archived. */
     public boolean isArchived() {
         return isArchived;
     }
@@ -93,18 +95,22 @@ public class Person {
         return new Person(value, isArchived, name, phone, email, level, subjects, rate, venue, remark);
     }
 
+    /** Returns the name. */
     public Name getName() {
         return name;
     }
 
+    /** Returns the phone. */
     public Phone getPhone() {
         return phone;
     }
 
+    /** Returns the email, if any. */
     public Optional<Email> getEmail() {
         return Optional.ofNullable(email);
     }
 
+    /** Returns the level. */
     public Level getLevel() {
         return level;
     }
@@ -117,14 +123,17 @@ public class Person {
         return Collections.unmodifiableSet(subjects);
     }
 
+    /** Returns the rate. */
     public Rate getRate() {
         return rate;
     }
 
+    /** Returns the venue, if any. */
     public Optional<Venue> getVenue() {
         return Optional.ofNullable(venue);
     }
 
+    /** Returns the remark. */
     public Remark getRemark() {
         return remark;
     }

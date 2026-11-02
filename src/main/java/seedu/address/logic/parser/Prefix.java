@@ -11,6 +11,7 @@ public class Prefix {
         this.prefix = prefix;
     }
 
+    /** Returns the prefix text, such as {@code n/}. */
     public String getPrefix() {
         return prefix;
     }

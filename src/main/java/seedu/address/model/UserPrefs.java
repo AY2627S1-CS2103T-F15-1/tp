@@ -26,10 +26,12 @@ public class UserPrefs implements ReadOnlyUserPrefs {
         setGuiSettings(userPrefs.getGuiSettings());
     }
 
+    /** Returns the GUI settings. */
     public GuiSettings getGuiSettings() {
         return guiSettings;
     }
 
+    /** Sets the GUI settings to {@code guiSettings}. */
     public void setGuiSettings(GuiSettings guiSettings) {
         requireNonNull(guiSettings);
         this.guiSettings = guiSettings;
