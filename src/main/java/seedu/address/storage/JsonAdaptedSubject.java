@@ -28,6 +28,7 @@ class JsonAdaptedSubject {
         subjectName = source.value;
     }
 
+    /** Returns the stored subject name. */
     @JsonValue
     public String getSubjectName() {
         return subjectName;

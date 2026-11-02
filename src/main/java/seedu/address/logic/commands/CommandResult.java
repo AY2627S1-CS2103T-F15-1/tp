@@ -49,10 +49,12 @@ public class CommandResult {
         this(feedbackToUser, false, false);
     }
 
+    /** Returns the text to show to the user. */
     public String getFeedbackToUser() {
         return feedbackToUser;
     }
 
+    /** Returns the lessons to display, if this result has any. */
     public Optional<List<Lesson>> getDisplayedLessons() {
         return Optional.ofNullable(displayedLessons);
     }
@@ -62,6 +64,7 @@ public class CommandResult {
         return new CommandResult(feedbackToUser, showHelp, exit, lessons, displayedHomework);
     }
 
+    /** Returns the homework to display, if this result has any. */
     public Optional<List<Homework>> getDisplayedHomework() {
         return Optional.ofNullable(displayedHomework);
     }
@@ -76,10 +79,12 @@ public class CommandResult {
         return new CommandResult(feedback, showHelp, exit, displayedLessons, displayedHomework);
     }
 
+    /** Returns true if the help window should be shown. */
     public boolean isShowHelp() {
         return showHelp;
     }
 
+    /** Returns true if the application should exit. */
     public boolean isExit() {
         return exit;
     }

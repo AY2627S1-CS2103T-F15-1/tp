@@ -114,6 +114,7 @@ public class UniqueLessonList implements Iterable<Lesson> {
                 .collect(Collectors.toList());
     }
 
+    /** Replaces the contents of this list with {@code replacement}. */
     public void setLessons(UniqueLessonList replacement) {
         requireNonNull(replacement);
         internalList.setAll(replacement.internalList);

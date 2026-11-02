@@ -45,6 +45,7 @@ public class GuideView extends ScrollPane {
         setContent(document);
     }
 
+    /** Sets the handler that receives status messages from the guide view. */
     public void setStatusHandler(Consumer<String> handler) {
         statusHandler = handler;
     }

@@ -61,10 +61,12 @@ public class VersionedAddressBookStorage extends JsonAddressBookStorage {
         super.saveAddressBook(addressBook);
     }
 
+    /** Returns the file the data was read from. */
     public Path getReadSource() {
         return readSource;
     }
 
+    /** Returns true if the data must be saved once at start-up, for example after a migration. */
     public boolean requiresInitialSave() {
         return isInitialSaveRequired;
     }

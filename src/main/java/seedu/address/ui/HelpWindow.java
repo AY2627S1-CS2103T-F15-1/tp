@@ -46,14 +46,17 @@ public class HelpWindow extends UiPart<Stage> {
         }
     }
 
+    /** Returns true if the help window is currently being shown. */
     public boolean isShowing() {
         return getRoot().isShowing();
     }
 
+    /** Hides the help window. */
     public void hide() {
         getRoot().hide();
     }
 
+    /** Focuses on the help window. */
     public void focus() {
         getRoot().requestFocus();
     }

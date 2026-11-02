@@ -89,6 +89,7 @@ public class UniquePersonList implements Iterable<Person> {
         internalList.sort(comparator);
     }
 
+    /** Replaces the contents of this list with {@code replacement}. */
     public void setPersons(UniquePersonList replacement) {
         requireNonNull(replacement);
         internalList.setAll(replacement.internalList);

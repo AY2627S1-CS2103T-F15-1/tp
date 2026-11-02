@@ -51,6 +51,7 @@ public class JsonAddressBookStorage {
                 : Files.notExists(path) ? SourcePresence.ABSENT : SourcePresence.UNKNOWN;
     }
 
+    /** Returns the path of the data file. */
     public Path getAddressBookFilePath() {
         return filePath;
     }
