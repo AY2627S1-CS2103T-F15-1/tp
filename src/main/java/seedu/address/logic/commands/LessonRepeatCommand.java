@@ -30,6 +30,7 @@ import seedu.address.model.lesson.LessonDuration;
 import seedu.address.model.lesson.LessonStatus;
 import seedu.address.model.lesson.LessonTime;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.StudentSummaryLabels;
 import seedu.address.model.person.Subject;
 import seedu.address.model.person.Venue;
 
@@ -164,7 +165,8 @@ public class LessonRepeatCommand extends Command {
         String details = warnings + LessonCommandUtil.getTravelWarningsForLessons(model, series);
         if (isRenumbered(shownBefore, model.getFilteredLessonList())) {
             // Like lesson add, end with the new numbering so that the tutor does not use stale numbers.
-            return new CommandResult(summary + details + Messages.formatLessonList(model.getFilteredLessonList()))
+            return new CommandResult(summary + details + Messages.formatLessonList(model.getFilteredLessonList(),
+                    new StudentSummaryLabels(model.getAddressBook())))
                     .withDisplayedLessons(model.getFilteredLessonList());
         }
         return new CommandResult(summary + "\n" + String.format(MESSAGE_NOT_DISPLAYED, studentIndex.getOneBased())
@@ -220,6 +222,7 @@ public class LessonRepeatCommand extends Command {
      * Occurrences are on different dates, so they can only overlap lessons that already exist.
      */
     private static String formatOverlapWarnings(Model model, List<Lesson> series) {
+        StudentSummaryLabels labels = new StudentSummaryLabels(model.getAddressBook());
         List<String> lines = new ArrayList<>();
         Lesson first = null;
         for (Lesson lesson : series) {
@@ -228,7 +231,7 @@ public class LessonRepeatCommand extends Command {
                 continue;
             }
             first = first == null ? lesson : first;
-            lines.add(String.format(MESSAGE_OVERLAP_LINE, lesson.getDate(), Messages.formatOverlaps(overlaps)));
+            lines.add(String.format(MESSAGE_OVERLAP_LINE, lesson.getDate(), Messages.formatOverlaps(overlaps, labels)));
         }
         if (lines.isEmpty()) {
             return "";

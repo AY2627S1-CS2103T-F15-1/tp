@@ -23,6 +23,7 @@ import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.Model;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.StudentSummaryLabels;
 import seedu.address.storage.Storage;
 
 /**
@@ -121,7 +122,8 @@ public class LogicManager implements Logic {
         boolean preservesShownRows = shownAfter.size() >= shownBefore.size()
                 && shownAfter.subList(0, shownBefore.size()).equals(shownBefore);
         if (changed && !preservesShownRows) {
-            numbering = Messages.formatLessonList(model.getFilteredLessonList());
+            numbering = Messages.formatLessonList(model.getFilteredLessonList(),
+                    new StudentSummaryLabels(model.getAddressBook()));
             if (commandResult.getDisplayedLessons().isEmpty()) {
                 commandResult = commandResult.withFeedback(commandResult.getFeedbackToUser() + numbering)
                         .withDisplayedLessons(model.getFilteredLessonList());

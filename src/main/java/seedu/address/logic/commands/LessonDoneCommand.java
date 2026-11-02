@@ -19,6 +19,7 @@ import seedu.address.model.finance.Ledger;
 import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonStatus;
+import seedu.address.model.person.StudentSummaryLabels;
 
 /**
  * Records completion and optional teaching notes for a lesson in the displayed lesson list.
@@ -94,7 +95,8 @@ public class LessonDoneCommand extends Command {
         }
         logger.fine("Completed lesson");
         String message = target.getStatus() == LessonStatus.COMPLETED ? MESSAGE_UPDATED_NOTES : MESSAGE_SUCCESS;
-        String feedback = String.format(message, Messages.format(target));
+        String feedback = String.format(message,
+                Messages.format(target, new StudentSummaryLabels(model.getAddressBook())));
         if (target.getStatus() != LessonStatus.COMPLETED) {
             String noChargeMessage = Ledger.activeCharge(model.getAddressBook(), target.getId()).isPresent()
                     ? MESSAGE_ALREADY_BILLED

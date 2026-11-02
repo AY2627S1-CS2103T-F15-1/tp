@@ -22,6 +22,7 @@ import seedu.address.model.lesson.LessonDate;
 import seedu.address.model.lesson.LessonDuration;
 import seedu.address.model.lesson.LessonStatus;
 import seedu.address.model.lesson.LessonTime;
+import seedu.address.model.person.StudentSummaryLabels;
 import seedu.address.model.person.Venue;
 
 /**
@@ -94,7 +95,8 @@ public class LessonMoveCommand extends Command {
         model.setLesson(target, moved);
         logger.fine("Rescheduled lesson");
 
-        return new CommandResult(String.format(MESSAGE_SUCCESS, target.getStudentName(), target.getSubject(),
+        String studentLabel = LessonCommandUtil.studentLabel(new StudentSummaryLabels(model.getAddressBook()), target);
+        return new CommandResult(String.format(MESSAGE_SUCCESS, studentLabel, target.getSubject(),
                 Messages.formatSlot(target), Messages.formatSlot(moved))
                 + LessonCommandUtil.getOverlapWarning(model, moved)
                 + LessonCommandUtil.getTravelWarningsForLesson(model, moved));
