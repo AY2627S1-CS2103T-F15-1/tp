@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html data-dark-mode="false" data-code-theme="light">
+<head>
+    <script src="/tp/markbind/js/theme-manager.js"></script>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="generator" content="MarkBind 7.2.1">
+    <meta name="viewport" content="width=device-width, initial-scale=1"><title>Lesson outcome and correction testing - TutorFlow</title> <link rel="stylesheet" href="/tp/markbind/css/bootstrap.min.css"> <link rel="stylesheet" href="/tp/markbind/fontawesome/css/all.min.css"> <link rel="stylesheet" href="/tp/markbind/glyphicons/css/bootstrap-glyphicons.min.css">
+    
+    
+    <link rel="stylesheet" id="markbind-highlight-light" href="/tp/markbind/css/codeblock-light.min.css">
+    <link rel="stylesheet" id="markbind-highlight-dark" href="/tp/markbind/css/codeblock-dark.min.css">
+    <script src="/tp/markbind/js/code-theme.js"></script><link rel="stylesheet" href="/tp/markbind/css/markbind.min.css"><link rel="stylesheet" href="/tp/plugins/markbind-plugin-anchors/markbind-plugin-anchors.css"><link rel="stylesheet" href="/tp/plugins/markbind-plugin-tree/markbind-plugin-tree.css">
+    
+  <link rel="stylesheet" href="/tp/stylesheets/main.css">
+<link rel="icon" href="/tp/images/SeEduLogo.png"></head>
+<script>
+  const baseUrl = '/tp'
+</script>
+<body 
+   
+  data-code-theme="light">
+<div id="app"><!--[--><header sticky><div data-v-94b60ff6><nav class="navbar navbar-expand-md d-print-none navbar-dark bg-dark" data-v-94b60ff6><div class="container-fluid" data-v-94b60ff6><div class="navbar-left" data-v-94b60ff6><!--[--><a href="/tp/index.html" title="Home" class="navbar-brand">TutorFlow</a><!--]--></div><div class="navbar-default" data-v-94b60ff6><ul class="navbar-nav me-auto mt-2 mt-lg-0" data-v-94b60ff6><!--[--> <li><a href="/tp/index.html" class="nav-link">Home</a></li> <li><a href="/tp/UserGuide.html" class="nav-link">User Guide</a></li> <li><a href="/tp/DeveloperGuide.html" class="nav-link">Developer Guide</a></li> <li><a href="/tp/AboutUs.html" class="nav-link">About Us</a></li> <li><a href="https://github.com/AY2627S1-CS2103T-F15-1/tp" target="_blank" class="nav-link"><span><span aria-hidden="true" class="fab fa-github"></span></span></a></li> <!--]--></ul></div><div class="navbar-right" data-v-94b60ff6><ul class="navbar-nav" data-v-94b60ff6><!--[--><li><form class="navbar-form"><div style="position:relative;" class="dropdown" data-v-103d5c4e><!--[--><input value="" data-bs-toggle="dropdown" type="text" class="form-control" placeholder="Search" autocomplete="off" data-v-103d5c4e><div class="form-control placeholder-div-hidden" data-v-103d5c4e>Search</div><!--]--><ul class="dropdown-menu search-dropdown-menu dropdown-menu-hidden dropdown-menu-end" data-v-103d5c4e><!--[--><!--]--></ul></div></form></li><!--]--></ul><!----></div></div></nav><div style="display:none;" class="lower-navbar-container" data-v-94b60ff6><!--[--><!----><!----><!--]--></div></div></header> <div id="flex-body"><nav id="site-nav" data-v-6b1b63d2><!--[--><div class="site-nav-top"><div class="fw-bold mb-2" style="font-size:1.25rem;">Site Map</div></div> <div class="nav-component slim-scroll"><div class="site-nav-root"><!--[--><ul class="site-nav-list site-nav-list-root" data-v-6b1b63d2><!--[--><li><div class="site-nav-default-list-item site-nav-list-item-0" onclick="handleSiteNavClick(this)"><a href="/tp/index.html">Home</a></div></li> <li><div class="site-nav-default-list-item site-nav-list-item-0" onclick="handleSiteNavClick(this)"><a href="/tp/UserGuide.html">User Guide</a> <div class="site-nav-dropdown-btn-container"><i class="site-nav-dropdown-btn-icon site-nav-rotate-icon" onclick="handleSiteNavClick(this.parentNode.parentNode, false); event.stopPropagation();"><span class="glyphicon glyphicon-menu-down" aria-hidden="true"></span></i></div></div><ul class="site-nav-dropdown-container site-nav-dropdown-container-open site-nav-list"><li><div class="site-nav-default-list-item site-nav-list-item-1" onclick="handleSiteNavClick(this)"><a href="/tp/UserGuide.html#quick-start">Quick Start</a></div></li> <li><div class="site-nav-default-list-item site-nav-list-item-1" onclick="handleSiteNavClick(this)"><a href="/tp/UserGuide.html#features">Features</a></div></li> <li><div class="site-nav-default-list-item site-nav-list-item-1" onclick="handleSiteNavClick(this)"><a href="/tp/UserGuide.html#faq">FAQ</a></div></li> <li><div class="site-nav-default-list-item site-nav-list-item-1" onclick="handleSiteNavClick(this)"><a href="/tp/UserGuide.html#command-summary">Command Summary</a></div></li></ul></li> <li><div class="site-nav-default-list-item site-nav-list-item-0" onclick="handleSiteNavClick(this)"><a href="/tp/DeveloperGuide.html">Developer Guide</a> <div class="site-nav-dropdown-btn-container"><i class="site-nav-dropdown-btn-icon site-nav-rotate-icon" onclick="handleSiteNavClick(this.parentNode.parentNode, false); event.stopPropagation();"><span class="glyphicon glyphicon-menu-down" aria-hidden="true"></span></i></div></div><ul class="site-nav-dropdown-container site-nav-dropdown-container-open site-nav-list"><li><div class="site-nav-default-list-item site-nav-list-item-1" onclick="handleSiteNavClick(this)"><a href="/tp/DeveloperGuide.html#acknowledgements">Acknowledgements</a></div></li> <li><div class="site-nav-default-list-item site-nav-list-item-1" onclick="handleSiteNavClick(this)"><a href="/tp/DeveloperGuide.html#setting-up-getting-started">Setting Up</a></div></li> <li><div class="site-nav-default-list-item site-nav-list-item-1" onclick="handleSiteNavClick(this)"><a href="/tp/DeveloperGuide.html#design">Design</a></div></li> <li><div class="site-nav-default-list-item site-nav-list-item-1" onclick="handleSiteNavClick(this)"><a href="/tp/DeveloperGuide.html#implementation">Implementation</a></div></li> <li><div class="site-nav-default-list-item site-nav-list-item-1" onclick="handleSiteNavClick(this)"><a href="/tp/DeveloperGuide.html#documentation-logging-testing-dev-ops">Documentation, logging, testing, dev-ops</a></div></li> <li><div class="site-nav-default-list-item site-nav-list-item-1" onclick="handleSiteNavClick(this)"><a href="/tp/DeveloperGuide.html#appendix-requirements">Appendix: Requirements</a></div></li> <li><div class="site-nav-default-list-item site-nav-list-item-1" onclick="handleSiteNavClick(this)"><a href="/tp/DeveloperGuide.html#appendix-instructions-for-manual-testing">Appendix: Instructions for manual testing</a></div></li></ul></li> <li><div class="site-nav-default-list-item site-nav-list-item-0" onclick="handleSiteNavClick(this)"><a href="/tp/AboutUs.html">About Us</a></div></li><!--]--><!--v-if--></ul><!--]--></div></div><!--]--><!--v-if--></nav> <div id="content-wrapper"><h1 id="lesson-outcome-and-correction-testing">Lesson outcome and correction testing<a class="fa fa-anchor" href="#lesson-outcome-and-correction-testing" onclick="event.stopPropagation()"></a></h1> <p>This plan covers lesson completion, missed status, teaching notes and the lookup/optional-value corrections.
+It complements the other feature owners&#39; manual tests in the <a href="/tp/DeveloperGuide.html#appendix-instructions-for-manual-testing">Developer Guide</a>.</p> <h2 id="test-environment-and-isolation">Test environment and isolation<a class="fa fa-anchor" href="#test-environment-and-isolation" onclick="event.stopPropagation()"></a></h2> <p>Use Java 25 and a <strong>new, empty test folder</strong>, with a copy of the JAR in it. Run <code class="hljs inline no-lang">java -jar tutorflow.jar</code>
+from that folder. Never run these checks against a tutor&#39;s real records. Each group below starts in a
+separate empty folder unless it explicitly says to continue. Enter commands one at a time.
+<code class="hljs inline no-lang">today</code> and <code class="hljs inline no-lang">tmr</code> use the computer&#39;s local date, so the examples do not expire on a fixed calendar date.
+The setup creates one student with one subject, avoiding a missing-subject error.</p> <p>Lesson numbers and student numbers are separate. Run the indicated <code class="hljs inline no-lang">lesson list</code> or <code class="hljs inline no-lang">agenda</code> before
+using a lesson number. After reopening, list lessons again. If a result says the lesson numbers changed,
+use the refreshed numbers for the next operation.</p> <h2 id="1-completion-notes-billing-and-persistence">1. Completion, notes, billing and persistence<a class="fa fa-anchor" href="#1-completion-notes-billing-and-persistence" onclick="event.stopPropagation()"></a></h2> <p>Start in a new test folder and enter:</p> <pre><code class="hljs text"><span>add n/Alice p/91234567 l/S3 s/Math r/60
+</span><span>lesson add st/1 d/today t/08:00 dur/90
+</span><span>lesson list st/1 all/
+</span><span>lesson done 1 n/Covered algebra
+</span><span>view 1
+</span><span>balance st/1
+</span></code></pre><p>Expected: one completed lesson, notes <code class="hljs inline no-lang">Covered algebra</code>, and one $90.00 charge for 90 minutes at
+$60 per hour. The student&#39;s booking details remain unchanged.</p> <p>Continue:</p> <pre><code class="hljs text"><span>lesson list st/1 all/
+</span><span>lesson done 1 n/Revised notes
+</span><span>lesson done 1
+</span><span>view 1
+</span><span>balance st/1
+</span><span>exit
+</span></code></pre><p>Expected: the notes become <code class="hljs inline no-lang">Revised notes</code>; omitting <code class="hljs inline no-lang">n/</code> retains them. There is still one lesson and
+one $90.00 charge. Repeating completion does not charge again. Relaunch the same JAR in the same
+folder, then run <code class="hljs inline no-lang">lesson list st/1 all/</code>, <code class="hljs inline no-lang">view 1</code> and <code class="hljs inline no-lang">balance st/1</code>. The completed status, notes and
+balance must be unchanged.</p> <p>To test zero fees, start a separate folder, use the same setup with <code class="hljs inline no-lang">r/0</code>, and complete the lesson.
+Expected: completion succeeds with an explanation that no automatic charge was recorded. A second
+separate case with <code class="hljs inline no-lang">r/0.01</code> and <code class="hljs inline no-lang">dur/15</code> also creates no charge because its calculated fee rounds to zero.</p> <h2 id="2-rejected-transitions-and-malformed-commands">2. Rejected transitions and malformed commands<a class="fa fa-anchor" href="#2-rejected-transitions-and-malformed-commands" onclick="event.stopPropagation()"></a></h2> <p>Continue group 1, after relaunching and listing lessons, with:</p> <pre><code class="hljs text"><span>lesson missed 1
+</span><span>lesson done 0
+</span><span>lesson done -1
+</span><span>lesson done 99
+</span><span>lesson done 1 n/
+</span><span>lesson done 1 n/First n/Second
+</span><span>lesson done 1 notes/Unexpected
+</span></code></pre><p>Expected: each command returns a normal diagnostic and changes neither the lesson, existing notes nor
+balance. A completed lesson cannot be marked missed. There is no student or lesson numbered 0 or -1,
+and the setup has no lesson 99. Notes cannot be empty, duplicated or supplied through an unknown prefix.</p> <p>Then enter:</p> <pre><code class="hljs text"><span>lesson add st/1 d/tmr t/08:00
+</span><span>lesson list st/1 all/
+</span><span>lesson done 2 n/Future
+</span><span>lesson missed 2
+</span><span>lesson cancel 2 r/Test cancellation
+</span><span>lesson done 2
+</span><span>lesson missed 2
+</span></code></pre><p>Expected: the future lesson is number 2. Both outcome changes are rejected while it is in the future.
+Cancellation succeeds; neither completion nor missed status can then replace the cancellation.
+The first lesson&#39;s notes and $90.00 charge remain unchanged. Cancelled lessons remain in this <code class="hljs inline no-lang">all/</code> list.</p> <h2 id="3-missed-to-completed-correction">3. Missed-to-completed correction<a class="fa fa-anchor" href="#3-missed-to-completed-correction" onclick="event.stopPropagation()"></a></h2> <p>Start in another empty folder:</p> <pre><code class="hljs text"><span>add n/Alice p/91234567 l/S3 s/Math r/60
+</span><span>lesson add st/1 d/today t/10:00
+</span><span>lesson list st/1 all/
+</span><span>lesson missed 1
+</span><span>lesson missed 1
+</span><span>view 1
+</span><span>balance st/1
+</span></code></pre><p>Expected: one missed lesson, no automatic charge, and an informative response to the repeated request.
+<code class="hljs inline no-lang">lesson missed 1 extra</code> and <code class="hljs inline no-lang">lesson move 1 d/tmr</code> are rejected without mutation. Close and reopen,
+list with <code class="hljs inline no-lang">lesson list st/1 all/</code>, and check that the missed status remains.</p> <p>Continue:</p> <pre><code class="hljs text"><span>lesson done 1 n/Actually taught
+</span><span>lesson done 1
+</span><span>view 1
+</span><span>balance st/1
+</span></code></pre><p>Expected: the existing lesson becomes completed with <code class="hljs inline no-lang">Actually taught</code>, and is charged once at $60.00.
+No second lesson or charge is created. The completed count replaces the missed count for that lesson.</p> <p>For the existing manual-charge guard, start another folder with the same initial lesson, then run:</p> <pre><code class="hljs text"><span>lesson missed 1
+</span><span>charge l/1 amt/25
+</span><span>lesson cancel 1
+</span><span>lesson done 1
+</span><span>balance st/1
+</span></code></pre><p>Expected: cancellation is refused while the charge is active; completion succeeds without a second charge.
+The balance remains $25.00. In a separate uncharged case, <code class="hljs inline no-lang">lesson missed 1</code> followed by
+<code class="hljs inline no-lang">lesson cancel 1 r/Mistaken booking</code> succeeds. These checks describe current behaviour, not a proposal
+to change the cancellation policy.</p> <h2 id="4-lesson-numbers-after-an-outcome-change">4. Lesson numbers after an outcome change<a class="fa fa-anchor" href="#4-lesson-numbers-after-an-outcome-change" onclick="event.stopPropagation()"></a></h2> <p>Start in another empty folder:</p> <pre><code class="hljs text"><span>add n/Alice p/91234567 l/S3 s/Math r/60
+</span><span>lesson add st/1 d/today t/08:00
+</span><span>lesson add st/1 d/today t/09:00
+</span><span>lesson list st/1
+</span><span>lesson done 1
+</span><span>lesson missed 1
+</span><span>lesson list st/1 all/
+</span></code></pre><p>Expected: completing the 08:00 lesson removes it from the upcoming-only selection and displays the
+refreshed lesson numbers. The remaining 09:00 lesson becomes number 1, so the following <code class="hljs inline no-lang">lesson missed 1</code>
+marks that lesson missed. The final history contains the 08:00 completed lesson and 09:00 missed lesson,
+with one $60.00 charge. Check date/time and status, not just the row count. Reopening retains both records.</p> <h2 id="5-note-boundaries-and-adversarial-input">5. Note boundaries and adversarial input<a class="fa fa-anchor" href="#5-note-boundaries-and-adversarial-input" onclick="event.stopPropagation()"></a></h2> <p>Use a selected lesson from group 1. Generate the note lengths exactly when checking these boundaries.</p> <div class="table-responsive"><table class="markbind-table table table-bordered table-striped"><thead><tr><th>Input</th> <th>Expected</th></tr></thead> <tbody class="table-group-divider"><tr><td><code class="hljs inline no-lang">lesson done 1 n/</code> plus exactly 1,000 <code class="hljs inline no-lang">a</code> characters</td> <td>Accepted, saved, and restored with all 1,000 characters</td></tr> <tr><td>The same form with 1,001 characters</td> <td>Rejected without changing notes or saved bytes</td></tr> <tr><td>The same form with 200,000 characters</td> <td>Normal rejection, with the app remaining usable</td></tr> <tr><td>Notes containing a line break or Unicode U+2028 line separator</td> <td>Rejected without mutation</td></tr> <tr><td><code class="hljs inline no-lang">lesson done</code> with a 36-digit index</td> <td>Normal invalid-index diagnostic, without an overflow crash</td></tr> <tr><td><code class="hljs inline no-lang">lesson done 1 n/Covered   algebra. x² = 4.</code></td> <td>Repeated spaces normalized; the Unicode text retained</td></tr></tbody></table></div><p>A valid 1,000-character note makes the full <code class="hljs inline no-lang">lesson done 1 n/</code> command 1,016 characters long;
+a blanket 1,000-character command limit would reject this valid test case.</p> <h2 id="6-optional-contact-and-feedback-corrections">6. Optional contact and feedback corrections<a class="fa fa-anchor" href="#6-optional-contact-and-feedback-corrections" onclick="event.stopPropagation()"></a></h2> <p>Start in another empty folder:</p> <pre><code class="hljs text"><span>add n/Alice p/91234567 l/S3 s/Math r/60 e/alice@example.com v/Old tuition venue
+</span><span>lesson add st/1 d/today t/09:00
+</span><span>edit 1 e/
+</span><span>view 1
+</span><span>edit 1 v/
+</span><span>view 1
+</span><span>lesson list st/1 all/
+</span></code></pre><p>Expected: the first edit clears only email; venue remains. The second clears only the student&#39;s current
+venue. The already-booked lesson keeps its venue snapshot and student link. <code class="hljs inline no-lang">edit 1 n/</code> and
+<code class="hljs inline no-lang">edit 1 e/ e/</code> are rejected without mutation. Reopening retains the cleared optional fields.</p> <p>Continue:</p> <pre><code class="hljs text"><span>hw add st/1 desc/Algebra due/tmr
+</span><span>hw list
+</span><span>hw feedback 1 f/Too early
+</span><span>hw feedback 1 f/
+</span><span>hw status 1 s/submitted
+</span><span>hw feedback 1 f/For the wrong assignment
+</span><span>hw feedback 1 f/
+</span><span>hw feedback 1 f/
+</span><span>hw list
+</span></code></pre><p>Expected: non-empty feedback on assigned homework is rejected. Clearing absent feedback is allowed.
+After submission, feedback can be recorded and explicitly cleared, including repeatedly. The assignment,
+due date, status and links remain; only feedback disappears. Reopening retains the submitted assignment
+without feedback.</p> <p>For the Unicode search correction, add <code class="hljs inline no-lang">Işık</code> as a second student and run:</p> <pre><code class="hljs text"><span>add n/Işık p/92345678 l/S3 s/Math r/50
+</span><span>find ışık
+</span></code></pre><p>Expected: <code class="hljs inline no-lang">Işık</code> is found even though the search uses dotless lowercase i.</p></div> <nav id="page-nav" data-v-6b1b63d2><!--[--><div class="nav-component slim-scroll"></div><!--]--><!--v-if--></nav> <div class="scroll-top-button fa-lg d-print-none" style="display:none;bottom:2%;right:2%;position:fixed;" aria-hidden="true"><!--[--><i class="fas fa-arrow-circle-up"></i><!--]--></div></div> <footer><div class="text-center"><small>[<span><strong>Powered by</strong></span> <img src="https://markbind.org/favicon.ico" width="30"> <a href="https://markbind.org/">MarkBind 7.2.1</a>, generated on Mon, 2 Nov 2026, 13:12:27 GMT+8]</small></div></footer><!--]--></div>
+</body><script src="/tp/markbind/js/bootstrap-utility.min.js"></script>
+<script src="/tp/markbind/js/polyfill.min.js"></script>
+<script src="/tp/markbind/js/vue.global.prod.min.js"></script>
+<script src="/tp/markbind/js/markbind.min.js"></script>
+<script src="LessonStatusManualTesting.page-vue-render.js"></script>
+<script>
+  MarkBind.setupWithSearch()
+</script>
+</html>

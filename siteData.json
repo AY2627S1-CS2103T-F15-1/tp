@@ -232,6 +232,21 @@
       "headingKeywords": {}
     },
     {
+      "src": "testing/LessonStatusManualTesting.md",
+      "title": "Lesson outcome and correction testing",
+      "headings": {
+        "lesson-outcome-and-correction-testing": "Lesson outcome and correction testing",
+        "test-environment-and-isolation": "Test environment and isolation",
+        "1-completion-notes-billing-and-persistence": "1. Completion, notes, billing and persistence",
+        "2-rejected-transitions-and-malformed-commands": "2. Rejected transitions and malformed commands",
+        "3-missed-to-completed-correction": "3. Missed-to-completed correction",
+        "4-lesson-numbers-after-an-outcome-change": "4. Lesson numbers after an outcome change",
+        "5-note-boundaries-and-adversarial-input": "5. Note boundaries and adversarial input",
+        "6-optional-contact-and-feedback-corrections": "6. Optional contact and feedback corrections"
+      },
+      "headingKeywords": {}
+    },
+    {
       "src": "yash-PoPularPlusPLus.md",
       "title": "Thakker Yash's Project Portfolio Page",
       "headings": {
