@@ -76,6 +76,18 @@ public class InputDiagnosticsTest {
     }
 
     @Test
+    public void parse_unknownSingleLetterPrefixAfterStructuredValue_namesThePrefix() {
+        String[] commands = {
+            "add n/josh p/78787878 l/S3 s/Math r/120 q/x",
+            "lesson add st/1 d/2026-12-01 t/10:00 dur/60 z/x",
+        };
+        for (String command : commands) {
+            ParseException error = assertThrows(ParseException.class, () -> parser.parseCommand(command));
+            assertTrue(error.getMessage().startsWith("Unknown prefix for this command: "));
+        }
+    }
+
+    @Test
     public void parse_retiredAddressPrefix_namesTheRetiredPrefixInsteadOfMisreportingTheEmail() {
         String command = "add n/josh p/78787878 l/S3 s/Math r/120 e/josh@gmail.com a/2902 Yishun";
 
