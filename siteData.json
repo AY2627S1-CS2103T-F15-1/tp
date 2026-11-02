@@ -207,14 +207,6 @@
       "headingKeywords": {}
     },
     {
-      "src": "ilieks.md",
-      "title": "Wang Xiaojie's Project Portfolio Page",
-      "headings": {
-        "project-tutorflow": "Project: TutorFlow"
-      },
-      "headingKeywords": {}
-    },
-    {
       "src": "index.md",
       "headings": {
         "tutorflow": "TutorFlow"
@@ -222,7 +214,15 @@
       "headingKeywords": {}
     },
     {
-      "src": "joshmode.md",
+      "src": "team/ilieks.md",
+      "title": "Wang Xiaojie's Project Portfolio Page",
+      "headings": {
+        "project-tutorflow": "Project: TutorFlow"
+      },
+      "headingKeywords": {}
+    },
+    {
+      "src": "team/joshmode.md",
       "title": "Joshua Andrew's Project Portfolio Page",
       "headings": {
         "project-tutorflow": "Project: TutorFlow"
@@ -230,7 +230,7 @@
       "headingKeywords": {}
     },
     {
-      "src": "lew1swong.md",
+      "src": "team/lew1swong.md",
       "title": "Wang Kaiyuanhao's Project Portfolio Page",
       "headings": {
         "project-tutorflow": "Project: TutorFlow"
@@ -238,7 +238,7 @@
       "headingKeywords": {}
     },
     {
-      "src": "notmeegoreng.md",
+      "src": "team/notmeegoreng.md",
       "title": "Terence Goh Yan Chen's Project Portfolio Page",
       "headings": {
         "project-tutorflow": "Project: TutorFlow"
@@ -246,8 +246,16 @@
       "headingKeywords": {}
     },
     {
-      "src": "samairakapur.md",
+      "src": "team/samairakapur.md",
       "title": "Samaira Kapur's Project Portfolio Page",
+      "headings": {
+        "project-tutorflow": "Project: TutorFlow"
+      },
+      "headingKeywords": {}
+    },
+    {
+      "src": "team/yash-popularplusplus.md",
+      "title": "Thakker Yash's Project Portfolio Page",
       "headings": {
         "project-tutorflow": "Project: TutorFlow"
       },
@@ -265,14 +273,6 @@
         "4-lesson-numbers-after-an-outcome-change": "4. Lesson numbers after an outcome change",
         "5-note-boundaries-and-adversarial-input": "5. Note boundaries and adversarial input",
         "6-optional-contact-and-feedback-corrections": "6. Optional contact and feedback corrections"
-      },
-      "headingKeywords": {}
-    },
-    {
-      "src": "yash-PoPularPlusPLus.md",
-      "title": "Thakker Yash's Project Portfolio Page",
-      "headings": {
-        "project-tutorflow": "Project: TutorFlow"
       },
       "headingKeywords": {}
     }
