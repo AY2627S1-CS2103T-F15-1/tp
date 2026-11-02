@@ -225,6 +225,12 @@ Format: `view INDEX`
 * The command only shows information. It does not change the student list, so the indexes you use for other commands stay the same.
 * In a narrow window, the student card shortens a long name, venue or remark with `…`. The overview always shows them in full.
 
+Example: `view 1` for a student with lessons, notes, a balance and homework:
+
+![Screenshot of the overview of a student shown by view 1](images/view-student.png)
+
+_The result box is made taller in this picture so that the whole overview fits. In TutorFlow, scroll the result box to see the rest._
+
 Examples:
 
 * `list` followed by `view 2` shows the overview of the 2nd student.
@@ -350,6 +356,12 @@ Format: `agenda [d/DATE] [week/]`
 * Lessons are numbered in time order. If moving, cancelling, completing or marking a lesson missed changes the displayed numbers, the result includes `Lesson numbers have changed. Current lesson list:` and the refreshed list. If every lesson keeps its number, for example when a lesson only changes its time or is cancelled but stays in the list, the numbers are not shown again. Use those new numbers for your next command. If more than 30 lessons are listed, only the first 30 are shown, followed by how many more there are; run `lesson list` or `agenda` to see every number. Running `agenda` or `lesson list` again also refreshes the list.
 * A week with more than 200 lessons shows the first 200 rows and a line saying how many were omitted, so the result box stays responsive.
 * A day without lessons is not an error: it shows `No lessons on Tue 22 Dec 2026.`
+
+Example: `agenda d/2026-11-02 week/` for a week with lessons on four of the seven days:
+
+![Screenshot of the week shown by agenda d/2026-11-02 week/](images/agenda-week.png)
+
+_The result box is made taller in this picture so that the whole week fits._
 
 Examples:
 
@@ -901,6 +913,10 @@ Format: `help [COMMAND]`
 * The command list and `help COMMAND` are short syntax references. The full guide includes the field limits, examples and behavior rules.
 * The Help window shows the guide bundled with your version of TutorFlow. Documentation changes appear in the next build of the app; `Reload guide` does not download newer documentation into an older JAR.
 
+Example: `help lesson add` shows what the command does, its parameters and an example:
+
+![Screenshot of the usage shown by help lesson add](images/help-lesson-add.png)
+
 Examples:
 
 * `help` lists all commands.
@@ -1114,7 +1130,7 @@ Action     | Format, Examples
 
 ## Upgrading from an older data file
 
-V1.5 reads `data/tutorflow-v14.json`. If it is absent, TutorFlow reads the legacy `data/addressbook.json`, assigns stable internal student and lesson identifiers, and saves a new `tutorflow-v14.json`. The legacy file is left untouched; if both files exist, the v1.4 file takes precedence. Keep both in your backup.
+TutorFlow reads `data/tutorflow-v14.json`. If it is absent, TutorFlow reads the legacy `data/addressbook.json`, assigns stable internal student and lesson identifiers, and saves a new `tutorflow-v14.json`. The legacy file is left untouched; if both files exist, the v1.4 file takes precedence. Keep both in your backup.
 
 Files without later records, such as homework or financial history, start with empty records for those features. An unsupported newer schema stops startup and leaves the original file unchanged. Invalid content uses the recovery flow described under [Editing the data file](#editing-the-data-file). A file that cannot be opened is never renamed or overwritten.
 
