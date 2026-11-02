@@ -18,6 +18,7 @@
 * The TutorFlow application icon was supplied by the project team and resized for use as the window icon.
 * Libraries used: [JavaFX](https://openjfx.io/) (user interface), [Jackson](https://github.com/FasterXML/jackson) (JSON storage), [commonmark-java](https://github.com/commonmark/commonmark-java) (showing the bundled User Guide in the Help window), [JUnit5](https://github.com/junit-team/junit5) (testing), [Monocle](https://github.com/TestFX/Monocle) (running the user interface tests without a screen), [Checkstyle](https://checkstyle.sourceforge.io/) and [JaCoCo](https://www.jacoco.org/jacoco/) (code quality and coverage).
 * Documentation is built with [MarkBind](https://markbind.org/) and the diagrams are drawn with [PlantUML](https://plantuml.com/).
+* **Use of AI tools:** Some team members used AI coding assistants (Claude Code, OpenAI Codex and GitHub Copilot) to help draft code, tests and documentation. Such work can be recognised in the repository history by commits with a `Co-Authored-By: Claude` trailer and by branches named `codex/` or `copilot/`. Each member is responsible for reviewing and testing the AI-assisted changes they submit, and the changes were merged through pull requests.
 
 --------------------------------------------------------------------------------------------------------------------
 
