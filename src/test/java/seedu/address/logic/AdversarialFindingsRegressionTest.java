@@ -59,6 +59,71 @@ public class AdversarialFindingsRegressionTest {
         assertTrue(Ledger.formatDues(book, TODAY).contains("$100.00"));
     }
 
+    @Test
+    public void dues_debtWithoutActiveCharge_keepsItsDateAfterLaterPartialPayments() {
+        LocalDate twentyOct = LocalDate.of(2026, 10, 20);
+        Person alice = new PersonBuilder().withName("Alice").build();
+        AddressBook book = new AddressBook();
+        book.addPerson(alice);
+        LedgerEntry payment = LedgerEntry.payment(alice, new BigDecimal("100.00"), twentyOct);
+        book.addLedgerEntry(payment);
+        book.addLedgerEntry(LedgerEntry.withdrawal(alice, new BigDecimal("100.00"), twentyOct));
+        book.addLedgerEntry(LedgerEntry.reversalOf(payment, twentyOct));
+        assertEquals(twentyOct, Ledger.dues(book, TODAY).get(0).oldestUnpaidDate());
+
+        // a later payment reduces the debt but does not make it new
+        book.addLedgerEntry(LedgerEntry.payment(alice, BigDecimal.ONE, TODAY));
+        List<Ledger.Due> dues = Ledger.dues(book, TODAY);
+        assertEquals(new BigDecimal("99.00"), dues.get(0).amount());
+        assertEquals(twentyOct, dues.get(0).oldestUnpaidDate());
+    }
+
+    @Test
+    public void dues_debtWithoutActiveCharge_orderedByWhenEachDebtBegan() {
+        Person alice = new PersonBuilder().withName("Alice").build();
+        Person bob = new PersonBuilder().withName("Bob").withPhone("98765432").build();
+        AddressBook book = new AddressBook();
+        book.addPerson(alice);
+        book.addPerson(bob);
+        LocalDate early = LocalDate.of(2026, 10, 5);
+        LocalDate late = LocalDate.of(2026, 10, 25);
+        for (Person student : List.of(bob, alice)) {
+            LocalDate day = student == alice ? late : early;
+            LedgerEntry payment = LedgerEntry.payment(student, new BigDecimal("50.00"), day);
+            book.addLedgerEntry(payment);
+            book.addLedgerEntry(LedgerEntry.withdrawal(student, new BigDecimal("50.00"), day));
+            book.addLedgerEntry(LedgerEntry.reversalOf(payment, day));
+        }
+        // Alice's later payment must not move her debt ahead of Bob's older one
+        book.addLedgerEntry(LedgerEntry.payment(alice, BigDecimal.TEN, TODAY));
+        book.addLedgerEntry(LedgerEntry.payment(bob, BigDecimal.TEN, TODAY));
+        List<Ledger.Due> dues = Ledger.dues(book, TODAY);
+        assertEquals(List.of(bob, alice), dues.stream().map(Ledger.Due::student).toList());
+        assertEquals(List.of(early, late), dues.stream().map(Ledger.Due::oldestUnpaidDate).toList());
+    }
+
+    @Test
+    public void dues_debtThatWasClearedAndReturned_datesFromWhenItReturned() {
+        LocalDate first = LocalDate.of(2026, 10, 1);
+        LocalDate second = LocalDate.of(2026, 10, 15);
+        Person alice = new PersonBuilder().withName("Alice").build();
+        AddressBook book = new AddressBook();
+        book.addPerson(alice);
+        LedgerEntry payment = LedgerEntry.payment(alice, new BigDecimal("100.00"), first);
+        book.addLedgerEntry(payment);
+        book.addLedgerEntry(LedgerEntry.withdrawal(alice, new BigDecimal("100.00"), first));
+        // owes 100 from 1 Oct
+        book.addLedgerEntry(LedgerEntry.reversalOf(payment, first));
+        // settled on 15 Oct
+        book.addLedgerEntry(LedgerEntry.payment(alice, new BigDecimal("100.00"), second));
+        LedgerEntry again = LedgerEntry.payment(alice, new BigDecimal("40.00"), TODAY);
+        book.addLedgerEntry(again);
+        book.addLedgerEntry(LedgerEntry.withdrawal(alice, new BigDecimal("40.00"), TODAY));
+        // owes 40 again from today
+        book.addLedgerEntry(LedgerEntry.reversalOf(again, TODAY));
+        assertEquals(TODAY, Ledger.dues(book, TODAY).get(0).oldestUnpaidDate());
+    }
+
     // ---- non-ASCII digits were accepted as numbers ----
 
     @Test
@@ -107,6 +172,9 @@ public class AdversarialFindingsRegressionTest {
     public void remarkParser_rejectsOverlongRemark() throws Exception {
         RemarkCommandParser parser = new RemarkCommandParser();
         parser.parse("1 r/" + "a".repeat(Remark.MAX_LENGTH));
+        parser.parse("1 r/" + "\uD83D\uDE00".repeat(Remark.MAX_LENGTH)); // an emoji counts as one character
+        String tooManyEmoji = "1 r/" + "\uD83D\uDE00".repeat(Remark.MAX_LENGTH + 1);
+        assertThrows(ParseException.class, () -> parser.parse(tooManyEmoji));
         String tooLong = "1 r/" + "a".repeat(Remark.MAX_LENGTH + 1);
         ParseException e = assertThrows(ParseException.class, () -> parser.parse(tooLong));
         assertEquals(Remark.MESSAGE_TOO_LONG, e.getMessage());
@@ -127,18 +195,37 @@ public class AdversarialFindingsRegressionTest {
 
     // ---- a 52-lesson series printed more than a hundred rows ----
 
+    private static String lessonListOf(int count) {
+        Person alice = new PersonBuilder().withName("Alice").build();
+        List<Lesson> lessons = IntStream.range(0, count)
+                .mapToObj(i -> new LessonBuilder().withStudent(alice).withDate(TODAY.plusDays(i + 1)).build()).toList();
+        return Messages.formatLessonList(lessons);
+    }
+
+    @Test
+    public void formatLessonList_atTheCap_showsEveryRowWithoutAMoreLine() {
+        String text = lessonListOf(Messages.MAX_RENUMBERED_LESSONS_SHOWN);
+        assertTrue(text.contains("\n" + Messages.MAX_RENUMBERED_LESSONS_SHOWN + ". "));
+        assertFalse(text.contains("more."));
+        assertEquals(Messages.MAX_RENUMBERED_LESSONS_SHOWN + 2, text.split("\n").length - 1);
+    }
+
+    @Test
+    public void formatLessonList_oneOverTheCap_showsTheCapAndOneMore() {
+        String text = lessonListOf(Messages.MAX_RENUMBERED_LESSONS_SHOWN + 1);
+        assertTrue(text.contains("\n" + Messages.MAX_RENUMBERED_LESSONS_SHOWN + ". "));
+        assertFalse(text.contains("\n" + (Messages.MAX_RENUMBERED_LESSONS_SHOWN + 1) + ". "));
+        assertTrue(text.contains("... and 1 more."));
+    }
+
     @Test
     public void formatLessonList_longList_isCapped() {
-        Person alice = new PersonBuilder().withName("Alice").build();
-        List<Lesson> many = IntStream.range(0, 104)
-                .mapToObj(i -> new LessonBuilder().withStudent(alice).withDate(TODAY.plusDays(i + 1)).build()).toList();
-        String text = Messages.formatLessonList(many);
-        assertEquals(Messages.MAX_RENUMBERED_LESSONS_SHOWN + 1 + 1 + 1, text.split("\n").length - 1);
+        String text = lessonListOf(104);
+        assertEquals(Messages.MAX_RENUMBERED_LESSONS_SHOWN + 3, text.split("\n").length - 1);
         assertTrue(text.contains("... and 74 more."));
-        assertTrue(text.contains(Messages.MAX_RENUMBERED_LESSONS_SHOWN + ". "));
         assertFalse(text.contains("\n31. "));
 
-        String small = Messages.formatLessonList(many.subList(0, 3));
+        String small = lessonListOf(3);
         assertFalse(small.contains("more."));
         assertTrue(small.contains("\n3. "));
     }

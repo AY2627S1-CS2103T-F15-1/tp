@@ -126,7 +126,7 @@ public class ParserUtil {
     public static Email parseEmail(String email) throws ParseException {
         requireNonNull(email);
         String trimmedEmail = email.trim();
-        if (trimmedEmail.length() > Email.MAX_LENGTH) {
+        if (trimmedEmail.codePointCount(0, trimmedEmail.length()) > Email.MAX_LENGTH) {
             throw new ParseException(Email.MESSAGE_TOO_LONG);
         }
         if (!Email.isValidEmail(trimmedEmail)) {

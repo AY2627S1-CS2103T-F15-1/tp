@@ -79,8 +79,15 @@ public final class Ledger {
                 .toList();
     }
 
+    /**
+     * Returns the date from which {@code student}, who must owe money, has been in debt.
+     * Payments cover the oldest charges first, so this is the date of the oldest charge that is not fully covered.
+     * If every charge is covered but the student still owes money, for example after a payment that was already
+     * withdrawn is reversed, the debt dates from the entry that made the account go into debt, and it keeps that
+     * date when later payments reduce it. A reversal dated today therefore gives a debt that is 0 days old.
+     */
     private static LocalDate oldestUnpaidDate(ReadOnlyAddressBook book, Person student) {
-        assert balance(book, student).signum() > 0 : "Only debtors have an oldest unpaid charge";
+        assert balance(book, student).signum() > 0 : "Only debtors have an oldest unpaid date";
         List<LedgerEntry> entries = book.getLedgerEntries().stream().filter(entry -> entry.isWith(student)).toList();
         Set<UUID> reversedIds = reversedIds(book);
         List<LedgerEntry> charges = entries.stream().filter(entry -> entry.kind() == LedgerEntry.Kind.CHARGE)
@@ -97,9 +104,28 @@ public final class Ledger {
             }
             credit = credit.subtract(charge.amount());
         }
-        // A debt can exist without an active charge, e.g. after a payment that was already withdrawn is reversed.
-        // Such a debt dates from the latest entry of the account rather than from a charge.
-        return entries.stream().map(LedgerEntry::date).max(Comparator.naturalOrder()).orElseThrow();
+        return debtOriginDate(entries);
+    }
+
+    /**
+     * Returns the date of the entry after which the balance of {@code entries} has been above zero without a break,
+     * in date order. Later payments that leave a balance above zero do not change it.
+     */
+    private static LocalDate debtOriginDate(List<LedgerEntry> entries) {
+        List<LedgerEntry> inOrder = entries.stream().sorted(Comparator.comparing(LedgerEntry::date)).toList();
+        BigDecimal running = ZERO;
+        LocalDate origin = null;
+        for (LedgerEntry entry : inOrder) {
+            BigDecimal before = running;
+            running = running.add(entry.kind().increasesBalance() ? entry.amount() : entry.amount().negate());
+            if (running.signum() <= 0) {
+                origin = null;
+            } else if (before.signum() <= 0) {
+                origin = entry.date();
+            }
+        }
+        // A debtor's running balance ends above zero, so an origin exists; the latest date is only a safeguard.
+        return origin != null ? origin : inOrder.getLast().date();
     }
 
     /** Shared account label for balance, payment, student details, and dashboards. */
