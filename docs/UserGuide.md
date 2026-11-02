@@ -221,6 +221,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [l/LEVEL] [s/SUBJECT]...
   Omitting a prefix leaves that value unchanged. Required fields cannot be cleared. Clearing contact details
   preserves the student and all linked history; existing lessons keep their recorded venues.
 * When editing subjects, all of the student's existing subjects are replaced; adding subjects is not cumulative. A student must keep at least one subject.
+* The displayed student list stays as it was after an edit, so the index numbers do not change. The exception is a student who no longer matches the current `find` or `list` filter after the edit (for example, a new name that the `find` keywords do not match): that student leaves the displayed list and the numbers below shift. Run `list` to show all active students again.
 * After changing a student's name or phone number, run `lesson list st/STUDENT_INDEX` again before using lesson numbers.
 * The values for the level, subjects, rate and venue follow the same rules as for [`add`](#adding-a-student-add).
 * If the edit gives the student the name of another student, it is accepted and TutorFlow shows a note. If the phone number is also the same as that student's, the edit is rejected as a duplicate.
@@ -280,6 +281,7 @@ Format: `remark INDEX r/REMARK`
 * Sets the remark of the student at the specified `INDEX`, which is the index number shown in the displayed student list and **must be a positive integer** 1, 2, 3, ...
 * The new remark replaces the old one. Writing `r/` with nothing after it removes the remark.
 * Surrounding spaces are removed and repeated spaces inside the remark are collapsed into one, as for other free text.
+* The displayed student list stays as it was after a remark, so the index numbers do not change.
 * A remark is shown in the student's card and in [`view`](#viewing-the-overview-of-a-student-view).
 
 Examples:
