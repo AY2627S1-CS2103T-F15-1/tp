@@ -258,7 +258,7 @@ Format: `view INDEX`
 * The index **must be a positive integer** 1, 2, 3, ...
 * The overview shows, in this order:
   * the student's level, subjects, rate, phone number and, if recorded, email, usual venue and remark
-  * the **next lesson**: the date, time, subject and venue of the first scheduled lesson from today onwards
+  * the **next lesson**: the date, time, subject and venue of the first scheduled lesson from today onwards, and its preparation notes, if any. A lesson earlier today stays the next lesson until you mark it completed or missed
   * the **recent lesson notes**: the notes of the 3 most recent completed lessons, newest first
   * the **lesson history**: how many lessons are completed, cancelled and missed
   * the **balance**: what the student owes, as `OUTSTANDING $X.XX`, or the credit from paying ahead, as `IN CREDIT $X.XX`. A student who owes nothing shows `OUTSTANDING $0.00`.
@@ -266,6 +266,7 @@ Format: `view INDEX`
 * A section with nothing to show says so, for example `No upcoming lessons.`, instead of disappearing.
 * An archived student is marked after their name, as in `Viewing: Chen Hao (archived)`, so that you can tell them apart from active students when you reach them through `student list all/` or `find`.
 * The command only shows information. It does not change the student list, so the indexes you use for other commands stay the same.
+* In a narrow window, the student card shortens a long name, venue or remark with `…`. The overview always shows them in full.
 
 Examples:
 * `list` followed by `view 2` shows the overview of the 2nd student.
