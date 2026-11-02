@@ -1093,7 +1093,7 @@ The dashboard, the overview and the main window were tested in four ways.
 What it found:
 * Same-name students looked identical in the lesson rows of the dashboard. This is fixed in #270.
 * Long names push the dashboard's columns out of line, and a narrow window shortens long text on the cards. Both are now documented in the User Guide.
-* `view` with digits of other scripts is accepted (#262), and `remark` resets the student list (#261). Both were already reported.
+* `view` accepted digits of other scripts, such as `view ١` (#262, rejected once #250 is in), and `remark` resets the student list (#261). Both were already reported.
 
 ### Command box
 
