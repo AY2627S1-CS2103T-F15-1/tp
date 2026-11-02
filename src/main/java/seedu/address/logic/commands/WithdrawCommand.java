@@ -17,6 +17,7 @@ import seedu.address.model.Model;
 import seedu.address.model.finance.Ledger;
 import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.StudentSummaryLabels;
 
 /** Withdraws available credit from a student's account as an append-only ledger entry. */
 public class WithdrawCommand extends Command {
@@ -74,14 +75,15 @@ public class WithdrawCommand extends Command {
             throw new CommandException(MESSAGE_FUTURE_DATE);
         }
 
+        String label = StudentSummaryLabels.of(model.getAddressBook(), student);
         BigDecimal balanceBefore = Ledger.balance(model.getAddressBook(), student);
         BigDecimal credit = balanceBefore.negate();
         if (credit.signum() <= 0) {
-            throw new CommandException(String.format(MESSAGE_NO_CREDIT, student.getName(),
+            throw new CommandException(String.format(MESSAGE_NO_CREDIT, label,
                     Ledger.describeBalance(balanceBefore)));
         }
         if (amount.compareTo(credit) > 0) {
-            throw new CommandException(String.format(MESSAGE_EXCEEDS_CREDIT, student.getName(),
+            throw new CommandException(String.format(MESSAGE_EXCEEDS_CREDIT, label,
                     Ledger.format(credit)));
         }
 
@@ -91,7 +93,7 @@ public class WithdrawCommand extends Command {
             throw new CommandException(e.getMessage(), e);
         }
         BigDecimal balanceAfter = Ledger.balance(model.getAddressBook(), student);
-        return new CommandResult("Withdrawal of " + Ledger.format(amount) + " recorded for " + student.getName()
+        return new CommandResult("Withdrawal of " + Ledger.format(amount) + " recorded for " + label
                 + " on " + withdrawalDate + ".\nBalance: " + Ledger.describeBalance(balanceAfter) + ".");
     }
 

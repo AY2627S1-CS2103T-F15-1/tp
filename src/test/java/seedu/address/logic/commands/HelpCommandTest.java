@@ -119,6 +119,12 @@ public class HelpCommandTest {
         assertTrue(message.contains("lesson add"));
         assertTrue(message.contains("lesson done"));
         assertFalse(message.contains("agenda"));
+        assertTrue(message.endsWith(HelpCommand.MESSAGE_USER_GUIDE));
+    }
+
+    @Test
+    public void execute_chargeReverse_showsItsOwnUsage() throws Exception {
+        assertTrue(helpFor("charge reverse").startsWith("charge reverse l/LESSON_INDEX"));
     }
 
     @Test

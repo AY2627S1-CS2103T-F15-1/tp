@@ -4,7 +4,6 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -18,6 +17,7 @@ import seedu.address.model.Model;
 import seedu.address.model.finance.Ledger;
 import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.StudentSummaryLabels;
 
 /**
  * Lists the recorded payments, oldest first, and numbers them for {@code pay reverse}.
@@ -64,16 +64,16 @@ public class PaymentListCommand extends Command {
 
         if (payments.isEmpty()) {
             return new CommandResult(student == null ? MESSAGE_NO_PAYMENTS
-                    : String.format(MESSAGE_NO_PAYMENTS_FOR_STUDENT, student.getName()));
+                    : String.format(MESSAGE_NO_PAYMENTS_FOR_STUDENT,
+                    StudentSummaryLabels.of(model.getAddressBook(), student)));
         }
         // Built once, so listing n payments stays linear instead of scanning the students and the ledger per row.
-        Map<UUID, String> studentNames = model.getAddressBook().getPersonList().stream()
-                .collect(Collectors.toMap(Person::getId, person -> person.getName().toString()));
+        StudentSummaryLabels labels = new StudentSummaryLabels(model.getAddressBook());
         Set<UUID> reversedIds = Ledger.reversedIds(model.getAddressBook());
 
         int shown = Math.min(payments.size(), MAX_DISPLAYED_PAYMENTS);
         String rows = IntStream.range(0, shown)
-                .mapToObj(i -> (i + 1) + ". " + describe(payments.get(i), studentNames, reversedIds))
+                .mapToObj(i -> (i + 1) + ". " + describe(payments.get(i), labels, reversedIds))
                 .collect(Collectors.joining("\n"));
         if (shown < payments.size()) {
             rows += "\n" + String.format(MESSAGE_TRUNCATED, shown, payments.size());
@@ -81,8 +81,8 @@ public class PaymentListCommand extends Command {
         return new CommandResult(MESSAGE_HEADER + "\n" + rows + "\n" + MESSAGE_FOOTER);
     }
 
-    private static String describe(LedgerEntry payment, Map<UUID, String> studentNames, Set<UUID> reversedIds) {
-        String name = studentNames.get(payment.studentId());
+    private static String describe(LedgerEntry payment, StudentSummaryLabels labels, Set<UUID> reversedIds) {
+        String name = labels.find(payment.studentId()).orElse(null);
         if (name == null) {
             throw new IllegalStateException("Payment " + payment.id() + " refers to student " + payment.studentId()
                     + ", who is not in the address book.");

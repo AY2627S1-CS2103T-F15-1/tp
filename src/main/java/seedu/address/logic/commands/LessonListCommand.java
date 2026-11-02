@@ -19,6 +19,7 @@ import seedu.address.logic.parser.LessonCommandParser;
 import seedu.address.model.Model;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.StudentSummaryLabels;
 
 /**
  * Lists the lessons of a student in the displayed student list. The numbers it shows are the lesson indices that
@@ -64,6 +65,7 @@ public class LessonListCommand extends Command {
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
         Person student = LessonCommandUtil.getStudent(model, studentIndex);
+        String label = StudentSummaryLabels.of(model.getAddressBook(), student);
 
         Predicate<Lesson> isStudentsLesson = lesson -> lesson.isWith(student);
         model.updateFilteredLessonList(isStudentsLesson);
@@ -74,21 +76,21 @@ public class LessonListCommand extends Command {
         }
 
         if (!hasLessons) {
-            return new CommandResult(String.format(MESSAGE_NO_LESSONS, student.getName()));
+            return new CommandResult(String.format(MESSAGE_NO_LESSONS, label));
         }
         if (isShowingAll) {
-            return new CommandResult(format(MESSAGE_HEADER_ALL, student, model.getFilteredLessonList()))
+            return new CommandResult(format(MESSAGE_HEADER_ALL, label, model.getFilteredLessonList()))
                     .withDisplayedLessons(model.getFilteredLessonList());
         }
         if (model.getFilteredLessonList().isEmpty()) {
-            return new CommandResult(String.format(MESSAGE_NO_UPCOMING_LESSONS, student.getName()));
+            return new CommandResult(String.format(MESSAGE_NO_UPCOMING_LESSONS, label));
         }
-        return new CommandResult(format(MESSAGE_HEADER_UPCOMING, student, model.getFilteredLessonList()))
+        return new CommandResult(format(MESSAGE_HEADER_UPCOMING, label, model.getFilteredLessonList()))
                 .withDisplayedLessons(model.getFilteredLessonList());
     }
 
-    private static String format(String headerFormat, Person student, List<Lesson> lessons) {
-        String header = String.format(headerFormat, student.getName(), lessons.size());
+    private static String format(String headerFormat, String label, List<Lesson> lessons) {
+        String header = String.format(headerFormat, label, lessons.size());
         String body = IntStream.range(0, lessons.size())
                 .mapToObj(i -> String.format("%d. %s  %s  %s  %s", i + 1, lessons.get(i).getDate(),
                         lessons.get(i).getTimeRange(), lessons.get(i).getSubject(), describe(lessons.get(i))))

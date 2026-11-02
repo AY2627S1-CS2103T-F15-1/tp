@@ -20,6 +20,7 @@ import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.TravelGap;
+import seedu.address.model.lesson.exceptions.DuplicateLessonException;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.StudentOrder;
 import seedu.address.model.task.Task;
@@ -135,7 +136,6 @@ class JsonSerializableAddressBook {
                     + StorageSchema.WITHDRAWAL_VERSION + " or later.");
         }
         Set<UUID> studentIds = new HashSet<>();
-        Set<UUID> lessonIds = new HashSet<>();
         AddressBook addressBook = new AddressBook();
         if (travelBuffer != null) {
             if (!TravelGap.isValidBuffer(travelBuffer)) {
@@ -159,28 +159,31 @@ class JsonSerializableAddressBook {
         if (studentOrder != null) {
             addressBook.sortPersons(toStudentOrder(studentOrder));
         }
+        List<Lesson> restoredLessons = new ArrayList<>();
         for (JsonAdaptedLesson jsonAdaptedLesson : lessons) {
             if (jsonAdaptedLesson == null) {
                 throw new IllegalValueException("Lessons list contains a null lesson.");
             }
             Lesson lesson = jsonAdaptedLesson.toModelType();
-            if (addressBook.hasLesson(lesson)) {
-                throw new IllegalValueException(MESSAGE_DUPLICATE_LESSON);
-            }
-            if (!lessonIds.add(lesson.getId())) {
-                throw new IllegalValueException("Duplicate lesson ID.");
-            }
             if (lesson.getStudentId().isEmpty()) {
                 Lesson unlinked = lesson;
                 lesson = addressBook.getPersonList().stream().filter(unlinked::isWith).findFirst()
                         .map(unlinked::withStudent).orElse(unlinked);
             }
-            addressBook.addLesson(lesson);
+            restoredLessons.add(lesson);
+        }
+        try {
+            addressBook.setLessons(restoredLessons);
+        } catch (DuplicateLessonException e) {
+            throw new IllegalValueException(MESSAGE_DUPLICATE_LESSON);
+        }
+        if (restoredLessons.stream().map(Lesson::getId).distinct().count() != restoredLessons.size()) {
+            throw new IllegalValueException("Duplicate lesson ID.");
         }
         // Commands always delete or update the lessons of a student together with the student, so a lesson without
         // its student can only come from editing the data file by hand
         boolean hasLessonWithoutStudent = addressBook.getLessonList().stream()
-                .anyMatch(lesson -> addressBook.getPersonList().stream().noneMatch(lesson::isWith));
+                .anyMatch(lesson -> lesson.getStudentId().map(id -> !studentIds.contains(id)).orElse(true));
         if (hasLessonWithoutStudent) {
             throw new IllegalValueException(MESSAGE_LESSON_WITHOUT_STUDENT);
         }

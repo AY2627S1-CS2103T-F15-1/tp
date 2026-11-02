@@ -130,7 +130,8 @@ public class ArgumentMultimap {
                 throw unknownPrefix(prefixToken);
             }
             String word = lowerCaseToken.substring(0, lowerCaseToken.length() - 1);
-            boolean isLikelyPrefix = LIKELY_PREFIX_WORDS.contains(word) || isKnownPrefix(lowerCaseToken);
+            boolean isLikelyPrefix = word.length() == 1 || LIKELY_PREFIX_WORDS.contains(word)
+                    || isKnownPrefix(lowerCaseToken);
             if (!isLikelyPrefix) {
                 continue;
             }
@@ -146,9 +147,9 @@ public class ArgumentMultimap {
         return KNOWN_PREFIX_TOKENS.contains(token);
     }
 
-    /** Returns whether a known prefix is short enough to be ordinary prose inside a free-text value. */
+    /** Returns whether a single-letter or known prefix is short enough to be prose inside a free-text value. */
     private static boolean isShortKnownPrefix(String token) {
-        return isKnownPrefix(token) && token.length() <= 4;
+        return token.length() == 2 || isKnownPrefix(token) && token.length() <= 4;
     }
 
     /** Builds the diagnostic, retaining the retired address prefix's venue suggestion. */
