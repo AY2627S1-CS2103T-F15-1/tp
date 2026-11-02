@@ -23,7 +23,9 @@ import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.homework.Homework;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonStatus;
+import seedu.address.model.person.Person;
 import seedu.address.testutil.LessonBuilder;
+import seedu.address.testutil.PersonBuilder;
 
 public class TodayCommandTest {
 
@@ -119,6 +121,28 @@ public class TodayCommandTest {
         assertEquals("DUES\n"
                 + "1 student(s) with outstanding balances \u2014 $52.50 total\n"
                 + "  Carl Kurz (archived) $52.50 oldest unpaid 7 days", section("DUES"));
+    }
+
+    @Test
+    public void execute_sameNameStudentsHaveLessonsToday_eachRowSaysWhichStudent() {
+        Person otherAlice = new PersonBuilder().withName("Alice Pauline").withPhone("98765432").build();
+        model.addPerson(otherAlice);
+        // Lessons booked by command carry their student's id, which is what tells the two apart
+        addLessons(todayMath.snapshotStudent(ALICE), new LessonBuilder().withDate(TODAY).withTime("19:00")
+                .withDuration(60).build().snapshotStudent(otherAlice));
+
+        String lessonsToday = section("TODAY'S LESSONS");
+
+        assertTrue(lessonsToday.contains("16:30-18:00  Alice Pauline (phone ending 1253)"), lessonsToday);
+        assertTrue(lessonsToday.contains("19:00-20:00  Alice Pauline (phone ending 5432)"), lessonsToday);
+    }
+
+    @Test
+    public void execute_archivedStudentHasLessonAwaitingNotes_marksThemArchived() {
+        addLessons(lastWeekScheduled.snapshotStudent(CARL));
+        model.setPerson(CARL, CARL.withArchived(true));
+
+        assertTrue(section("LESSONS AWAITING NOTES").contains("  Thu 3 Jan   Carl Kurz (archived) "));
     }
 
     @Test

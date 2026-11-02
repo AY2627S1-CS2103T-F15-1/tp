@@ -6,6 +6,9 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
+import java.util.UUID;
+import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -18,6 +21,8 @@ import seedu.address.model.homework.HomeworkQueries;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonDuration;
 import seedu.address.model.lesson.LessonStatus;
+import seedu.address.model.person.Person;
+import seedu.address.model.person.StudentSummaryLabels;
 
 /**
  * Shows what a day requires: the lessons that take place on it, the past lessons that are still waiting to be
@@ -74,15 +79,23 @@ public class TodayCommand extends Command {
         logger.fine("Showing " + lessonsToday.size() + " lessons on " + today + " and "
                 + lessonsAwaitingNotes.size() + " lessons awaiting notes");
 
+        // Same-name and archived students are told apart as in the homework and dues sections below
+        StudentSummaryLabels labels = new StudentSummaryLabels(model.getAddressBook());
+        Set<UUID> students = model.getAddressBook().getPersonList().stream().map(Person::getId)
+                .collect(Collectors.toSet());
+        Function<Lesson, String> studentLabel = lesson -> lesson.getStudentId().filter(students::contains)
+                .map(labels::format).orElseGet(() -> lesson.getStudentName().toString());
+
         return new CommandResult(DATE_FORMAT.format(today)
-                + "\n\n" + formatLessonsToday(model, lessonsToday)
+                + "\n\n" + formatLessonsToday(model, lessonsToday, studentLabel)
                 + LessonCommandUtil.getTravelWarnings(model, lesson -> lesson.getDate().value.equals(today), "  ")
-                + "\n\n" + formatLessonsAwaitingNotes(lessonsAwaitingNotes)
+                + "\n\n" + formatLessonsAwaitingNotes(lessonsAwaitingNotes, studentLabel)
                 + "\n\n" + HomeworkQueries.summary(model.getAddressBook(), null, true, today)
                 + "\n\n" + formatDues(model));
     }
 
-    private static String formatLessonsToday(Model model, List<Lesson> lessons) {
+    private static String formatLessonsToday(Model model, List<Lesson> lessons,
+            Function<Lesson, String> studentLabel) {
         int minutes = lessons.stream().mapToInt(lesson -> lesson.getDuration().value).sum();
         String header = String.format(MESSAGE_TODAY_HEADER, lessons.size(), LessonDuration.format(minutes));
         if (lessons.isEmpty()) {
@@ -90,13 +103,14 @@ public class TodayCommand extends Command {
         }
         List<Lesson> visible = lessons.stream().limit(MAX_DISPLAYED_LESSONS).toList();
         String rows = visible.stream()
-                .map(lesson -> "\n" + formatLessonToday(lesson, !model.getConflictingLessons(lesson).isEmpty()))
+                .map(lesson -> "\n" + formatLessonToday(lesson, studentLabel.apply(lesson),
+                        !model.getConflictingLessons(lesson).isEmpty()))
                 .collect(Collectors.joining());
         return header + rows + omitted(lessons, visible);
     }
 
-    private static String formatLessonToday(Lesson lesson, boolean isOverlapping) {
-        String line = String.format("  %s  %-18s %-10s %s", lesson.getTimeRange(), lesson.getStudentName(),
+    private static String formatLessonToday(Lesson lesson, String student, boolean isOverlapping) {
+        String line = String.format("  %s  %-18s %-10s %s", lesson.getTimeRange(), student,
                 lesson.getSubject(), Messages.formatVenue(lesson));
         if (!lesson.isScheduled()) {
             line += "  (" + lesson.getStatus() + ")";
@@ -104,7 +118,7 @@ public class TodayCommand extends Command {
         return isOverlapping ? line + "  " + AgendaCommand.MESSAGE_OVERLAPS : line;
     }
 
-    private static String formatLessonsAwaitingNotes(List<Lesson> lessons) {
+    private static String formatLessonsAwaitingNotes(List<Lesson> lessons, Function<Lesson, String> studentLabel) {
         String header = String.format(MESSAGE_AWAITING_NOTES_HEADER, lessons.size());
         if (lessons.isEmpty()) {
             return header + "\n" + MESSAGE_ALL_RECORDED;
@@ -112,7 +126,7 @@ public class TodayCommand extends Command {
         List<Lesson> visible = lessons.stream().limit(MAX_DISPLAYED_LESSONS).toList();
         String rows = visible.stream()
                 .map(lesson -> String.format("\n  %-10s  %-18s %-10s %s",
-                        PAST_DAY_FORMAT.format(lesson.getDate().value), lesson.getStudentName(),
+                        PAST_DAY_FORMAT.format(lesson.getDate().value), studentLabel.apply(lesson),
                         lesson.getSubject(), MESSAGE_NOT_COMPLETED))
                 .collect(Collectors.joining());
         return header + rows + omitted(lessons, visible);

@@ -395,6 +395,7 @@ Format: `today`
 
 * The first section, `TODAY'S LESSONS`, shows the number of lessons today and their total time, followed by the time, student, subject and venue of each lesson. Lessons that overlap another lesson are marked `⚠ overlaps`. Cancelled lessons are left out.
 * The second section, `LESSONS AWAITING NOTES`, shows the scheduled lessons from earlier days that were not marked completed, the most recent first.
+* In both lesson sections, a student who shares a name with another student is shown with the last four digits of their phone number, such as `Alex Yeoh (phone ending 4567)`, and an archived student is marked, such as `David Li (archived)`, as in the homework and dues sections.
 * The third section, `OVERDUE HOMEWORK`, shows assigned work due before today, or `No overdue homework.`. Run `hw list overdue/` to get selectable numbers.
 * The fourth section, `DUES`, is the list that [`dues`](#viewing-all-outstanding-balances-dues) shows: how many students owe money and the total, then each student's amount and the age of their oldest unpaid charge, such as `oldest unpaid 2 days` or `oldest unpaid 1 day`, the oldest first. If nobody owes money, it shows `No outstanding balances. Everyone is up to date.`
 * The lessons on the dashboard are not numbered. To complete, move or cancel one of them, first run [`agenda`](#viewing-the-agenda-agenda) for today's lessons, or [`lesson list st/STUDENT_INDEX all/`](#listing-the-lessons-of-a-student-lesson-list) for a lesson awaiting notes, and use the number shown there. Right after TutorFlow starts, no lesson has a number yet, so a command such as `lesson done 1` is refused with a message that tells you to run `agenda` or `lesson list`.
@@ -844,7 +845,7 @@ _Details coming soon ..._
 
 1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
 2. **If you minimize the Help Window** and then use the `Help` menu or the keyboard shortcut `F1` again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window. The `help` command displays command information in the main window.
-3. **Chinese and other wide characters** take up more room than Latin letters. In the result box, the columns of `agenda`, `today` and `lesson list` can therefore look misaligned when a name, subject or venue contains them. The information shown is still correct.
+3. **Chinese and other wide characters** take up more room than Latin letters. In the result box, the columns of `agenda`, `today` and `lesson list` can therefore look misaligned when a name, subject or venue contains them. The same happens when a name is longer than 18 characters or carries a label such as `(phone ending 4567)`. The information shown is still correct.
 
 --------------------------------------------------------------------------------------------------------------------
 
