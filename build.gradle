@@ -38,8 +38,9 @@ run {
 }
 
 processResources {
+    // The Help window shows only the Ui.png screenshot, so no other image is bundled.
     from('docs') {
-        include 'UserGuide.md', 'images/**'
+        include 'UserGuide.md', 'images/Ui.png'
         into 'guide'
     }
 }
