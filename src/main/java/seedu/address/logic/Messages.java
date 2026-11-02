@@ -2,6 +2,7 @@ package seedu.address.logic;
 
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -10,6 +11,7 @@ import seedu.address.commons.core.index.Index;
 import seedu.address.logic.parser.Prefix;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.StudentSummaryLabels;
 import seedu.address.model.person.Subject;
 
 /**
@@ -83,7 +85,21 @@ public class Messages {
      * "Tan Wei Ming \u2014 Math, Mon 22 Sep 2026, 16:30-18:00".
      */
     public static String format(Lesson lesson) {
-        return String.format("%s \u2014 %s, %s, %s", lesson.getStudentName(), lesson.getSubject(), lesson.getDate(),
+        return formatLesson(lesson, lesson.getStudentName().toString());
+    }
+
+    /** Formats a lesson with the same student label used by agendas and dashboards. */
+    public static String format(Lesson lesson, StudentSummaryLabels labels) {
+        return formatLesson(lesson, studentLabel(labels, lesson));
+    }
+
+    /** Uses the linked student's label, falling back to the stored name for unlinked legacy lessons. */
+    public static String studentLabel(StudentSummaryLabels labels, Lesson lesson) {
+        return lesson.getStudentId().flatMap(labels::find).orElseGet(() -> lesson.getStudentName().toString());
+    }
+
+    private static String formatLesson(Lesson lesson, String studentLabel) {
+        return String.format("%s \u2014 %s, %s, %s", studentLabel, lesson.getSubject(), lesson.getDate(),
                 lesson.getTimeRange());
     }
 
@@ -109,6 +125,15 @@ public class Messages {
 
     /** Formats the current numbered lesson selection after a mutation changes its rows. */
     public static String formatLessonList(List<Lesson> lessons) {
+        return formatLessonList(lessons, Messages::format);
+    }
+
+    /** Formats refreshed lesson numbers using one student-label snapshot for the whole list. */
+    public static String formatLessonList(List<Lesson> lessons, StudentSummaryLabels labels) {
+        return formatLessonList(lessons, lesson -> format(lesson, labels));
+    }
+
+    private static String formatLessonList(List<Lesson> lessons, Function<Lesson, String> formatter) {
         int shown = Math.min(lessons.size(), MAX_RENUMBERED_LESSONS_SHOWN);
         String more = lessons.size() > shown
                 ? "\n... and " + (lessons.size() - shown) + " more. Run 'lesson list' or 'agenda' to see every number."
@@ -116,7 +141,7 @@ public class Messages {
         return "\n\nLesson numbers have changed. Current lesson list:"
                 + (lessons.isEmpty() ? "\nNo lessons in the current list." : "")
                 + IntStream.range(0, shown)
-                        .mapToObj(i -> "\n" + (i + 1) + ". " + format(lessons.get(i)) + ", "
+                        .mapToObj(i -> "\n" + (i + 1) + ". " + formatter.apply(lessons.get(i)) + ", "
                                 + formatVenue(lessons.get(i)) + "  (" + lessons.get(i).getStatus() + ")")
                         .collect(Collectors.joining())
                 + more;
@@ -127,6 +152,12 @@ public class Messages {
      */
     public static String formatOverlaps(List<Lesson> overlappingLessons) {
         return overlappingLessons.stream().map(Messages::format).collect(Collectors.joining("; ")) + ".";
+    }
+
+    /** Formats overlap warnings without exposing full phone numbers for same-name students. */
+    public static String formatOverlaps(List<Lesson> overlappingLessons, StudentSummaryLabels labels) {
+        return overlappingLessons.stream().map(lesson -> format(lesson, labels))
+                .collect(Collectors.joining("; ")) + ".";
     }
 
 }

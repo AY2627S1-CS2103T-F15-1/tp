@@ -27,6 +27,7 @@ import seedu.address.model.lesson.LessonDuration;
 import seedu.address.model.lesson.LessonStatus;
 import seedu.address.model.lesson.LessonTime;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.StudentSummaryLabels;
 import seedu.address.model.person.Subject;
 import seedu.address.model.person.Venue;
 
@@ -123,8 +124,10 @@ public class LessonAddCommand extends Command {
         model.addLesson(lesson);
         logger.fine("Scheduled lesson");
 
-        String numbering = formatChangedLessonNumbers(model.getFilteredLessonList(), lesson, previousLessonCount);
-        CommandResult result = new CommandResult(String.format(MESSAGE_SUCCESS, Messages.format(lesson),
+        StudentSummaryLabels labels = new StudentSummaryLabels(model.getAddressBook());
+        String numbering = formatChangedLessonNumbers(model.getFilteredLessonList(), lesson, previousLessonCount,
+                labels);
+        CommandResult result = new CommandResult(String.format(MESSAGE_SUCCESS, Messages.format(lesson, labels),
                 Messages.formatVenue(lesson)) + LessonCommandUtil.getOverlapWarning(model, lesson)
                 + LessonCommandUtil.getTravelWarningsForLesson(model, lesson) + numbering);
         return numbering.isEmpty() ? result : result.withDisplayedLessons(model.getFilteredLessonList());
@@ -134,12 +137,13 @@ public class LessonAddCommand extends Command {
      * Shows the new numbers if inserting a matching lesson moved any previously displayed lesson down the list.
      * Additions outside the active filter, or after its last lesson, leave the existing numbers unchanged.
      */
-    private static String formatChangedLessonNumbers(List<Lesson> lessons, Lesson added, int previousLessonCount) {
+    private static String formatChangedLessonNumbers(List<Lesson> lessons, Lesson added, int previousLessonCount,
+            StudentSummaryLabels labels) {
         int addedIndex = lessons.indexOf(added);
         if (addedIndex < 0 || addedIndex >= previousLessonCount) {
             return "";
         }
-        return Messages.formatLessonList(lessons);
+        return Messages.formatLessonList(lessons, labels);
     }
 
     private Lesson createLesson(Person student) throws CommandException {

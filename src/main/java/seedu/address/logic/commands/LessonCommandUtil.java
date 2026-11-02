@@ -192,7 +192,8 @@ final class LessonCommandUtil {
         if (overlappingLessons.isEmpty()) {
             return "";
         }
-        return String.format(MESSAGE_OVERLAP_WARNING, Messages.formatOverlaps(overlappingLessons));
+        return String.format(MESSAGE_OVERLAP_WARNING, Messages.formatOverlaps(overlappingLessons,
+                new StudentSummaryLabels(model.getAddressBook())));
     }
 
     /** Reports travel warnings for the selected destination lessons without changing any displayed numbers. */
@@ -239,11 +240,12 @@ final class LessonCommandUtil {
 
     private static String formatTravelWarnings(Model model, Predicate<TravelGap> included, String indentation,
             int limit) {
+        StudentSummaryLabels labels = new StudentSummaryLabels(model.getAddressBook());
         return TravelGap.find(model.getAddressBook().getLessonList(), model.getAddressBook().getTravelBuffer())
                 .stream().filter(included)
                 .map(gap -> "\n" + indentation + String.format(MESSAGE_TRAVEL_WARNING,
-                        gap.previous().getStudentName(), Messages.formatVenue(gap.previous()),
-                        gap.next().getStudentName(), Messages.formatVenue(gap.next()),
+                        studentLabel(labels, gap.previous()), Messages.formatVenue(gap.previous()),
+                        studentLabel(labels, gap.next()), Messages.formatVenue(gap.next()),
                         gap.next().getDate(), gap.next().getTime(), gap.minutes(), gap.buffer()))
                 .limit(limit)
                 .collect(Collectors.joining());
@@ -254,6 +256,6 @@ final class LessonCommandUtil {
      * told apart. A lesson whose student is not in the address book keeps the name stored with it.
      */
     static String studentLabel(StudentSummaryLabels labels, Lesson lesson) {
-        return lesson.getStudentId().flatMap(labels::find).orElseGet(() -> lesson.getStudentName().toString());
+        return Messages.studentLabel(labels, lesson);
     }
 }

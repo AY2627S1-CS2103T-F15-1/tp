@@ -4,6 +4,7 @@ import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.lesson.Lesson;
+import seedu.address.model.person.StudentSummaryLabels;
 
 /** Records preparation without changing teaching notes or lesson status. */
 public class LessonPrepCommand extends Command {
@@ -22,6 +23,7 @@ public class LessonPrepCommand extends Command {
     public CommandResult execute(Model model) throws CommandException {
         Lesson lesson = LessonCommandUtil.getLesson(model, index);
         model.setLesson(lesson, lesson.prepare(notes));
-        return new CommandResult("Preparation saved for " + lesson.getStudentName() + ": " + notes);
+        return new CommandResult("Preparation saved for " + LessonCommandUtil.studentLabel(
+                new StudentSummaryLabels(model.getAddressBook()), lesson) + ": " + notes);
     }
 }

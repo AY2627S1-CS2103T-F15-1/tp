@@ -15,6 +15,7 @@ import seedu.address.logic.parser.LessonCommandParser;
 import seedu.address.model.Model;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonStatus;
+import seedu.address.model.person.StudentSummaryLabels;
 
 /**
  * Cancels a lesson in the displayed lesson list. The lesson is kept, so that the record of the booking remains.
@@ -65,7 +66,8 @@ public class LessonCancelCommand extends Command {
         model.setLesson(target, target.cancel(reason));
         logger.fine("Cancelled lesson");
 
-        String message = String.format(MESSAGE_SUCCESS, Messages.format(target));
+        String message = String.format(MESSAGE_SUCCESS,
+                Messages.format(target, new StudentSummaryLabels(model.getAddressBook())));
         return new CommandResult(reason == null ? message : message + String.format(MESSAGE_REASON, reason));
     }
 

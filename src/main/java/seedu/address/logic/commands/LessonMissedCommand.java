@@ -14,6 +14,7 @@ import seedu.address.logic.parser.LessonCommandParser;
 import seedu.address.model.Model;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonStatus;
+import seedu.address.model.person.StudentSummaryLabels;
 
 /**
  * Records that a scheduled lesson in the displayed lesson list was missed.
@@ -68,7 +69,8 @@ public class LessonMissedCommand extends Command {
 
         model.setLesson(target, target.miss());
         logger.fine("Marked lesson missed");
-        return new CommandResult(String.format(MESSAGE_SUCCESS, Messages.format(target)));
+        return new CommandResult(String.format(MESSAGE_SUCCESS,
+                Messages.format(target, new StudentSummaryLabels(model.getAddressBook()))));
     }
 
     @Override
