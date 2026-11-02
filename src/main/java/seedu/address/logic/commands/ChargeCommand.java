@@ -16,6 +16,7 @@ import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonStatus;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.StudentSummaryLabels;
 
 /**
  * Records a charge for a lesson by hand, or reverses the active charge of a lesson.
@@ -96,16 +97,18 @@ public class ChargeCommand extends Command {
         if (fee.signum() == 0) {
             throw new CommandException(MESSAGE_ZERO_RATE);
         }
+        String label = StudentSummaryLabels.of(model.getAddressBook(), student);
         try {
             model.addLedgerEntry(LedgerEntry.charge(student, lesson, fee));
         } catch (IllegalArgumentException e) {
             throw new CommandException(e.getMessage(), e);
         }
-        return new CommandResult(String.format(MESSAGE_SUCCESS, Ledger.format(fee), student.getName(),
+        return new CommandResult(String.format(MESSAGE_SUCCESS, Ledger.format(fee), label,
                 lesson.getSubject(), lesson.getDate()));
     }
 
     private CommandResult reverse(Model model, Lesson lesson, Person student) throws CommandException {
+        String label = StudentSummaryLabels.of(model.getAddressBook(), student);
         LedgerEntry active = Ledger.activeCharge(model.getAddressBook(), lesson.getId())
                 .orElseThrow(() -> new CommandException(MESSAGE_NO_ACTIVE_CHARGE));
         try {
@@ -113,7 +116,7 @@ public class ChargeCommand extends Command {
         } catch (IllegalArgumentException e) {
             throw new CommandException(e.getMessage(), e);
         }
-        return new CommandResult(String.format(MESSAGE_REVERSED, Ledger.format(active.amount()), student.getName()));
+        return new CommandResult(String.format(MESSAGE_REVERSED, Ledger.format(active.amount()), label));
     }
 
     @Override

@@ -17,6 +17,7 @@ import seedu.address.model.Model;
 import seedu.address.model.finance.Ledger;
 import seedu.address.model.finance.LedgerEntry;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.StudentSummaryLabels;
 
 /** Records money received from a student and shows the updated amount owed or credit. */
 public class PaymentCommand extends Command {
@@ -83,7 +84,8 @@ public class PaymentCommand extends Command {
             throw new CommandException(e.getMessage(), e);
         }
         BigDecimal balance = Ledger.balance(model.getAddressBook(), student);
-        String feedback = "Payment of " + Ledger.format(amount) + " recorded for " + student.getName()
+        String label = StudentSummaryLabels.of(model.getAddressBook(), student);
+        String feedback = "Payment of " + Ledger.format(amount) + " recorded for " + label
                 + " on " + paymentDate + ".\nBalance: " + Ledger.describeBalance(balance) + ".\n"
                 + MESSAGE_INDICES_NOTE;
         if (amount.compareTo(LARGE_AMOUNT) >= 0) {

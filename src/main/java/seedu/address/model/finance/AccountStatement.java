@@ -10,6 +10,7 @@ import java.util.Optional;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.StudentSummaryLabels;
 
 /** Formats the account of one student: every charge, payment and withdrawal in date order, with a running balance. */
 public final class AccountStatement {
@@ -27,10 +28,10 @@ public final class AccountStatement {
         List<LedgerEntry> entries = book.getLedgerEntries().stream().filter(entry -> entry.isWith(student))
                 .sorted(Comparator.comparing(LedgerEntry::date)).toList();
         if (entries.isEmpty()) {
-            return String.format(MESSAGE_NO_ACTIVITY, student.getName());
+            return String.format(MESSAGE_NO_ACTIVITY, StudentSummaryLabels.of(book, student));
         }
 
-        StringBuilder statement = new StringBuilder("Account — ").append(student.getName());
+        StringBuilder statement = new StringBuilder("Account — ").append(StudentSummaryLabels.of(book, student));
         BigDecimal running = Ledger.ZERO;
         BigDecimal charged = Ledger.ZERO;
         BigDecimal paid = Ledger.ZERO;

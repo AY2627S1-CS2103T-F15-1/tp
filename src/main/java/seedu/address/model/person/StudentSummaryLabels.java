@@ -47,6 +47,11 @@ public final class StudentSummaryLabels {
         }
     }
 
+    /** Returns the label of a single {@code student} in {@code book}, telling same-name students apart. */
+    public static String of(ReadOnlyAddressBook book, Person student) {
+        return new StudentSummaryLabels(book).format(student.getId());
+    }
+
     /** Returns the label captured for this student when the summary began rendering. */
     public String format(UUID studentId) {
         return requireNonNull(labels.get(requireNonNull(studentId)), "Student is absent from the summary snapshot");
