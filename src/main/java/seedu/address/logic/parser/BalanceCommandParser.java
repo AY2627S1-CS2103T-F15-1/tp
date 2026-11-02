@@ -3,6 +3,8 @@ package seedu.address.logic.parser;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_STUDENT;
 
+import java.util.List;
+
 import seedu.address.logic.commands.BalanceCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 
@@ -10,8 +12,9 @@ import seedu.address.logic.parser.exceptions.ParseException;
 public class BalanceCommandParser implements Parser<BalanceCommand> {
     @Override
     public BalanceCommand parse(String args) throws ParseException {
+        ArgumentMultimap arguments = ArgumentTokenizer.tokenize(args, PREFIX_STUDENT);
+        arguments.verifyNoUnexpectedPrefixes(List.of(), List.of());
         try {
-            ArgumentMultimap arguments = ArgumentTokenizer.tokenize(args, PREFIX_STUDENT);
             ParserUtil.requirePrefixesPresent(arguments, BalanceCommand.MESSAGE_USAGE, PREFIX_STUDENT);
             arguments.verifyNoDuplicatePrefixesFor(PREFIX_STUDENT);
             arguments.verifyNoEmptyValuesFor(PREFIX_STUDENT);

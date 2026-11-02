@@ -67,6 +67,8 @@ TutorFlow is a desktop application for independent private tutors who teach arou
   For example, `exit now` is rejected, so a mistyped command cannot close the app.
 
 * Command words are not case-sensitive: `LIST`, `List` and `list` are the same command, and so are `LESSON ADD` and `lesson add`. The same goes for the keyword `confirm`. Parameter prefixes such as `n/` and `st/` must still be in lower case, and the values you type keep their case.
+* A mistyped parameter prefix is reported as `Unknown prefix for this command: name/.` instead of being absorbed into the previous value and blamed on that field. This includes a prefix that belongs to a different command, such as `amt/` in `lesson add`, and an upper-case spelling such as `N/`.
+* Slash-bearing text is still allowed where it is ordinary content. A name or venue accepts `c/o`, `d/o`, `s/o`, `n/a`, `w/o` and `Blk/123`. Notes, feedback, reasons and remarks may quote a full command, including tokens such as `n/` or `desc/`. A description accepts an unaccepted short prefix such as `p/3` as prose, but still rejects a field-name spelling such as `name/` and the retired `a/`.
 
 * The command box remembers the commands you have entered in this session. Press `Up` to bring back an earlier command and `Down` to move forward again, as in a terminal. Down past the newest command returns to what you were typing.<br>
   When a command fails, it stays in the command box, so you can correct it instead of typing it all again.
@@ -85,13 +87,16 @@ Adds a student to TutorFlow.
 
 Format: `add n/NAME p/PHONE_NUMBER l/LEVEL s/SUBJECT... r/RATE [e/EMAIL] [v/VENUE]`
 
-* `NAME` is 1-100 printable characters after trimming and must contain at least one letter. It may contain letters in any language (such as `José Álvarez` or `陈伟明`), digits, spaces and `. , ' ( ) / - @`, such as `Tan Wei Ming (twin A)`, `Priya d/o Kumar` or `John @ Tan`. It does not matter how an accent is typed, so `José` written with one character and with a letter and a separate accent is the same name. `s/o` and `d/o` are supported. Avoid other prefix-like text after a space, such as ` p/`, because TutorFlow reads it as the start of the next parameter.
+* `NAME` is 1-100 printable characters after trimming and must contain at least one letter. It may contain letters in any language (such as `José Álvarez` or `陈伟明`), digits, spaces and `. , ' ( ) / - @`, such as `Tan Wei Ming (twin A)`, `Priya d/o Kumar` or `John @ Tan`. It does not matter how an accent is typed, so `José` written with one character and with a letter and a separate accent is the same name. Avoid typing a `/` right after a space when it would look like a prefix, such as `s/o`, because TutorFlow reads it as the start of the next parameter.
+* `NAME` and `VENUE` reject a field-name typo such as `name/` or `email/` instead of absorbing it into the value. Ordinary relationship or address forms such as `s/o`, `d/o`, `c/o`, `n/a`, `w/o` and `Blk/123` remain valid.
 * `LEVEL` is one of `P1` to `P6` (primary), `S1` to `S5` (secondary) or `J1` to `J2` (junior college). It is not case-sensitive, so `s3` is the same as `S3`.
 * `PHONE_NUMBER` has 8 to 15 digits and can start with `+`, for example `91234567` or `+6591234567`. Spaces and hyphens between the digits are allowed and are removed, so `9123 4567` is stored as `91234567`.
 * `SUBJECT` is free text of up to 30 characters in any language, digits, spaces, `&` and `-`, such as `Math`, `English & Literature` or `华文`. Subjects are not case-sensitive. When you enter one, its first letter is capitalized automatically, so `math` is saved and shown as `Math`. The rest of what you type keeps its case.
 * `RATE` is the amount charged per hour, from `0` to `9999.99` with at most 2 decimal places. It is shown in dollars. A leading `$` is accepted, so `50`, `50.00` and `$50` are the same rate.
 * `VENUE` is where the student is usually taught, up to 100 characters.
-* `EMAIL` can be at most 254 characters.
+* `EMAIL` can be at most 254 characters (an emoji or other symbol counts as one).
+* The old address prefix `a/` is no longer supported. Use `v/` for a student's venue, such as `v/2902 Yishun`. An `a/` parameter is rejected as an unknown prefix instead of being read as part of the preceding email or venue.
+* A mistyped prefix such as `name/`, `phone/`, `sub/`, `email/` or `venue/` is named in an `Unknown prefix for this command` error. Correct the spelling instead of looking for a fault in the preceding field.
 * Extra spaces in a `NAME` are ignored, so `John  Tan` is stored as `John Tan`.
 * A student can have at most 10 different subjects, so a command with more than 10 `s/SUBJECT` values is rejected. The same limit applies when you [edit](#editing-a-student-edit) a student.
 * Two students are duplicates if they have the same phone number and a name that matches when letter case and extra spaces are ignored. A duplicate is not added.
@@ -137,7 +142,7 @@ Format: `archive INDEX`
 * `student archive INDEX` works the same way.
 
 Examples:
-* `archive 3` Archives the 3rd student and replies, for example, `Archived: Chen Hao. Lessons and history are retained. The student list has refreshed.`
+* `archive 3` Archives the 3rd student and replies, for example, `Archived: Chen Hao. Lessons and history are retained. Run 'list' to refresh the student list.`
 
 ### Restoring an archived student: `restore`
 
@@ -150,7 +155,7 @@ Format: `restore INDEX`
 * `student restore INDEX` works the same way.
 
 Examples:
-* `list archived/`, then `restore 1` Restores the first archived student, for example `Restored: Amy Tan. Lessons and history are retained. The student list has refreshed.`
+* `list archived/`, then `restore 1` Restores the first archived student, for example `Restored: Amy Tan. Lessons and history are retained. Run 'list' to refresh the student list.`
 
 ### Editing a student: `edit`
 
@@ -165,8 +170,9 @@ Format: `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [l/LEVEL] [s/SUBJECT]...
   Omitting a prefix leaves that value unchanged. Required fields cannot be cleared. Clearing contact details
   preserves the student and all linked history; existing lessons keep their recorded venues.
 * When editing subjects, all of the student's existing subjects are replaced; adding subjects is not cumulative. A student must keep at least one subject.
+* The displayed student list stays as it was after an edit, so the index numbers do not change. The exception is a student who no longer matches the current `find` or `list` filter after the edit (for example, a new name that the `find` keywords do not match): that student leaves the displayed list and the numbers below shift. Run `list` to show all active students again.
 * After changing a student's name or phone number, run `lesson list st/STUDENT_INDEX` again before using lesson numbers.
-* The values for the email, level, subjects, rate and venue follow the same rules as for [`add`](#adding-a-student-add).
+* The values for the email, level, subjects, rate and venue follow the same rules as for [`add`](#adding-a-student-add), so an email can be at most 254 characters.
 * If the edit gives the student the name of another student, it is accepted and TutorFlow shows a note. If the phone number is also the same as that student's, the edit is rejected as a duplicate.
 
 Examples:
@@ -191,7 +197,7 @@ Examples:
 * `find John` returns `john` and `John Doe`
 * `find alex david` lists `Alex Yeoh` and `David Li` if those students are recorded. If only those two students match, the result says `2 student(s) listed!` and the student list shows their current details with new index numbers.
 
-### Viewing a student's overview: `view`
+### Viewing the overview of a student: `view`
 
 Shows what you need to prepare for one student, on one screen.
 
@@ -222,10 +228,10 @@ Sets a free-text remark on a student, such as a preference or something to remem
 Format: `remark INDEX r/REMARK`
 
 * Sets the remark of the student at the specified `INDEX`, which is the index number shown in the displayed student list and **must be a positive integer** 1, 2, 3, ...
-* The new remark replaces the old one and can be at most 1000 characters. Writing `r/` with nothing after it removes the remark.
-* A remark has no length limit in this version.
+* The new remark replaces the old one and can be at most 1000 characters (an emoji or other symbol counts as one). Writing `r/` with nothing after it removes the remark.
 * Surrounding spaces are removed and repeated spaces inside the remark are collapsed into one, as for other free text.
-* A remark is shown in the student's card and in [`view`](#viewing-a-student-s-overview-view).
+* The displayed student list stays as it was after a remark, so the index numbers do not change.
+* A remark is shown in the student's card and in [`view`](#viewing-the-overview-of-a-student-view).
 
 Examples:
 * `remark 1 r/Prefers morning lessons` sets the remark of the 1st student.
@@ -326,7 +332,7 @@ Format: `agenda [d/DATE] [week/]`
 * Each line shows the lesson number, the time, the student, the subject, the venue, and the status if the lesson is not simply scheduled. Lessons that overlap another lesson are marked `⚠ overlaps`.
 * Cancelled lessons are listed but are not counted in the number of lessons and the total time.
 * The lesson numbers are the ones that `lesson move`, `lesson cancel`, `lesson done` and `lesson missed` take, so run `agenda` or `lesson list` first and then use the number you see.
-* Lessons are numbered in time order. If moving, cancelling, completing or marking a lesson missed changes the displayed numbers, the result includes `Lesson numbers have changed. Current lesson list:` and the refreshed list. If every lesson keeps its number, for example when a lesson only changes its time or is cancelled but stays in the list, the numbers are not shown again. If more than 30 lessons are listed in the result, only the first 30 are shown, followed by how many more there are. Use those new numbers for your next command. Running `agenda` or `lesson list` again also refreshes the list.
+* Lessons are numbered in time order. If moving, cancelling, completing or marking a lesson missed changes the displayed numbers, the result includes `Lesson numbers have changed. Current lesson list:` and the refreshed list. If every lesson keeps its number, for example when a lesson only changes its time or is cancelled but stays in the list, the numbers are not shown again. Use those new numbers for your next command. If more than 30 lessons are listed, only the first 30 are shown, followed by how many more there are; run `lesson list` or `agenda` to see every number. Running `agenda` or `lesson list` again also refreshes the list.
 * A week with more than 200 lessons shows the first 200 rows and a line saying how many were omitted, so the result box stays responsive.
 * A day without lessons is not an error: it shows `No lessons on Tue 22 Dec 2026.`
 
@@ -344,6 +350,7 @@ Format: `today`
 * The second section, `LESSONS AWAITING NOTES`, shows the scheduled lessons from earlier days that were not marked completed, the most recent first.
 * The third section, `OVERDUE HOMEWORK`, shows assigned work due before today, or `No overdue homework.`. Run `hw list overdue/` to get selectable numbers.
 * The fourth section, `DUES`, is the list that [`dues`](#viewing-all-outstanding-balances-dues) shows: how many students owe money and the total, then each student's amount and the age of their oldest unpaid charge, such as `oldest unpaid 2 days` or `oldest unpaid 1 day`, the oldest first. If nobody owes money, it shows `No outstanding balances. Everyone is up to date.`
+* The lessons on the dashboard are not numbered. To complete, move or cancel one of them, first run [`agenda`](#viewing-the-agenda-agenda) for today's lessons, or [`lesson list st/STUDENT_INDEX all/`](#listing-the-lessons-of-a-student-lesson-list) for a lesson awaiting notes, and use the number shown there. Right after TutorFlow starts, no lesson has a number yet, so a command such as `lesson done 1` is refused with a message that tells you to run `agenda` or `lesson list`.
 * All four sections are always shown. An empty section is not an error: it shows `No lessons today.`, `All past lessons are recorded.`, `No overdue homework.` or `No outstanding balances. Everyone is up to date.`
 * To keep the result box responsive, each lesson section lists at most 200 rows. The heading still gives the complete count and total time.
 * `today` does not number lessons. Run `agenda` or `lesson list st/INDEX` before using a lesson number in a later command.
@@ -450,8 +457,7 @@ Marks a lesson completed and optionally records what was taught.
 
 Format: `lesson done INDEX [n/NOTES]`
 
-* `INDEX` is the lesson number from the current `agenda` or `lesson list`, not the student number. It must be a positive integer.
-* Run `agenda` or `lesson list st/INDEX` first; lesson numbers come from the last list shown.
+* `INDEX` is the lesson number from the current `agenda` or `lesson list`, not the student number. It must be a positive integer. The `today` dashboard does not number lessons, so run `agenda` or `lesson list` first.
 * The first completion adds the hourly lesson fee to the student’s balance and shows `Charge of $X.XX recorded.` Updating notes never charges again. A fee that is zero, including after cent rounding, completes the lesson without creating a charge and explains why: for a rate of $0.00 it says `No automatic charge: This student's rate is $0.00.` and how to specify an amount. Use [`charge`](#charging-a-lesson-charge) to bill a lesson by hand.
 * Only lessons dated today or earlier can be completed, using your computer's local date. A cancelled lesson cannot be completed.
 * `NOTES` is optional free text of 1–1000 printable characters on one line. Leading/trailing whitespace is trimmed and repeated spaces are collapsed. An empty `n/`, line breaks and repeated `n/` parameters are rejected.

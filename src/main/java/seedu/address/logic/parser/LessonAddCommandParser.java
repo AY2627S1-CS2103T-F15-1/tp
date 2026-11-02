@@ -9,6 +9,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_TIME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_VENUE;
 
 import java.time.Clock;
+import java.util.List;
 import java.util.Objects;
 
 import seedu.address.commons.core.index.Index;
@@ -44,6 +45,7 @@ public class LessonAddCommandParser implements Parser<LessonAddCommand> {
     public LessonAddCommand parse(String args) throws ParseException {
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_STUDENT, PREFIX_SUBJECT, PREFIX_DATE,
                 PREFIX_TIME, PREFIX_DURATION, PREFIX_VENUE, PREFIX_PAST);
+        argMultimap.verifyNoUnexpectedPrefixes(List.of(), List.of());
         ParserUtil.requirePrefixesPresent(argMultimap, LessonAddCommand.MESSAGE_USAGE, PREFIX_STUDENT, PREFIX_DATE,
                 PREFIX_TIME);
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_STUDENT, PREFIX_SUBJECT, PREFIX_DATE, PREFIX_TIME,

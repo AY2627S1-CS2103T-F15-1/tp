@@ -8,6 +8,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_RATE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_VENUE;
 
+import java.util.List;
 import java.util.Set;
 
 import seedu.address.logic.commands.AddCommand;
@@ -35,6 +36,7 @@ public class AddCommandParser implements Parser<AddCommand> {
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(ParserUtil.maskSonOf(args), PREFIX_NAME,
                 PREFIX_PHONE, PREFIX_EMAIL, PREFIX_LEVEL, PREFIX_SUBJECT, PREFIX_RATE, PREFIX_VENUE);
 
+        argMultimap.verifyNoUnexpectedPrefixes(List.of(), List.of());
         ParserUtil.requirePrefixesPresent(argMultimap, AddCommand.MESSAGE_USAGE, PREFIX_NAME, PREFIX_PHONE,
                 PREFIX_LEVEL, PREFIX_SUBJECT, PREFIX_RATE);
 

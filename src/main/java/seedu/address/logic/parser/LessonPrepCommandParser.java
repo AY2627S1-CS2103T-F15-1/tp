@@ -2,6 +2,8 @@ package seedu.address.logic.parser;
 
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NOTES;
 
+import java.util.List;
+
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.LessonPrepCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -11,6 +13,7 @@ public class LessonPrepCommandParser implements Parser<LessonPrepCommand> {
     @Override
     public LessonPrepCommand parse(String args) throws ParseException {
         ArgumentMultimap values = ArgumentTokenizer.tokenize(args, PREFIX_NOTES);
+        values.verifyNoUnexpectedPrefixes(List.of(PREFIX_NOTES), List.of(PREFIX_NOTES));
         values.verifyNoDuplicatePrefixesFor(PREFIX_NOTES);
         values.verifyNoEmptyValuesFor(PREFIX_NOTES);
         Index index = ParserUtil.parseIndex(values.getPreamble(), LessonPrepCommand.MESSAGE_USAGE);

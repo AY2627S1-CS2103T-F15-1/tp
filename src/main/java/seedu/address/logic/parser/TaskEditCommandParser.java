@@ -6,6 +6,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_DUE;
 
 import java.time.Clock;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Objects;
 
 import seedu.address.commons.core.index.Index;
@@ -36,6 +37,7 @@ public class TaskEditCommandParser implements Parser<TaskEditCommand> {
      */
     public TaskEditCommand parse(String args) throws ParseException {
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_DESCRIPTION, PREFIX_DUE);
+        argMultimap.verifyNoUnexpectedPrefixes(List.of(PREFIX_DESCRIPTION), List.of());
 
         Index index;
         try {

@@ -2,6 +2,8 @@ package seedu.address.logic.parser;
 
 import static seedu.address.logic.parser.CliSyntax.PREFIX_BUFFER;
 
+import java.util.List;
+
 import seedu.address.logic.commands.TravelCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.lesson.TravelGap;
@@ -11,6 +13,7 @@ public class TravelCommandParser implements Parser<TravelCommand> {
     @Override
     public TravelCommand parse(String args) throws ParseException {
         ArgumentMultimap arguments = ArgumentTokenizer.tokenize(" " + args.strip(), PREFIX_BUFFER);
+        arguments.verifyNoUnexpectedPrefixes(List.of(), List.of());
         ParserUtil.requirePrefixesPresent(arguments, TravelCommand.MESSAGE_USAGE, PREFIX_BUFFER);
         arguments.verifyNoDuplicatePrefixesFor(PREFIX_BUFFER);
         arguments.verifyNoEmptyValuesFor(PREFIX_BUFFER);

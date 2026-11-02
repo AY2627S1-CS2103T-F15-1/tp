@@ -9,6 +9,9 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
  */
 public class Email {
 
+    /** Longest address allowed by RFC 5321; also keeps one stored value small. Applies to new input only. */
+    public static final int MAX_LENGTH = 254;
+    public static final String MESSAGE_TOO_LONG = "Emails can be at most " + MAX_LENGTH + " characters.";
     private static final String SPECIAL_CHARACTERS = "+_.%-";
     public static final String MESSAGE_CONSTRAINTS = "Emails should be of the format local-part@domain "
             + "and adhere to the following constraints:\n"

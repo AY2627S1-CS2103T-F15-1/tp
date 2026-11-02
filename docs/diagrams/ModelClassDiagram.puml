@@ -77,7 +77,7 @@ Lesson *--> LessonTime
 Lesson *--> LessonDuration
 Lesson *--> LessonStatus
 Lesson *--> "0..1" Venue
-Lesson ..> Person : studentId
+Lesson ..> Person : permanent studentId\n(name/phone are\ndisplay details)
 Lesson ..> Subject : subject
 Homework *--> HomeworkStatus
 Homework ..> Person : studentId

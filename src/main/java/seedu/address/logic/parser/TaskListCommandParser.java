@@ -4,6 +4,8 @@ import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ALL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_STUDENT;
 
+import java.util.List;
+
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.TaskListCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -20,6 +22,7 @@ public class TaskListCommandParser implements Parser<TaskListCommand> {
      */
     public TaskListCommand parse(String args) throws ParseException {
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_ALL, PREFIX_STUDENT);
+        argMultimap.verifyNoUnexpectedPrefixes(List.of(), List.of());
         if (!argMultimap.getPreamble().isEmpty()) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, TaskListCommand.MESSAGE_USAGE));
         }

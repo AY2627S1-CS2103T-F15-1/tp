@@ -5,6 +5,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_LESSON_INDEX;
 
 import java.math.BigDecimal;
 import java.time.Clock;
+import java.util.List;
 import java.util.Objects;
 
 import seedu.address.commons.core.index.Index;
@@ -40,6 +41,7 @@ public class ChargeCommandParser implements Parser<ChargeCommand> {
         ArgumentMultimap arguments = isReversal
                 ? ArgumentTokenizer.tokenize(" " + trimmed, PREFIX_LESSON_INDEX)
                 : ArgumentTokenizer.tokenize(" " + trimmed, PREFIX_LESSON_INDEX, PREFIX_AMOUNT);
+        arguments.verifyNoUnexpectedPrefixes(List.of(), List.of());
         ParserUtil.requirePrefixesPresent(arguments, ChargeCommand.MESSAGE_USAGE, PREFIX_LESSON_INDEX);
         arguments.verifyNoDuplicatePrefixesFor(PREFIX_LESSON_INDEX, PREFIX_AMOUNT);
         arguments.verifyNoEmptyValuesFor(PREFIX_LESSON_INDEX, PREFIX_AMOUNT);
@@ -52,10 +54,7 @@ public class ChargeCommandParser implements Parser<ChargeCommand> {
         BigDecimal amount = null;
         if (arguments.getValue(PREFIX_AMOUNT).isPresent()) {
             String amountText = arguments.getValue(PREFIX_AMOUNT).get();
-            if (!amountText.matches("[0-9]+(?:\\.[0-9]{1,2})?") || new BigDecimal(amountText).signum() <= 0) {
-                throw new ParseException(PaymentCommand.MESSAGE_AMOUNT_CONSTRAINTS);
-            }
-            amount = new BigDecimal(amountText);
+            amount = ParserUtil.parseAmount(amountText, PaymentCommand.MESSAGE_AMOUNT_CONSTRAINTS);
         }
         return new ChargeCommand(index, amount, isReversal, clock);
     }

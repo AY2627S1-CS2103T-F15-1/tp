@@ -31,9 +31,10 @@ public class TravelCommandParserTest {
 
     @Test
     public void parse_missingEmptyDuplicateAndPreamble_useCommonErrors() {
-        for (String args : new String[]{"", "30", "BUFFER/30"}) {
+        for (String args : new String[]{"", "30"}) {
             assertError(args, "Missing required parameter(s): buffer/\n" + TravelCommand.MESSAGE_USAGE);
         }
+        assertError("BUFFER/30", "Unknown prefix for this command: BUFFER/.");
         assertError("buffer/  ", "Empty value for buffer/. Enter a value after this prefix.");
         assertError("buffer/30 buffer/40", Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_BUFFER));
         assertError("buffer/ buffer/40", Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_BUFFER));

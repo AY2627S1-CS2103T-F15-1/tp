@@ -138,6 +138,7 @@ How the parsing works:
   * An index that is not a positive whole number is reported as `Invalid command format!` with the command's usage. A parser gets this by calling `ParserUtil.parseIndex(value, usage)`.
   * `CommandInput` splits the first word from the rest of an input and lower-cases that word, so command words and sub-command words do not depend on letter case. The same holds for the `confirm` keyword, which `ConfirmableIndex`, `ClearCommandParser`, `DemoCommandParser` and `LessonSeriesCancelCommandParser` compare ignoring case. Prefixes such as `n/` remain case-sensitive. `AddressBookParser` uses it for the command word, and `SubCommandParser` uses it for the sub-command word of `lesson` and `task`, and `PayCommandParser` and `ChargeCommandParser` for `pay list`, `pay reverse` and `charge reverse`. `SubCommandParser` is given one `Parser` per sub-command word, so adding a sub-command means registering one more parser.
   * `ConfirmableIndex` parses an index with an optional `confirm` keyword and is used by `delete`, `task delete` and `hw delete`. It strips surrounding whitespace with `String.strip()` and splits the words with `(?U)\s+`, so all three treat Unicode spaces such as U+3000 the same way as ASCII ones, both around the arguments and between the index and `confirm`.
+  * Each prefix-based parser calls `ArgumentMultimap#verifyNoUnexpectedPrefixes` before required-prefix, duplicate and value checks. The multimap compares unaccepted prefix-shaped tokens with the prefixes its tokenizer accepted and with known parameter names. Names, venues and descriptions are not exempt from the retired `a/`, so its venue hint is shown. A typo such as `name/` is also reported instead of being absorbed. Notes, feedback, reasons and remarks are fully permissive because they may quote a command. A description tolerates an unaccepted short prefix such as `p/3` as prose. The fixed whitelist keeps `c/o`, `d/o`, `s/o`, `n/a` and `w/o` valid. A real prefix used by another command and an upper-case spelling are reported by name rather than as a misleading field or missing-prefix error. `AddressBookParser` also rejects the retired `a/` for index-only subcommands such as `pay reverse`, `hw delete`, `task done` and `lesson missed`, which do not tokenize prefixes. `find a/Home` remains a plain search for that text.
 
 ### Model component
 **API** : [`Model.java`](https://github.com/AY2627S1-CS2103T-F15-1/tp/tree/master/src/main/java/seedu/address/model/Model.java)
@@ -148,7 +149,7 @@ How the parsing works:
 The `Model` component,
 
 * stores the address book data i.e., all `Person` objects, each of which represents a student with a name, phone number, level, subjects and rate, and optionally an email, a venue and a remark (the `Person` objects are contained in a `UniquePersonList` object). Two `Person` objects are the same student if they have the same phone number and the same name, ignoring case.
-* stores the `Lesson` objects, each of which is a lesson with a student, a subject, a date, a start time, a duration, a status and optionally a venue (the `Lesson` objects are contained in a `UniqueLessonList` object). A `Lesson` refers to its student by the student's permanent UUID; the name and phone number are kept only as a display snapshot for older data. Deleting a student deletes their lessons, and editing the name or phone number of a student keeps their lessons attached.
+* stores the `Lesson` objects, each of which is a lesson with a student, a subject, a date, a start time, a duration, a status and optionally a venue (the `Lesson` objects are contained in a `UniqueLessonList` object). A `Lesson` refers to its student by the permanent student UUID. Its stored name and phone number are display details and support linking older data during migration; they are not the permanent relationship key. Deleting a student deletes their lessons, and editing contact details retains the UUID link and the lesson's booking snapshots.
 * stores immutable `LedgerEntry` records for lesson charges, student payments, withdrawals and the reversals of charges or payments. Each record refers to a permanent student UUID and, for charges and charge reversals, a lesson UUID; a reversal also refers to the entry it cancels. `Ledger` derives balances and unpaid dues from those records; those calculations do not mutate the ledger.
 * stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
 * stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
@@ -267,12 +268,12 @@ Move, single cancellation and series cancellation use `LessonCommandUtil#require
 
 **Aspect: how a lesson refers to its student**
 
-* **Alternative 1 (current choice):** store a permanent student UUID, with the name and phone number only as a display snapshot.
-    * Pros: Renaming a student never detaches their lessons, and a lesson can still be displayed when the profile is unavailable during migration.
-    * Cons: The saved file needs UUIDs, and a lesson and its student must be checked together when a file is loaded.
-* **Alternative 2 (former design):** store the student's name and phone number as the link.
-    * Pros: The saved file stays flat and a lesson can be validated without loading students.
-    * Cons: `AddressBook` must update every lesson when a student is edited, and a rename can silently detach history.
+* **Alternative 1 (current choice):** store the permanent student UUID, with name/phone display details and booking-time snapshots in the lesson.
+    * Pros: Profile edits do not change the relationship key. Immutable lesson copies and JSON round trips preserve the same identity, and booking-time level and venue remain available for history.
+    * Cons: Loading must validate the student link and migrate older lessons that have no student UUID. `AddressBook` maintains display details and handles cascade deletion centrally.
+* **Alternative 2 (former design):** identify the student solely by the stored name and phone number.
+    * Pros: The older file needs no separate student identifier.
+    * Cons: Contact edits change the relationship key and require every linked record to be repaired. A stable UUID avoids relying on mutable contact values for identity.
 
 **Aspect: what to do when lessons overlap**
 
@@ -902,8 +903,8 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 1.  Tutor requests to view the agenda for a day
 2.  TutorFlow shows the lessons on that day
-3.  Tutor requests to mark a specific lesson as completed, and provides teaching notes
-4.  TutorFlow marks the lesson as completed, records the automatic charge when the rate is above zero, saves both and confirms the update
+3.  Tutor requests to mark a specific lesson as completed, optionally providing teaching notes
+4.  TutorFlow marks the lesson as completed, retains its booking details, saves any notes, records the lesson fee and confirms the outcome
 
     Use case ends.
 
@@ -927,19 +928,33 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 * 3c. The lesson is already completed.
 
-    * 3c1. TutorFlow replaces the existing notes with the new notes and confirms the update.
+    * 3c1. If new notes are supplied, TutorFlow replaces the existing notes and confirms the update. Otherwise, it retains the existing notes and informs the tutor that the lesson is already completed.
 
-      Use case ends.
-
-* 3e. The student's rate is zero.
-
-    * 3e1. TutorFlow completes the lesson without a charge and explains how to use `charge` to bill it by hand.
+      No additional fee is recorded.
 
       Use case ends.
 
 * 3d. The tutor requests to mark the lesson as missed instead.
 
-    * 3d1. TutorFlow marks the lesson as missed and confirms the update.
+    * 3d1. If the lesson is scheduled for today or earlier, TutorFlow marks it as missed, retains its booking details and notes, and confirms the update. No fee is recorded by this action.
+
+      A future, cancelled or completed lesson cannot be marked missed. Repeating the request on an already-missed lesson leaves it unchanged.
+
+      Use case ends.
+
+* 3e. The teaching notes are invalid.
+
+    * 3e1. TutorFlow explains the notes constraint without changing the lesson or balance.
+
+      Use case resumes at step 3.
+
+* 3f. The selected lesson was previously marked missed but actually took place.
+
+    * 3f1. TutorFlow continues at step 4, retaining the identity of the original lesson.
+
+* 4a. The calculated fee rounds to zero, or the lesson already has an active charge.
+
+    * 4a1. TutorFlow completes the lesson without adding a charge and explains why. If the student's rate is zero, it also explains how to use `charge` to bill the lesson by hand.
 
       Use case ends.
 
@@ -1314,6 +1329,10 @@ Given below are instructions to test the app manually.
 testers are expected to do more *exploratory* testing.
 </box>
 
+For self-contained checks of lesson completion, missed status, teaching-note boundaries, changing lesson
+numbers and the correction features, see the [lesson-outcome and correction test plan](testing/LessonStatusManualTesting.md).
+It includes starting data, literal commands, expected results and a reproducible packaged-JAR test runner.
+
 ### Launch and shutdown
 
 1. Initial launch
@@ -1654,6 +1673,131 @@ Start each group with `clear confirm`, then `demo`, then `demo confirm`, so the 
    1. Test case: `travel buffer/45`, then `travel buffer/181`<br>
       Expected: `Travel buffer set to 45 minutes.`, then a rejection that gives the range 0-180.
 
+### Follow-up tasks: further cases
+
+The dates in the following steps are written for a test run between 2 and 9 November 2026. If you test later, move every date forward by the same number of days so that each lesson date is still today or later; `today` and `tmr` always work. Dates with `past/` must stay in the past.
+
+1. Adding a task
+
+   1. Prerequisites: Start from the demo data. Run `list`, then `lesson add st/1 s/Math d/2026-11-10 t/16:00` and `lesson list st/1`.
+
+   1. Test case: `task add st/1 desc/Call parent due/2026-11-20`<br>
+      Expected: `Added task: Call parent. Run 'task list' to display its index.`
+
+   1. Test case: `task add lesson/1 desc/Prepare mock paper`<br>
+      Expected: The task is added without a due date. `task list` shows it as `(no due date)` with the lesson it is about.
+
+   1. Test case: the same command again<br>
+      Expected: Added again. Two tasks may have the same text.
+
+   1. Other incorrect commands to try: `task add st/1 lesson/1 desc/Both` (two links), `task add desc/No link`, `task add st/1 desc/` (empty text), `task add st/1 desc/` followed by 201 characters, `task add st/1 desc/Late due/2026-10-01`, `task add st/99 desc/No such student`, `task add pay/1 desc/No payment list yet`<br>
+      Expected: Nothing is added. The result shows an error message. The late due date gives `Due dates must be today or later.`
+
+1. Listing, editing and completing tasks
+
+   1. Prerequisites: Add three tasks, two of them with due dates, then run `task list`.
+
+   1. Test case: `task list`<br>
+      Expected: Open tasks are shown with the earliest due date first and the tasks without a due date last.
+
+   1. Test case: `task edit 1 desc/Call parent again due/-`<br>
+      Expected: The text changes and the due date is removed.
+
+   1. Test case: `task done 1`, then `task done 1` again<br>
+      Expected: The first completes the task. The second says that the task is already done. `task list` hides it and `task list all/` shows it.
+
+   1. Test case: after `task done 1`, run `task edit 2 desc/Changed` without running `task list`<br>
+      Expected: Task 2 of the last list is changed. The numbers stay fixed until the next `task list`.
+
+1. Deleting a task
+
+   1. Prerequisites: Run `task list` with at least one task.
+
+   1. Test case: `task delete 1`<br>
+      Expected: Nothing is deleted. TutorFlow asks you to type `task delete 1 confirm`.
+
+   1. Test case: `task delete 1 confirm`, then `task delete 1 confirm` again<br>
+      Expected: The first deletes the task. The second says that the task was deleted and to run `task list` to refresh.
+
+1. Tasks follow what they are about
+
+   1. Prerequisites: A task on the 1st student and a task on a lesson of that student.
+
+   1. Test case: `edit 1 n/Alexander Yeoh`, then `task list`<br>
+      Expected: Both tasks show the new name.
+
+   1. Test case: `lesson list st/1`, `lesson cancel 1`, then book a new lesson in the same slot (for example `lesson add st/1 s/Math d/2026-11-10 t/16:00`) and run `task list`<br>
+      Expected: The lesson task still points to the cancelled lesson. The new lesson does not take it over.
+
+   1. Test case: `delete 1 confirm`, then `undo`<br>
+      Expected: The tasks of the student are restored together with the student.
+
+### Edge-case and adversarial testing
+
+These checks go beyond the example cases above. Unless a step says otherwise, start from the demo data: run `clear confirm`, then `demo` and `demo confirm`. We also ran these checks with a script (see "Testing approach" below).
+
+1. Boundary values
+
+   1. Test case: `lesson add st/1 s/Math d/tmr t/23:45 dur/15`, `lesson add st/1 s/Math d/2026-11-09 t/23:00 dur/120`<br>
+      Expected: The first is scheduled. The second is rejected because it passes midnight.
+
+   1. Test case: `lesson repeat st/1 s/Math d/tmr t/16:00 count/52 every/3`<br>
+      Expected: Rejected, because the series would pass two years. `count/52` with the default every week is accepted, as is `count/2`.
+
+   1. Test case: `lesson repeat st/1 s/Math d/tmr t/16:00 count/52`, then `lesson repeat st/1 s/Physics d/tmr t/16:00 count/52` (the demo student takes both subjects; the second series clashes with all 52 lessons of the first)<br>
+      Expected: The first is accepted. The second gives a one-line overlap warning, then at most 30 rows of the renumbered list followed by `... and N more.` Run `clear confirm`, `demo` and `demo confirm` afterwards to get the demo data back.
+
+1. Inputs that must be rejected without crashing
+
+   1. Test case: `view ١`, `lesson add st/1 s/Math d/2026-11-09 t/09:00 dur/٦٠` (non-English digits), `pay st/1 amt/1e2`, `pay st/1 amt/-5`, `task add st/1 st/2 desc/Twice`<br>
+      Expected: Each shows an error message. Nothing changes and TutorFlow keeps running.
+
+   1. Test case: `remark 1 r/` followed by 1,001 characters, or `edit 1 e/` followed by an email longer than 254 characters<br>
+      Expected: Rejected with a message about the maximum length.
+
+   1. Test case: `pay st/1 amt/` followed by 31 digits<br>
+      Expected: Rejected at once with a message about the maximum length.
+
+1. State that must survive a restart
+
+   1. Test case: After each of `lesson done`, `task done`, `pay`, `charge reverse`, close and reopen TutorFlow.<br>
+      Expected: The same data is shown as before closing.
+
+   1. Test case: Starting again from the demo data, run `pay st/1 amt/100`, `pay list`, `withdraw st/1 amt/100`, `pay reverse 1`, then `dues`<br>
+      Expected: The student is listed as owing $100.00, and no error appears.
+
+1. Edited data files
+
+   1. Prerequisites: Close TutorFlow and edit `data/tutorflow-v14.json`.
+
+   1. Test case: Set a student's `"rate"` to `"abc"`, a lesson's `"duration"` to `0`, or a ledger entry's `"amount"` to `"-20.00"`, then launch.<br>
+      Expected: TutorFlow starts with an empty list, and the result box says that the file was set aside as `.corrupt`.
+
+   1. Test case: Delete the `"tasks"` list, then launch.<br>
+      Expected: TutorFlow starts normally with the students and lessons and no tasks.
+
+### Testing approach: lessons, tasks and payments
+
+We tested the lesson, task and payment features (lesson scheduling, series and agenda, lesson status changes, follow-up tasks, and the ledger) in three ways.
+
+**1. Manual testing from the User Guide.** We ran every example in the UG and the manual-testing appendix, in the GUI, with typical data, and compared the result with the specification in the tP notes.
+
+**2. Automated unit and integration tests.** JUnit tests cover each parser and command, and workflow tests cover several commands in a row (for example `lesson add`, `lesson move`, `lesson cancel`, `task add` and `undo`).
+
+**3. Edge-case and adversarial testing on 1 Nov 2026.** To find what the earlier tests missed, we ran a script that drives the real command logic with a fixed clock (1 Nov 2026). After every successful command it reloads the saved file and compares it with the data in memory. It ran about 17,000 checks. The script is a throwaway tool and is not part of the repository:
+
+| Area | What was tried |
+|---|---|
+| Students | valid and invalid values at each limit, duplicate names, other languages, delete, clear and undo |
+| Lessons | every date, time and duration limit, overlaps, series up to the two-year limit, all-or-nothing series, done, missed, cancel and move |
+| Tasks | exactly one link, text limits, due dates, stable numbers after done and delete, links after edit, cancel and undo |
+| Payments and charges | rounding of 100 rate and duration pairs, reversals, withdrawals, and 40 random sequences checked against a separate calculation of the balance |
+| Data files | about 2,000 edited copies of a saved file (empty, wrong type, missing, duplicated or unknown links, huge values), each loaded and then used |
+| Long input | up to 1,000,000 characters in each field, with timing |
+| Random commands | 60 sessions of 400 random commands each |
+
+The run found one crash (`dues` after a payment was reversed) and a data-loss risk (a field of more than 1,000,000 characters could be saved but not loaded again). Both are fixed, and each fix has JUnit tests in `AdversarialFindingsRegressionTest`. The manual cases under "Edge-case and adversarial testing" above are kept so that these checks can be repeated by hand.
+
 ### Saving data
 
 1. Dealing with missing/corrupted data files
@@ -1683,8 +1827,8 @@ Start each group with `clear confirm`, then `demo`, then `demo confirm`, so the 
 
    1. Prerequisites: Make `data/tutorflow-v14.json` read-only, as a user who is not an administrator.
 
-   1. Test case: Run a command that changes data, such as `add n/Test Two p/98765432 l/S1 s/Math r/40`.<br>
-      Expected: The result box says that the change was applied in this session but could not be saved, and why. `exit` does not close TutorFlow until the file can be written again.
+   1. Test case: Run `add n/Save Failure Test p/98765432 l/S1 s/Math r/40` (use a fresh test name if that student already exists).<br>
+      Expected: The student is added in this session, but the result box says that the change could not be saved and why. A read-only command such as `list` does not test saving. `exit` does not close TutorFlow while the change remains unsaved. Restore write permission, run `save`, then close and reopen to check that the student was saved; do not repeat the `add` command.
 
    1. Test case: Make the file writable again, run `save`, then close TutorFlow and launch it again.<br>
       Expected: `save` replies `All changes have been saved.` and the student added in the previous step is still there. Running `save` when nothing is unsaved gives the same reply.

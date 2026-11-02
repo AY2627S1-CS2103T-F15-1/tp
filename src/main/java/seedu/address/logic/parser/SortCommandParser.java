@@ -2,6 +2,8 @@ package seedu.address.logic.parser;
 
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 
+import java.util.List;
+
 import seedu.address.logic.commands.SortCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 
@@ -17,6 +19,7 @@ public class SortCommandParser implements Parser<SortCommand> {
      */
     public SortCommand parse(String args) throws ParseException {
         String trimmedArgs = args.trim();
+        ArgumentTokenizer.tokenize(trimmedArgs).verifyNoUnexpectedPrefixes(List.of(), List.of());
 
         if (trimmedArgs.isEmpty() || trimmedArgs.equalsIgnoreCase(SortCommand.ORDER_ASCENDING)) {
             return new SortCommand(false);

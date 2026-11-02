@@ -1,5 +1,7 @@
 package seedu.address.logic.parser;
 
+import java.util.List;
+
 import seedu.address.logic.commands.ArchiveCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 
@@ -17,6 +19,7 @@ public class ArchiveCommandParser implements Parser<ArchiveCommand> {
     @Override
     public ArchiveCommand parse(String args) throws ParseException {
         String usage = shouldArchive ? ArchiveCommand.MESSAGE_USAGE_ARCHIVE : ArchiveCommand.MESSAGE_USAGE_RESTORE;
+        ArgumentTokenizer.tokenize(args).verifyNoUnexpectedPrefixes(List.of(), List.of());
         return new ArchiveCommand(ParserUtil.parseIndex(args, usage), shouldArchive);
     }
 }

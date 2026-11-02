@@ -3,6 +3,8 @@ package seedu.address.logic.parser;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_REASON;
 
+import java.util.List;
+
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.LessonCancelCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -19,6 +21,7 @@ public class LessonCancelCommandParser implements Parser<LessonCancelCommand> {
      */
     public LessonCancelCommand parse(String args) throws ParseException {
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_REASON);
+        argMultimap.verifyNoUnexpectedPrefixes(List.of(PREFIX_REASON), List.of(PREFIX_REASON));
 
         Index index;
         try {

@@ -25,7 +25,7 @@ public class ArgumentTokenizer {
      */
     public static ArgumentMultimap tokenize(String argsString, Prefix... prefixes) {
         List<PrefixPosition> positions = findAllPrefixPositions(argsString, prefixes);
-        return extractArguments(argsString, positions);
+        return extractArguments(argsString, positions, Arrays.asList(prefixes));
     }
 
     /**
@@ -84,7 +84,8 @@ public class ArgumentTokenizer {
      * @param prefixPositions Zero-based positions of all prefixes in {@code argsString}
      * @return                ArgumentMultimap object that maps prefixes to their arguments
      */
-    private static ArgumentMultimap extractArguments(String argsString, List<PrefixPosition> prefixPositions) {
+    private static ArgumentMultimap extractArguments(String argsString, List<PrefixPosition> prefixPositions,
+            List<Prefix> acceptedPrefixes) {
 
         // Sort by start position
         prefixPositions.sort((prefix1, prefix2) -> prefix1.getStartPosition() - prefix2.getStartPosition());
@@ -98,7 +99,7 @@ public class ArgumentTokenizer {
         prefixPositions.add(endPositionMarker);
 
         // Map prefixes to their argument values (if any)
-        ArgumentMultimap argMultimap = new ArgumentMultimap();
+        ArgumentMultimap argMultimap = new ArgumentMultimap(argsString, acceptedPrefixes);
         for (int i = 0; i < prefixPositions.size() - 1; i++) {
             // Extract and store prefixes and their arguments
             Prefix argPrefix = prefixPositions.get(i).getPrefix();

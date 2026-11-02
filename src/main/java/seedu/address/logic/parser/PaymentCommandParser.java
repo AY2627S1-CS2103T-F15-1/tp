@@ -8,6 +8,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_STUDENT;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Objects;
 
 import seedu.address.commons.core.index.Index;
@@ -34,19 +35,14 @@ public class PaymentCommandParser implements Parser<PaymentCommand> {
     public PaymentCommand parse(String args) throws ParseException {
         ArgumentMultimap arguments = ArgumentTokenizer.tokenize(args, PREFIX_STUDENT, PREFIX_AMOUNT,
                 PREFIX_DATE, PREFIX_NOTES);
+        arguments.verifyNoUnexpectedPrefixes(List.of(PREFIX_NOTES), List.of(PREFIX_NOTES));
         ParserUtil.requirePrefixesPresent(arguments, PaymentCommand.MESSAGE_USAGE, PREFIX_STUDENT, PREFIX_AMOUNT);
         arguments.verifyNoDuplicatePrefixesFor(PREFIX_STUDENT, PREFIX_AMOUNT, PREFIX_DATE, PREFIX_NOTES);
         arguments.verifyNoEmptyValuesFor(PREFIX_STUDENT, PREFIX_AMOUNT, PREFIX_DATE, PREFIX_NOTES);
         Index index = ParserUtil.parseIndex(arguments.getValue(PREFIX_STUDENT).orElseThrow(),
                 PaymentCommand.MESSAGE_USAGE);
         String amountText = arguments.getValue(PREFIX_AMOUNT).orElseThrow();
-        if (!amountText.matches("[0-9]+(?:\\.[0-9]{1,2})?")) {
-            throw new ParseException(PaymentCommand.MESSAGE_AMOUNT_CONSTRAINTS);
-        }
-        BigDecimal amount = new BigDecimal(amountText);
-        if (amount.signum() <= 0) {
-            throw new ParseException(PaymentCommand.MESSAGE_AMOUNT_CONSTRAINTS);
-        }
+        BigDecimal amount = ParserUtil.parseAmount(amountText, PaymentCommand.MESSAGE_AMOUNT_CONSTRAINTS);
         LocalDate date = ParserUtil.parseOptional(arguments, PREFIX_DATE,
                 value -> ParserUtil.parseDate(value, LocalDate.now(clock)).value);
         String notes = arguments.getValue(PREFIX_NOTES).map(value -> value.strip().replaceAll(" {2,}", " "))
