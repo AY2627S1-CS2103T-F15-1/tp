@@ -663,7 +663,7 @@ Format: `pay st/STUDENT_INDEX amt/AMOUNT [d/DATE] [n/NOTES]`
 * A payment of $10,000.00 or more is recorded, but TutorFlow adds a warning such as `Warning: $100000.00 is an unusually large payment. Check that the amount has no extra digits.` There is no hard upper limit.
 * `DATE` defaults to today using your computer's local date. It accepts any of the [ways to write a date](#writing-dates), and cannot be in the future. A future date is rejected with `Payment dates cannot be in the future.`
 * Payment dates have no lower bound, so an old date such as `1990-01-01` is accepted.
-* In the replies of `pay`, `pay list`, `charge`, `balance`, `withdraw` and `lesson list`, a student who shares a name with another student is labelled with the last four digits of their phone number, as in [`agenda`](#viewing-the-agenda-agenda).
+* In the replies of `pay`, `pay list`, `charge`, `balance`, `withdraw` and `lesson list`, a student who shares a name with another student is labelled with the last four digits of their phone number, as in [`agenda`](#viewing-the-agenda-agenda), and an archived student is marked `(archived)`.
 * `NOTES` is optional printable text of 1–200 characters on one line, such as a transfer reference. Extra spaces are collapsed and the notes are saved with the payment.
 * Each prefix can appear once, in any order. Both `st/` and `amt/` are required. Empty or repeated fields are rejected.
 * Payments are saved automatically. Partial payments reduce the amount owed; excess payments and advance payments are accepted as credit. Archived students can receive payments.
