@@ -15,7 +15,7 @@ Given below are my contributions to the project.
   * Highlights: TODO
   * Credits: *TODO -- mention any reused code/ideas or third-party libraries*
 
-* **Code contributed**: [RepoSense link]()
+* **Code contributed**: [RepoSense link](https://nus-cs2103-ay2627s1.github.io/tp-dashboard/?search=Yash-PoPularPlusPlus&breakdown=true)
 
 * **Project management**:
   * TODO
