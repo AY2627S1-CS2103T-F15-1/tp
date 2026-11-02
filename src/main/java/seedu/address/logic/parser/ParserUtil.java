@@ -61,7 +61,9 @@ public class ParserUtil {
         if (!StringUtil.isNonZeroUnsignedInteger(trimmedIndex)) {
             throw new ParseException(MESSAGE_INVALID_INDEX);
         }
-        return Index.fromOneBased(Integer.parseInt(trimmedIndex));
+        Index index = Index.fromOneBased(Integer.parseInt(trimmedIndex));
+        assert index.getZeroBased() >= 0 : "An index is never negative";
+        return index;
     }
 
     /**

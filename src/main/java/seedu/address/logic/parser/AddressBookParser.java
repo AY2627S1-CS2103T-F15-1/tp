@@ -76,6 +76,7 @@ public class AddressBookParser {
 
         final String commandWord = input.get().getWord();
         final String arguments = input.get().getArguments();
+        assert !commandWord.isEmpty() : "A command with no command word is rejected above";
         if (NON_PREFIX_COMMAND_PATHS.contains(commandPath(commandWord, arguments))
                 && RETIRED_ADDRESS_TOKEN.matcher(arguments).find()) {
             throw new ParseException(CliSyntax.MESSAGE_RETIRED_ADDRESS_PREFIX);

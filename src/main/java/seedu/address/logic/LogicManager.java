@@ -93,6 +93,7 @@ public class LogicManager implements Logic {
 
     @Override
     public CommandResult execute(String commandText) throws CommandException, ParseException {
+        assert commandText != null : "The UI never passes null text";
         logger.fine("Executing command");
 
         CommandResult commandResult;

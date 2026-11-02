@@ -8,7 +8,9 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
+import java.util.logging.Logger;
 
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
@@ -38,6 +40,8 @@ public class PaymentCommand extends Command {
     public static final String MESSAGE_INDICES_NOTE =
             "Payment indices stay as last shown; run 'pay list' to refresh.";
 
+    private static final Logger logger = LogsCenter.getLogger(PaymentCommand.class);
+
     private final Index studentIndex;
     private final BigDecimal amount;
     private final LocalDate date;
@@ -57,6 +61,7 @@ public class PaymentCommand extends Command {
         }
         this.studentIndex = studentIndex;
         this.amount = amount.setScale(2);
+        assert this.amount.scale() == 2 && this.amount.signum() > 0 : "A payment is a positive amount in cents";
         if (notes != null && !LedgerEntry.isValidNotes(notes)) {
             throw new IllegalArgumentException(LedgerEntry.MESSAGE_NOTES_CONSTRAINTS);
         }
@@ -80,7 +85,9 @@ public class PaymentCommand extends Command {
         }
         try {
             model.addLedgerEntry(LedgerEntry.payment(student, amount, paymentDate, notes));
+            logger.fine("Recorded a payment");
         } catch (IllegalArgumentException e) {
+            logger.warning("The ledger rejected a payment");
             throw new CommandException(e.getMessage(), e);
         }
         BigDecimal balance = Ledger.balance(model.getAddressBook(), student);

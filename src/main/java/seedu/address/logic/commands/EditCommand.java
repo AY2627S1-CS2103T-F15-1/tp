@@ -15,7 +15,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.logging.Logger;
 
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.CollectionUtil;
 import seedu.address.commons.util.ToStringBuilder;
@@ -60,6 +62,8 @@ public class EditCommand extends Command {
     public static final String MESSAGE_SAME_NAME_WARNING = AddCommand.MESSAGE_SAME_NAME_WARNING;
     public static final String MESSAGE_UNCHANGED = "The student already has these details.";
 
+    private static final Logger logger = LogsCenter.getLogger(EditCommand.class);
+
     private final Index index;
     private final EditPersonDescriptor editPersonDescriptor;
 
@@ -100,6 +104,7 @@ public class EditCommand extends Command {
                 && model.getAddressBook().getPersonList().stream().anyMatch(editedPerson::hasSameName);
 
         model.setPerson(personToEdit, editedPerson);
+        logger.fine("Edited a student");
         String message = String.format(MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson));
         if (!personToEdit.getLevel().equals(editedPerson.getLevel())) {
             message += "\nPast lessons keep their original details.";

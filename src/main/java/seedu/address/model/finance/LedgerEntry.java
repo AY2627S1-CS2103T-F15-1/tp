@@ -78,6 +78,7 @@ public record LedgerEntry(UUID id, UUID studentId, UUID lessonId, Kind kind,
         } catch (ArithmeticException e) {
             throw new IllegalArgumentException("Amounts must have at most two decimal places.", e);
         }
+        assert amount.scale() == 2 && amount.signum() > 0 : "A ledger amount is a positive amount in cents";
     }
 
     /** Captures the hourly rate times duration, rounding once to cents with HALF_UP. */
