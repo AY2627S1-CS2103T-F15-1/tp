@@ -67,7 +67,7 @@ TutorFlow is a desktop application for independent private tutors who teach arou
   For example, `exit now` is rejected, so a mistyped command cannot close the app.
 
 * Command words are not case-sensitive: `LIST`, `List` and `list` are the same command, and so are `LESSON ADD` and `lesson add`. The same goes for the keyword `confirm`. Parameter prefixes such as `n/` and `st/` must still be in lower case, and the values you type keep their case.
-* A mistyped parameter prefix is reported as `Unknown prefix for this command: name/.` instead of being absorbed into the previous value and blamed on that field. This includes a prefix that belongs to a different command, such as `amt/` in `lesson add`, and an upper-case spelling such as `N/`.
+* A mistyped parameter prefix is reported as `Unknown prefix for this command: name/.` instead of being absorbed into the previous value and blamed on that field. This includes a prefix that belongs to a different command, such as `amt/` in `lesson add`, and an upper-case spelling such as `N/`. A single letter that is not a parameter, such as `q/`, is reported the same way, except inside a description, note, feedback or remark, where text such as `c/o` is kept as written.
 * Slash-bearing text is still allowed where it is ordinary content. A name or venue accepts `c/o`, `d/o`, `s/o`, `n/a`, `w/o` and `Blk/123`. Notes, feedback, reasons and remarks may quote a full command, including tokens such as `n/` or `desc/`. A description accepts an unaccepted short prefix such as `p/3` as prose, but still rejects a field-name spelling such as `name/` and the retired `a/`.
 
 * The command box remembers the commands you have entered in this session. Press `Up` to bring back an earlier command and `Down` to move forward again, as in a terminal. Down past the newest command returns to what you were typing.<br>
@@ -328,7 +328,7 @@ Shows the lessons of a day or of a week, in the order that they take place.
 
 Format: `agenda [d/DATE] [week/]`
 
-* Without `d/DATE`, it shows today. `DATE` is written as for [`lesson add`](#scheduling-a-lesson-lesson-add).
+* Without `d/DATE`, it shows today. `DATE` is written as for [`lesson add`](#scheduling-a-lesson-lesson-add). The year must be from 2000 to 2099.
 * With `week/`, it shows the Monday to Sunday week that contains the date, one day after another. A day without lessons shows `— no lessons —`.
 * Each line shows the lesson number, the time, the student, the subject, the venue, and the status if the lesson is not simply scheduled. Lessons that overlap another lesson are marked `⚠ overlaps`.
 * A student who shares a name with another student is shown with the last four digits of their phone number, such as `Alex Yeoh (phone ending 4567)`, so that you can tell their lessons apart before using a lesson number. If the last four digits are the same too, a short reference is added, such as `Alex Yeoh (phone ending 4567, ref 7b04d3c8)`. An archived student is marked, such as `David Li (archived)`.
@@ -404,7 +404,7 @@ Format: `lesson move INDEX [d/DATE] [t/TIME] [dur/MINUTES] [v/VENUE]`
 * At least one of the optional fields must be given. Fields that are not given stay as they were.
 * The values follow the same rules as for [`lesson add`](#scheduling-a-lesson-lesson-add). A new date must be today or later. Only a date that you give is checked, so you can still change the time of a lesson that has already passed.
 * A completed, cancelled or missed lesson cannot be rescheduled. Moving a missed lesson would lose the record that it was missed, so schedule a make-up lesson with [`lesson add`](#scheduling-a-lesson-lesson-add) instead.
-* `lesson move` can change the date, time, duration and venue, but cannot clear the venue or change the subject.
+* `lesson move` can change the date, time, duration and venue, but cannot clear the venue or change the subject. A move that would leave the lesson exactly as it is is rejected.
 * If the move makes the lesson identical to another lesson, it is rejected. If it makes the lesson overlap another lesson, it is moved and the result warns you.
 
 Examples:
@@ -663,6 +663,7 @@ Format: `pay st/STUDENT_INDEX amt/AMOUNT [d/DATE] [n/NOTES]`
 * A payment of $10,000.00 or more is recorded, but TutorFlow adds a warning such as `Warning: $100000.00 is an unusually large payment. Check that the amount has no extra digits.` There is no hard upper limit.
 * `DATE` defaults to today using your computer's local date. It accepts any of the [ways to write a date](#writing-dates), and cannot be in the future. A future date is rejected with `Payment dates cannot be in the future.`
 * Payment dates have no lower bound, so an old date such as `1990-01-01` is accepted.
+* In the replies of `pay`, `pay list`, `charge`, `balance`, `withdraw` and `lesson list`, a student who shares a name with another student is labelled with the last four digits of their phone number, as in [`agenda`](#viewing-the-agenda-agenda).
 * `NOTES` is optional printable text of 1–200 characters on one line, such as a transfer reference. Extra spaces are collapsed and the notes are saved with the payment.
 * Each prefix can appear once, in any order. Both `st/` and `amt/` are required. Empty or repeated fields are rejected.
 * Payments are saved automatically. Partial payments reduce the amount owed; excess payments and advance payments are accepted as credit. Archived students can receive payments.

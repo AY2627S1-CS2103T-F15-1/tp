@@ -15,7 +15,7 @@
 
 * This project is based on the [AddressBook-Level3](https://github.com/se-edu/addressbook-level3) project created by the [SE-EDU initiative](https://se-education.org). The architecture, the command and parser design and the testing approach are adapted from it.
 * The edit, archive, delete and add icons in the student-card controls are from [Material Design Icons](https://github.com/google/material-design-icons), licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
-* The TutorFlow application icon was supplied by the project team in a6891d76; 4e576c20 resized that asset for use as the window icon.
+* The TutorFlow application icon was supplied by the project team and resized for use as the window icon.
 * Libraries used: [JavaFX](https://openjfx.io/) (user interface), [Jackson](https://github.com/FasterXML/jackson) (JSON storage), [commonmark-java](https://github.com/commonmark/commonmark-java) (showing the bundled User Guide in the Help window), [JUnit5](https://github.com/junit-team/junit5) (testing), [Monocle](https://github.com/TestFX/Monocle) (running the user interface tests without a screen), [Checkstyle](https://checkstyle.sourceforge.io/) and [JaCoCo](https://www.jacoco.org/jacoco/) (code quality and coverage).
 * Documentation is built with [MarkBind](https://markbind.org/) and the diagrams are drawn with [PlantUML](https://plantuml.com/).
 
@@ -104,18 +104,18 @@ Here's a (partial) class diagram of the `Logic` component:
 
 The sequence diagram below illustrates the interactions within the `Logic` component, taking `execute("delete 1")` API call as an example.
 
-All subject values entered through commands go through `ParserUtil#parseSubject`. It normalizes the text,
-capitalizes the first Unicode letter with an uppercase mapping under `Locale.ROOT`, and then creates the immutable
-`Subject`. This keeps `add`, `edit`, lesson subject selection and subject filters consistent. Stored values loaded by
-`Subject` and `JsonAdaptedSubject` keep their original case, so existing data files and historical lessons are not
-rewritten.
-
 <puml src="diagrams/DeleteSequenceDiagram.puml" alt="Interactions Inside the Logic Component for the `delete 1` Command" />
 
 <box type="info" seamless>
 
 **Note:** The lifeline for `DeleteCommandParser` should end at the destroy marker (X), but due to a limitation of PlantUML, the lifeline continues till the end of diagram.
 </box>
+
+All subject values entered through commands go through `ParserUtil#parseSubject`. It normalizes the text,
+capitalizes the first Unicode letter with an uppercase mapping under `Locale.ROOT`, and then creates the immutable
+`Subject`. This keeps `add`, `edit`, lesson subject selection and subject filters consistent. Stored values loaded by
+`Subject` and `JsonAdaptedSubject` keep their original case, so existing data files and historical lessons are not
+rewritten.
 
 
 How the `Logic` component works:
@@ -151,6 +151,7 @@ The `Model` component,
 * stores the address book data i.e., all `Person` objects, each of which represents a student with a name, phone number, level, subjects and rate, and optionally an email, a venue and a remark (the `Person` objects are contained in a `UniquePersonList` object). Two `Person` objects are the same student if they have the same phone number and the same name, ignoring case.
 * stores the `Lesson` objects, each of which is a lesson with a student, a subject, a date, a start time, a duration, a status and optionally a venue (the `Lesson` objects are contained in a `UniqueLessonList` object). A `Lesson` refers to its student by the permanent student UUID. Its stored name and phone number are display details and support linking older data during migration; they are not the permanent relationship key. Deleting a student deletes their lessons, and editing contact details retains the UUID link and the lesson's booking snapshots.
 * stores immutable `LedgerEntry` records for lesson charges, student payments, withdrawals and the reversals of charges or payments. Each record refers to a permanent student UUID and, for charges and charge reversals, a lesson UUID; a reversal also refers to the entry it cancels. `Ledger` derives balances and unpaid dues from those records; those calculations do not mutate the ledger.
+* stores `Homework` items, each for one student, and `Task` follow-ups, each linked to exactly one student, lesson, homework item or payment. It also stores the minimum travel buffer between venues and the `StudentOrder` chosen by `sort`. Dues are not stored: they are worked out from the ledger.
 * stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
 * stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
 * does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
@@ -366,7 +367,7 @@ The sequence diagram below shows `execute("lesson repeat st/3 d/2026-12-03 t/16:
 
 `today` shows the dashboard, which answers "what does today require?", and `view INDEX` shows the overview of one student. Both are read-only commands that return their whole result as text for the result box.
 
-**Parsing.** `today` takes no parameters, so `AddressBookParser` calls `requireNoArguments` before it creates the command: `today 2` fails with `The 'today' command takes no parameters.` instead of running. `AddressBookParser` passes `LocalDate.now()` to `TodayCommand`, and `ViewCommandParser` passes it to `ViewCommand` with the parsed index. The commands do not read the clock themselves, so tests can give them a fixed date.
+**Parsing.** `today` takes no parameters, so `AddressBookParser` calls `requireNoArguments` before it creates the command: `today 2` fails with `The 'today' command takes no parameters.` instead of running. `AddressBookParser` passes `LocalDate.now(clock)` to `TodayCommand`, and `ViewCommandParser` passes it to `ViewCommand` with the parsed index. The commands do not read the clock themselves, so tests can give them a fixed date.
 
 **Building the dashboard.** `TodayCommand#execute` gets the lessons from `Model#getAddressBook()` and returns the date followed by four sections, in this order:
 
