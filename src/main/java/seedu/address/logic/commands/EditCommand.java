@@ -196,22 +196,27 @@ public class EditCommand extends Command {
                     || CollectionUtil.isAnyNonNull(name, phone, email, level, subjects, rate, venue);
         }
 
+        /** Sets the new name. */
         public void setName(Name name) {
             this.name = name;
         }
 
+        /** Returns the new name, if it is edited. */
         public Optional<Name> getName() {
             return Optional.ofNullable(name);
         }
 
+        /** Sets the new phone. */
         public void setPhone(Phone phone) {
             this.phone = phone;
         }
 
+        /** Returns the new phone, if it is edited. */
         public Optional<Phone> getPhone() {
             return Optional.ofNullable(phone);
         }
 
+        /** Sets the new email. */
         public void setEmail(Email email) {
             this.email = email;
             isEmailCleared = false;
@@ -223,18 +228,22 @@ public class EditCommand extends Command {
             isEmailCleared = true;
         }
 
+        /** Returns true if the email is cleared. */
         public boolean isEmailCleared() {
             return isEmailCleared;
         }
 
+        /** Returns the new email, if it is edited. */
         public Optional<Email> getEmail() {
             return Optional.ofNullable(email);
         }
 
+        /** Sets the new level. */
         public void setLevel(Level level) {
             this.level = level;
         }
 
+        /** Returns the new level, if it is edited. */
         public Optional<Level> getLevel() {
             return Optional.ofNullable(level);
         }
@@ -256,14 +265,17 @@ public class EditCommand extends Command {
             return (subjects != null) ? Optional.of(Collections.unmodifiableSet(subjects)) : Optional.empty();
         }
 
+        /** Sets the new rate. */
         public void setRate(Rate rate) {
             this.rate = rate;
         }
 
+        /** Returns the new rate, if it is edited. */
         public Optional<Rate> getRate() {
             return Optional.ofNullable(rate);
         }
 
+        /** Sets the new venue. */
         public void setVenue(Venue venue) {
             this.venue = venue;
             isVenueCleared = false;
@@ -275,10 +287,12 @@ public class EditCommand extends Command {
             isVenueCleared = true;
         }
 
+        /** Returns true if the venue is cleared. */
         public boolean isVenueCleared() {
             return isVenueCleared;
         }
 
+        /** Returns the new venue, if it is edited. */
         public Optional<Venue> getVenue() {
             return Optional.ofNullable(venue);
         }
