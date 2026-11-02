@@ -2,6 +2,7 @@ package seedu.address.logic.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,12 @@ public class LessonPrepCommandParserTest {
             "0 n/Notes", "1 n/Line\nBreak"}) {
             assertThrows(ParseException.class, () -> parser.parseCommand("lesson prep " + arguments));
         }
+    }
+
+    @Test
+    public void parse_missingNotes_namesMissingPrefix() {
+        ParseException thrown = assertThrows(ParseException.class, () -> parser.parseCommand("lesson prep 2"));
+        assertTrue(thrown.getMessage().startsWith("Missing required parameter(s): n/"));
     }
 
     @Test
