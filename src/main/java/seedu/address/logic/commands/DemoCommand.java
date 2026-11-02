@@ -6,11 +6,11 @@ import seedu.address.model.util.SampleDataUtil;
 
 /** Loads the existing sample dataset only after confirmation and only into an empty dataset. */
 public class DemoCommand extends Command {
-    private final boolean confirmed;
+    private final boolean isConfirmed;
 
     /** Creates a sample-data preview or a confirmed load. */
-    public DemoCommand(boolean confirmed) {
-        this.confirmed = confirmed;
+    public DemoCommand(boolean isConfirmed) {
+        this.isConfirmed = isConfirmed;
     }
 
     @Override
@@ -18,7 +18,7 @@ public class DemoCommand extends Command {
         if (!model.getAddressBook().isEmpty()) {
             throw new CommandException("Demo requires an empty dataset. Your records have been retained.");
         }
-        if (!confirmed) {
+        if (!isConfirmed) {
             return new CommandResult("Load " + SampleDataUtil.getSamplePersons().length
                     + " sample students for exploration. Type demo confirm to load them.");
         }

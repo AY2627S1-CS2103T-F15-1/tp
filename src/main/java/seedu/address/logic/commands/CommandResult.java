@@ -20,25 +20,25 @@ public class CommandResult {
     private final List<Homework> displayedHomework;
 
     /** Help information should be shown to the user. */
-    private final boolean showHelp;
+    private final boolean isShowHelp;
 
     /** The application should exit. */
-    private final boolean exit;
+    private final boolean isExit;
 
     /**
      * Constructs a {@code CommandResult} with the specified fields.
      */
-    public CommandResult(String feedbackToUser, boolean showHelp, boolean exit) {
-        this(feedbackToUser, showHelp, exit, null, null);
+    public CommandResult(String feedbackToUser, boolean isShowHelp, boolean isExit) {
+        this(feedbackToUser, isShowHelp, isExit, null, null);
     }
 
-    private CommandResult(String feedbackToUser, boolean showHelp, boolean exit, List<Lesson> displayedLessons,
+    private CommandResult(String feedbackToUser, boolean isShowHelp, boolean isExit, List<Lesson> displayedLessons,
             List<Homework> displayedHomework) {
         this.displayedHomework = displayedHomework == null ? null : List.copyOf(displayedHomework);
         this.displayedLessons = displayedLessons == null ? null : List.copyOf(displayedLessons);
         this.feedbackToUser = requireNonNull(feedbackToUser);
-        this.showHelp = showHelp;
-        this.exit = exit;
+        this.isShowHelp = isShowHelp;
+        this.isExit = isExit;
     }
 
     /**
@@ -61,7 +61,7 @@ public class CommandResult {
 
     /** Attaches the immutable numbered selection actually rendered in this result. */
     public CommandResult withDisplayedLessons(List<Lesson> lessons) {
-        return new CommandResult(feedbackToUser, showHelp, exit, lessons, displayedHomework);
+        return new CommandResult(feedbackToUser, isShowHelp, isExit, lessons, displayedHomework);
     }
 
     /** Returns the homework to display, if this result has any. */
@@ -71,22 +71,22 @@ public class CommandResult {
 
     /** Attaches immutable homework rows actually numbered in this result. */
     public CommandResult withDisplayedHomework(List<Homework> homework) {
-        return new CommandResult(feedbackToUser, showHelp, exit, displayedLessons, homework);
+        return new CommandResult(feedbackToUser, isShowHelp, isExit, displayedLessons, homework);
     }
 
     /** Replaces feedback while retaining presentation data and command flags. */
     public CommandResult withFeedback(String feedback) {
-        return new CommandResult(feedback, showHelp, exit, displayedLessons, displayedHomework);
+        return new CommandResult(feedback, isShowHelp, isExit, displayedLessons, displayedHomework);
     }
 
     /** Returns true if the help window should be shown. */
     public boolean isShowHelp() {
-        return showHelp;
+        return isShowHelp;
     }
 
     /** Returns true if the application should exit. */
     public boolean isExit() {
-        return exit;
+        return isExit;
     }
 
     @Override
@@ -101,21 +101,21 @@ public class CommandResult {
         }
 
         return feedbackToUser.equals(otherCommandResult.feedbackToUser)
-                && showHelp == otherCommandResult.showHelp
-                && exit == otherCommandResult.exit;
+                && isShowHelp == otherCommandResult.isShowHelp
+                && isExit == otherCommandResult.isExit;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(feedbackToUser, showHelp, exit);
+        return Objects.hash(feedbackToUser, isShowHelp, isExit);
     }
 
     @Override
     public String toString() {
         return new ToStringBuilder(this)
                 .add("feedbackToUser", feedbackToUser)
-                .add("showHelp", showHelp)
-                .add("exit", exit)
+                .add("showHelp", isShowHelp)
+                .add("exit", isExit)
                 .toString();
     }
 

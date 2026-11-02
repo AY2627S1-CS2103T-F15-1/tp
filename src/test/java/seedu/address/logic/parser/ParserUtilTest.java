@@ -350,16 +350,16 @@ public class ParserUtilTest {
 
     @Test
     public void parseFlag_flagAbsentOrGivenWithoutValue_returnsWhetherPresent() throws Exception {
-        assertFalse(ParserUtil.parseFlag(ArgumentTokenizer.tokenize(" d/2026-09-22", PREFIX_WEEK), PREFIX_WEEK));
-        assertTrue(ParserUtil.parseFlag(ArgumentTokenizer.tokenize(" week/", PREFIX_WEEK), PREFIX_WEEK));
+        assertFalse(ParserUtil.hasFlag(ArgumentTokenizer.tokenize(" d/2026-09-22", PREFIX_WEEK), PREFIX_WEEK));
+        assertTrue(ParserUtil.hasFlag(ArgumentTokenizer.tokenize(" week/", PREFIX_WEEK), PREFIX_WEEK));
     }
 
     @Test
     public void parseFlag_flagGivenValueOrRepeated_throwsParseException() {
         assertThrows(ParseException.class, String.format(ParserUtil.MESSAGE_FLAG_TAKES_NO_VALUE, PREFIX_WEEK), ()
-                -> ParserUtil.parseFlag(ArgumentTokenizer.tokenize(" week/yes", PREFIX_WEEK), PREFIX_WEEK));
+                -> ParserUtil.hasFlag(ArgumentTokenizer.tokenize(" week/yes", PREFIX_WEEK), PREFIX_WEEK));
         ArgumentMultimap repeated = ArgumentTokenizer.tokenize(" week/ week/", PREFIX_WEEK);
-        assertThrows(ParseException.class, () -> ParserUtil.parseFlag(repeated, PREFIX_WEEK));
+        assertThrows(ParseException.class, () -> ParserUtil.hasFlag(repeated, PREFIX_WEEK));
     }
 
     @Test

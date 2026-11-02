@@ -29,7 +29,7 @@ public class TaskListCommandParser implements Parser<TaskListCommand> {
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_STUDENT);
         argMultimap.verifyNoEmptyValuesFor(PREFIX_STUDENT);
 
-        boolean isShowingAll = ParserUtil.parseFlag(argMultimap, PREFIX_ALL);
+        boolean isShowingAll = ParserUtil.hasFlag(argMultimap, PREFIX_ALL);
         Index studentIndex = ParserUtil.parseOptional(argMultimap, PREFIX_STUDENT,
                 value -> ParserUtil.parseIndex(value, TaskListCommand.MESSAGE_USAGE));
         return new TaskListCommand(isShowingAll, studentIndex);

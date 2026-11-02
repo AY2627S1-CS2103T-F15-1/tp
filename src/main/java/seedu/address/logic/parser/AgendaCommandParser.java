@@ -55,7 +55,7 @@ public class AgendaCommandParser implements Parser<AgendaCommand> {
                 throw new ParseException(MESSAGE_YEAR_RANGE);
             }
         }
-        return new AgendaCommand(date, ParserUtil.parseFlag(argMultimap, PREFIX_WEEK));
+        return new AgendaCommand(date, ParserUtil.hasFlag(argMultimap, PREFIX_WEEK));
     }
 
 }

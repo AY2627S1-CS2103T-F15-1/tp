@@ -41,7 +41,7 @@ public class LessonListCommandParser implements Parser<LessonListCommand> {
 
         Index studentIndex = ParserUtil.parseIndex(argMultimap.getValue(PREFIX_STUDENT).get(),
                 LessonListCommand.MESSAGE_USAGE);
-        return new LessonListCommand(studentIndex, ParserUtil.parseFlag(argMultimap, PREFIX_ALL), clock);
+        return new LessonListCommand(studentIndex, ParserUtil.hasFlag(argMultimap, PREFIX_ALL), clock);
     }
 
 }

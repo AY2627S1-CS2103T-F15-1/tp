@@ -359,7 +359,7 @@ public class ParserUtil {
      *
      * @throws ParseException if the flag is repeated or is given a value.
      */
-    public static boolean parseFlag(ArgumentMultimap argMultimap, Prefix flag) throws ParseException {
+    public static boolean hasFlag(ArgumentMultimap argMultimap, Prefix flag) throws ParseException {
         argMultimap.verifyNoDuplicatePrefixesFor(flag);
         Optional<String> value = argMultimap.getValue(flag);
         if (value.isPresent() && !value.get().isBlank()) {

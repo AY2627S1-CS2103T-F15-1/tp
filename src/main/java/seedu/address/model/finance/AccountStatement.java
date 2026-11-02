@@ -39,7 +39,7 @@ public final class AccountStatement {
         for (LedgerEntry entry : entries) {
             BigDecimal signed = entry.kind().increasesBalance() ? entry.amount() : entry.amount().negate();
             running = running.add(signed);
-            if (entry.kind().refersToLesson()) {
+            if (entry.kind().isLessonRelated()) {
                 charged = charged.add(signed);
             } else if (entry.kind() == LedgerEntry.Kind.WITHDRAWAL) {
                 withdrawn = withdrawn.add(entry.amount());
