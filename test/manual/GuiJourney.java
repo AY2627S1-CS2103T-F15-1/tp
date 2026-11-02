@@ -1,3 +1,8 @@
+/*
+ * Unmaintained snapshot for the published TutorFlow v1.5 JAR (1 November 2026).
+ * Outside Gradle/CI/Checkstyle; later app internals may not be compatible.
+ * See README.md for prerequisites, isolation and reproduction instructions.
+ */
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.*;
