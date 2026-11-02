@@ -138,10 +138,11 @@ public class HomeworkCommandParserTest {
     }
 
     @Test
-    public void parseEdit_noFieldGiven_answersWithTheUsageString() {
-        assertParseFailure(parser, "edit 1", HomeworkEditCommand.MESSAGE_USAGE);
-        assertParseFailure(parser, "edit", HomeworkEditCommand.MESSAGE_USAGE);
-        assertParseFailure(parser, "edit abc", HomeworkEditCommand.MESSAGE_USAGE);
+    public void parseEdit_noFieldGiven_namesTheFieldsAndUsage() {
+        String expected = "Provide at least one of desc/ or due/.\n" + HomeworkEditCommand.MESSAGE_USAGE;
+        assertParseFailure(parser, "edit 1", expected);
+        assertParseFailure(parser, "edit", expected);
+        assertParseFailure(parser, "edit abc", expected);
     }
 
     @Test

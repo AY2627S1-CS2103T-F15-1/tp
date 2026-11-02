@@ -62,6 +62,14 @@ public class LessonMoveCommandTest {
     }
 
     @Test
+    public void execute_sameDate_throwsCommandException() {
+        model.addLesson(lesson);
+        LessonMoveCommand command = new LessonMoveCommand(INDEX_FIRST_PERSON, lesson.getDate(), null, null, null);
+
+        assertCommandFailure(command, model, LessonMoveCommand.MESSAGE_UNCHANGED);
+    }
+
+    @Test
     public void execute_allFieldsGiven_movesLesson() {
         model.addLesson(lesson);
         Venue venue = new Venue("Online");

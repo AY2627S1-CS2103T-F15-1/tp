@@ -1,6 +1,7 @@
 package seedu.address.commons.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -37,6 +38,14 @@ public class JsonUtilTest {
         assertEquals(serializableTestClass.getName(), SerializableTestClass.getNameTestValue());
         assertEquals(serializableTestClass.getListOfLocalDateTimes(), SerializableTestClass.getListTestValues());
         assertEquals(serializableTestClass.getMapOfIntegerToString(), SerializableTestClass.getHashMapTestValues());
+    }
+
+    @Test
+    public void deserializeObjectFromJsonFile_trailingText_throwsIoException() throws IOException {
+        FileUtil.writeToFile(SERIALIZATION_FILE, SerializableTestClass.JSON_STRING_REPRESENTATION + " garbage");
+
+        assertThrows(IOException.class, () ->
+                JsonUtil.deserializeObjectFromJsonFile(SERIALIZATION_FILE, SerializableTestClass.class));
     }
 
     //TODO: @Test jsonUtil_readJsonStringToObjectInstance_correctObject()

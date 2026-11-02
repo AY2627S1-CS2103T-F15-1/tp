@@ -34,6 +34,12 @@ public class AgendaCommandParserTest {
     }
 
     @Test
+    public void parse_yearOutOfRange_failure() {
+        assertParseFailure(parser, " d/1999-12-31", AgendaCommandParser.MESSAGE_YEAR_RANGE);
+        assertParseFailure(parser, " d/2100-01-01 week/", AgendaCommandParser.MESSAGE_YEAR_RANGE);
+    }
+
+    @Test
     public void parse_weekWithoutDate_usesToday() throws Exception {
         assertTrue(parser.parse(" week/").equals(new AgendaCommand(LocalDate.now(), true)));
     }

@@ -2,6 +2,7 @@ package seedu.address.logic;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.FileSystemException;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
@@ -175,6 +176,9 @@ public class LogicManager implements Logic {
 
     /** Returns the reason a write failed, naming the kind of failure if the exception gives no message. */
     private static String describe(IOException e) {
+        if (e instanceof FileSystemException failure && failure.getOtherFile() != null) {
+            return failure.getOtherFile() + (failure.getReason() == null ? "" : ": " + failure.getReason());
+        }
         return e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
     }
 

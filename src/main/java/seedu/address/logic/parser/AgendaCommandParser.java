@@ -16,6 +16,10 @@ import seedu.address.logic.parser.exceptions.ParseException;
  * Parses input arguments and creates a new AgendaCommand object
  */
 public class AgendaCommandParser implements Parser<AgendaCommand> {
+    public static final int MIN_YEAR = 2000;
+    public static final int MAX_YEAR = 2099;
+    public static final String MESSAGE_YEAR_RANGE = "The agenda date must be in the years " + MIN_YEAR + " to "
+            + MAX_YEAR + ".";
 
     private final Clock clock;
 
@@ -47,6 +51,9 @@ public class AgendaCommandParser implements Parser<AgendaCommand> {
         LocalDate date = today;
         if (argMultimap.getValue(PREFIX_DATE).isPresent()) {
             date = ParserUtil.parseDate(argMultimap.getValue(PREFIX_DATE).get(), today).value;
+            if (date.getYear() < MIN_YEAR || date.getYear() > MAX_YEAR) {
+                throw new ParseException(MESSAGE_YEAR_RANGE);
+            }
         }
         return new AgendaCommand(date, ParserUtil.parseFlag(argMultimap, PREFIX_WEEK));
     }

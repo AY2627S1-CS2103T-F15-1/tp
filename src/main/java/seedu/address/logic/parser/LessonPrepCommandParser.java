@@ -16,9 +16,8 @@ public class LessonPrepCommandParser implements Parser<LessonPrepCommand> {
         values.verifyNoUnexpectedPrefixes(List.of(PREFIX_NOTES), List.of(PREFIX_NOTES));
         values.verifyNoDuplicatePrefixesFor(PREFIX_NOTES);
         values.verifyNoEmptyValuesFor(PREFIX_NOTES);
+        ParserUtil.requirePrefixesFound(values, LessonPrepCommand.MESSAGE_USAGE, PREFIX_NOTES);
         Index index = ParserUtil.parseIndex(values.getPreamble(), LessonPrepCommand.MESSAGE_USAGE);
-        String notes = values.getValue(PREFIX_NOTES)
-                .orElseThrow(() -> new ParseException(LessonPrepCommand.MESSAGE_USAGE));
-        return new LessonPrepCommand(index, ParserUtil.parseNotes(notes));
+        return new LessonPrepCommand(index, ParserUtil.parseNotes(values.getValue(PREFIX_NOTES).orElseThrow()));
     }
 }

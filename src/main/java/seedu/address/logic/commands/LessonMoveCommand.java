@@ -40,6 +40,7 @@ public class LessonMoveCommand extends Command {
 
     public static final String MESSAGE_NOT_MOVED = "Provide at least one of " + PREFIX_DATE + ", " + PREFIX_TIME
             + ", " + PREFIX_DURATION + " or " + PREFIX_VENUE + ".";
+    public static final String MESSAGE_UNCHANGED = "The lesson already has that date, time, duration and venue.";
     public static final String MESSAGE_SUCCESS = "Rescheduled: %1$s — %2$s\n  from  %3$s\n  to    %4$s";
     public static final String MESSAGE_DATE_IN_PAST = "That date is in the past.";
     public static final String MESSAGE_COMPLETED_LESSON = "Cannot reschedule a completed lesson. "
@@ -88,6 +89,9 @@ public class LessonMoveCommand extends Command {
         requireMovable(target);
         LessonCommandUtil.requireNotCharged(model, target);
         Lesson moved = createMovedLesson(target);
+        if (moved.equals(target)) {
+            throw new CommandException(MESSAGE_UNCHANGED);
+        }
 
         if (!moved.isSameLesson(target) && model.hasLesson(moved)) {
             throw new CommandException(LessonCommandUtil.MESSAGE_DUPLICATE_LESSON);

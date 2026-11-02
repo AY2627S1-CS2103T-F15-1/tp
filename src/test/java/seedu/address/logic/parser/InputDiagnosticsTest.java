@@ -88,6 +88,11 @@ public class InputDiagnosticsTest {
     }
 
     @Test
+    public void parse_upperCaseSlashPairInVenue_isKeptAsText() throws Exception {
+        parser.parseCommand("add n/Amy p/91110004 l/S3 s/Math r/60 v/Lift C/D");
+    }
+
+    @Test
     public void parse_retiredAddressPrefix_namesTheRetiredPrefixInsteadOfMisreportingTheEmail() {
         String command = "add n/josh p/78787878 l/S3 s/Math r/120 e/josh@gmail.com a/2902 Yishun";
 

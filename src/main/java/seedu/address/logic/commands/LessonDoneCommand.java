@@ -40,8 +40,7 @@ public class LessonDoneCommand extends Command {
     public static final String MESSAGE_ALREADY_BILLED =
             "No automatic charge: This lesson was already charged. No second charge was recorded.";
     public static final String MESSAGE_NO_CHARGE_ZERO_RATE =
-            "No automatic charge: This student's rate is $0.00. Specify an amount with amt/ if you want to charge "
-                    + "for this lesson. Use charge with an amount.";
+            "No automatic charge: This student's rate is $0.00. Use charge with amt/ to charge for this lesson.";
     public static final String MESSAGE_FUTURE_LESSON =
             "That lesson is scheduled for %1$s. Mark it complete on or after that date.";
 

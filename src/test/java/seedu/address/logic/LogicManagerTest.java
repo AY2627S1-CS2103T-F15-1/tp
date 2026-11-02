@@ -15,6 +15,7 @@ import static seedu.address.testutil.TypicalPersons.AMY;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
@@ -164,6 +165,14 @@ public class LogicManagerTest {
         assertCommandFailureForExceptionFromStorage(DUMMY_IO_EXCEPTION, String.format(
                 LogicManager.FILE_OPS_ERROR_FORMAT, DUMMY_IO_EXCEPTION.getMessage()) + "\n"
                 + LogicManager.UNSAVED_WARNING);
+    }
+
+    @Test
+    public void execute_storageThrowsFileSystemException_hidesTemporaryFile() {
+        assertCommandFailureForExceptionFromStorage(
+                new FileSystemException("/data/.tutorflow-1.tmp", "/data/book.json", "Is a directory"),
+                String.format(LogicManager.FILE_OPS_ERROR_FORMAT, "/data/book.json: Is a directory") + "\n"
+                        + LogicManager.UNSAVED_WARNING);
     }
 
     @Test

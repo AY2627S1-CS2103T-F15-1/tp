@@ -49,7 +49,7 @@ public final class StudentSummaryLabels {
 
     /** Returns the label of a single {@code student} in {@code book}, telling same-name students apart. */
     public static String of(ReadOnlyAddressBook book, Person student) {
-        return new StudentSummaryLabels(book).format(student.getId());
+        return new StudentSummaryLabels(book).find(student.getId()).orElse(student.getName().toString());
     }
 
     /** Returns the label captured for this student when the summary began rendering. */
