@@ -5,6 +5,7 @@ import static java.util.Objects.requireNonNull;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.function.Function;
@@ -49,6 +50,11 @@ public final class StudentSummaryLabels {
     /** Returns the label captured for this student when the summary began rendering. */
     public String format(UUID studentId) {
         return requireNonNull(labels.get(requireNonNull(studentId)), "Student is absent from the summary snapshot");
+    }
+
+    /** Returns the label of this student, or nothing if they were not in the address book when it was captured. */
+    public Optional<String> find(UUID studentId) {
+        return Optional.ofNullable(labels.get(requireNonNull(studentId)));
     }
 
     private static Map<String, Long> count(List<Person> students, Function<Person, String> key) {

@@ -21,6 +21,7 @@ import seedu.address.model.Model;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonDuration;
 import seedu.address.model.lesson.LessonStatus;
+import seedu.address.model.person.StudentSummaryLabels;
 
 /**
  * Shows the lessons of a day or of the week containing the day, in the order that they take place. The numbers it
@@ -132,19 +133,22 @@ public class AgendaCommand extends Command {
 
     /**
      * Returns one numbered line for each lesson on {@code day}. The number of a lesson is its position in
-     * {@code shownLessons}, which is the index that other commands use for it.
+     * {@code shownLessons}, which is the index that other commands use for it. Students with the same name are told
+     * apart, and archived students marked, as on the dashboard.
      */
     private static String formatLessons(Model model, List<Lesson> shownLessons, LocalDate day) {
+        StudentSummaryLabels labels = new StudentSummaryLabels(model.getAddressBook());
         return IntStream.range(0, shownLessons.size())
                 .filter(i -> shownLessons.get(i).getDate().value.equals(day))
                 .mapToObj(i -> "\n" + formatLine(i + 1, shownLessons.get(i),
+                        LessonCommandUtil.studentLabel(labels, shownLessons.get(i)),
                         !model.getConflictingLessons(shownLessons.get(i)).isEmpty()))
                 .collect(Collectors.joining());
     }
 
-    private static String formatLine(int number, Lesson lesson, boolean isOverlapping) {
+    private static String formatLine(int number, Lesson lesson, String student, boolean isOverlapping) {
         String line = String.format("%2d. %s  %-18s %-10s %s", number, lesson.getTimeRange(),
-                lesson.getStudentName(), lesson.getSubject(), Messages.formatVenue(lesson));
+                student, lesson.getSubject(), Messages.formatVenue(lesson));
         if (lesson.getStatus() != LessonStatus.SCHEDULED) {
             line += "  (" + lesson.getStatus() + ")";
         }

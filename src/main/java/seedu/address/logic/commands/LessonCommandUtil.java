@@ -20,6 +20,7 @@ import seedu.address.model.lesson.LessonStatus;
 import seedu.address.model.lesson.LessonTime;
 import seedu.address.model.lesson.TravelGap;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.StudentSummaryLabels;
 import seedu.address.model.person.Subject;
 
 /**
@@ -246,5 +247,13 @@ final class LessonCommandUtil {
                         gap.next().getDate(), gap.next().getTime(), gap.minutes(), gap.buffer()))
                 .limit(limit)
                 .collect(Collectors.joining());
+    }
+
+    /**
+     * Returns the student of {@code lesson} as {@code labels} shows them, so that students with the same name can be
+     * told apart. A lesson whose student is not in the address book keeps the name stored with it.
+     */
+    static String studentLabel(StudentSummaryLabels labels, Lesson lesson) {
+        return lesson.getStudentId().flatMap(labels::find).orElseGet(() -> lesson.getStudentName().toString());
     }
 }

@@ -188,8 +188,9 @@ accents. It does not implement full Unicode case folding or multi-character mapp
 once per textual summary. It precomputes labels by student ID, avoiding a student-list scan for each homework
 row. Same-name students show only the last four phone digits. If those digits also collide, an eight-character
 student-ID reference is added, falling back to the complete ID if its prefix collides. Archived status is part
-of the same label. `Ledger` dues, `HomeworkQueries` and the `view` heading use these labels independently of
-the current filter. This formatter is scoped to textual summaries, not contact cards or exports. Full contact
+of the same label. `Ledger` dues, `HomeworkQueries`, the lesson rows of `today` and `agenda`, and the `view` heading
+use these labels independently of the current filter. A lesson whose student is not in the address book keeps the
+name stored with it. This formatter is scoped to textual summaries, not contact cards or exports. Full contact
 details remain in the explicit student overview, not in homework or dues rows or the startup dashboard.
 
 `EditPersonDescriptor` distinguishes an omitted optional contact field from a requested clear using explicit
