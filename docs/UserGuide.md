@@ -146,6 +146,7 @@ Format: `add n/NAME p/PHONE_NUMBER l/LEVEL s/SUBJECT... r/RATE [e/EMAIL] [v/VENU
 * `SUBJECT` is free text of up to 30 letters in any language, digits, spaces, `&` and `-`, such as `Math`, `English & Literature` or `华文`. Subjects are not case-sensitive. When you enter one, its first letter is capitalized automatically, so `math` is saved and shown as `Math`. The rest of what you type keeps its case.
 * `RATE` is the amount charged per hour in SGD, from `0` to `9999.99` with at most 2 decimal places. A leading `$` is accepted, so `50`, `50.00` and `$50` are the same rate.
 * `VENUE` is where the student is usually taught, up to 100 characters.
+* `EMAIL` can be at most 254 characters (an emoji or other symbol counts as one).
 * The old address prefix `a/` is no longer supported. Use `v/` for a student's venue, such as `v/2902 Yishun`. An `a/` parameter is rejected as an unknown prefix instead of being read as part of the preceding email or venue.
 * A mistyped prefix such as `name/`, `phone/`, `sub/`, `email/` or `venue/` is named in an `Unknown prefix for this command` error. Correct the spelling instead of looking for a fault in the preceding field.
 * Extra spaces in a `NAME` are ignored, so `John  Tan` is stored as `John Tan`.
@@ -223,7 +224,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [l/LEVEL] [s/SUBJECT]...
 * When editing subjects, all of the student's existing subjects are replaced; adding subjects is not cumulative. A student must keep at least one subject.
 * The displayed student list stays as it was after an edit, so the index numbers do not change. The exception is a student who no longer matches the current `find` or `list` filter after the edit (for example, a new name that the `find` keywords do not match): that student leaves the displayed list and the numbers below shift. Run `list` to show all active students again.
 * After changing a student's name or phone number, run `lesson list st/STUDENT_INDEX` again before using lesson numbers.
-* The values for the level, subjects, rate and venue follow the same rules as for [`add`](#adding-a-student-add).
+* The values for the email, level, subjects, rate and venue follow the same rules as for [`add`](#adding-a-student-add), so an email can be at most 254 characters.
 * If the edit gives the student the name of another student, it is accepted and TutorFlow shows a note. If the phone number is also the same as that student's, the edit is rejected as a duplicate.
 
 Examples:
@@ -279,7 +280,7 @@ Sets a free-text remark on a student, such as a preference or something to remem
 Format: `remark INDEX r/REMARK`
 
 * Sets the remark of the student at the specified `INDEX`, which is the index number shown in the displayed student list and **must be a positive integer** 1, 2, 3, ...
-* The new remark replaces the old one. Writing `r/` with nothing after it removes the remark.
+* The new remark replaces the old one and can be at most 1000 characters (an emoji or other symbol counts as one). Writing `r/` with nothing after it removes the remark.
 * Surrounding spaces are removed and repeated spaces inside the remark are collapsed into one, as for other free text.
 * The displayed student list stays as it was after a remark, so the index numbers do not change.
 * A remark is shown in the student's card and in [`view`](#viewing-the-overview-of-a-student-view).
@@ -381,7 +382,7 @@ Format: `agenda [d/DATE] [week/]`
 * Each line shows the lesson number, the time, the student, the subject, the venue, and the status if the lesson is not simply scheduled. Lessons that overlap another lesson are marked `⚠ overlaps`.
 * Cancelled lessons are listed but are not counted in the number of lessons and the total time.
 * The lesson numbers are the ones that `lesson move`, `lesson cancel`, `lesson done` and `lesson missed` take, so run `agenda` or `lesson list` first and then use the number you see.
-* Lessons are numbered in time order. If moving, cancelling, completing or marking a lesson missed changes the displayed numbers, the result includes `Lesson numbers have changed. Current lesson list:` and the refreshed list. If every lesson keeps its number, for example when a lesson only changes its time or is cancelled but stays in the list, the numbers are not shown again. Use those new numbers for your next command. Running `agenda` or `lesson list` again also refreshes the list.
+* Lessons are numbered in time order. If moving, cancelling, completing or marking a lesson missed changes the displayed numbers, the result includes `Lesson numbers have changed. Current lesson list:` and the refreshed list. If every lesson keeps its number, for example when a lesson only changes its time or is cancelled but stays in the list, the numbers are not shown again. Use those new numbers for your next command. If more than 30 lessons are listed, only the first 30 are shown, followed by how many more there are; run `lesson list` or `agenda` to see every number. Running `agenda` or `lesson list` again also refreshes the list.
 * A week with more than 200 lessons shows the first 200 rows and a line saying how many were omitted, so the result box stays responsive.
 * A day without lessons is not an error: it shows `No lessons on Tue 22 Dec 2026.`
 
@@ -627,7 +628,7 @@ Records money received from a student and shows the updated outstanding balance 
 Format: `pay st/STUDENT_INDEX amt/AMOUNT [d/DATE] [n/NOTES]`
 
 * `STUDENT_INDEX` is the positive student number in the displayed student list. After `find`, use that filtered list's numbers. It is independent of lesson numbers, so payment can follow `lesson done` immediately without running `agenda` or `list` again.
-* `AMOUNT` must be greater than zero with at most two decimal places, such as `50`, `50.00` or `0.50`. Dollar signs, negative amounts, zero, commas and scientific notation are rejected.
+* `AMOUNT` must be greater than zero with at most two decimal places, such as `50`, `50.00` or `0.50`. Dollar signs, negative amounts, zero, commas and scientific notation are rejected, as is an amount written with more than 30 characters.
 * A payment of $10,000.00 or more is recorded, but TutorFlow adds a warning such as `Warning: $100000.00 is an unusually large payment. Check that the amount has no extra digits.`
 * `DATE` defaults to today using your computer's local date. Accepts `YYYY-MM-DD`, `DD/MM/YYYY`, `today` and `tmr`; future dates are rejected with `Payment dates cannot be in the future.`
 * `NOTES` is optional printable text of 1–200 characters on one line, such as a transfer reference. Extra spaces are collapsed and the notes are saved with the payment.
@@ -688,7 +689,7 @@ Format: `charge l/LESSON_INDEX [amt/AMOUNT]`
 Format to take a charge back: `charge reverse l/LESSON_INDEX`
 
 * `LESSON_INDEX` is the lesson number from the current `agenda` or `lesson list`, not the student number.
-* Without `amt/`, the charge is the student's current hourly rate × the lesson duration ÷ 60, rounded to cents. `AMOUNT` must be greater than zero with at most two decimal places.
+* Without `amt/`, the charge is the student's current hourly rate × the lesson duration ÷ 60, rounded to cents. `AMOUNT` must be greater than zero with at most two decimal places, and cannot be written with more than 30 characters.
 * Only a completed or missed lesson can be charged. A cancelled lesson gives `Cannot charge a cancelled lesson.`, and a lesson that is still scheduled gives `Cannot charge a lesson scheduled for Thu 22 Oct 2026.`
 * A lesson has at most one active charge. A second one gives `That lesson already has a charge of $75.50.`
 * If the student's rate is $0 and you give no `amt/`, TutorFlow asks you to specify an amount.
@@ -738,7 +739,7 @@ Returns credit from a student's account, for example after an overpayment. A wit
 Format: `withdraw st/STUDENT_INDEX amt/AMOUNT [d/DATE] [n/NOTES]`
 
 * `STUDENT_INDEX` is the positive student number in the displayed student list. Archived students with credit can be selected from `list archived/`.
-* `AMOUNT` must be greater than zero with at most two decimal places, and cannot exceed the student's available credit. Withdrawing the full credit is allowed.
+* `AMOUNT` must be greater than zero with at most two decimal places, cannot be written with more than 30 characters, and cannot exceed the student's available credit. Withdrawing the full credit is allowed.
 * A student who owes money, or has no credit, gets an error and no withdrawal is recorded.
 * `DATE` defaults to today and cannot be in the future. `NOTES` is optional printable text of 1-200 characters on one line.
 * A withdrawal is saved automatically. It appears on the account statement as `withdrawal -$X.XX` and reduces the available credit.

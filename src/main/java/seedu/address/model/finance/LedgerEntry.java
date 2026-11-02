@@ -17,6 +17,13 @@ import seedu.address.model.person.Person;
  */
 public record LedgerEntry(UUID id, UUID studentId, UUID lessonId, Kind kind,
         BigDecimal amount, LocalDate date, String notes, UUID reverses) {
+    /**
+     * Longest amount text accepted from a command. Amounts have no business maximum, so this only stops digit
+     * strings so long that they would be slow to process and could make the saved file unreadable.
+     */
+    public static final int MAX_AMOUNT_LENGTH = 30;
+    public static final String MESSAGE_AMOUNT_TOO_LONG = "Amounts can have at most " + MAX_AMOUNT_LENGTH
+            + " characters. Check that the amount has no extra digits.";
     public static final String MESSAGE_NOTES_CONSTRAINTS =
             "Payment notes must contain 1-200 printable characters on one line.";
 

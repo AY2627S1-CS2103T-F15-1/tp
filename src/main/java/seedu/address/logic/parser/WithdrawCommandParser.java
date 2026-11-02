@@ -41,13 +41,7 @@ public class WithdrawCommandParser implements Parser<WithdrawCommand> {
         Index index = ParserUtil.parseIndex(arguments.getValue(PREFIX_STUDENT).orElseThrow(),
                 WithdrawCommand.MESSAGE_USAGE);
         String amountText = arguments.getValue(PREFIX_AMOUNT).orElseThrow();
-        if (!amountText.matches("[0-9]+(?:\\.[0-9]{1,2})?")) {
-            throw new ParseException(WithdrawCommand.MESSAGE_AMOUNT_CONSTRAINTS);
-        }
-        BigDecimal amount = new BigDecimal(amountText);
-        if (amount.signum() <= 0) {
-            throw new ParseException(WithdrawCommand.MESSAGE_AMOUNT_CONSTRAINTS);
-        }
+        BigDecimal amount = ParserUtil.parseAmount(amountText, WithdrawCommand.MESSAGE_AMOUNT_CONSTRAINTS);
         LocalDate date = ParserUtil.parseOptional(arguments, PREFIX_DATE,
                 value -> ParserUtil.parseDate(value, LocalDate.now(clock)).value);
         String notes = arguments.getValue(PREFIX_NOTES).map(value -> value.strip().replaceAll(" {2,}", " "))
