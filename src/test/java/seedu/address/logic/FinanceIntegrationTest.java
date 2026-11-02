@@ -21,6 +21,7 @@ import seedu.address.logic.commands.BalanceCommand;
 import seedu.address.logic.commands.DuesCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.LessonCancelCommand;
+import seedu.address.logic.commands.LessonDoneCommand;
 import seedu.address.logic.commands.LessonMoveCommand;
 import seedu.address.logic.commands.PaymentCommand;
 import seedu.address.logic.commands.PaymentReverseCommand;
@@ -311,8 +312,7 @@ public class FinanceIntegrationTest {
         logic.execute("edit 1 r/0");
         logic.execute("lesson add st/1 d/" + TODAY + " t/10:00");
         String result = logic.execute("lesson done 1").getFeedbackToUser();
-        assertTrue(result.contains("No automatic charge: This student's rate is $0.00. Specify an amount with amt/ "
-                + "if you want to charge for this lesson. Use charge with an amount."), result);
+        assertTrue(result.contains(LessonDoneCommand.MESSAGE_NO_CHARGE_ZERO_RATE), result);
         assertTrue(model.getAddressBook().getLedgerEntries().isEmpty());
         assertEquals(Ledger.ZERO, Ledger.balance(storage.readAddressBook().orElseThrow(), alice));
     }
