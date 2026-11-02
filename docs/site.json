@@ -2,7 +2,7 @@
   "baseUrl": "",
   "titlePrefix": "",
   "titleSuffix": "TutorFlow",
-  "faviconPath": "images/SeEduLogo.png",
+  "faviconPath": "images/tutorflow.png",
   "style": {
     "codeTheme": "light"
   },

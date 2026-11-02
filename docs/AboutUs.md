@@ -16,6 +16,7 @@ You can reach us at the email `e1406390[at]u.nus.edu`
 <img src="images/joshmode.png" width="200px">
 
 [[github](https://github.com/joshmode)]
+[[portfolio](joshmode.md)]
 
 * Role: Maintainer and implementer
 * Responsibilities: Maintaining the team repository, including the issue tracker, milestones and merging of pull requests, and implementing features
@@ -47,7 +48,7 @@ You can reach us at the email `e1406390[at]u.nus.edu`
 
 Year 3 Computer Science
 * Role: Developer
-* Responsibilities: Maintaining the team repository, including the issue tracker, milestones and merging of pull requests, and implementing features
+* Responsibilities: Implementing and testing assigned TutorFlow features, and maintaining related documentation
 
 ### Thakker Yash
 

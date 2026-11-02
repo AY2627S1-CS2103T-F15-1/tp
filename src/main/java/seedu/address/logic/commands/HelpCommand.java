@@ -87,7 +87,7 @@ public class HelpCommand extends Command {
                             + "Examples: hw list, hw list st/1 overdue/"),
             new CommandHelp("hw edit", "Corrects description or due date", HomeworkEditCommand.MESSAGE_USAGE,
                     "Parameters: INDEX from the last hw list, and at least one of desc/ and due/. Status and "
-                            + "feedback are kept.\nExample: hw edit 1 due/2026-10-21"),
+                            + "feedback are kept.\nExample: hw edit 1 due/tmr"),
             new CommandHelp("hw status", "Updates or corrects homework status", HomeworkStatusCommand.MESSAGE_USAGE,
                     "Parameters: INDEX from the last hw list; STATUS is assigned, submitted or reviewed. Overdue is "
                             + "worked out from the due date and cannot be set.\n"
@@ -104,7 +104,7 @@ public class HelpCommand extends Command {
                             + "Example: hw delete 2 confirm"),
             new CommandHelp("agenda", "Shows the lessons of a day or a week", AgendaCommand.MESSAGE_USAGE),
             new CommandHelp("today", "Shows today's lessons, overdue homework and dues", TodayCommand.MESSAGE_USAGE),
-            new CommandHelp("task add", "Adds a follow-up task to a student, lesson or homework item",
+            new CommandHelp("task add", "Adds a follow-up task to a student, lesson, homework item or payment",
                     TaskAddCommand.MESSAGE_USAGE),
             new CommandHelp("task list", "Lists the open tasks", TaskListCommand.MESSAGE_USAGE),
             new CommandHelp("task edit", "Changes a task's text or due date", TaskEditCommand.MESSAGE_USAGE),
@@ -112,8 +112,8 @@ public class HelpCommand extends Command {
             new CommandHelp("task delete", "Deletes a task, after confirmation", TaskDeleteCommand.MESSAGE_USAGE),
             new CommandHelp("clear", "Deletes all data, after confirmation", ClearCommand.MESSAGE_USAGE),
             new CommandHelp("save", "Retries saving unsaved changes", SaveCommand.MESSAGE_USAGE, "Example: save"),
-            new CommandHelp("undo", "Restores the latest student, homework, "
-                    + "lesson, or task deletion, or clear.", UndoCommand.MESSAGE_USAGE),
+            new CommandHelp("undo", "Restores the latest student, homework, task deletion or clear.",
+                    UndoCommand.MESSAGE_USAGE),
             new CommandHelp("help", "Shows this list, or how to use one command", MESSAGE_USAGE),
             new CommandHelp("exit", "Exits TutorFlow", ExitCommand.MESSAGE_USAGE));
 

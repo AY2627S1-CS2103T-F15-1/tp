@@ -54,7 +54,7 @@ public class LessonRepeatCommand extends Command {
             + "Parameters: " + PREFIX_STUDENT + "STUDENT_INDEX [" + PREFIX_SUBJECT + "SUBJECT] "
             + PREFIX_DATE + "START_DATE " + PREFIX_TIME + "TIME [" + PREFIX_DURATION + "MINUTES] ["
             + PREFIX_VENUE + "VENUE] " + PREFIX_COUNT + "COUNT [" + PREFIX_EVERY + "WEEKS]\n"
-            + "Example: " + COMMAND_WORD + " " + PREFIX_STUDENT + "4 " + PREFIX_DATE + "2026-10-29 "
+            + "Example: " + COMMAND_WORD + " " + PREFIX_STUDENT + "3 " + PREFIX_DATE + "2026-12-03 "
             + PREFIX_TIME + "16:00 " + PREFIX_COUNT + "4";
 
     public static final String MESSAGE_COUNT_CONSTRAINTS = "COUNT is " + MIN_COUNT + "-" + MAX_COUNT
