@@ -28,7 +28,7 @@ public class HelpCommand extends Command {
     public static final String MESSAGE_ALL_COMMANDS = MESSAGE_USER_GUIDE
             + "\nCommands (type 'help COMMAND' to see how to use one):";
     public static final String MESSAGE_COMMANDS_STARTING_WITH = "Commands that start with '%1$s' (type 'help COMMAND' "
-            + "to see how to use one):\n" + MESSAGE_USER_GUIDE;
+            + "to see how to use one):";
     public static final String MESSAGE_NO_HELP = "No help available for '%1$s'. Type 'help' for the full list.";
 
     /** Every command, in the order that it is listed. */
@@ -54,7 +54,9 @@ public class HelpCommand extends Command {
             new CommandHelp("view", "Shows a student's overview", ViewCommand.MESSAGE_USAGE),
             new CommandHelp("balance", "Shows a student's outstanding balance or credit", BalanceCommand.MESSAGE_USAGE),
             new CommandHelp("charge", "Charges a completed or missed lesson", ChargeCommand.MESSAGE_USAGE),
-            new CommandHelp("charge reverse", "Reverses the charge of a lesson", ChargeCommand.MESSAGE_USAGE),
+            new CommandHelp("charge reverse", "Reverses the charge of a lesson", "charge reverse l/LESSON_INDEX",
+                    "Parameters: LESSON_INDEX of a charged lesson in the displayed lesson list.\n"
+                            + "Example: charge reverse l/1"),
             new CommandHelp("pay", "Records a student's payment with optional date and notes",
                     PaymentCommand.MESSAGE_USAGE),
             new CommandHelp("dues", "Lists all students who owe money", DuesCommand.MESSAGE_USAGE),
@@ -156,7 +158,8 @@ public class HelpCommand extends Command {
         if (matches.isEmpty()) {
             throw new CommandException(String.format(MESSAGE_NO_HELP, commandName));
         }
-        return new CommandResult(String.format(MESSAGE_COMMANDS_STARTING_WITH, commandName) + format(matches));
+        return new CommandResult(String.format(MESSAGE_COMMANDS_STARTING_WITH, commandName) + format(matches)
+                + "\n" + MESSAGE_USER_GUIDE);
     }
 
     private static String format(List<CommandHelp> commands) {
