@@ -130,7 +130,7 @@ public class ArgumentMultimap {
                 throw unknownPrefix(prefixToken);
             }
             String word = lowerCaseToken.substring(0, lowerCaseToken.length() - 1);
-            boolean isLikelyPrefix = word.length() == 1 || LIKELY_PREFIX_WORDS.contains(word)
+            boolean isLikelyPrefix = isLowerCaseLetter(prefixToken) || LIKELY_PREFIX_WORDS.contains(word)
                     || isKnownPrefix(lowerCaseToken);
             if (!isLikelyPrefix) {
                 continue;
@@ -145,6 +145,11 @@ public class ArgumentMultimap {
     /** Returns whether {@code token} is a parameter of at least one command. */
     private static boolean isKnownPrefix(String token) {
         return KNOWN_PREFIX_TOKENS.contains(token);
+    }
+
+    /** Returns whether {@code token} is one lower-case letter and a slash, as a mistyped prefix is. */
+    private static boolean isLowerCaseLetter(String token) {
+        return token.length() == 2 && Character.isLowerCase(token.charAt(0));
     }
 
     /** Returns whether a single-letter or known prefix is short enough to be prose inside a free-text value. */
