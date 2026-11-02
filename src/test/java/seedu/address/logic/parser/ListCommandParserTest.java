@@ -46,8 +46,9 @@ public class ListCommandParserTest {
 
     @Test
     public void parse_bothArchiveFlags_showsTheUsageOfList() {
-        assertParseFailure(parser, " archived/ all/", ListCommand.MESSAGE_USAGE);
-        assertParseFailure(parser, " all/ archived/", ListCommand.MESSAGE_USAGE);
+        String error = String.format(MESSAGE_INVALID_COMMAND_FORMAT, ListCommand.MESSAGE_USAGE);
+        assertParseFailure(parser, " archived/ all/", error);
+        assertParseFailure(parser, " all/ archived/", error);
     }
 
     @Test
