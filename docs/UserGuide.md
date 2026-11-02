@@ -1023,6 +1023,18 @@ Archiving whole data files is not supported in this version. Use [`archive`](#ar
 
 --------------------------------------------------------------------------------------------------------------------
 
+## Planned enhancements
+
+These are known flaws in this version that the team plans to fix. Each one says what you see now and what TutorFlow will do instead.
+
+1. **Extra text after the last parameter is blamed on that parameter.** In `add n/Cat Ho p/91234569 l/S3 s/Math r/25 junk`, the word `junk` becomes part of the rate and TutorFlow answers `Rate must be between 0 and 9999.99 with at most 2 decimal places, e.g. 45 or 62.50.` TutorFlow will instead name the extra text, for example `Unexpected text after the last parameter: junk`, and keep the rate error for a rate that is really wrong.
+1. **A new lesson is not shown when it is outside the displayed lesson list.** After `lesson add`, the reply says `Scheduled: ...` without a lesson number, and the lesson appears in the list only if the list already covers its date or student. TutorFlow will add the number of the new lesson to the reply, and show the lesson in the list when it fits the filter, so `lesson done`, `lesson move` and `lesson cancel` can be used straight away.
+1. **Undo only reverses the latest deletion or `clear confirm`.** It cannot undo an edit, a lesson change or a payment, and it forgets the deletion as soon as you make another change. TutorFlow will keep a history of recent changes, so that `undo` can step back through several of them in one session.
+1. **Wide characters make the result box columns look misaligned.** The columns of `agenda`, `today` and `lesson list` are padded by the number of characters, and a Chinese character is wider than a Latin letter. TutorFlow will pad by the width on screen, or show these results in a table.
+1. **Long results are cut off.** When a list has more than 30 lessons, only the first 30 are shown, followed by how many more there are. TutorFlow will let you ask for the next part, for example with `lesson list ... page/2`, instead of repeating the command with a narrower filter.
+
+--------------------------------------------------------------------------------------------------------------------
+
 ## Command summary
 
 ### Students
