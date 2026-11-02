@@ -1194,27 +1194,27 @@ testers are expected to do more *exploratory* testing.
 
 1. Marking a lesson as missed
 
-   1. Prerequisites: Run `lesson add st/1 d/<a date last week> t/16:00 past/`, then `lesson list st/1 all/` and note the lesson number.
+   1. Prerequisites: Start from the demo data. Run `lesson add st/1 s/Math d/2026-10-30 t/16:00 past/`, then `lesson list st/1 all/` and note the number of that lesson (written as INDEX below).
 
    1. Test case: `lesson missed INDEX`<br>
       Expected: The lesson is marked as missed. `view 1` counts it under lesson history, and no charge is added to `balance st/1`.
 
    1. Test case: `lesson missed INDEX` again<br>
-      Expected: The result says that the lesson is already marked as missed, and nothing changes.
+      Expected: `That lesson is already marked as missed.` Nothing changes.
 
    1. Test case: `lesson done INDEX`<br>
       Expected: The missed lesson is changed to completed and charged once.
 
-   1. Other incorrect commands to try: `lesson missed` on a lesson in the future or a cancelled lesson, `lesson missed 0`, `lesson missed INDEX extra`<br>
+   1. Other incorrect commands to try: `lesson missed` on a future lesson (add one with `lesson add st/1 s/Math d/2026-12-01 t/16:00`) or on a cancelled lesson, `lesson missed 0`, `lesson missed INDEX extra`<br>
       Expected: Rejected without changing the lesson.
 
 ### Follow-up tasks
 
 1. Adding a task
 
-   1. Prerequisites: Use `list`, with at least one student. Schedule one lesson and run `lesson list st/1`.
+   1. Prerequisites: Start from the demo data. Run `list`, then `lesson add st/1 s/Math d/2026-11-10 t/16:00` and `lesson list st/1`.
 
-   1. Test case: `task add st/1 desc/Call parent due/<a date next week>`<br>
+   1. Test case: `task add st/1 desc/Call parent due/2026-11-20`<br>
       Expected: `Added task: Call parent. Run 'task list' to display its index.`
 
    1. Test case: `task add lesson/1 desc/Prepare mock paper`<br>
@@ -1223,7 +1223,7 @@ testers are expected to do more *exploratory* testing.
    1. Test case: the same command again<br>
       Expected: Added again. Two tasks may have the same text.
 
-   1. Other incorrect commands to try: `task add st/1 lesson/1 desc/Both` (two links), `task add desc/No link`, `task add st/1 desc/` (empty text), `task add st/1 desc/` followed by 201 characters, `task add st/1 desc/Late due/<yesterday>`, `task add st/99 desc/No such student`, `task add pay/1 desc/No payment list yet`<br>
+   1. Other incorrect commands to try: `task add st/1 lesson/1 desc/Both` (two links), `task add desc/No link`, `task add st/1 desc/` (empty text), `task add st/1 desc/` followed by 201 characters, `task add st/1 desc/Late due/2026-10-01`, `task add st/99 desc/No such student`, `task add pay/1 desc/No payment list yet`<br>
       Expected: Nothing is added. The result shows an error message. The late due date gives `Due dates must be today or later.`
 
 1. Listing, editing and completing tasks
@@ -1256,10 +1256,10 @@ testers are expected to do more *exploratory* testing.
 
    1. Prerequisites: A task on the 1st student and a task on a lesson of that student.
 
-   1. Test case: `edit 1 n/<a new name>`, then `task list`<br>
+   1. Test case: `edit 1 n/Alexander Yeoh`, then `task list`<br>
       Expected: Both tasks show the new name.
 
-   1. Test case: `lesson list st/1`, `lesson cancel 1`, then book a new lesson in the same slot and run `task list`<br>
+   1. Test case: `lesson list st/1`, `lesson cancel 1`, then book a new lesson in the same slot (for example `lesson add st/1 s/Math d/2026-11-10 t/16:00`) and run `task list`<br>
       Expected: The lesson task still points to the cancelled lesson. The new lesson does not take it over.
 
    1. Test case: `delete 1 confirm`, then `undo`<br>
@@ -1267,22 +1267,22 @@ testers are expected to do more *exploratory* testing.
 
 ### Edge-case and adversarial testing
 
-These checks go beyond the example cases above. Each was also run by script (see "Testing approach" below), so a failure here is a regression.
+These checks go beyond the example cases above. Unless a step says otherwise, start from the demo data: run `clear confirm`, then `demo` and `demo confirm`. We also ran these checks with a script (see "Testing approach" below).
 
 1. Boundary values
 
-   1. Test case: `lesson add st/1 d/<today> t/23:45 dur/15`, `lesson add st/1 d/<a date next week> t/23:00 dur/120`<br>
+   1. Test case: `lesson add st/1 s/Math d/tmr t/23:45 dur/15`, `lesson add st/1 s/Math d/2026-11-09 t/23:00 dur/120`<br>
       Expected: The first is scheduled. The second is rejected because it passes midnight.
 
-   1. Test case: `lesson repeat st/1 d/<a date next week> t/16:00 count/52 every/3`<br>
+   1. Test case: `lesson repeat st/1 s/Math d/tmr t/16:00 count/52 every/3`<br>
       Expected: Rejected, because the series would pass two years. `count/52` with the default every week is accepted, as is `count/2`.
 
-   1. Test case: `lesson repeat st/1 d/<a date next week> t/16:00 count/52` where every lesson clashes with existing ones<br>
-      Expected: A one-line overlap warning, then at most 30 rows of the renumbered list followed by `... and N more.`
+   1. Test case: `lesson repeat st/1 s/Math d/tmr t/16:00 count/52`, then `lesson repeat st/1 s/Physics d/tmr t/16:00 count/52` (the demo student takes both subjects; the second series clashes with all 52 lessons of the first)<br>
+      Expected: The first is accepted. The second gives a one-line overlap warning, then at most 30 rows of the renumbered list followed by `... and N more.` Run `clear confirm`, `demo` and `demo confirm` afterwards to get the demo data back.
 
 1. Inputs that must be rejected without crashing
 
-   1. Test case: `view ١`, `lesson add st/1 d/<next week> t/09:00 dur/٦٠` (non-English digits), `pay st/1 amt/1e2`, `pay st/1 amt/-5`, `task add st/1 st/2 desc/Twice`<br>
+   1. Test case: `view ١`, `lesson add st/1 s/Math d/2026-11-09 t/09:00 dur/٦٠` (non-English digits), `pay st/1 amt/1e2`, `pay st/1 amt/-5`, `task add st/1 st/2 desc/Twice`<br>
       Expected: Each shows an error message. Nothing changes and TutorFlow keeps running.
 
    1. Test case: `remark 1 r/` followed by 1,001 characters, or `edit 1 e/` followed by an email longer than 254 characters<br>
@@ -1296,7 +1296,7 @@ These checks go beyond the example cases above. Each was also run by script (see
    1. Test case: After each of `lesson done`, `task done`, `pay`, `charge reverse`, close and reopen TutorFlow.<br>
       Expected: The same data is shown as before closing.
 
-   1. Test case: `pay st/1 amt/100`, `pay list`, `withdraw st/1 amt/100`, `pay reverse 1`, then `dues`<br>
+   1. Test case: Starting again from the demo data, run `pay st/1 amt/100`, `pay list`, `withdraw st/1 amt/100`, `pay reverse 1`, then `dues`<br>
       Expected: The student is listed as owing $100.00, and no error appears.
 
 1. Edited data files
@@ -1309,15 +1309,15 @@ These checks go beyond the example cases above. Each was also run by script (see
    1. Test case: Delete the `"tasks"` list, then launch.<br>
       Expected: TutorFlow starts normally with the students and lessons and no tasks.
 
-### Testing approach
+### Testing approach: lessons, tasks and payments
 
-I tested my features (lesson scheduling, series and agenda, lesson status changes, and follow-up tasks) in three ways.
+We tested the lesson, task and payment features (lesson scheduling, series and agenda, lesson status changes, follow-up tasks, and the ledger) in three ways.
 
-**1. Manual testing from the User Guide.** I ran every example in the UG and the manual-testing appendix, in the GUI, with typical data, and compared the result with the specification in the tP notes.
+**1. Manual testing from the User Guide.** We ran every example in the UG and the manual-testing appendix, in the GUI, with typical data, and compared the result with the specification in the tP notes.
 
 **2. Automated unit and integration tests.** JUnit tests cover each parser and command, and workflow tests cover several commands in a row (for example `lesson add`, `lesson move`, `lesson cancel`, `task add` and `undo`).
 
-**3. Edge-case and adversarial testing on 1 Nov 2026.** To find what the earlier tests missed, I ran a script that drives the real command logic with a fixed clock (1 Nov 2026). After every successful command it reloads the saved file and compares it with the data in memory. It ran about 17,000 checks:
+**3. Edge-case and adversarial testing on 1 Nov 2026.** To find what the earlier tests missed, we ran a script that drives the real command logic with a fixed clock (1 Nov 2026). After every successful command it reloads the saved file and compares it with the data in memory. It ran about 17,000 checks. The script is a throwaway tool and is not part of the repository:
 
 | Area | What was tried |
 |---|---|
@@ -1329,7 +1329,7 @@ I tested my features (lesson scheduling, series and agenda, lesson status change
 | Long input | up to 1,000,000 characters in each field, with timing |
 | Random commands | 60 sessions of 400 random commands each |
 
-The run found one crash (`dues` after a payment was reversed) and a data-loss risk (a field of more than 1,000,000 characters could be saved but not loaded again). Both are fixed and covered by regression tests. Cases in this section are kept as manual tests so that they are not lost.
+The run found one crash (`dues` after a payment was reversed) and a data-loss risk (a field of more than 1,000,000 characters could be saved but not loaded again). Both are fixed, and each fix has JUnit tests in `AdversarialFindingsRegressionTest`. The manual cases under "Edge-case and adversarial testing" above are kept so that these checks can be repeated by hand.
 
 ### Saving data
 
