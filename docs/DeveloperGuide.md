@@ -1459,6 +1459,14 @@ Start each group with `clear confirm`, then `demo`, then `demo confirm`, so the 
    1. Test case: `sort up`<br>
       Expected: `Invalid command format!` and the usage of `sort`. The order is unchanged.
 
+1. Student aliases
+
+   1. Test case: `student list l/S3 s/Math`, then `student find charlotte`, then `student view 1`<br>
+      Expected: Each works exactly like the same command without `student`, for example `list l/S3 s/Math`.
+
+   1. Test case: `student`, then `student foo`<br>
+      Expected: Both are rejected with `Student commands: add, edit, delete, find, view, list, archive, restore.`
+
 ### Lessons
 
 Start each group with `clear confirm`, then `demo`, then `demo confirm`, so the sample students and empty lesson history are known.
@@ -1677,6 +1685,9 @@ Start each group with `clear confirm`, then `demo`, then `demo confirm`, so the 
 
    1. Test case: Run a command that changes data, such as `add n/Test Two p/98765432 l/S1 s/Math r/40`.<br>
       Expected: The result box says that the change was applied in this session but could not be saved, and why. `exit` does not close TutorFlow until the file can be written again.
+
+   1. Test case: Make the file writable again, run `save`, then close TutorFlow and launch it again.<br>
+      Expected: `save` replies `All changes have been saved.` and the student added in the previous step is still there. Running `save` when nothing is unsaved gives the same reply.
 
 
 ### Data file versioning and domain extension
