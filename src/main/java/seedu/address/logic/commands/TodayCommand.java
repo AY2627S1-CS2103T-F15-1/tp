@@ -6,8 +6,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
-import java.util.UUID;
 import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -21,7 +19,6 @@ import seedu.address.model.homework.HomeworkQueries;
 import seedu.address.model.lesson.Lesson;
 import seedu.address.model.lesson.LessonDuration;
 import seedu.address.model.lesson.LessonStatus;
-import seedu.address.model.person.Person;
 import seedu.address.model.person.StudentSummaryLabels;
 
 /**
@@ -81,10 +78,7 @@ public class TodayCommand extends Command {
 
         // Same-name and archived students are told apart as in the homework and dues sections below
         StudentSummaryLabels labels = new StudentSummaryLabels(model.getAddressBook());
-        Set<UUID> students = model.getAddressBook().getPersonList().stream().map(Person::getId)
-                .collect(Collectors.toSet());
-        Function<Lesson, String> studentLabel = lesson -> lesson.getStudentId().filter(students::contains)
-                .map(labels::format).orElseGet(() -> lesson.getStudentName().toString());
+        Function<Lesson, String> studentLabel = lesson -> LessonCommandUtil.studentLabel(labels, lesson);
 
         return new CommandResult(DATE_FORMAT.format(today)
                 + "\n\n" + formatLessonsToday(model, lessonsToday, studentLabel)
