@@ -265,8 +265,8 @@ public class AddressBook implements ReadOnlyAddressBook {
                 .findFirst().orElseThrow(() -> new IllegalArgumentException("Lesson student does not exist."));
         LedgerEntry charge = null;
         // A lesson that was already billed by hand (for example a missed lesson) is completed without a second charge
-        boolean alreadyBilled = Ledger.activeCharge(this, replacement.getId()).isPresent();
-        if (!alreadyBilled && LedgerEntry.lessonFee(student, replacement).signum() > 0) {
+        boolean isAlreadyBilled = Ledger.activeCharge(this, replacement.getId()).isPresent();
+        if (!isAlreadyBilled && LedgerEntry.lessonFee(student, replacement).signum() > 0) {
             // The automatic charge reuses the lesson's id as its entry id. Only this method creates it, and it
             // completes the lesson, so a scheduled or missed lesson cannot already have an entry with that id.
             // validateLedgerEntry still rejects a duplicate id if hand-edited data ever contains one.
@@ -403,7 +403,7 @@ public class AddressBook implements ReadOnlyAddressBook {
             if (!entryIds.add(entry.id())) {
                 throw new IllegalArgumentException("Duplicate ledger entry ID.");
             }
-            if (entry.kind().refersToLesson()) {
+            if (entry.kind().isLessonRelated()) {
                 Lesson lesson = lessonsById.get(entry.lessonId());
                 if (lesson == null || !lesson.isWith(student)) {
                     throw new IllegalArgumentException("Ledger lesson does not exist or belongs to another student.");
@@ -433,7 +433,7 @@ public class AddressBook implements ReadOnlyAddressBook {
         requireNonNull(entry);
         Person student = persons.asUnmodifiableObservableList().stream().filter(entry::isWith).findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Ledger student does not exist."));
-        if (entry.kind().refersToLesson() && lessons.asUnmodifiableObservableList().stream().noneMatch(lesson ->
+        if (entry.kind().isLessonRelated() && lessons.asUnmodifiableObservableList().stream().noneMatch(lesson ->
                 lesson.getId().equals(entry.lessonId()) && lesson.isWith(student))) {
             throw new IllegalArgumentException("Ledger lesson does not exist or belongs to another student.");
         }

@@ -46,7 +46,7 @@ public class LogicManager implements Logic {
     private final AddressBookParser addressBookParser;
     private final String startupWarning;
     private final Clock clock;
-    private boolean dirty;
+    private boolean isDirty;
 
     /**
      * Constructs a {@code LogicManager} with the given {@code Model} and {@code Storage}.
@@ -80,7 +80,7 @@ public class LogicManager implements Logic {
         this.clock = Objects.requireNonNull(clock);
         String warning = startupWarning;
         if (requiresInitialSave) {
-            dirty = true;
+            isDirty = true;
             try {
                 saveChanges();
             } catch (CommandException e) {
@@ -93,14 +93,15 @@ public class LogicManager implements Logic {
 
     @Override
     public CommandResult execute(String commandText) throws CommandException, ParseException {
+        assert commandText != null : "The UI never passes null text";
         logger.fine("Executing command");
 
         CommandResult commandResult;
         Command command = addressBookParser.parseCommand(commandText);
         String before = snapshot();
         List<UUID> shownBefore = lessonSelection();
-        boolean wasDirty = dirty;
-        boolean changed;
+        boolean wasDirty = isDirty;
+        boolean hasChanged;
         boolean isSuccessful = false;
         try {
             model.beforeCommand(command instanceof DestructiveCommand);
@@ -108,21 +109,21 @@ public class LogicManager implements Logic {
             isSuccessful = true;
         } finally {
             // An unavailable snapshot must never clear a previous save failure or permit an unchecked exit.
-            dirty = true;
-            changed = !before.equals(snapshot());
-            dirty = wasDirty || changed;
+            isDirty = true;
+            hasChanged = !before.equals(snapshot());
+            isDirty = wasDirty || hasChanged;
             model.afterCommand(
                     command instanceof DestructiveCommand destructiveCommand
                             ? destructiveCommand.getDestructDescription()
                             : null,
-                    isSuccessful && changed);
+                    isSuccessful && hasChanged);
         }
 
         String numbering = "";
         List<UUID> shownAfter = lessonSelection();
-        boolean preservesShownRows = shownAfter.size() >= shownBefore.size()
+        boolean isPreservingShownRows = shownAfter.size() >= shownBefore.size()
                 && shownAfter.subList(0, shownBefore.size()).equals(shownBefore);
-        if (changed && !preservesShownRows) {
+        if (hasChanged && !isPreservingShownRows) {
             numbering = Messages.formatLessonList(model.getFilteredLessonList(),
                     new StudentSummaryLabels(model.getAddressBook()));
             if (commandResult.getDisplayedLessons().isEmpty()) {
@@ -130,15 +131,15 @@ public class LogicManager implements Logic {
                         .withDisplayedLessons(model.getFilteredLessonList());
             }
         }
-        if (dirty && (commandResult.isExit() || command instanceof SaveCommand
-                || changed)) {
+        if (isDirty && (commandResult.isExit() || command instanceof SaveCommand
+                || hasChanged)) {
             try {
                 saveChanges();
             } catch (CommandException e) {
                 throw new CommandException(e.getMessage() + numbering + "\n" + UNSAVED_WARNING, e);
             }
         }
-        if (dirty) {
+        if (isDirty) {
             return commandResult.withFeedback(commandResult.getFeedbackToUser() + "\n" + UNSAVED_WARNING);
         }
         return commandResult;
@@ -166,7 +167,7 @@ public class LogicManager implements Logic {
     private void saveChanges() throws CommandException {
         try {
             storage.saveAddressBook(model.getAddressBook());
-            dirty = false;
+            isDirty = false;
         } catch (AccessDeniedException e) {
             throw new CommandException(String.format(FILE_OPS_PERMISSION_ERROR_FORMAT, describe(e)), e);
         } catch (IOException ioe) {
@@ -184,7 +185,7 @@ public class LogicManager implements Logic {
 
     @Override
     public boolean hasUnsavedChanges() {
-        return dirty;
+        return isDirty;
     }
 
     @Override

@@ -61,7 +61,9 @@ public class ParserUtil {
         if (!StringUtil.isNonZeroUnsignedInteger(trimmedIndex)) {
             throw new ParseException(MESSAGE_INVALID_INDEX);
         }
-        return Index.fromOneBased(Integer.parseInt(trimmedIndex));
+        Index index = Index.fromOneBased(Integer.parseInt(trimmedIndex));
+        assert index.getZeroBased() >= 0 : "An index is never negative";
+        return index;
     }
 
     /**
@@ -359,7 +361,7 @@ public class ParserUtil {
      *
      * @throws ParseException if the flag is repeated or is given a value.
      */
-    public static boolean parseFlag(ArgumentMultimap argMultimap, Prefix flag) throws ParseException {
+    public static boolean hasFlag(ArgumentMultimap argMultimap, Prefix flag) throws ParseException {
         argMultimap.verifyNoDuplicatePrefixesFor(flag);
         Optional<String> value = argMultimap.getValue(flag);
         if (value.isPresent() && !value.get().isBlank()) {

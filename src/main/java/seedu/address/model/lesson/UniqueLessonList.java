@@ -127,7 +127,7 @@ public class UniqueLessonList implements Iterable<Lesson> {
      */
     public void setLessons(List<Lesson> lessons) {
         requireAllNonNull(lessons);
-        if (!lessonsAreUnique(lessons)) {
+        if (!areLessonsUnique(lessons)) {
             throw new DuplicateLessonException();
         }
 
@@ -181,7 +181,7 @@ public class UniqueLessonList implements Iterable<Lesson> {
      * Returns true if {@code lessons} contains only unique lessons. Duplicates share a date and time, so only lessons
      * with the same date and time are compared.
      */
-    private boolean lessonsAreUnique(List<Lesson> lessons) {
+    private boolean areLessonsUnique(List<Lesson> lessons) {
         return lessons.stream().collect(Collectors.groupingBy(lesson -> List.of(lesson.getDate(), lesson.getTime())))
                 .values().stream().allMatch(sameSlot -> IntStream.range(0, sameSlot.size()).noneMatch(i ->
                         sameSlot.subList(i + 1, sameSlot.size()).stream().anyMatch(sameSlot.get(i)::isDuplicateOf)));

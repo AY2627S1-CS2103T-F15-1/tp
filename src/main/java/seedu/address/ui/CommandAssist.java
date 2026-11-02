@@ -13,7 +13,7 @@ public final class CommandAssist {
     private final CommandDraftTarget commandInput;
     private final Consumer<String> helpOutput;
     private String generatedDraft;
-    private boolean generatedReferencesStudent;
+    private boolean isReferencingStudent;
     private Integer generatedFieldEditIndex;
     private Runnable closeActiveEdit;
 
@@ -32,7 +32,7 @@ public final class CommandAssist {
     public void editField(int displayedIndex, Field field) {
         requireNonNull(field);
         setDraft(field.draftFor(displayedIndex));
-        generatedReferencesStudent = true;
+        isReferencingStudent = true;
         generatedFieldEditIndex = displayedIndex;
         announceHelp(field.commandWord());
     }
@@ -41,7 +41,7 @@ public final class CommandAssist {
     public void archive(int displayedIndex) {
         closeActiveEditMode();
         setDraft("archive " + displayedIndex);
-        generatedReferencesStudent = true;
+        isReferencingStudent = true;
         generatedFieldEditIndex = null;
         announceHelp("archive");
     }
@@ -50,7 +50,7 @@ public final class CommandAssist {
     public void delete(int displayedIndex) {
         closeActiveEditMode();
         setDraft("delete " + displayedIndex);
-        generatedReferencesStudent = true;
+        isReferencingStudent = true;
         generatedFieldEditIndex = null;
         announceHelp("delete");
     }
@@ -59,7 +59,7 @@ public final class CommandAssist {
     public void addStudent() {
         closeActiveEditMode();
         setDraft("add " + CliSyntax.PREFIX_NAME);
-        generatedReferencesStudent = false;
+        isReferencingStudent = false;
         generatedFieldEditIndex = null;
         announceHelp("add");
     }
@@ -85,7 +85,7 @@ public final class CommandAssist {
                 commandInput.clearAndFocus();
             }
             generatedDraft = null;
-            generatedReferencesStudent = false;
+            isReferencingStudent = false;
             generatedFieldEditIndex = null;
         }
         closeActiveEditMode();
@@ -94,7 +94,7 @@ public final class CommandAssist {
     /** Cancels the active card interaction after a draft was submitted or replaced by another interaction. */
     public void finishInteraction() {
         generatedDraft = null;
-        generatedReferencesStudent = false;
+        isReferencingStudent = false;
         generatedFieldEditIndex = null;
         closeActiveEditMode();
     }
@@ -112,7 +112,7 @@ public final class CommandAssist {
      * its numbered student could now refer to a different person; text the user has edited is left alone.
      */
     public void displayedListChanged() {
-        if (generatedReferencesStudent && generatedDraft != null && generatedDraft.equals(commandInput.getText())) {
+        if (isReferencingStudent && generatedDraft != null && generatedDraft.equals(commandInput.getText())) {
             commandInput.clearAndFocus();
         }
         finishInteraction();

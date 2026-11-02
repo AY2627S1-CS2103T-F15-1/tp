@@ -13,7 +13,7 @@ public class HelpWindow extends UiPart<Stage> {
     private static final Logger logger = LogsCenter.getLogger(HelpWindow.class);
     private static final String FXML = "HelpWindow.fxml";
     private final GuideLoader guideLoader;
-    private boolean loaded;
+    private boolean isLoaded;
 
     @FXML
     private GuideView userGuide;
@@ -41,7 +41,7 @@ public class HelpWindow extends UiPart<Stage> {
         logger.fine("Showing help page about the application.");
         getRoot().show();
         getRoot().centerOnScreen();
-        if (!loaded) {
+        if (!isLoaded) {
             reloadGuide();
         }
     }
@@ -67,10 +67,10 @@ public class HelpWindow extends UiPart<Stage> {
         try {
             loadStatus.setText("Loading User Guide...");
             userGuide.loadHtml(guideLoader.load());
-            loaded = true;
+            isLoaded = true;
             loadStatus.setText("");
         } catch (IOException e) {
-            loaded = false;
+            isLoaded = false;
             logger.warning("Could not read the bundled User Guide: " + e);
             loadStatus.setText("Could not read the bundled User Guide. Click Reload guide to try again.");
         }

@@ -167,7 +167,7 @@ public class MainApp extends Application {
             Platform.exit();
             System.exit(1);
         }
-        logger.info("Starting TutorFlow");
+        logger.info("Starting TutorFlow " + VERSION);
         ui.start(primaryStage);
     }
 

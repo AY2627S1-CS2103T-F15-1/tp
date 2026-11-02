@@ -50,6 +50,7 @@ public class ModelManager implements Model {
         filteredPersons = new FilteredList<>(this.addressBook.getPersonList(), PREDICATE_SHOW_ACTIVE_PERSONS);
         filteredLessons = new FilteredList<>(this.addressBook.getLessonList());
         sortedLessons = new SortedList<>(filteredLessons, Lesson.CHRONOLOGICAL);
+        assert filteredPersons != null && filteredLessons != null : "The displayed lists exist from the start";
     }
 
     public ModelManager() {

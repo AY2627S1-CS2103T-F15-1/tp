@@ -9,6 +9,9 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_RATE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_VENUE;
 
+import java.util.logging.Logger;
+
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
@@ -46,6 +49,8 @@ public class AddCommand extends Command {
     public static final String MESSAGE_SAME_NAME_WARNING =
             "\nNote: you already have a student named %1$s. Both are now in your list.";
 
+    private static final Logger logger = LogsCenter.getLogger(AddCommand.class);
+
     private final Person toAdd;
 
     /**
@@ -68,6 +73,7 @@ public class AddCommand extends Command {
         boolean hasSameName = model.getAddressBook().getPersonList().stream().anyMatch(toAdd::hasSameName);
 
         model.addPerson(toAdd);
+        logger.info("Added a student");
         String message = String.format(MESSAGE_SUCCESS, Messages.format(toAdd));
         if (hasSameName) {
             message += String.format(MESSAGE_SAME_NAME_WARNING, toAdd.getName());

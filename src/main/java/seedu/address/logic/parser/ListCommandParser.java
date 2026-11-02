@@ -23,10 +23,10 @@ public class ListCommandParser implements Parser<ListCommand> {
         if (!values.getPreamble().isBlank()) {
             throw ParserUtil.invalidFormat(ListCommand.MESSAGE_USAGE);
         }
-        boolean isArchivedOnly = ParserUtil.parseFlag(values, PREFIX_ARCHIVED);
-        boolean isArchivedIncluded = ParserUtil.parseFlag(values, PREFIX_ALL);
+        boolean isArchivedOnly = ParserUtil.hasFlag(values, PREFIX_ARCHIVED);
+        boolean isArchivedIncluded = ParserUtil.hasFlag(values, PREFIX_ALL);
         if (isArchivedOnly && isArchivedIncluded) {
-            throw new ParseException(ListCommand.MESSAGE_USAGE);
+            throw ParserUtil.invalidFormat(ListCommand.MESSAGE_USAGE);
         }
         return new ListCommand(ParserUtil.parseOptional(values, PREFIX_LEVEL, ParserUtil::parseLevel),
                 ParserUtil.parseOptional(values, PREFIX_SUBJECT, ParserUtil::parseSubject),

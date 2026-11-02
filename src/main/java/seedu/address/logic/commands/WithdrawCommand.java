@@ -53,6 +53,7 @@ public class WithdrawCommand extends Command {
         }
         this.studentIndex = studentIndex;
         this.amount = amount.setScale(2);
+        assert this.amount.scale() == 2 && this.amount.signum() > 0 : "A withdrawal is a positive amount in cents";
         if (notes != null && !LedgerEntry.isValidNotes(notes)) {
             throw new IllegalArgumentException(LedgerEntry.MESSAGE_NOTES_CONSTRAINTS);
         }

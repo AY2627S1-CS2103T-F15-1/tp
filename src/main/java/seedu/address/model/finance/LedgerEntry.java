@@ -37,7 +37,7 @@ public record LedgerEntry(UUID id, UUID studentId, UUID lessonId, Kind kind,
         }
 
         /** Returns whether entries of this kind refer to a lesson. */
-        public boolean refersToLesson() {
+        public boolean isLessonRelated() {
             return this == CHARGE || this == CHARGE_REVERSAL;
         }
 
@@ -64,7 +64,7 @@ public record LedgerEntry(UUID id, UUID studentId, UUID lessonId, Kind kind,
         if (notes != null && !isValidNotes(notes)) {
             throw new IllegalArgumentException(MESSAGE_NOTES_CONSTRAINTS);
         }
-        if (kind.refersToLesson() != (lessonId != null)) {
+        if (kind.isLessonRelated() != (lessonId != null)) {
             throw new IllegalArgumentException("Only charges must refer to a lesson.");
         }
         if (kind.isReversal() != (reverses != null)) {
@@ -78,6 +78,7 @@ public record LedgerEntry(UUID id, UUID studentId, UUID lessonId, Kind kind,
         } catch (ArithmeticException e) {
             throw new IllegalArgumentException("Amounts must have at most two decimal places.", e);
         }
+        assert amount.scale() == 2 && amount.signum() > 0 : "A ledger amount is a positive amount in cents";
     }
 
     /** Captures the hourly rate times duration, rounding once to cents with HALF_UP. */

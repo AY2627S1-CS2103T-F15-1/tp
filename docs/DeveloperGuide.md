@@ -18,6 +18,7 @@
 * The TutorFlow application icon was supplied by the project team and resized for use as the window icon.
 * Libraries used: [JavaFX](https://openjfx.io/) (user interface), [Jackson](https://github.com/FasterXML/jackson) (JSON storage), [commonmark-java](https://github.com/commonmark/commonmark-java) (showing the bundled User Guide in the Help window), [JUnit5](https://github.com/junit-team/junit5) (testing), [Monocle](https://github.com/TestFX/Monocle) (running the user interface tests without a screen), [Checkstyle](https://checkstyle.sourceforge.io/) and [JaCoCo](https://www.jacoco.org/jacoco/) (code quality and coverage).
 * Documentation is built with [MarkBind](https://markbind.org/) and the diagrams are drawn with [PlantUML](https://plantuml.com/).
+* **Use of AI tools:** Some team members used AI coding assistants (Claude Code, OpenAI Codex and GitHub Copilot) to help draft code, tests and documentation. Such work can be recognised in the repository history by commits with a `Co-Authored-By: Claude` trailer and by branches named `codex/` or `copilot/`. Each member is responsible for reviewing and testing the AI-assisted changes they submit, and the changes were merged through pull requests.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -40,6 +41,7 @@ The following provides a quick overview of the main components and their interac
 **Main components of the architecture**
 
 **`Main`** (consisting of classes [`Main`](https://github.com/AY2627S1-CS2103T-F15-1/tp/tree/master/src/main/java/seedu/address/Main.java) and [`MainApp`](https://github.com/AY2627S1-CS2103T-F15-1/tp/tree/master/src/main/java/seedu/address/MainApp.java)) is in charge of the app launch and shut down.
+
 * At app launch, it initializes the other components in the correct sequence, and connects them up with each other.
 * At shut down, it shuts down the other components and invokes cleanup methods where necessary.
 
@@ -54,7 +56,7 @@ The bulk of the app's work is done by the following four components:
 
 **How the architecture components interact with each other**
 
-The *Sequence Diagram* below shows how the components interact with each other for the scenario where the user issues the command `delete 1`.
+The _Sequence Diagram_ below shows how the components interact with each other for the scenario where the user issues the command `delete 1`.
 
 <puml src="diagrams/ArchitectureSequenceDiagram.puml" width="574" />
 
@@ -131,6 +133,7 @@ Here are the other classes in `Logic` (omitted from the class diagram above) tha
 <puml src="diagrams/ParserClasses.puml" width="600"/>
 
 How the parsing works:
+
 * When called upon to parse a user command, the `AddressBookParser` class creates an `XYZCommandParser` (`XYZ` is a placeholder for the specific command name, e.g., `AddCommandParser`). The parser uses the other classes shown above to parse the user command and create an `XYZCommand` object (e.g., `AddCommand`). The `AddressBookParser` returns that object as a `Command` object.
 * All `XYZCommandParser` classes, such as `AddCommandParser` and `DeleteCommandParser`, implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
 * Arguments are parsed by each `XYZCommandParser`, not by `AddressBookParser`, because the prefixes, required fields and error messages differ between commands. Logic that more than one parser needs lives in shared classes instead of being copied:
@@ -141,6 +144,7 @@ How the parsing works:
   * Each prefix-based parser calls `ArgumentMultimap#verifyNoUnexpectedPrefixes` before required-prefix, duplicate and value checks. The multimap compares unaccepted prefix-shaped tokens with the prefixes its tokenizer accepted and with known parameter names. Names, venues and descriptions are not exempt from the retired `a/`, so its venue hint is shown. A typo such as `name/` is also reported instead of being absorbed. Notes, feedback, reasons and remarks are fully permissive because they may quote a command. A description tolerates an unaccepted short prefix such as `p/3` as prose. The fixed whitelist keeps `c/o`, `d/o`, `s/o`, `n/a` and `w/o` valid. A real prefix used by another command and an upper-case spelling are reported by name rather than as a misleading field or missing-prefix error. `AddressBookParser` also rejects the retired `a/` for index-only subcommands such as `pay reverse`, `hw delete`, `task done` and `lesson missed`, which do not tokenize prefixes. `find a/Home` remains a plain search for that text.
 
 ### Model component
+
 **API** : [`Model.java`](https://github.com/AY2627S1-CS2103T-F15-1/tp/tree/master/src/main/java/seedu/address/model/Model.java)
 
 <puml src="diagrams/ModelClassDiagram.puml" width="450" />
@@ -163,6 +167,7 @@ The `Model` component,
 <puml src="diagrams/StorageClassDiagram.puml" width="550" />
 
 The `Storage` component,
+
 * can save both address book data and user preference data in JSON format, and read them back into corresponding objects.
 * is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonAddressBookStorage` and `JsonUserPrefsStorage` (one class per data file).
 * saves the students, lessons, homework, ledger entries, follow-up tasks and travel/sort settings in the same data file. A data file written before a later domain existed has no records for that domain and still loads with empty records for it.
@@ -295,14 +300,17 @@ A date with a four-digit year has one reading. When the first and the last part 
 #### Design considerations
 
 **Alternative 1 (current choice):** read a date with two short end parts day first, and use the year-first reading only if that day does not exist.
+
 * Pros: one rule, matching how dates are usually written in Singapore, and the same text always means the same date. It still accepts `35-12-31` as 31 December 2035.
 * Cons: a year-first form such as `26-12-22` means 26 December 2022. The User Guide says to write a year-first date with four digits.
 
 **Alternative 2:** take the reading nearer to today.
+
 * Pros: `26-12-22` typed in 2026 is 22 December 2026.
 * Cons: it silently misreads ordinary day-first dates such as `26/11/27` and changes its result with the computer's date.
 
 **Alternative 3:** refuse a date that can be read two ways, as `9/10` is refused.
+
 * Pros: never misreads a date.
 * Cons: most two-digit dates in the next few years would be refused, because they can be read both ways.
 
@@ -1328,7 +1336,7 @@ Given below are instructions to test the app manually.
 <box type="info" seamless>
 
 **Note:** These instructions only provide a starting point for testers to work on;
-testers are expected to do more *exploratory* testing.
+testers are expected to do more _exploratory_ testing.
 </box>
 
 For self-contained checks of lesson completion, missed status, teaching-note boundaries, changing lesson

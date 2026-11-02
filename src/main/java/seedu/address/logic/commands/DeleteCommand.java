@@ -8,7 +8,9 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.logging.Logger;
 
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
@@ -46,6 +48,8 @@ public class DeleteCommand extends DestructiveCommand {
     public static final String MESSAGE_BALANCE = "\nBalance: %1$s.";
     public static final String MESSAGE_ARCHIVE_ADVICE =
             "\nUse 'archive INDEX' to retain these obligations and all history instead.";
+
+    private static final Logger logger = LogsCenter.getLogger(DeleteCommand.class);
 
     private final Index targetIndex;
     private final boolean isConfirmed;
@@ -95,6 +99,7 @@ public class DeleteCommand extends DestructiveCommand {
 
         if (records.isEmpty()) {
             model.deletePerson(personToDelete);
+            logger.info("Deleted a student with no linked records");
             return new CommandResult(String.format(MESSAGE_DELETE_PERSON_SUCCESS, Messages.format(personToDelete)));
         }
 
@@ -102,7 +107,9 @@ public class DeleteCommand extends DestructiveCommand {
             return new CommandResult(getConfirmationPreview(personToDelete, records));
         }
 
+        assert !records.isEmpty() : "A student with linked records is deleted only after confirmation";
         model.deletePerson(personToDelete);
+        logger.info("Deleted a student and the linked records");
         return new CommandResult(getSuccessMessage(personToDelete, records));
     }
 

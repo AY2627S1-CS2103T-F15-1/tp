@@ -65,7 +65,7 @@ public class LessonAddCommandParser implements Parser<LessonAddCommand> {
         LessonDate date = ParserUtil.parseDate(argMultimap.getValue(PREFIX_DATE).get(), java.time.LocalDate.now(clock));
         LessonTime time = ParserUtil.parseTime(argMultimap.getValue(PREFIX_TIME).get());
 
-        boolean isPast = ParserUtil.parseFlag(argMultimap, PREFIX_PAST);
+        boolean isPast = ParserUtil.hasFlag(argMultimap, PREFIX_PAST);
 
         return new LessonAddCommand(studentIndex, subject, date, time, duration, venue, isPast, clock);
     }

@@ -152,8 +152,8 @@ public class HomeworkCommandParser implements Parser<Command> {
         if (!values.getPreamble().isEmpty()) {
             throw ParserUtil.invalidFormat(HomeworkListCommand.MESSAGE_USAGE);
         }
-        boolean isOverdueOnly = parseListFlag(values, PREFIX_OVERDUE);
-        boolean isOutstandingOnly = parseListFlag(values, PREFIX_OUTSTANDING);
+        boolean isOverdueOnly = hasListFlag(values, PREFIX_OVERDUE);
+        boolean isOutstandingOnly = hasListFlag(values, PREFIX_OUTSTANDING);
         if (isOverdueOnly && isOutstandingOnly) {
             throw new ParseException(HomeworkListCommand.MESSAGE_FLAGS_EXCLUSIVE);
         }
@@ -163,9 +163,9 @@ public class HomeworkCommandParser implements Parser<Command> {
     }
 
     /** Reads a flag of the list command, answering a value given to it with the usage string. */
-    private static boolean parseListFlag(ArgumentMultimap values, Prefix flag) throws ParseException {
+    private static boolean hasListFlag(ArgumentMultimap values, Prefix flag) throws ParseException {
         try {
-            return ParserUtil.parseFlag(values, flag);
+            return ParserUtil.hasFlag(values, flag);
         } catch (ParseException e) {
             throw new ParseException(HomeworkListCommand.MESSAGE_USAGE, e);
         }

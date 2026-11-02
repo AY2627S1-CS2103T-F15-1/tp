@@ -28,6 +28,7 @@ public class LessonDuration {
     public LessonDuration(int minutes) {
         checkArgument(isValidDuration(minutes), MESSAGE_CONSTRAINTS);
         value = minutes;
+        assert value >= MIN_DURATION && value <= MAX_DURATION : "A duration is checked before it is stored";
     }
 
     /**
