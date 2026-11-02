@@ -1351,6 +1351,94 @@ It includes starting data, literal commands, expected results and a reproducible
        Expected: The most recent window size and location are retained.
 
 
+### Dashboard, student overview and main window
+
+Start with `clear confirm`, then `demo`, then `demo confirm`, and then set up one day of work. Run the commands in this order, because later steps use the lesson numbers that earlier ones show.
+
+```
+lesson add st/3 d/today t/16:00 dur/90
+lesson add st/5 s/Physics d/today t/16:30 v/Online
+lesson add st/6 d/today t/18:00
+agenda
+lesson cancel 3
+lesson add st/4 s/Math d/2026-10-26 t/10:00 past/
+lesson add st/2 s/Chemistry d/2026-10-26 t/17:00 past/
+lesson list st/2 all/
+lesson done 1
+pay st/2 amt/20
+```
+
+1. Dashboard sections
+
+   1. Test case: `today`<br>
+      Expected: today's date, then four sections in this order.
+      * `TODAY'S LESSONS (2, 2h 30m)` lists Charlotte Oliveiro at 16:00 and Irfan Ibrahim at 16:30, both marked `⚠ overlaps`. Roy's cancelled lesson is left out.
+      * `LESSONS AWAITING NOTES (1)` lists `Mon 26 Oct  David Li  Math  not yet marked completed`.
+      * `OVERDUE HOMEWORK (0)` shows `No overdue homework.`
+      * `DUES` shows `Bernice Yu $40.00`, with `oldest unpaid N days` counted from 26 Oct 2026.
+
+   1. Test case: `today extra`<br>
+      Expected: `The 'today' command takes no parameters.` `TODAY` and `Today` work like `today`.
+
+1. Student overview
+
+   1. Test case: `view 3`<br>
+      Expected: `Viewing: Charlotte Oliveiro`, then her details and five sections. `NEXT LESSON` is today's 16:00 lesson. It stays the next lesson after 17:30 until it is marked completed or missed, because the next lesson is the first scheduled one from today onwards. The other sections show `No lesson notes yet.`, `0 completed · 0 cancelled · 0 missed`, `OUTSTANDING $0.00` and `No outstanding homework.`
+
+   1. Test case: `lesson list st/2 all/`, `lesson done 1 n/Mole concept`, then `view 2`<br>
+      Expected: `Updated notes for: ...` and no second charge. The overview shows `Mon 26 Oct 2026  Mole concept` under `RECENT LESSON NOTES`, `1 completed` and `OUTSTANDING $40.00`.
+
+   1. Test case: `lesson list st/5`, `lesson prep 1 n/Bring the mock paper`, then `view 5`<br>
+      Expected: `Preparation: Bring the mock paper` under `NEXT LESSON`.
+
+   1. Test case: `archive 2`, `today`, then `list all/` and `view 2`<br>
+      Expected: The dues row reads `Bernice Yu (archived) $40.00 ...`, and the overview starts with `Viewing: Bernice Yu (archived)`.
+
+   1. Test case: `find charlotte`, then `view 1`<br>
+      Expected: Charlotte's overview. The number comes from the list that `find` displayed.
+
+   1. Incorrect commands to try: `view 0`, `view`, `view abc`, `view 1 2`, then `view 99`<br>
+      Expected: The first four give `Invalid command format!` and the usage. `view 99` gives `The student index provided is invalid. No student numbered 99 in the current list. The list has N item(s).`
+
+1. Main window
+
+   1. Test case: drag the window to its smallest size.<br>
+      Expected: It stops at 450 by 600 pixels. The command box, result box and student list stay usable, and a long result scrolls inside the result box.
+
+   1. Test case: `view 0`, then `today`<br>
+      Expected: The error appears in red in the result box, with no dialog. The next command's result is shown in the normal colour.
+
+   1. Test case: press `F1`.<br>
+      Expected: The offline User Guide opens in its own window.
+
+   1. Test case: `add n/Maximilian Alexander Constantine Wellington-Smythe Fitzgerald p/81234567 l/S2 s/Math r/40`, with the window at its smallest size<br>
+      Expected: The card shortens the name with `…`. `view INDEX` shows the full name.
+
+1. Empty dashboard (run this last, because it deletes the data the cases above use)
+
+   1. Test case: `clear confirm`, then close and reopen TutorFlow.<br>
+      Expected: The dashboard is shown when TutorFlow starts. Each section shows its own empty message (`No lessons today.`, `All past lessons are recorded.`, `No overdue homework.`, `No outstanding balances. Everyone is up to date.`), and `lesson done 1` says to run `agenda` or `lesson list` first, because no lesson has a number yet.
+
+### Testing approach: dashboard, student overview and main window
+
+We tested the dashboard (`today`), the student overview (`view`) and the main window in three ways.
+
+**1. Manual testing from the User Guide.** We ran every case in the section above and the `today` and `view` examples in the UG, in the GUI, with the demo data, and compared the result with the UG.
+
+**2. Automated unit tests.** `TodayCommandTest` and `ViewCommandTest` check each section, the empty states, the order of the rows, the 200-row cap, archived students and that neither command changes the displayed lists. `TodayCommandTest` and `AgendaCommandTest` check that students with the same name are told apart. `PersonCardTest` checks the `(archived)` label on the student card.
+
+**3. Edge-case testing with a fixed clock.** Many dashboard cases depend on the date, so we ran command scripts through the real command logic and storage with a fixed clock that could be moved between steps. That way a lesson could be booked in the past and the dashboard checked "today", or a session could run past midnight. We also looked at the main window at 450×600 and 900×720 with long names, venues and remarks. The script is a throwaway tool and is not part of the repository:
+
+| Area | What was tried |
+|---|---|
+| Input | `today` with text after it and in other letter cases; `view` with 0, negative, non-numeric, decimal, huge and out-of-range numbers, and two numbers |
+| Dates | lessons earlier today, lessons later today, a lesson ending at midnight, the clock moving from 23:59 to 00:00, and a restart on the next day |
+| Content | completed, missed and cancelled lessons today; 5 completed lessons, one of them without notes; homework assigned, submitted and overdue; debts, partial payments and credit |
+| Students | archived students with debts and with lessons awaiting notes; two students with the same name; names of 100 characters and in Chinese |
+| Scale | 205 lessons on one day and 205 awaiting notes |
+
+The run found that two students with the same name looked identical in the lesson rows of `today` and `agenda`. They are now labelled as in the dues section, such as `Alex Yeoh (phone ending 4567)`, and the tests above cover it. It also found that `view` accepted digits of other scripts, such as `view ١`. Only the digits 0-9 are accepted now, which `AdversarialFindingsRegressionTest` checks. Long names push the columns of the dashboard out of line, and a narrow window shortens long text on the student cards. Both are described in the UG.
+
 ### Command box
 
 1. Letter case of commands
