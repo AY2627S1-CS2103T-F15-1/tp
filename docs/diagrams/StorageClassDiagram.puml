@@ -15,9 +15,13 @@ Class JsonUserPrefsStorage
 
 package "AddressBook Storage" #F4F6F6{
 Class JsonAddressBookStorage
+Class VersionedAddressBookStorage
 Class JsonSerializableAddressBook
 Class JsonAdaptedPerson
-Class JsonAdaptedTag
+Class JsonAdaptedSubject
+Class JsonAdaptedLesson
+Class JsonAdaptedHomework
+Class JsonAdaptedTask
 Class JsonAdaptedLedgerEntry
 }
 
@@ -28,16 +32,27 @@ HiddenOutside ..> Storage
 
 StorageManager .up.|> Storage
 StorageManager -down-> "1" JsonUserPrefsStorage
-StorageManager -down-> "1" JsonAddressBookStorage
+StorageManager -down-> "1" VersionedAddressBookStorage
+
+VersionedAddressBookStorage -down-> "1" JsonAddressBookStorage
 
 JsonAddressBookStorage ..> JsonSerializableAddressBook
 JsonSerializableAddressBook --> "*" JsonAdaptedPerson
-JsonAdaptedPerson --> "*" JsonAdaptedTag
+JsonSerializableAddressBook --> "0..*" JsonAdaptedLesson : lessons
+JsonSerializableAddressBook --> "0..*" JsonAdaptedHomework : homework
+JsonSerializableAddressBook --> "0..*" JsonAdaptedTask : tasks
+JsonAdaptedPerson --> "1..*" JsonAdaptedSubject : subjects
 JsonSerializableAddressBook --> "0..*" JsonAdaptedLedgerEntry : ledgerEntries
+JsonAdaptedLesson ..> Lesson : converts to/from
+JsonAdaptedHomework ..> Homework : converts to/from
+JsonAdaptedTask ..> Task : converts to/from
 JsonAdaptedLedgerEntry ..> LedgerEntry : converts to/from
 JsonSerializableAddressBook ..> LedgerEntry : snapshots
 
 package Model {
+Class Lesson
+Class Homework
+Class Task
 Class LedgerEntry
 }
 

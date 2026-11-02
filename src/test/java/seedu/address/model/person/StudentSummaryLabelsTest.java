@@ -3,6 +3,7 @@ package seedu.address.model.person;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,16 @@ public class StudentSummaryLabelsTest {
         AddressBook book = new AddressBook();
         book.addPerson(student);
         assertEquals("Alex", new StudentSummaryLabels(book).format(student.getId()));
+    }
+
+    @Test
+    public void find_studentInBook_returnsLabelElseNothing() {
+        Person student = new PersonBuilder().withName("Alex").build();
+        AddressBook book = new AddressBook();
+        book.addPerson(student);
+        StudentSummaryLabels labels = new StudentSummaryLabels(book);
+        assertEquals(Optional.of("Alex"), labels.find(student.getId()));
+        assertEquals(Optional.empty(), labels.find(UUID.randomUUID()));
     }
 
     @Test

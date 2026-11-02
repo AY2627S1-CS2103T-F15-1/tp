@@ -20,6 +20,7 @@ import seedu.address.model.lesson.LessonStatus;
 import seedu.address.model.lesson.LessonTime;
 import seedu.address.model.lesson.TravelGap;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.StudentSummaryLabels;
 import seedu.address.model.person.Subject;
 
 /**
@@ -103,16 +104,6 @@ final class LessonCommandUtil {
     }
 
     /**
-     * Checks that {@code date} is not before today.
-     *
-     * @param message the message to show if it is.
-     * @throws CommandException if the date is in the past.
-     */
-    static void requireNotInPast(LessonDate date, String message) throws CommandException {
-        requireNotInPast(date, message, Clock.systemDefaultZone());
-    }
-
-    /**
      * Checks that {@code date} is not before today, by the date of {@code clock}.
      *
      * @param message the message to show if it is.
@@ -134,15 +125,6 @@ final class LessonCommandUtil {
         if (date.value.isAfter(LocalDate.now(clock))) {
             throw new CommandException(message);
         }
-    }
-
-    /**
-     * Checks that {@code date} is not so far in the past that it is probably a mistyped year.
-     *
-     * @throws CommandException if the date is more than 2 years before today.
-     */
-    static void requireNotTooFarPast(LessonDate date) throws CommandException {
-        requireNotTooFarPast(date, Clock.systemDefaultZone());
     }
 
     /**
@@ -176,15 +158,6 @@ final class LessonCommandUtil {
         return student.getSubjects().stream().filter(requested::equals).findFirst()
                 .orElseThrow(() -> new CommandException(
                         String.format(MESSAGE_SUBJECT_NOT_TAKEN, student.getName(), requested)));
-    }
-
-    /**
-     * Checks that {@code date} is not so far ahead that it is probably a mistyped year.
-     *
-     * @throws CommandException if the date is more than 2 years from today.
-     */
-    static void requireNearFuture(LessonDate date) throws CommandException {
-        requireNearFuture(date, Clock.systemDefaultZone());
     }
 
     /**
@@ -274,5 +247,13 @@ final class LessonCommandUtil {
                         gap.next().getDate(), gap.next().getTime(), gap.minutes(), gap.buffer()))
                 .limit(limit)
                 .collect(Collectors.joining());
+    }
+
+    /**
+     * Returns the student of {@code lesson} as {@code labels} shows them, so that students with the same name can be
+     * told apart. A lesson whose student is not in the address book keeps the name stored with it.
+     */
+    static String studentLabel(StudentSummaryLabels labels, Lesson lesson) {
+        return lesson.getStudentId().flatMap(labels::find).orElseGet(() -> lesson.getStudentName().toString());
     }
 }

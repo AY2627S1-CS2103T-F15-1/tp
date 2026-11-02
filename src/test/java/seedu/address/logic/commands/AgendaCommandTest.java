@@ -18,7 +18,9 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.lesson.Lesson;
+import seedu.address.model.person.Person;
 import seedu.address.testutil.LessonBuilder;
+import seedu.address.testutil.PersonBuilder;
 
 public class AgendaCommandTest {
 
@@ -55,6 +57,30 @@ public class AgendaCommandTest {
         assertTrue(lines[2].endsWith(AgendaCommand.MESSAGE_OVERLAPS));
         assertEquals(3, lines.length);
         assertEquals(List.of(mondayMath, mondayPhysics), model.getFilteredLessonList());
+    }
+
+    @Test
+    public void execute_sameNameStudents_eachRowSaysWhichStudent() {
+        Person otherAlice = new PersonBuilder().withName("Alice Pauline").withPhone("98765432").build();
+        model.addPerson(otherAlice);
+        // Lessons booked by command carry their student's id, which is what tells the two apart
+        addLessons(mondayMath.snapshotStudent(ALICE), new LessonBuilder().withDate(MONDAY).withTime("19:00")
+                .withDuration(60).build().snapshotStudent(otherAlice));
+
+        String message = new AgendaCommand(MONDAY, false).execute(model).getFeedbackToUser();
+
+        assertTrue(message.contains("\n 1. 16:30-18:00  Alice Pauline (phone ending 1253)"), message);
+        assertTrue(message.contains("\n 2. 19:00-20:00  Alice Pauline (phone ending 5432)"), message);
+    }
+
+    @Test
+    public void execute_weekWithArchivedStudent_marksThemArchived() {
+        addLessons(tuesdayEnglish.snapshotStudent(CARL));
+        model.setPerson(CARL, CARL.withArchived(true));
+
+        String message = new AgendaCommand(MONDAY, true).execute(model).getFeedbackToUser();
+
+        assertTrue(message.contains("\n 1. " + tuesdayEnglish.getTimeRange() + "  Carl Kurz (archived) "), message);
     }
 
     @Test

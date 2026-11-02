@@ -104,9 +104,9 @@ public class ArchiveCommandTest {
     public void messages_matchSpecification() {
         assertEquals("This student is already active. Use student list archived/ before restoring.",
                 ArchiveCommand.MESSAGE_ALREADY_ACTIVE);
-        assertEquals("Archived: Chen Hao. Lessons and history are retained. The student list has refreshed.",
+        assertEquals("Archived: Chen Hao. Lessons and history are retained. Run 'list' to refresh the student list.",
                 String.format(ArchiveCommand.MESSAGE_ARCHIVED, "Chen Hao"));
-        assertEquals("Restored: Amy Tan. Lessons and history are retained. The student list has refreshed.",
+        assertEquals("Restored: Amy Tan. Lessons and history are retained. Run 'list' to refresh the student list.",
                 String.format(ArchiveCommand.MESSAGE_RESTORED, "Amy Tan"));
     }
 

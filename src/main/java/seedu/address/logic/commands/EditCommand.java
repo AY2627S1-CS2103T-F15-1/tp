@@ -8,7 +8,6 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_RATE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_VENUE;
-import static seedu.address.model.Model.PREDICATE_SHOW_ACTIVE_PERSONS;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -96,7 +95,6 @@ public class EditCommand extends Command {
                 && model.getAddressBook().getPersonList().stream().anyMatch(editedPerson::hasSameName);
 
         model.setPerson(personToEdit, editedPerson);
-        model.updateFilteredPersonList(PREDICATE_SHOW_ACTIVE_PERSONS);
         String message = String.format(MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson));
         if (!personToEdit.getLevel().equals(editedPerson.getLevel())) {
             message += "\nPast lessons keep their original details.";

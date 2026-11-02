@@ -1,9 +1,11 @@
 package seedu.address.logic.commands;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
+import static seedu.address.logic.commands.CommandTestUtil.showPersonAtIndex;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
@@ -50,6 +52,13 @@ public class RemarkCommandTest {
         String expectedMessage = String.format(
                 RemarkCommand.MESSAGE_DELETE_REMARK_SUCCESS, Messages.format(editedPerson));
         assertCommandSuccess(command, model, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_filteredList_keepsDisplayedList() throws Exception {
+        showPersonAtIndex(model, INDEX_SECOND_PERSON);
+        new RemarkCommand(INDEX_FIRST_PERSON, new Remark("Likes baseball")).execute(model);
+        assertEquals(1, model.getFilteredPersonList().size());
     }
 
     @Test

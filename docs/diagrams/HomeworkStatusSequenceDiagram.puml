@@ -27,6 +27,7 @@ activate LogicManager
 LogicManager -> AddressBookParser : parseCommand("hw status 2 s/submitted")
 activate AddressBookParser
 
+create HomeworkCommandParser
 AddressBookParser -> HomeworkCommandParser : parse(" status 2 s/submitted")
 activate HomeworkCommandParser
 
