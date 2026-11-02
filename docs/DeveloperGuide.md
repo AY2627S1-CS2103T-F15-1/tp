@@ -1451,6 +1451,14 @@ Start each group with `clear confirm`, then `demo`, then `demo confirm`, so the 
    1. Test case: `archive 1`, then `list archived/`, then `restore 1`<br>
       Expected: The student is hidden from the active list, shown by `list archived/`, and restored to the active list.
 
+1. Sorting students
+
+   1. Test case: `sort desc`, then `list`<br>
+      Expected: `Sorted all students by name (Z to A).` The list is shown from Z to A and stays that way after `list`. `sort` alone sorts A to Z again.
+
+   1. Test case: `sort up`<br>
+      Expected: `Invalid command format!` and the usage of `sort`. The order is unchanged.
+
 ### Lessons
 
 Start each group with `clear confirm`, then `demo`, then `demo confirm`, so the sample students and empty lesson history are known.
@@ -1545,6 +1553,34 @@ Start each group with `clear confirm`, then `demo`, then `demo confirm`, so the 
    1. Other incorrect commands to try: completion of a future or cancelled lesson, `lesson done 0`, `lesson done 1 n/`, or `lesson done 1 n/First n/Second`<br>
       Expected: Rejected without changing the lesson or notes.
 
+1. Recording a missed lesson and its preparation
+
+   1. Prerequisites: `clear confirm`, then `demo`, then `demo confirm`; run `lesson add st/3 d/2026-10-12 t/16:30 past/`, then `agenda d/2026-10-12`.
+
+   1. Test case: `lesson missed 1`, then `lesson missed 1` again<br>
+      Expected: `Marked missed: ...`, then `That lesson is already marked as missed.`
+
+   1. Test case: `lesson done 1`<br>
+      Expected: The missed lesson is corrected to completed and the $45.00 charge is recorded.
+
+   1. Prerequisites: `lesson add st/3 d/tmr t/16:30`, then `agenda d/tmr`.
+
+   1. Test case: `lesson prep 1 n/Bring the mock paper`, then `lesson prep 1 n/Past papers`, then `lesson list st/3`<br>
+      Expected: The second preparation replaces the first, and the list shows `[Preparation: Past papers]`.
+
+   1. Test case: `lesson prep 1 n/`<br>
+      Expected: Rejected with `Empty value for n/`; the preparation cannot be cleared.
+
+1. Cancelling a weekly series
+
+   1. Prerequisites: `clear confirm`, then `demo`, then `demo confirm`; run `lesson repeat st/3 d/tmr t/16:00 count/4`, then `lesson list st/3`.
+
+   1. Test case: `lesson series cancel 2`<br>
+      Expected: Rejected with the usage of `lesson series cancel`, because `confirm` is missing.
+
+   1. Test case: `lesson series cancel 2 confirm`, then `lesson list st/3 all/`<br>
+      Expected: `Cancelled 4 series occurrences.` All four lessons are listed as cancelled.
+
 ### Homework, tasks and finance
 
 1. Homework lifecycle
@@ -1568,6 +1604,13 @@ Start each group with `clear confirm`, then `demo`, then `demo confirm`, so the 
    1. Test case: `task edit 1 desc/Call parent again due/-`, `task done 1`, then `task list all/`<br>
       Expected: The text changes, the due date is removed, and the completed task is shown with `all/`.
 
+1. Deleting and restoring a task
+
+   1. Prerequisites: `clear confirm`, then `demo`, then `demo confirm`; run `task add st/1 desc/Call parent`, then `task list`.
+
+   1. Test case: `task delete 1`, then `task delete 1 confirm`, then `undo`, then `task list`<br>
+      Expected: The first command only asks for confirmation. The second deletes the task, and `undo` brings it back.
+
 1. Payments, charges, withdrawals and dues
 
    1. Prerequisites: `clear confirm`; `demo`; `demo confirm`; `lesson add st/3 d/2026-10-12 t/16:30 past/`; `agenda d/2026-10-12`; `lesson done 1`.
@@ -1588,6 +1631,20 @@ Start each group with `clear confirm`, then `demo`, then `demo confirm`, so the 
 
    1. Test case: `clear`, then `clear confirm`, then `demo`, then `demo confirm`<br>
       Expected: `clear` only asks for confirmation; `clear confirm` empties the data; `demo` previews loading; `demo confirm` loads the sample students.
+
+### Dashboard and travel buffer
+
+1. Today's dashboard
+
+   1. Prerequisites: `clear confirm`, then `demo`, then `demo confirm`.
+
+   1. Test case: `today`<br>
+      Expected: The four sections `TODAY'S LESSONS`, `LESSONS AWAITING NOTES`, `OVERDUE HOMEWORK` and `DUES` are all shown, and empty ones say so. `today now` is rejected because `today` takes no parameters.
+
+1. Travel buffer
+
+   1. Test case: `travel buffer/45`, then `travel buffer/181`<br>
+      Expected: `Travel buffer set to 45 minutes.`, then a rejection that gives the range 0-180.
 
 ### Saving data
 
