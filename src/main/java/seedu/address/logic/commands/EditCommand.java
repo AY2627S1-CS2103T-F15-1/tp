@@ -58,6 +58,7 @@ public class EditCommand extends Command {
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
     public static final String MESSAGE_DUPLICATE_PERSON = "This student already exists in TutorFlow.";
     public static final String MESSAGE_SAME_NAME_WARNING = AddCommand.MESSAGE_SAME_NAME_WARNING;
+    public static final String MESSAGE_UNCHANGED = "The student already has these details.";
 
     private final Index index;
     private final EditPersonDescriptor editPersonDescriptor;
@@ -85,6 +86,10 @@ public class EditCommand extends Command {
 
         Person personToEdit = lastShownList.get(index.getZeroBased());
         Person editedPerson = createEditedPerson(personToEdit, editPersonDescriptor);
+        // equals() ignores letter case in some fields, but a case-only edit changes what is shown and saved
+        if (Messages.format(editedPerson).equals(Messages.format(personToEdit))) {
+            throw new CommandException(MESSAGE_UNCHANGED);
+        }
 
         if (!personToEdit.isSamePerson(editedPerson) && model.hasPerson(editedPerson)) {
             throw new CommandException(MESSAGE_DUPLICATE_PERSON);
