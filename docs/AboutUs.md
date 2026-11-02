@@ -16,7 +16,7 @@ You can reach us at the email `e1406390[at]u.nus.edu`
 <img src="images/joshmode.png" width="200px">
 
 [[github](https://github.com/joshmode)]
-[[portfolio](joshmode.md)]
+[[portfolio](team/joshmode.md)]
 
 * Role: Maintainer and implementer
 * Responsibilities: Maintaining the team repository, including the issue tracker, milestones and merging of pull requests, and implementing features
@@ -26,6 +26,7 @@ You can reach us at the email `e1406390[at]u.nus.edu`
 <img src="images/lew1swong.png" width="200px">
 
 [[github](https://github.com/Lew1sWong)]
+[[portfolio](team/lew1swong.md)]
 
 * Role: Developer
 * Responsibilities: Implementing and testing assigned TutorFlow features, and maintaining related documentation.
@@ -35,6 +36,7 @@ You can reach us at the email `e1406390[at]u.nus.edu`
 <img src="images/notmeegoreng.png" width="200px">
 
 [[github](https://github.com/notmeegoreng)]
+[[portfolio](team/notmeegoreng.md)]
 
 * Role: Developer
 * Responsibilities: Implementing and testing assigned TutorFlow features, and maintaining related documentation.
@@ -44,7 +46,7 @@ You can reach us at the email `e1406390[at]u.nus.edu`
 <img src="images/ilieks.png" width="200px">
 
 [[github](https://github.com/IliekS)]
-[[portfolio](ilieks.md)]
+[[portfolio](team/ilieks.md)]
 
 Year 3 Computer Science
 * Role: Developer
@@ -55,6 +57,7 @@ Year 3 Computer Science
 <img src="images/yash-popularplusplus.png" width="200px">
 
 [[github](https://github.com/Yash-PoPularPlusPlus)]
+[[portfolio](team/yash-popularplusplus.md)]
 
 * Role: Developer
 * Responsibilities: Implementing and testing assigned TutorFlow features, and maintaining related documentation.
@@ -64,6 +67,7 @@ Year 3 Computer Science
 <img src="images/samairakapur.png" width="200px">
 
 [[github](https://github.com/samairakapur)]
+[[portfolio](team/samairakapur.md)]
 
 * Role: Developer
 * Responsibilities: Implementing and testing assigned TutorFlow features, and maintaining related documentation.
