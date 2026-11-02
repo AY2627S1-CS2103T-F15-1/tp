@@ -116,7 +116,8 @@ public class HomeworkCommandParser implements Parser<Command> {
         values.verifyNoDuplicatePrefixesFor(PREFIX_DESCRIPTION, PREFIX_DUE);
         values.verifyNoEmptyValuesFor(PREFIX_DESCRIPTION, PREFIX_DUE);
         if (values.getValue(PREFIX_DESCRIPTION).isEmpty() && values.getValue(PREFIX_DUE).isEmpty()) {
-            throw new ParseException(HomeworkEditCommand.MESSAGE_USAGE);
+            throw new ParseException("Provide at least one of " + PREFIX_DESCRIPTION + " or " + PREFIX_DUE + ".\n"
+                    + HomeworkEditCommand.MESSAGE_USAGE);
         }
         Index index = ParserUtil.parseIndex(values.getPreamble(), HomeworkEditCommand.MESSAGE_USAGE);
         return new HomeworkEditCommand(index,
