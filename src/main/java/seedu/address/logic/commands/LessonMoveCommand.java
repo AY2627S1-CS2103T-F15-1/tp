@@ -6,6 +6,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_DURATION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TIME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_VENUE;
 
+import java.time.Clock;
 import java.util.Objects;
 import java.util.logging.Logger;
 
@@ -50,6 +51,7 @@ public class LessonMoveCommand extends Command {
     private static final Logger logger = LogsCenter.getLogger(LessonMoveCommand.class);
 
     private final Index lessonIndex;
+    private final Clock clock;
     private final LessonDate date; // null if the date is retained
     private final LessonTime time; // null if the time is retained
     private final LessonDuration duration; // null if the duration is retained
@@ -61,7 +63,15 @@ public class LessonMoveCommand extends Command {
      */
     public LessonMoveCommand(Index lessonIndex, LessonDate date, LessonTime time, LessonDuration duration,
             Venue venue) {
+        this(lessonIndex, date, time, duration, venue, Clock.systemDefaultZone());
+    }
+
+    /** Creates a command that takes today's date from {@code clock}. */
+    public LessonMoveCommand(Index lessonIndex, LessonDate date, LessonTime time, LessonDuration duration,
+            Venue venue, Clock clock) {
         requireNonNull(lessonIndex);
+        requireNonNull(clock);
+        this.clock = clock;
         this.lessonIndex = lessonIndex;
         this.date = date;
         this.time = time;
@@ -104,8 +114,8 @@ public class LessonMoveCommand extends Command {
 
     private Lesson createMovedLesson(Lesson target) throws CommandException {
         if (date != null) {
-            LessonCommandUtil.requireNotInPast(date, MESSAGE_DATE_IN_PAST);
-            LessonCommandUtil.requireNearFuture(date);
+            LessonCommandUtil.requireNotInPast(date, MESSAGE_DATE_IN_PAST, clock);
+            LessonCommandUtil.requireNearFuture(date, clock);
         }
         LessonTime newTime = Objects.requireNonNullElse(time, target.getTime());
         LessonDuration newDuration = Objects.requireNonNullElse(duration, target.getDuration());

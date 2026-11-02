@@ -3,6 +3,7 @@ package seedu.address.logic.commands;
 import static java.util.Objects.requireNonNull;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,6 +49,7 @@ public class DeleteCommand extends DestructiveCommand {
 
     private final Index targetIndex;
     private final boolean isConfirmed;
+    private final Clock clock;
 
     /**
      * Creates a {@code DeleteCommand} that deletes the student at {@code targetIndex} only if the student
@@ -62,9 +64,16 @@ public class DeleteCommand extends DestructiveCommand {
      * A student who has lessons, homework or tasks is only deleted if {@code isConfirmed} is true.
      */
     public DeleteCommand(Index targetIndex, boolean isConfirmed) {
+        this(targetIndex, isConfirmed, Clock.systemDefaultZone());
+    }
+
+    /** Creates a command that takes today's date from {@code clock} to count upcoming lessons and homework. */
+    public DeleteCommand(Index targetIndex, boolean isConfirmed, Clock clock) {
         requireNonNull(targetIndex);
+        requireNonNull(clock);
         this.targetIndex = targetIndex;
         this.isConfirmed = isConfirmed;
+        this.clock = clock;
     }
 
     @Override
@@ -106,7 +115,7 @@ public class DeleteCommand extends DestructiveCommand {
     private String getConfirmationPreview(Person student, LinkedRecords records) {
         String preview = getConfirmationPrompt(student, records.lessons());
         if (records.hasHomework() || records.financialEvents() > 0) {
-            preview += "\n" + describeHistory(records);
+            preview += "\n" + describeHistory(records, LocalDate.now(clock));
         }
         if (records.hasTasks()) {
             preview += "\nThis also deletes " + records.tasks().size() + " task(s).";
@@ -124,9 +133,9 @@ public class DeleteCommand extends DestructiveCommand {
      * Feedback is mentioned only when there is some, because it is the part of the history that took thought to
      * write.
      */
-    private static String describeHistory(LinkedRecords records) {
+    private static String describeHistory(LinkedRecords records, LocalDate today) {
         long upcoming = records.homework().stream().filter(Homework::isOutstanding)
-                .filter(item -> !item.getDueDate().isBefore(LocalDate.now())).count();
+                .filter(item -> !item.getDueDate().isBefore(today)).count();
         String line = "This also deletes " + records.homework().size() + " homework item(s), including " + upcoming
                 + " upcoming homework item(s), and " + records.financialEvents() + " financial event(s).";
         long withFeedback = records.homework().stream().filter(item -> item.getFeedback().isPresent()).count();
@@ -192,7 +201,7 @@ public class DeleteCommand extends DestructiveCommand {
      * student is about to be deleted.
      */
     private String getConfirmationPrompt(Person student, List<Lesson> lessons) {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(clock);
         long upcomingCount = lessons.stream().filter(lesson -> lesson.isUpcoming(today)).count();
         String upcomingWarning = upcomingCount == 0
                 ? ""
