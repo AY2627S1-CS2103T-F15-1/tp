@@ -1380,9 +1380,6 @@ pay st/2 amt/20
    1. Test case: `today extra`<br>
       Expected: `The 'today' command takes no parameters.` `TODAY` and `Today` work like `today`.
 
-   1. Test case: `clear confirm`, then close and reopen TutorFlow.<br>
-      Expected: The dashboard is shown when TutorFlow starts. Each section shows its own empty message (`No lessons today.`, `All past lessons are recorded.`, `No overdue homework.`, `No outstanding balances. Everyone is up to date.`), and `lesson done 1` says to run `agenda` or `lesson list` first, because no lesson has a number yet.
-
 1. Student overview
 
    1. Test case: `view 3`<br>
@@ -1417,27 +1414,30 @@ pay st/2 amt/20
    1. Test case: `add n/Maximilian Alexander Constantine Wellington-Smythe Fitzgerald p/81234567 l/S2 s/Math r/40`, with the window at its smallest size<br>
       Expected: The card shortens the name with `…`. `view INDEX` shows the full name.
 
-#### How the dashboard and overview were tested
+1. Empty dashboard (run this last, because it deletes the data the cases above use)
 
-The dashboard, the overview and the main window were tested in four ways.
+   1. Test case: `clear confirm`, then close and reopen TutorFlow.<br>
+      Expected: The dashboard is shown when TutorFlow starts. Each section shows its own empty message (`No lessons today.`, `All past lessons are recorded.`, `No overdue homework.`, `No outstanding balances. Everyone is up to date.`), and `lesson done 1` says to run `agenda` or `lesson list` first, because no lesson has a number yet.
 
-1. **Unit tests.** `TodayCommandTest` and `ViewCommandTest` check each section, the empty states, ordering, the 200-row cap, archived students and the "read only" rule. `PersonCardTest` checks the `(archived)` label.
-1. **Manual testing against the specification.** Each case above was run in the GUI and compared with sections 4.6, 4.34 and 4.35 of the team's specification.
-1. **Scripted edge cases with a fixed clock.** A small driver ran the real `LogicManager`, with storage, through command scripts and switched the clock between steps, so that dates could be set up in the past and checked "today". The table below lists what was tried.
-1. **Rendering checks.** The real `MainWindow` was rendered headlessly at 450×600 and 900×720 with long names, venues and remarks, and the images were checked by eye.
+### Testing approach: dashboard, student overview and main window
+
+We tested the dashboard (`today`), the student overview (`view`) and the main window in three ways.
+
+**1. Manual testing from the User Guide.** We ran every case in the section above and the `today` and `view` examples in the UG, in the GUI, with the demo data, and compared the result with the UG.
+
+**2. Automated unit tests.** `TodayCommandTest` and `ViewCommandTest` check each section, the empty states, the order of the rows, the 200-row cap, archived students and that neither command changes the displayed lists. `TodayCommandTest` and `AgendaCommandTest` check that students with the same name are told apart. `PersonCardTest` checks the `(archived)` label on the student card.
+
+**3. Edge-case testing with a fixed clock.** Many dashboard cases depend on the date, so we ran command scripts through the real command logic and storage with a fixed clock that could be moved between steps. That way a lesson could be booked in the past and the dashboard checked "today", or a session could run past midnight. We also looked at the main window at 450×600 and 900×720 with long names, venues and remarks. The script is a throwaway tool and is not part of the repository:
 
 | Area | What was tried |
 |---|---|
 | Input | `today` with text after it and in other letter cases; `view` with 0, negative, non-numeric, decimal, huge and out-of-range numbers, and two numbers |
-| Dates | lessons earlier today, lessons later today, a lesson exactly at midnight, the clock moving from 23:59 to 00:00, and a restart on the next day |
+| Dates | lessons earlier today, lessons later today, a lesson ending at midnight, the clock moving from 23:59 to 00:00, and a restart on the next day |
 | Content | completed, missed and cancelled lessons today; 5 completed lessons, one of them without notes; homework assigned, submitted and overdue; debts, partial payments and credit |
 | Students | archived students with debts and with lessons awaiting notes; two students with the same name; names of 100 characters and in Chinese |
 | Scale | 205 lessons on one day and 205 awaiting notes |
 
-What it found:
-* Same-name students looked identical in the lesson rows of the dashboard. This is fixed in #270.
-* Long names push the dashboard's columns out of line, and a narrow window shortens long text on the cards. Both are now documented in the User Guide.
-* `view` accepted digits of other scripts, such as `view ١` (#262, rejected once #250 is in), and `remark` resets the student list (#261). Both were already reported.
+The run found that two students with the same name looked identical in the lesson rows of `today` and `agenda`. They are now labelled as in the dues section, such as `Alex Yeoh (phone ending 4567)`, and the tests above cover it. It also found that `view` accepted digits of other scripts, such as `view ١`. Only the digits 0-9 are accepted now, which `AdversarialFindingsRegressionTest` checks. Long names push the columns of the dashboard out of line, and a narrow window shortens long text on the student cards. Both are described in the UG.
 
 ### Command box
 

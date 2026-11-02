@@ -214,7 +214,7 @@ Format: `view INDEX`
   * the **balance**: what the student owes, as `OUTSTANDING $X.XX`, or the credit from paying ahead, as `IN CREDIT $X.XX`. A student who owes nothing shows `OUTSTANDING $0.00`.
   * the **outstanding homework**: assignments awaiting submission or review, with due dates and feedback
 * A section with nothing to show says so, for example `No upcoming lessons.`, instead of disappearing.
-* An archived student is marked after their name, as in `Viewing: Chen Hao (archived)`, so that you can tell them apart from active students when you reach them through `student list all/` or `find`.
+* An archived student is marked after their name, as in `Viewing: Chen Hao (archived)`, so that you can tell them apart from active students when you reach them through `list all/` or `find`.
 * The command only shows information. It does not change the student list, so the indexes you use for other commands stay the same.
 * In a narrow window, the student card shortens a long name, venue or remark with `…`. The overview always shows them in full.
 
