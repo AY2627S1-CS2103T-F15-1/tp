@@ -167,6 +167,9 @@ Use a selected lesson from group 1. Generate the note lengths exactly when check
 | `lesson done` with a 36-digit index | Normal invalid-index diagnostic, without an overflow crash |
 | `lesson done 1 n/Covered   algebra. x² = 4.` | Repeated spaces normalized; the Unicode text retained |
 
+A valid 1,000-character note makes the full `lesson done 1 n/` command 1,016 characters long;
+a blanket 1,000-character command limit would reject this valid test case.
+
 ## 6. Optional contact and feedback corrections
 
 Start in another empty folder:
