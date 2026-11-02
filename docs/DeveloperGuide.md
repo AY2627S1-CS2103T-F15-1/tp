@@ -1111,58 +1111,58 @@ testers are expected to do more *exploratory* testing.
 
 1. Scheduling a lesson
 
-   1. Prerequisites: Use `list`, with at least two students in the list. The 1st student takes one subject and the 2nd student takes more than one.
+   1. Prerequisites: Start from the demo data and run `list`. The 3rd student takes one subject (Math) and the 1st student takes two (Math and Physics).
 
-   1. Test case: `lesson add st/1 d/<a date next week> t/16:30 dur/90`<br>
+   1. Test case: `lesson add st/3 d/2026-11-10 t/16:30 dur/90`<br>
       Expected: A lesson is scheduled in the student's only subject at the student's venue. The result shows `Scheduled: ...`.
 
    1. Test case: the same command again<br>
       Expected: The lesson is rejected as an exact duplicate.
 
-   1. Test case: `lesson add st/2 d/<the same date> t/17:00` (without `s/`)<br>
+   1. Test case: `lesson add st/1 d/2026-11-10 t/17:00` (without `s/`)<br>
       Expected: Rejected, because the student takes several subjects. The result names the subjects.
 
-   1. Test case: `lesson add st/2 s/<a subject of the student> d/<the same date> t/17:00`<br>
+   1. Test case: `lesson add st/1 s/Math d/2026-11-10 t/17:00`<br>
       Expected: Scheduled, and the result warns that it overlaps the first lesson.
 
-   1. Other incorrect commands to try: `lesson add st/1 d/2020-01-01 t/16:30` (past date), `lesson add st/1 d/<next week> t/23:00 dur/120` (past midnight), `lesson add st/0 d/<next week> t/16:30`, `lesson add st/1`<br>
+   1. Other incorrect commands to try: `lesson add st/1 d/2020-01-01 t/16:30` (past date), `lesson add st/3 d/2026-11-10 t/23:00 dur/120` (past midnight), `lesson add st/0 d/2026-11-10 t/16:30`, `lesson add st/3`<br>
       Expected: Nothing is scheduled. The result shows an error message.
 
 1. Scheduling a weekly series
 
-   1. Prerequisites: Use `list`, with at least one student who takes one subject.
+   1. Prerequisites: Start from the demo data and run `list`. We use the 3rd student, who takes only Math.
 
-   1. Test case: `lesson repeat st/1 d/<a date next week> t/16:00 count/4`<br>
-      Expected: The result says `Scheduled 4 weekly occurrences.` and, on the next line, that the new lessons are not in the displayed list. `lesson list st/1` then shows 4 lessons, each with the student's level at booking.
+   1. Test case: `lesson repeat st/3 d/2026-11-16 t/16:00 count/4`<br>
+      Expected: The result says `Scheduled 4 weekly occurrences.` and, on the next line, that the new lessons are not in the displayed list. `lesson list st/3` then shows 4 lessons, each with the student's level at booking.
 
-   1. Test case: `lesson repeat st/1 d/<a date next week> t/16:00 count/4 past/`<br>
+   1. Test case: `lesson repeat st/3 d/2026-11-16 t/16:00 count/4 past/`<br>
       Expected: Rejected with a message that `past/` is not accepted for a series.
 
-   1. Test case: `lesson repeat st/1 d/<a date next week> t/16:00 count/53`<br>
+   1. Test case: `lesson repeat st/3 d/2026-11-16 t/16:00 count/53`<br>
       Expected: Rejected with the range message for `count/` and `every/`.
 
-   1. Test case: `lesson add st/1 d/<a date next week> t/09:00 past/`<br>
-      Expected: Rejected, because `past/` is only for a lesson that has already taken place. Using a date from last week succeeds.
+   1. Test case: `lesson add st/3 d/2026-11-16 t/09:00 past/`<br>
+      Expected: Rejected, because `past/` is only for a lesson that has already taken place. `lesson add st/3 d/2026-10-26 t/09:00 past/` succeeds.
 
 1. Viewing lessons
 
-   1. Prerequisites: Schedule the two lessons above.
+   1. Prerequisites: Schedule the two overlapping lessons on 10 Nov 2026 above (the 3rd student at 16:30 and the 1st student at 17:00).
 
-   1. Test case: `agenda d/<the same date>`<br>
-      Expected: Both lessons are listed in time order, each marked `⚠ overlaps`.
+   1. Test case: `agenda d/2026-11-10`<br>
+      Expected: Both lessons on 10 Nov (16:30 and 17:00) are listed in time order, each marked `⚠ overlaps`.
 
-   1. Test case: `agenda week/ d/<the same date>`<br>
+   1. Test case: `agenda week/ d/2026-11-10`<br>
       Expected: Seven days are shown, and days without lessons show `— no lessons —`.
 
    1. Test case: `agenda week/yes`<br>
       Expected: An error that the flag takes no value.
 
-   1. Test case: `lesson list st/1`<br>
-      Expected: The upcoming lessons of the 1st student are listed and numbered.
+   1. Test case: `lesson list st/3`<br>
+      Expected: The upcoming lessons of the 3rd student are listed and numbered.
 
 1. Rescheduling and cancelling a lesson
 
-   1. Prerequisites: Run `agenda` for the date of the lessons, so that the lessons are numbered.
+   1. Prerequisites: Run `agenda d/2026-11-10`, so that the lessons of 10 Nov are numbered.
 
    1. Test case: `lesson move 1 t/20:00`<br>
       Expected: The 1st lesson moves to 20:00 and keeps its subject and venue. The result shows the old and the new slot.
@@ -1173,7 +1173,7 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `lesson cancel 1 r/Student unwell`<br>
       Expected: The lesson is cancelled with its reason. Run `agenda` again to see it listed as cancelled and no longer overlapping.
 
-   1. Test case: `lesson cancel 1` again, then `lesson move 1 d/<next week>`<br>
+   1. Test case: `lesson cancel 1` again, then `lesson move 1 d/2026-11-17`<br>
       Expected: Both are rejected because the lesson is already cancelled.
 
    1. Test case: `lesson cancel 99`<br>
