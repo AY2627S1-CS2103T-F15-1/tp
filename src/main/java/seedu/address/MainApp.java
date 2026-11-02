@@ -35,6 +35,8 @@ import seedu.address.ui.UiManager;
  */
 public class MainApp extends Application {
 
+    public static final String VERSION = "V1.6";
+
     private static final Logger logger = LogsCenter.getLogger(MainApp.class);
     private static final Path USER_PREFS_FILE_PATH = Paths.get("preferences.json");
     private static final Path ADDRESS_BOOK_FILE_PATH = Paths.get("data", "tutorflow-v14.json");
