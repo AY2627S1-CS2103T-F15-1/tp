@@ -143,7 +143,7 @@ How the parsing works:
 The `Model` component,
 
 * stores the address book data i.e., all `Person` objects, each of which represents a student with a name, phone number, level, subjects and rate, and optionally an email, a venue and a remark (the `Person` objects are contained in a `UniquePersonList` object). Two `Person` objects are the same student if they have the same phone number and the same name, ignoring case.
-* stores the `Lesson` objects, each of which is a lesson with a student, a subject, a date, a start time, a duration, a status and optionally a venue (the `Lesson` objects are contained in a `UniqueLessonList` object). A `Lesson` refers to its student by the student's name and phone number, which together identify a `Person`. Deleting a student deletes their lessons, and editing the name or phone number of a student keeps their lessons attached.
+* stores the `Lesson` objects, each of which is a lesson with a student, a subject, a date, a start time, a duration, a status and optionally a venue (the `Lesson` objects are contained in a `UniqueLessonList` object). A `Lesson` refers to its student by the permanent student UUID. Its stored name and phone number are display details and support linking older data during migration; they are not the permanent relationship key. Deleting a student deletes their lessons, and editing contact details retains the UUID link and the lesson's booking snapshots.
 * stores immutable `LedgerEntry` records for lesson charges, student payments, withdrawals and the reversals of charges or payments. Each record refers to a permanent student UUID and, for charges and charge reversals, a lesson UUID; a reversal also refers to the entry it cancels. `Ledger` derives balances and unpaid dues from those records; those calculations do not mutate the ledger.
 * stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
 * stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
@@ -232,12 +232,12 @@ Move, single cancellation and series cancellation use `LessonCommandUtil#require
 
 **Aspect: how a lesson refers to its student**
 
-* **Alternative 1 (current choice):** store the student's name and phone number in the lesson.
-    * Pros: The saved file stays flat and a lesson can be validated without loading students. A name and phone number already identify a student in TutorFlow.
-    * Cons: `AddressBook` must update the lessons when it edits or deletes a student. This is done in `setPerson` and `removePerson`, so no command has to remember it.
-* **Alternative 2:** store a reference to the `Person` object.
-    * Pros: No update is needed when a student is edited.
-    * Cons: `Person` is immutable and is replaced on every edit, so the reference would have to be replaced as well, and the saved file would need ids that students do not have.
+* **Alternative 1 (current choice):** store the permanent student UUID, with name/phone display details and booking-time snapshots in the lesson.
+    * Pros: Profile edits do not change the relationship key. Immutable lesson copies and JSON round trips preserve the same identity, and booking-time level and venue remain available for history.
+    * Cons: Loading must validate the student link and migrate older lessons that have no student UUID. `AddressBook` maintains display details and handles cascade deletion centrally.
+* **Alternative 2 (former design):** identify the student solely by the stored name and phone number.
+    * Pros: The older file needs no separate student identifier.
+    * Cons: Contact edits change the relationship key and require every linked record to be repaired. A stable UUID avoids relying on mutable contact values for identity.
 
 **Aspect: what to do when lessons overlap**
 
@@ -765,8 +765,8 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 1.  Tutor requests to view the agenda for a day
 2.  TutorFlow shows the lessons on that day
-3.  Tutor requests to mark a specific lesson as completed, and provides teaching notes
-4.  TutorFlow marks the lesson as completed, saves the notes and confirms the update
+3.  Tutor requests to mark a specific lesson as completed, optionally providing teaching notes
+4.  TutorFlow marks the lesson as completed, retains its booking details, saves any notes, records the lesson fee and confirms the outcome
 
     Use case ends.
 
@@ -790,13 +790,33 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 * 3c. The lesson is already completed.
 
-    * 3c1. TutorFlow replaces the existing notes with the new notes and confirms the update.
+    * 3c1. If new notes are supplied, TutorFlow replaces the existing notes and confirms the update. Otherwise, it retains the existing notes and informs the tutor that the lesson is already completed.
+
+      No additional fee is recorded.
 
       Use case ends.
 
 * 3d. The tutor requests to mark the lesson as missed instead.
 
-    * 3d1. TutorFlow marks the lesson as missed and confirms the update.
+    * 3d1. If the lesson is scheduled for today or earlier, TutorFlow marks it as missed, retains its booking details and notes, and confirms the update. No fee is recorded by this action.
+
+      A future, cancelled or completed lesson cannot be marked missed. Repeating the request on an already-missed lesson leaves it unchanged.
+
+      Use case ends.
+
+* 3e. The teaching notes are invalid.
+
+    * 3e1. TutorFlow explains the notes constraint without changing the lesson or balance.
+
+      Use case resumes at step 3.
+
+* 3f. The selected lesson was previously marked missed but actually took place.
+
+    * 3f1. TutorFlow continues at step 4, retaining the identity of the original lesson.
+
+* 4a. The calculated fee rounds to zero, or the lesson already has an active charge.
+
+    * 4a1. TutorFlow completes the lesson without adding a charge and explains why.
 
       Use case ends.
 
@@ -989,6 +1009,10 @@ Given below are instructions to test the app manually.
 **Note:** These instructions only provide a starting point for testers to work on;
 testers are expected to do more *exploratory* testing.
 </box>
+
+For self-contained checks of lesson completion, missed status, teaching-note boundaries, changing lesson
+numbers and the correction features, see the [lesson-outcome and correction test plan](testing/LessonStatusManualTesting.md).
+It includes starting data, literal commands, expected results and a reproducible packaged-JAR test runner.
 
 ### Launch and shutdown
 
@@ -1221,8 +1245,8 @@ testers are expected to do more *exploratory* testing.
 
    1. Prerequisites: Make `data/tutorflow-v14.json` read-only, as a user who is not an administrator.
 
-   1. Test case: Run any command, such as `list`.<br>
-      Expected: The result box says that the change was applied in this session but could not be saved, and why. `exit` does not close TutorFlow until the file can be written again.
+   1. Test case: Run `add n/Save Failure Test p/98765432 l/S1 s/Math r/40` (use a fresh test name if that student already exists).<br>
+      Expected: The student is added in this session, but the result box says that the change could not be saved and why. A read-only command such as `list` does not test saving. `exit` does not close TutorFlow while the change remains unsaved. Restore write permission, run `save`, then close and reopen to check that the student was saved; do not repeat the `add` command.
 
 
 ### v1.4 continuity and domain extension contract

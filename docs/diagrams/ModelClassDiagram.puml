@@ -70,7 +70,7 @@ Lesson *--> LessonTime
 Lesson *--> LessonDuration
 Lesson *--> LessonStatus
 Lesson *--> "0..1" Venue
-Lesson ..> Person : refers to its\nstudent by name\nand phone
+Lesson ..> Person : permanent studentId\n(name/phone are\ndisplay details)
 
 LedgerEntry ..> Person : studentId
 LedgerEntry ..> Lesson : optional lessonId\n(charges only)
