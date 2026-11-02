@@ -44,7 +44,8 @@ public class FileUtil {
      * Assumes file exists
      */
     public static String readFromFile(Path file) throws IOException {
-        return new String(Files.readAllBytes(file), CHARSET);
+        String content = new String(Files.readAllBytes(file), CHARSET);
+        return content.startsWith("\uFEFF") ? content.substring(1) : content;
     }
 
     /**

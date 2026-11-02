@@ -3,6 +3,7 @@ package seedu.address.storage;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -64,7 +65,7 @@ class JsonSerializableAddressBook {
             @JsonProperty("homework") List<JsonAdaptedHomework> homework,
             @JsonProperty("ledgerEntries") List<JsonAdaptedLedgerEntry> ledgerEntries,
             @JsonProperty("tasks") List<JsonAdaptedTask> tasks) {
-        this.persons.addAll(persons);
+        this.persons.addAll(Objects.requireNonNull(persons, "The data file has no list of students."));
         if (ledgerEntries != null) {
             this.ledgerEntries.addAll(ledgerEntries);
         }

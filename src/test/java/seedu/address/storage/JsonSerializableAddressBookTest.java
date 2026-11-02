@@ -4,12 +4,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.exceptions.IllegalValueException;
@@ -68,6 +70,13 @@ public class JsonSerializableAddressBookTest {
                 JsonSerializableAddressBook.class);
         assertThrows(IllegalValueException.class, JsonSerializableAddressBook.MESSAGE_INVALID_STUDENT_ORDER,
                 invalid::toModelType);
+    }
+
+    @Test
+    public void fromJsonString_missingPersonsList_namesTheProblem() {
+        IOException thrown = Assertions.assertThrows(IOException.class, () ->
+                JsonUtil.fromJsonString("{}", JsonSerializableAddressBook.class));
+        assertTrue(thrown.getMessage().contains("The data file has no list of students."));
     }
 
     @Test

@@ -44,6 +44,14 @@ public class FileUtilTest {
     }
 
     @Test
+    public void readFromFile_byteOrderMark_isRemoved() throws Exception {
+        Path file = temporaryFolder.resolve("data.json");
+        Files.writeString(file, "\uFEFF{}");
+
+        assertEquals("{}", FileUtil.readFromFile(file));
+    }
+
+    @Test
     public void writeToFile_existingFile_replacesWholeContentAndRemovesTemporaryFile() throws Exception {
         Path file = temporaryFolder.resolve("data.json");
         Files.writeString(file, "previous longer data");
